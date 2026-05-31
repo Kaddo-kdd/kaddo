@@ -1,8 +1,13 @@
 import { readArtifacts } from '../services/artifact-reader.js'
 import { loadOwners } from '../services/owners.js'
-import { exists, join, cwd, readFile } from '../utils/fs.js'
+import { exists, join, cwd, readFile, writeFile } from '../utils/fs.js'
 import matter from 'gray-matter'
 import { parse as parseYaml } from 'yaml'
+import {
+  buildProjectExplanation,
+  renderExplanationHuman,
+  renderExplanationAgent,
+} from '../core/project-explain.js'
 
 const ARCH_DIR = 'architecture'
 const CONFIG_PATH = '.kaddo/config.yml'
@@ -193,9 +198,39 @@ function explainForAgent(
   console.log(JSON.stringify(output, null, 2))
 }
 
+/** Default (no-filter) invocation: summarize the whole project from existing artifacts. */
+function explainProject(dir: string, mode: ExplainMode): void {
+  if (!exists(join(dir, CONFIG_PATH))) {
+    console.error('No .kaddo/config.yml found. Run `kaddo init` first.')
+    process.exit(1)
+  }
+
+  const explanation = buildProjectExplanation(dir)
+  const markdown = renderExplanationHuman(explanation)
+  const jsonOut = renderExplanationAgent(explanation)
+
+  // Persist both outputs for reuse (onboarding, handoff, agents).
+  writeFile(join(dir, '.kaddo', 'explain.md'), markdown)
+  writeFile(join(dir, '.kaddo', 'explain.json'), jsonOut)
+
+  if (mode === 'agent') {
+    console.log(renderExplanationAgent(explanation).trimEnd())
+  } else {
+    console.log('')
+    console.log(markdown.trimEnd())
+    console.log('')
+  }
+}
+
 export function runExplain(opts: ExplainOpts): void {
   const dir = cwd()
   const mode: ExplainMode = opts.for === 'agent' ? 'agent' : 'human'
+
+  // No filters → the consolidated project explanation (VS-013).
+  if (!opts.scope && !opts.type && !opts.since) {
+    explainProject(dir, mode)
+    return
+  }
 
   const archDir = join(dir, ARCH_DIR)
   if (!exists(archDir)) {
