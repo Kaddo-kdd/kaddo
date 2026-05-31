@@ -2,6 +2,7 @@ import { Command } from 'commander'
 import { runInit } from './commands/init.js'
 import { runScan } from './commands/scan.js'
 import { runCreate } from './commands/create.js'
+import { runGuard } from './commands/guard.js'
 
 const program = new Command()
 
@@ -35,8 +36,9 @@ program
 program
   .command('guard')
   .description('Check if modified code has related artifacts that were not updated')
-  .action(() => {
-    console.log('kaddo guard — coming in Slice 4')
+  .option('--staged', 'Check only staged files')
+  .action(async (opts: { staged?: boolean }) => {
+    await runGuard(opts)
   })
 
 program.parseAsync(process.argv).catch((err) => {
