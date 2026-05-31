@@ -4,6 +4,7 @@ import { runScan } from './commands/scan.js'
 import { runCreate } from './commands/create.js'
 import { runGuard } from './commands/guard.js'
 import { runIgnore, runIgnoreList, runIgnoreRemove } from './commands/ignore.js'
+import { runExplain } from './commands/explain.js'
 
 const program = new Command()
 
@@ -65,6 +66,16 @@ ignoreCmd
   .description('Remove an artifact from the ignore list')
   .action((artifactId: string) => {
     runIgnoreRemove(artifactId)
+  })
+
+program
+  .command('explain')
+  .description('Explain the Knowledge Repository for humans or agents')
+  .option('--for <audience>', 'Output format: human (default) or agent')
+  .option('--scope <domain>', 'Limit to a specific domain or keyword')
+  .option('--since <date>', 'Limit to artifacts created since date (YYYY-MM-DD)')
+  .action((opts: { for?: string; scope?: string; since?: string }) => {
+    runExplain({ for: opts.for as 'human' | 'agent' | undefined, scope: opts.scope, since: opts.since })
   })
 
 program.parseAsync(process.argv).catch((err) => {

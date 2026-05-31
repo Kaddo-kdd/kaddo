@@ -16,6 +16,7 @@ updated_at: 2026-05-31
 |---|---|---|
 | [v1.0.0](https://github.com/judlup/kaddo/releases/tag/v1.0.0) | 2026-05-31 | MVP: init · scan · create · guard (Guard Lite) |
 | [v1.0.1](https://github.com/judlup/kaddo/releases/tag/v1.0.1) | 2026-05-31 | Ignore reason: guard FYIs ignorable with reason, `kaddo ignore` command |
+| [v1.1.0](https://github.com/judlup/kaddo/releases/tag/v1.1.0) | 2026-05-31 | `kaddo explain`: Knowledge Repository → context for humans and agents |
 
 ---
 
@@ -48,6 +49,20 @@ updated_at: 2026-05-31
 | `kaddo ignore remove <id>` | ✅ Done | Remove an ignore entry |
 | `.kaddo/ignores.yml` | ✅ Done | Persisted ignore store, YAML, one entry per artifact |
 | `guard --no-interactive` | ✅ Done | Disable prompts for CI use |
+
+---
+
+## Build order step 5 — kaddo explain ✅ DONE
+> Tag: [v1.1.0](https://github.com/judlup/kaddo/releases/tag/v1.1.0)
+
+**Goal:** Convert the Knowledge Repository into readable context for humans and agents. Token-efficient: front matters and summaries only, full docs on demand.
+
+| Feature | Status | Description |
+|---|---|---|
+| `kaddo explain` | ✅ Done | Human-readable summary: knowledge.md + active work items + roadmap now |
+| `kaddo explain --for agent` | ✅ Done | Structured JSON: front matters + summaries + domains, no full docs |
+| `kaddo explain --scope <domain>` | ✅ Done | Filters artifacts by domain, code glob, or keyword |
+| `kaddo explain --since <date>` | ✅ Done | Limits output to artifacts created since a given date |
 
 ---
 
@@ -225,7 +240,8 @@ Modules are optional. Core includes only what is needed to start.
 | 2 | Ownership front matter | Allows declaring what each artifact protects without a central file | ✅ v1.0.0 |
 | 3 | Guard Lite v1 | Delivers immediate value with glob intersection | ✅ v1.0.0 |
 | 4 | Ignore reason | Converts false positives into learning | ✅ v1.0.1 |
-| 5 | Transparent Evidence Score | Improves signal without inventing precision | ⬜ next |
+| 5 | `kaddo explain` | Converts the Knowledge Repository into context for humans and agents | ✅ v1.1.0 |
+| 5b | Transparent Evidence Score | Improves signal without inventing precision | ⬜ next |
 | 6 | Cheap Classification Drift | Contrasts declared classification with simple signals | ⬜ planned |
 | 7 | Semantic plugins | Adds stack-specific intelligence when the base is installed | ⬜ planned |
 
