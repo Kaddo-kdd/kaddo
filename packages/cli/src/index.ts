@@ -9,6 +9,7 @@ import { runClassify } from './commands/classify.js'
 import { runStatus } from './commands/status.js'
 import { runLearn } from './commands/learn.js'
 import { runHistory } from './commands/history.js'
+import { runAdd } from './commands/add.js'
 
 const program = new Command()
 
@@ -114,6 +115,11 @@ program
   .action(async (opts: { type?: string; level?: string; staged?: boolean }) => {
     await runClassify(opts)
   })
+
+program
+  .command('add [module]')
+  .description('Install an optional Kaddo module (adr, incident, rfc, migration, legacy)')
+  .action((moduleName?: string) => { runAdd(moduleName ?? '') })
 
 program.parseAsync(process.argv).catch((err) => {
   console.error(err)

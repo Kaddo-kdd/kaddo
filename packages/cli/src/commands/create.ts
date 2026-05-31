@@ -1,4 +1,6 @@
 import { getLevel, getLevelForType, isValidType, type WorkItemType, type KLevel } from '../core/knowledge-levels.js'
+import { findWorkItemType } from '../modules/registry.js'
+import type { ModuleWorkItemType } from '../modules/types.js'
 import { exists, readDir, writeFile, join, cwd } from '../utils/fs.js'
 import { intro, outro, log, text } from '../utils/ui.js'
 
@@ -107,12 +109,69 @@ function buildBody(
   return sections.join('\n')
 }
 
+function buildModuleFrontMatter(
+  id: string,
+  modType: ModuleWorkItemType,
+  title: string,
+  answers: Record<string, string>
+): string {
+  const today = new Date().toISOString().split('T')[0]
+  const extra = modType.extraFrontMatter ?? {}
+  const extraLines = Object.entries(extra).map(([k, v]) =>
+    `${k}: ${JSON.stringify(v)}`
+  )
+  const lines = [
+    '---',
+    `type: ${modType.name}`,
+    `id: ${id}`,
+    `title: "${title}"`,
+    `knowledge_level: ${modType.knowledgeLevel}`,
+    `status: in-progress`,
+    `domains: []`,
+    `code: []`,
+    `created_at: ${today}`,
+    `summary: "${title}"`,
+    ...extraLines,
+    '---',
+  ]
+  return lines.join('\n')
+}
+
+function buildModuleBody(modType: ModuleWorkItemType, title: string, answers: Record<string, string>): string {
+  const sections: string[] = []
+  sections.push(`# ${title}\n`)
+  sections.push(`> Type: ${modType.name} · Level: ${modType.knowledgeLevel}\n`)
+
+  for (const q of modType.questions) {
+    const answer = answers[q.frontMatterField]
+    if (answer) {
+      const heading = q.frontMatterField.replace(/_/g, ' ')
+      sections.push(`## ${heading.charAt(0).toUpperCase() + heading.slice(1)}\n\n${answer}\n`)
+    }
+  }
+
+  if (modType.qualityGate.length > 0) {
+    sections.push(`## Definition of Done\n\n${modType.qualityGate.map((g) => `- [ ] ${g}`).join('\n')}\n`)
+  }
+
+  sections.push(`## Learning\n\n_What did we learn from this change? Update after completion._\n`)
+  return sections.join('\n')
+}
+
 export async function runCreate(type: string): Promise<void> {
   const dir = cwd()
+
+  // Check module-defined types first
+  const modWorkItemType = findWorkItemType(type)
+
+  if (modWorkItemType) {
+    return runCreateModule(dir, modWorkItemType)
+  }
 
   if (!isValidType(type)) {
     console.error(`Unknown work item type: "${type}"`)
     console.error('Valid types: feature, bugfix, hotfix, spike')
+    console.error('Module types: adr, incident, rfc, migration, legacy (run `kaddo add <module>` first)')
     process.exit(1)
   }
 
@@ -123,14 +182,12 @@ export async function runCreate(type: string): Promise<void> {
   intro(`kaddo create ${workItemType}`)
   log.info(`Knowledge level: ${level} — ${levelDef.description}`)
 
-  // First: ask for the title (always)
   const title = await text({
     message: 'Title for this work item',
     placeholder: `e.g. ${workItemType === 'feature' ? 'Add email verification to checkout' : workItemType === 'hotfix' ? 'Fix null pointer in payment handler' : workItemType === 'bugfix' ? 'Fix broken pagination on orders list' : 'Explore caching strategies for API responses'}`,
     validate: (v) => (v.trim().length === 0 ? 'Title is required.' : undefined),
   })
 
-  // Then: ask only the questions for this K level
   const answers: Record<string, string> = {}
 
   for (const question of levelDef.questions) {
@@ -144,7 +201,6 @@ export async function runCreate(type: string): Promise<void> {
     answers[question.frontMatterField] = answer.trim()
   }
 
-  // Generate file
   const id = nextWorkItemId(dir)
   const slug = slugify(title)
   const fileName = `${id}-${slug}.md`
@@ -160,9 +216,47 @@ export async function runCreate(type: string): Promise<void> {
   }
 
   writeFile(filePath, content)
-
   log.success(`Created ${WORK_ITEMS_DIR}/${fileName}`)
   log.info(`Add code globs to the front matter \`code:\` field to enable Guard Lite.`)
+  outro(`Work item ${id} created.`)
+}
 
+async function runCreateModule(dir: string, modType: ModuleWorkItemType): Promise<void> {
+  intro(`kaddo create ${modType.name}`)
+  log.info(`Knowledge level: ${modType.knowledgeLevel} — ${modType.description}`)
+
+  if (!exists(join(dir, WORK_ITEMS_DIR))) {
+    log.warn(`${WORK_ITEMS_DIR}/ not found. Run \`kaddo init\` first.`)
+    process.exit(1)
+  }
+
+  const title = await text({
+    message: 'Title for this work item',
+    placeholder: `e.g. ${modType.questions[0]?.placeholder ?? modType.description}`,
+    validate: (v) => (v.trim().length === 0 ? 'Title is required.' : undefined),
+  })
+
+  const answers: Record<string, string> = {}
+  for (const q of modType.questions) {
+    const answer = await text({
+      message: q.prompt,
+      placeholder: q.placeholder,
+      validate: q.required ? (v) => (v.trim().length === 0 ? 'This field is required.' : undefined) : undefined,
+    })
+    answers[q.frontMatterField] = answer.trim()
+  }
+
+  const id = nextWorkItemId(dir)
+  const slug = slugify(title)
+  const fileName = `${id}-${slug}.md`
+  const filePath = join(dir, WORK_ITEMS_DIR, fileName)
+
+  const frontMatter = buildModuleFrontMatter(id, modType, title.trim(), answers)
+  const body = buildModuleBody(modType, title.trim(), answers)
+  const content = `${frontMatter}\n\n${body}`
+
+  writeFile(filePath, content)
+  log.success(`Created ${WORK_ITEMS_DIR}/${fileName}`)
+  log.info(`Add code globs to the front matter \`code:\` field to enable Guard Lite.`)
   outro(`Work item ${id} created.`)
 }

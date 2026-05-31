@@ -21,6 +21,7 @@ updated_at: 2026-05-31
 | [v1.2.0](https://github.com/judlup/kaddo/releases/tag/v1.2.0) | 2026-05-31 | `kaddo classify`: Classification Drift barato con señales observadas del diff |
 | [v1.3.0](https://github.com/judlup/kaddo/releases/tag/v1.3.0) | 2026-05-31 | `kaddo status` · `kaddo learn` · `kaddo history` — observabilidad del Knowledge Repository |
 | [v1.4.0](https://github.com/judlup/kaddo/releases/tag/v1.4.0) | 2026-05-31 | `kaddo guard --ci` — output JSON para CI/PR, no bloqueante |
+| [v2.0.0](https://github.com/judlup/kaddo/releases/tag/v2.0.0) | 2026-05-31 | Optional module system: `kaddo add [adr\|incident\|rfc\|migration\|legacy]` |
 
 ---
 
@@ -216,7 +217,21 @@ Rule: the number only appears with its explanation. If it cannot be explained, i
 
 ---
 
-## v2.0 — Semantic Plugins
+## v2.0 — Optional Module System ✅ DONE
+> Tag: [v2.0.0](https://github.com/judlup/kaddo/releases/tag/v2.0.0)
+
+**Goal:** Extend Kaddo with optional work item types via installable modules. Teams only install what they need.
+
+**Shipped:**
+- `kaddo add [module]` — install a module (adr, incident, rfc, migration, legacy)
+- `kaddo add` without args — lists available modules
+- Module work item types auto-detected in `kaddo create <type>`
+- Module installation state tracked in `.kaddo/config.yml`
+- 5 built-in modules: ADR (K4), Incident (K3), RFC (K3), Migration (K4), Legacy (K3)
+
+---
+
+## v2.1 — Semantic Plugins
 
 **Goal:** Add stack-specific semantic analysis via optional plugins. Core stays deterministic.
 
