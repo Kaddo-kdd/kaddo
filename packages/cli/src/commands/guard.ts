@@ -70,9 +70,33 @@ async function offerIgnore(dir: string, match: ArtifactMatch): Promise<boolean> 
   return true
 }
 
-export async function runGuard(opts: { staged?: boolean; interactive?: boolean } = {}): Promise<void> {
+function printCIJson(
+  touchedFiles: string[],
+  activeMatches: ArtifactMatch[],
+  ignoredCount: number
+): void {
+  const output = {
+    kaddo_guard: true,
+    ci: true,
+    touched_files: touchedFiles.length,
+    fyi_count: activeMatches.length,
+    ignored_count: ignoredCount,
+    findings: activeMatches.map((m) => ({
+      artifact_id: m.artifact.id || m.artifact.title,
+      artifact_type: m.artifact.type,
+      knowledge_level: m.artifact.knowledgeLevel,
+      matched_files: m.matchedFiles,
+      evidence: m.evidence.signals,
+      message: `${m.artifact.id || m.artifact.title} was not modified in this diff`,
+    })),
+  }
+  console.log(JSON.stringify(output, null, 2))
+}
+
+export async function runGuard(opts: { staged?: boolean; interactive?: boolean; ci?: boolean; json?: boolean } = {}): Promise<void> {
   const dir = cwd()
-  const interactive = opts.interactive !== false
+  const interactive = opts.interactive !== false && !opts.ci && !opts.json
+  const jsonMode = opts.json || opts.ci
 
   const isRepo = await isGitRepo(dir)
   if (!isRepo) {
@@ -118,6 +142,12 @@ export async function runGuard(opts: { staged?: boolean; interactive?: boolean }
   const activeMatches = fyiMatches.filter(
     (m) => !isIgnored(ignores, m.artifact.id || m.artifact.title)
   )
+
+  // JSON / CI mode
+  if (jsonMode) {
+    printCIJson(touchedFiles, activeMatches, alreadyIgnoredMatches.length)
+    return
+  }
 
   // Show active FYIs
   for (const match of activeMatches) {

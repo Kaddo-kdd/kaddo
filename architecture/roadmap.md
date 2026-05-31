@@ -20,6 +20,7 @@ updated_at: 2026-05-31
 | [v1.1.1](https://github.com/judlup/kaddo/releases/tag/v1.1.1) | 2026-05-31 | Evidence Score transparente en guard FYIs (señales observadas, sin porcentajes mágicos) |
 | [v1.2.0](https://github.com/judlup/kaddo/releases/tag/v1.2.0) | 2026-05-31 | `kaddo classify`: Classification Drift barato con señales observadas del diff |
 | [v1.3.0](https://github.com/judlup/kaddo/releases/tag/v1.3.0) | 2026-05-31 | `kaddo status` · `kaddo learn` · `kaddo history` — observabilidad del Knowledge Repository |
+| [v1.4.0](https://github.com/judlup/kaddo/releases/tag/v1.4.0) | 2026-05-31 | `kaddo guard --ci` — output JSON para CI/PR, no bloqueante |
 
 ---
 
@@ -178,6 +179,18 @@ Queries work item history by domain, type, or artifact.
 - `kaddo history --status done` → completed work items
 
 Does not load full documents. Reads front matter only.
+
+---
+
+## v1.4 — CI Integration ✅ DONE
+> Tag: [v1.4.0](https://github.com/judlup/kaddo/releases/tag/v1.4.0)
+
+| Feature | Status | Description |
+|---|---|---|
+| `kaddo guard --ci` | ✅ Done | JSON output, no prompts, non-blocking exit code |
+| `kaddo guard --json` | ✅ Done | Alias for --ci, same output |
+| JSON findings shape | ✅ Done | `artifact_id`, `knowledge_level`, `matched_files`, `evidence`, `message` |
+| `ignored_count` in output | ✅ Done | CI can see how many FYIs were suppressed by ignores |
 
 ---
 

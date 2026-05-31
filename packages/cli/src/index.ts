@@ -43,7 +43,9 @@ program
   .description('Check if modified code has related artifacts that were not updated')
   .option('--staged', 'Check only staged files')
   .option('--no-interactive', 'Disable interactive ignore prompts')
-  .action(async (opts: { staged?: boolean; interactive?: boolean }) => {
+  .option('--ci', 'CI mode: output JSON, no prompts, non-blocking')
+  .option('--json', 'Output JSON (alias for --ci)')
+  .action(async (opts: { staged?: boolean; interactive?: boolean; ci?: boolean; json?: boolean }) => {
     await runGuard(opts)
   })
 
