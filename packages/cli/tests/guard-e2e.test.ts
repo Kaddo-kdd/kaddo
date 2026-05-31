@@ -1,0 +1,150 @@
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
+import fs from 'fs'
+import os from 'os'
+import path from 'path'
+
+// Mock the git service so we control the diff without a real repo.
+const gitMock = vi.hoisted(() => ({
+  isGitRepo: vi.fn(async () => true),
+  getModifiedFiles: vi.fn(async () => [] as string[]),
+}))
+
+vi.mock('../src/services/git.js', () => gitMock)
+
+import { runGuard } from '../src/commands/guard.js'
+
+let tmpDir: string
+let logSpy: ReturnType<typeof vi.spyOn>
+
+function writeArtifact(relPath: string, frontMatter: string) {
+  const full = path.join(tmpDir, relPath)
+  fs.mkdirSync(path.dirname(full), { recursive: true })
+  fs.writeFileSync(full, `---\n${frontMatter}\n---\n\n# Artifact\n`)
+}
+
+function output(): string {
+  return logSpy.mock.calls.map((c) => c.join(' ')).join('\n')
+}
+
+describe('kaddo guard — end-to-end with real artifacts (VS-012)', () => {
+  beforeEach(() => {
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'kaddo-guard-e2e-'))
+    fs.mkdirSync(path.join(tmpDir, 'architecture', 'work-items'), { recursive: true })
+    vi.spyOn(process, 'cwd').mockReturnValue(tmpDir)
+    logSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
+    gitMock.isGitRepo.mockResolvedValue(true)
+    gitMock.getModifiedFiles.mockResolvedValue([])
+  })
+
+  afterEach(() => {
+    fs.rmSync(tmpDir, { recursive: true, force: true })
+    vi.restoreAllMocks()
+  })
+
+  it('detects drift against a real artifact that declares ownership', async () => {
+    writeArtifact(
+      'architecture/work-items/WI-001-payments.md',
+      'type: feature\nid: WI-001\ntitle: Payments\nknowledge_level: K2\nstatus: in-progress\ndomains:\n  - payments\ncode:\n  - src/payments/**'
+    )
+    gitMock.getModifiedFiles.mockResolvedValue(['src/payments/charge.ts'])
+
+    await runGuard({ interactive: false })
+    const out = output()
+    expect(out).toContain('Possible knowledge drift')
+    expect(out).toContain('WI-001')
+    expect(out).toContain('src/payments/charge.ts')
+    expect(out).toContain('src/payments/**')
+    expect(out).toContain('Suggested action')
+  })
+
+  it('does NOT warn when the artifact was also updated in the diff', async () => {
+    writeArtifact(
+      'architecture/work-items/WI-001-payments.md',
+      'type: feature\nid: WI-001\ntitle: Payments\nknowledge_level: K2\nstatus: in-progress\ncode:\n  - src/payments/**'
+    )
+    gitMock.getModifiedFiles.mockResolvedValue([
+      'src/payments/charge.ts',
+      'architecture/work-items/WI-001-payments.md',
+    ])
+
+    await runGuard({ interactive: false })
+    const out = output()
+    expect(out).not.toContain('Possible knowledge drift')
+    expect(out).toContain('All matched artifacts were updated in this diff.')
+  })
+
+  it('is silent when no artifact declares ownership', async () => {
+    writeArtifact(
+      'architecture/work-items/WI-002-noown.md',
+      'type: feature\nid: WI-002\ntitle: No ownership\nknowledge_level: K1\nstatus: in-progress'
+    )
+    gitMock.getModifiedFiles.mockResolvedValue(['src/payments/charge.ts'])
+
+    await runGuard({ interactive: false })
+    expect(output()).toBe('')
+  })
+
+  it('shows no matches when changed files do not match any glob', async () => {
+    writeArtifact(
+      'architecture/work-items/WI-001-payments.md',
+      'type: feature\nid: WI-001\ntitle: Payments\nknowledge_level: K2\nstatus: in-progress\ncode:\n  - src/payments/**'
+    )
+    gitMock.getModifiedFiles.mockResolvedValue(['src/auth/login.ts'])
+
+    await runGuard({ interactive: false })
+    const out = output()
+    expect(out).toContain('No artifact ownership matches found.')
+    expect(out).not.toContain('Possible knowledge drift')
+  })
+
+  it('reports multiple artifacts that match the same change', async () => {
+    writeArtifact(
+      'architecture/work-items/WI-001.md',
+      'type: feature\nid: WI-001\ntitle: A\nknowledge_level: K2\nstatus: in-progress\ncode:\n  - src/payments/**'
+    )
+    writeArtifact(
+      'architecture/work-items/WI-002.md',
+      'type: spike\nid: WI-002\ntitle: B\nknowledge_level: K3\nstatus: in-progress\ncode:\n  - src/**/charge.ts'
+    )
+    gitMock.getModifiedFiles.mockResolvedValue(['src/payments/charge.ts'])
+
+    await runGuard({ interactive: false })
+    const out = output()
+    expect(out).toContain('WI-001')
+    expect(out).toContain('WI-002')
+  })
+
+  it('reflects multiple globs in one artifact', async () => {
+    writeArtifact(
+      'architecture/work-items/WI-001.md',
+      'type: feature\nid: WI-001\ntitle: A\nknowledge_level: K2\nstatus: in-progress\ncode:\n  - src/payments/**\n  - src/shared/payment/**'
+    )
+    gitMock.getModifiedFiles.mockResolvedValue(['src/payments/charge.ts'])
+
+    await runGuard({ interactive: false })
+    expect(output()).toContain('1/2 globs matched')
+  })
+
+  it('normalizes Windows-style paths so they match POSIX globs', async () => {
+    writeArtifact(
+      'architecture/work-items/WI-001.md',
+      'type: feature\nid: WI-001\ntitle: A\nknowledge_level: K2\nstatus: in-progress\ncode:\n  - src/payments/**'
+    )
+    gitMock.getModifiedFiles.mockResolvedValue(['src\\payments\\charge.ts'])
+
+    await runGuard({ interactive: false })
+    expect(output()).toContain('Possible knowledge drift')
+  })
+
+  it('stays non-blocking (does not call process.exit) on drift', async () => {
+    const exitSpy = vi.spyOn(process, 'exit').mockImplementation((() => {}) as never)
+    writeArtifact(
+      'architecture/work-items/WI-001.md',
+      'type: feature\nid: WI-001\ntitle: A\nknowledge_level: K2\nstatus: in-progress\ncode:\n  - src/payments/**'
+    )
+    gitMock.getModifiedFiles.mockResolvedValue(['src/payments/charge.ts'])
+
+    await runGuard({ interactive: false })
+    expect(exitSpy).not.toHaveBeenCalled()
+  })
+})

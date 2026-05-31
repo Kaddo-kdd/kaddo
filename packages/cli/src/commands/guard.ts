@@ -36,11 +36,20 @@ function printHeader(touchedFiles: string[]) {
 function printFYI(match: ArtifactMatch) {
   const { artifact, matchedFiles, evidence } = match
   const id = artifact.id || artifact.title
-  const extra = matchedFiles.length > 1 ? ` (+${matchedFiles.length - 1} more)` : ''
-  console.log(`  FYI: ${matchedFiles[0]}${extra} matches ${id}`)
-  console.log(`  ${id} was not modified in this diff.`)
-  console.log(`  Evidence: ${evidence.signals.join(' · ')}`)
-  console.log(`  Consider reviewing whether ${id} still reflects the implementation.`)
+  const descriptor = [artifact.type, artifact.knowledgeLevel].filter(Boolean).join(', ')
+  const heading = descriptor ? `${id} (${descriptor})` : id
+
+  console.log(`  ⚠ Possible knowledge drift: ${heading}`)
+  console.log(`    Changed code matching this artifact:`)
+  matchedFiles.forEach((f) => console.log(`      - ${f}`))
+  if (artifact.codeGlobs.length > 0) {
+    console.log(`    Declared ownership:`)
+    artifact.codeGlobs.forEach((g) => console.log(`      - ${g}`))
+  }
+  console.log(`    ${id} was not updated in this diff.`)
+  console.log(`    Evidence: ${evidence.signals.join(' · ')}`)
+  console.log(`    Suggested action: review ${id} and update it if the behavior changed,`)
+  console.log(`    or ignore this artifact below if the change does not affect the knowledge.`)
   console.log('')
 }
 

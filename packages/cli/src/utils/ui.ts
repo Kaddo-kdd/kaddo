@@ -31,3 +31,12 @@ export async function select<T extends string>(opts: Parameters<typeof p.select>
   }
   return val as T
 }
+
+export async function multiselect<T extends string>(opts: Parameters<typeof p.multiselect>[0]) {
+  const val = await p.multiselect(opts)
+  if (p.isCancel(val)) {
+    p.cancel('Operation cancelled.')
+    process.exit(0)
+  }
+  return val as T[]
+}

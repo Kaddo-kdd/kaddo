@@ -12,7 +12,7 @@ import { runStatus } from './commands/status.js'
 import { runLearn } from './commands/learn.js'
 import { runHistory } from './commands/history.js'
 import { runAdd } from './commands/add.js'
-import { runOwners } from './commands/owners.js'
+import { runOwners, runOwnersSuggest } from './commands/owners.js'
 import { runModuleDescriptor } from './commands/module-descriptor.js'
 
 const program = new Command()
@@ -138,10 +138,16 @@ program
   })
 
 program
-  .command('owners')
-  .description('List domain owners configured in .kaddo/config.yml')
+  .command('owners [action]')
+  .description('List domain owners, or run `owners suggest` to declare code ownership on artifacts')
   .option('--domain <domain>', 'Show owners for a specific domain')
-  .action((opts: { domain?: string }) => { runOwners(opts) })
+  .action(async (action: string | undefined, opts: { domain?: string }) => {
+    if (action === 'suggest') {
+      await runOwnersSuggest()
+    } else {
+      runOwners(opts)
+    }
+  })
 
 program
   .command('module')
