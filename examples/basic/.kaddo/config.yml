@@ -1,0 +1,10 @@
+version: 1
+project:
+  name: "basic-example"
+  domains:
+    - payments
+    - orders
+knowledge:
+  default_level: K2
+guard:
+  silent_without_ownership: true
