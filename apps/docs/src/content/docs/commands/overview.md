@@ -7,6 +7,7 @@ description: The Kaddo CLI surface.
 |---|---|
 | `kaddo init` | Initialize Kaddo in the current project |
 | `kaddo scan` | Detect project stack and suggest domains |
+| `kaddo context` | Generate an LLM context pack for agent handoff |
 | `kaddo create <type>` | Create a Work Item (feature, bugfix, hotfix, spike) |
 | `kaddo guard` | Check if modified code has stale related artifacts |
 | `kaddo explain` | Explain the Knowledge Repository for humans or agents |

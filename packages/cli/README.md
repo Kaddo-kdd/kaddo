@@ -127,12 +127,44 @@ on real context instead of starting from scratch.
 ```bash
 kaddo init                        # state: new | pre-ai | legacy, team size, structure
 kaddo scan                        # deterministic technical inventory
+kaddo context                     # assemble an LLM context pack for agent handoff
 kaddo understand                  # extract capabilities, risks, open questions  (upcoming)
 kaddo architecture                # reconstruct decisions → ADR candidates       (upcoming)
 kaddo roadmap                     # turn the baseline into a roadmap             (upcoming)
 kaddo create feature              # work items grounded in capability + roadmap
 kaddo guard                       # detect knowledge drift
 ```
+
+---
+
+### `kaddo context`
+
+Assemble an LLM context pack for handoff to a chat agent (Claude, ChatGPT, Cursor, Copilot, Windsurf…).
+
+```bash
+kaddo context
+```
+
+Reads existing Kaddo artifacts — `.kaddo/config.yml`, `.kaddo/scan.json`,
+`architecture/inventory.md`, `architecture/knowledge.md`, `architecture/roadmap.md` and
+work-item front matter — and writes two files:
+
+- **`.kaddo/context-pack.md`** — compact, LLM-friendly markdown to paste into a chat.
+- **`.kaddo/context-pack.json`** — structured data for future tooling and automations.
+
+The pack is **deterministic**. Kaddo does not call an LLM, require an API key, or
+interpret your system — it assembles metadata and summaries, marks any missing context
+explicitly, and recommends which agents to use based on your project state:
+
+| State | Recommended handoff |
+|---|---|
+| `new` | roadmap-agent → architecture-agent |
+| `pre-ai` | capability-agent → architecture-agent → roadmap-agent |
+| `legacy` | legacy-agent → architecture-agent → capability-agent |
+
+> `scan` collects technical signals. `context` packages those signals (plus knowledge and
+> work items) for an LLM. The upcoming `understand` will let agents turn the pack into
+> capabilities, architecture and roadmap candidates.
 
 ---
 

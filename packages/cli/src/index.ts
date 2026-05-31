@@ -5,6 +5,7 @@ import { runCreate } from './commands/create.js'
 import { runGuard } from './commands/guard.js'
 import { runIgnore, runIgnoreList, runIgnoreRemove } from './commands/ignore.js'
 import { runExplain } from './commands/explain.js'
+import { runContext } from './commands/context.js'
 import { runClassify } from './commands/classify.js'
 import { runStatus } from './commands/status.js'
 import { runLearn } from './commands/learn.js'
@@ -86,6 +87,14 @@ program
   .option('--since <date>', 'Limit to artifacts created since date (YYYY-MM-DD)')
   .action((opts: { for?: string; scope?: string; type?: string; since?: string }) => {
     runExplain({ for: opts.for as 'human' | 'agent' | undefined, scope: opts.scope, type: opts.type, since: opts.since })
+  })
+
+program
+  .command('context')
+  .description('Generate an LLM context pack (.kaddo/context-pack.md + .json) for agent handoff')
+  .option('--format <format>', 'Output format: markdown, json (default: both)')
+  .action((opts: { format?: string }) => {
+    runContext(opts)
   })
 
 program

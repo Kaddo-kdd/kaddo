@@ -1,0 +1,169 @@
+import { describe, it, expect, beforeEach, afterEach } from 'vitest'
+import fs from 'fs'
+import os from 'os'
+import path from 'path'
+import { loadConfig } from '../src/core/config.js'
+import {
+  buildContextPack,
+  serializeContextPackJson,
+  recommendedAgentsForState,
+  CONTEXT_PACK_VERSION,
+} from '../src/core/context-pack.js'
+import { renderContextPack } from '../src/templates/context-pack-template.js'
+
+let tmpDir: string
+
+function write(rel: string, content: string) {
+  const full = path.join(tmpDir, rel)
+  fs.mkdirSync(path.dirname(full), { recursive: true })
+  fs.writeFileSync(full, content)
+}
+
+function writeConfig(state = 'pre-ai', extra = '') {
+  write(
+    '.kaddo/config.yml',
+    [
+      'version: 1',
+      'project:',
+      '  name: "demo"',
+      `  state: ${state}`,
+      '  structure: monorepo',
+      'team:',
+      '  size: indie',
+      extra,
+    ].join('\n')
+  )
+}
+
+function writeScan() {
+  write(
+    '.kaddo/scan.json',
+    JSON.stringify({
+      version: '1',
+      detected: {
+        languages: ['typescript'],
+        frameworks: ['next'],
+        packageManagers: ['npm'],
+        sourceDirectories: ['src'],
+        migrationDirectories: ['supabase/migrations'],
+        contractFiles: [],
+        infrastructureFiles: ['amplify.yml'],
+      },
+    })
+  )
+}
+
+function build(now = new Date('2026-01-01T00:00:00.000Z')) {
+  const config = loadConfig(tmpDir)!
+  return buildContextPack(tmpDir, config, now)
+}
+
+beforeEach(() => {
+  tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'kaddo-context-'))
+})
+afterEach(() => {
+  fs.rmSync(tmpDir, { recursive: true, force: true })
+})
+
+describe('context-pack — buildContextPack', () => {
+  it('assembles a full pack from config + scan + artifacts', () => {
+    writeConfig('pre-ai')
+    writeScan()
+    write('architecture/inventory.md', '# Project Inventory\n\nstuff')
+    write('architecture/knowledge.md', '# Knowledge\n\nThe product does X for users.')
+    write('architecture/roadmap.md', '# Roadmap\n\nNext we ship Y.')
+    write(
+      'architecture/work-items/WI-001-add-auth.md',
+      ['---', 'type: feature', 'id: WI-001', 'title: "Add auth"', 'knowledge_level: K2', 'status: in-progress', 'domains: [auth]', 'code:', '  - src/auth/**', 'summary: "Adds auth"', '---', '', '# Add auth'].join('\n')
+    )
+
+    const pack = build()
+    expect(pack.version).toBe(CONTEXT_PACK_VERSION)
+    expect(pack.generatedAt).toBe('2026-01-01T00:00:00.000Z')
+    expect(pack.project).toEqual({ name: 'demo', state: 'pre-ai', teamSize: 'indie', structure: 'monorepo' })
+    expect(pack.scan.available).toBe(true)
+    expect(pack.scan.frameworks).toEqual(['next'])
+    expect(pack.knowledge.summary).toContain('product does X')
+    expect(pack.knowledge.roadmapSummary).toContain('ship Y')
+    expect(pack.knowledge.inventoryAvailable).toBe(true)
+    expect(pack.knowledge.workItems).toHaveLength(1)
+    expect(pack.knowledge.workItems[0].id).toBe('WI-001')
+    expect(pack.knowledge.artifacts[0].codeGlobs).toEqual(['src/auth/**'])
+    expect(pack.missing).toHaveLength(0)
+  })
+
+  it('marks scan baseline missing when scan.json is absent', () => {
+    writeConfig('pre-ai')
+    const pack = build()
+    expect(pack.scan.available).toBe(false)
+    expect(pack.missing.some((m) => m.toLowerCase().includes('scan baseline'))).toBe(true)
+  })
+
+  it('marks inventory missing when inventory.md is absent', () => {
+    writeConfig('pre-ai')
+    writeScan()
+    const pack = build()
+    expect(pack.knowledge.inventoryAvailable).toBe(false)
+    expect(pack.missing.some((m) => m.toLowerCase().includes('inventory'))).toBe(true)
+  })
+
+  it('reports no work items when none exist', () => {
+    writeConfig('pre-ai')
+    const pack = build()
+    expect(pack.knowledge.workItems).toHaveLength(0)
+    expect(pack.missing.some((m) => m.toLowerCase().includes('work items'))).toBe(true)
+  })
+})
+
+describe('context-pack — state-aware recommendations', () => {
+  it('recommends roadmap/architecture for new', () => {
+    expect(recommendedAgentsForState('new')).toEqual(['roadmap-agent', 'architecture-agent'])
+  })
+  it('recommends capability-first for pre-ai', () => {
+    expect(recommendedAgentsForState('pre-ai')[0]).toBe('capability-agent')
+  })
+  it('recommends legacy-agent first for legacy', () => {
+    expect(recommendedAgentsForState('legacy')[0]).toBe('legacy-agent')
+  })
+  it('wires recommendations into the built pack per state', () => {
+    writeConfig('legacy')
+    const pack = build()
+    expect(pack.handoff.recommendedAgents[0]).toBe('legacy-agent')
+  })
+})
+
+describe('context-pack — serialization', () => {
+  it('produces valid JSON ending in a newline', () => {
+    writeConfig('pre-ai')
+    const pack = build()
+    const json = serializeContextPackJson(pack)
+    expect(json.endsWith('\n')).toBe(true)
+    expect(JSON.parse(json)).toEqual(pack)
+  })
+})
+
+describe('context-pack — renderContextPack', () => {
+  it('renders all sections in markdown', () => {
+    writeConfig('pre-ai')
+    writeScan()
+    const md = renderContextPack(build())
+    expect(md).toContain('# Kaddo Context Pack')
+    expect(md).toContain('## Project Metadata')
+    expect(md).toContain('## Technical Inventory')
+    expect(md).toContain('## Current Knowledge')
+    expect(md).toContain('## Roadmap')
+    expect(md).toContain('## Existing Work Items')
+    expect(md).toContain('## Missing Context')
+    expect(md).toContain('## Recommended Agent Handoff')
+    expect(md).toContain('## Instructions for the LLM')
+    expect(md).toContain('Name: demo')
+    expect(md).toContain('1. capability-agent')
+  })
+
+  it('states missing context when scan is absent', () => {
+    writeConfig('new')
+    const md = renderContextPack(build())
+    expect(md).toContain('Scan baseline missing')
+    expect(md).toContain('No work items found.')
+  })
+})
