@@ -76,6 +76,67 @@ describe('agents module — prompt pack source', () => {
   })
 })
 
+describe('roadmap-agent — structured output (VS-009)', () => {
+  const roadmap = () => {
+    const a = AGENT_PROMPTS.find((p) => p.fileName === 'roadmap-agent.md')
+    if (!a) throw new Error('roadmap-agent.md not found')
+    return a.content
+  }
+
+  it('directs the output to architecture/roadmap.md', () => {
+    expect(roadmap()).toContain('architecture/roadmap.md')
+  })
+
+  it('includes structured initiative fields', () => {
+    const c = roadmap()
+    for (const field of [
+      '**Goal:**',
+      '**Related capabilities:**',
+      '**Impact:**',
+      '**Risk:**',
+      '**Dependencies:**',
+      '### RM-001',
+    ]) {
+      expect(c, `missing ${field}`).toContain(field)
+    }
+  })
+
+  it('includes a Candidate Work Items section', () => {
+    const c = roadmap()
+    expect(c).toContain('Candidate Work Items')
+    expect(c).toContain('WI-CANDIDATE-001')
+  })
+
+  it('suggests a Knowledge Level for initiatives', () => {
+    const c = roadmap()
+    expect(c).toContain('Suggested Knowledge Level')
+    expect(c).toMatch(/K1 \/ K2 \/ K3 \/ K4/)
+  })
+
+  it('guides assumptions and open questions', () => {
+    const c = roadmap()
+    expect(c).toContain('## Assumptions')
+    expect(c).toContain('**Open questions:**')
+  })
+
+  it('adapts priorities to project states', () => {
+    const c = roadmap()
+    expect(c).toContain('new')
+    expect(c).toContain('pre-ai')
+    expect(c).toContain('legacy')
+  })
+
+  it('marks initiatives as candidates, not decisions, and forbids code', () => {
+    const c = roadmap()
+    expect(c.toLowerCase()).toContain('candidate')
+    expect(c).toContain('Do not write code')
+  })
+
+  it('references the future kaddo create --from roadmap bridge', () => {
+    expect(roadmap()).toContain('kaddo create --from roadmap')
+  })
+})
+
 describe('kaddo add agents', () => {
   it('creates architecture/agents/ and installs all base agents', () => {
     initProject()

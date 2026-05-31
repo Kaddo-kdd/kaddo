@@ -210,6 +210,22 @@ Recommended agent order by project state:
 Existing agent files are never overwritten silently. `kaddo init` does not install agents —
 add them only when you need them.
 
+#### Roadmap agent output
+
+The `roadmap-agent` is the bridge between understanding and execution. In your LLM chat it
+produces a **structured** `architecture/roadmap.md`:
+
+```txt
+context pack → roadmap agent → architecture/roadmap.md → (future) kaddo create --from roadmap
+```
+
+Each initiative (`RM-001`, …) includes a goal, related capabilities, impact, risk, a
+suggested Knowledge Level (K1–K4), dependencies, and **candidate work items** (with type,
+suggested knowledge level, expected value and notes), plus assumptions, suggested execution
+order and the next recommended work item. Initiatives and work items are **candidates** for
+human review — not final commitments — and priorities adapt to the project state. A future
+`kaddo create --from roadmap` will read these candidates (not yet implemented).
+
 ---
 
 ### `kaddo understand`

@@ -65,6 +65,27 @@ Luego, en tu chat LLM:
 - **pre-ai** → capability-agent → architecture-agent → roadmap-agent
 - **legacy** → legacy-agent → architecture-agent → capability-agent → roadmap-agent
 
+## El output del roadmap agent
+
+El `roadmap-agent` es el puente entre el entendimiento y la ejecución. Usado en tu chat LLM,
+produce un `architecture/roadmap.md` **estructurado**, pensado para ser legible hoy y
+procesable por máquina más adelante:
+
+```txt
+context pack → roadmap agent → architecture/roadmap.md → (futuro) kaddo create --from roadmap
+```
+
+Cada iniciativa (`RM-001`, `RM-002`, …) incluye objetivo, capacidades relacionadas, área del
+proyecto, impacto, riesgo, un **Knowledge Level sugerido** (K1–K4), dependencias, por qué va
+ahora, y **candidate work items** con tipo, knowledge level sugerido, valor esperado y notas.
+El roadmap también lista supuestos, un orden de ejecución sugerido, una lista "Not Now" y el
+siguiente work item recomendado.
+
+> Las iniciativas y work items son **candidatos** para revisión humana, no decisiones
+> finales. El roadmap se genera en tu chat LLM, nunca en el CLI, y las prioridades se
+> adaptan al estado del proyecto (new / pre-ai / legacy). Un futuro
+> `kaddo create --from roadmap` podrá leer estos candidatos — pero aún no está implementado.
+
 ## CLI vs LLM
 
 - **Kaddo CLI** prepara, detecta, estructura y guarda: `init`, `scan`, `context`,
