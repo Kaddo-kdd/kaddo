@@ -79,3 +79,11 @@ h1, h2, h3,
   background: var(--kaddo-amber);
   color: var(--kaddo-navy);
 }
+
+/* Justify body paragraphs in documentation content */
+.sl-markdown-content p,
+.sl-markdown-content li {
+  text-align: justify;
+  text-justify: inter-word;
+  hyphens: auto;
+}
