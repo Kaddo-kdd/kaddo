@@ -3,7 +3,7 @@ title: Kaddo
 description: An open-source CLI that helps new, pre-AI and legacy projects keep product knowledge close to the code.
 template: splash
 hero:
-  tagline: Make any software project easier to understand and evolve.
+  tagline: Prepare new, pre-AI and legacy projects to evolve with humans and AI.
   image:
     file: ../../assets/logo-full-white.png
   actions:
@@ -20,9 +20,9 @@ hero:
 import { Card, CardGrid } from '@astrojs/starlight/components';
 
 <p class="kaddo-lede">
-Kaddo is an open-source CLI for Knowledge Driven Development. It helps new, pre-AI and
-legacy projects preserve product knowledge close to the code, so humans and AI can
-build with better context.
+Kaddo is an open-source CLI that scans your repo, helps extract system capabilities,
+reconstructs project knowledge, and keeps that knowledge connected to the code as the
+project changes.
 </p>
 
 <p class="kaddo-badge">New projects · Pre-AI codebases · Legacy systems</p>
@@ -32,7 +32,7 @@ build with better context.
   <pre><code><span class="c-muted"># New project</span>{"\n"}<span class="c-prompt">$</span> <span class="c-cmd">npx kaddo init</span>{"\n\n"}<span class="c-muted"># Existing or pre-AI project</span>{"\n"}<span class="c-prompt">$</span> <span class="c-cmd">kaddo scan</span>{"\n\n"}<span class="c-muted"># Legacy project</span>{"\n"}<span class="c-prompt">$</span> <span class="c-cmd">kaddo scan --legacy</span>{"\n\n"}<span class="c-muted"># Create a lightweight work item, then detect drift</span>{"\n"}<span class="c-prompt">$</span> <span class="c-cmd">kaddo create feature</span>{"\n"}<span class="c-prompt">$</span> <span class="c-cmd">kaddo guard</span>{"\n"}<span class="c-ok">FYI</span> src/payments/payments.service.ts matches WI-001{"\n"}<span class="c-muted">    WI-001 was not modified in this diff — consider reviewing it.</span></code></pre>
 </div>
 
-<p class="kaddo-tagline-strong">Kaddo helps your repo remember why the code exists.</p>
+<p class="kaddo-tagline-strong">From scattered code to observable product knowledge.</p>
 
 ## Why Kaddo?
 
@@ -63,15 +63,24 @@ changes.
 
 ## How it works
 
+Kaddo does not start by creating tasks. It starts by understanding the state of the
+project, then builds knowledge progressively before you evolve the code.
+
 <CardGrid>
-  <Card title="1 · Classify" icon="pencil">
-    Declare the type of change and get a suggested Knowledge Level (K0–K4).
+  <Card title="1 · Initialize" icon="pencil">
+    Tell Kaddo if your project is new, pre-AI or legacy, your team size and repo structure.
   </Card>
-  <Card title="2 · Capture" icon="document">
-    Answer only the questions needed for that level — Kaddo creates a lightweight work item.
+  <Card title="2 · Scan" icon="magnifier">
+    Kaddo deterministically detects stack, structure, dependencies and technical signals.
   </Card>
-  <Card title="3 · Observe" icon="magnifier">
-    Kaddo Guard detects when code changes may affect related knowledge.
+  <Card title="3 · Understand" icon="open-book">
+    Agents help extract capabilities, architecture, risks and open questions. *(upcoming)*
+  </Card>
+  <Card title="4 · Plan" icon="list-format">
+    Kaddo turns the knowledge baseline into a roadmap. *(upcoming)*
+  </Card>
+  <Card title="5 · Evolve" icon="approve-check">
+    Create work items and use Guard to detect when code may drift from knowledge.
   </Card>
 </CardGrid>
 

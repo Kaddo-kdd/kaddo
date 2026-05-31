@@ -84,6 +84,37 @@ Detects language, framework, package manager, code dirs, migration dirs, contrac
 
 ---
 
+## From scan to knowledge baseline
+
+`kaddo scan` gives Kaddo a technical inventory. But inventory is not understanding.
+
+Kaddo does not start by creating tasks — it starts by understanding the state of the
+project. For pre-AI and legacy projects, the next step is to turn that inventory into a
+knowledge baseline:
+
+- capabilities
+- modules
+- risks and unknowns
+- ownership candidates
+- architecture notes
+- roadmap candidates
+
+This agent-assisted stage is on the roadmap (`understand`, `architecture`, `roadmap`).
+Once the baseline exists and artifacts declare ownership, `create` and `guard` operate
+on real context instead of starting from scratch.
+
+```bash
+kaddo init                        # state: new | pre-ai | legacy, team size, structure
+kaddo scan                        # deterministic technical inventory
+kaddo understand                  # extract capabilities, risks, open questions  (upcoming)
+kaddo architecture                # reconstruct decisions → ADR candidates       (upcoming)
+kaddo roadmap                     # turn the baseline into a roadmap             (upcoming)
+kaddo create feature              # work items grounded in capability + roadmap
+kaddo guard                       # detect knowledge drift
+```
+
+---
+
 ### `kaddo create`
 
 Create a Work Item with the minimum context for its Knowledge Level.
@@ -171,6 +202,10 @@ artifact → code globs → git diff intersection
 
 ## Roadmap
 
+Foundation commands (`init`, `scan`, `create`, `guard`) ship today. The knowledge
+baseline stage (`understand`, `architecture`, `roadmap`) is the next narrative step:
+Kaddo should understand a project's state before you build tasks on top of it.
+
 | Version | What shipped |
 |---|---|
 | v1.0 | `init`, `scan`, `create`, `guard` (Guard Lite) |
@@ -182,6 +217,16 @@ artifact → code globs → git diff intersection
 | v2.2 | Domain Owners (`kaddo owners`) |
 | v2.3 | Multirepo Module Descriptor (`kaddo module`) |
 | v2.4–2.5 | Modules: `contracts`, `capabilities`, `guard-advanced`, `agents`, `skills` |
+
+**Planned — knowledge baseline (agent-assisted):**
+
+| Version | Planned |
+|---|---|
+| next | `init` asks project state (new / pre-AI / legacy), team size and structure |
+| next | `understand` — extract capabilities, modules, risks and open questions |
+| next | `architecture` — reconstruct existing decisions into ADR candidates |
+| next | `roadmap` — turn the knowledge baseline into a prioritized roadmap |
+| next | `create --from roadmap` / `create --capability <name>` |
 
 **Optional modules (installed with `kaddo add`):**
 

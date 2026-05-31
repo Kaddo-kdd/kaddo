@@ -3,7 +3,7 @@ title: Kaddo
 description: Un CLI open source que ayuda a proyectos nuevos, pre-IA y legacy a mantener el conocimiento del producto junto al código.
 template: splash
 hero:
-  tagline: Haz que cualquier proyecto de software sea más fácil de entender y evolucionar.
+  tagline: Prepara proyectos nuevos, pre-IA y legacy para evolucionar con humanos e IA.
   image:
     file: ../../../assets/logo-full-white.png
   actions:
@@ -20,9 +20,9 @@ hero:
 import { Card, CardGrid } from '@astrojs/starlight/components';
 
 <p class="kaddo-lede">
-Kaddo es un CLI open source para Knowledge Driven Development. Ayuda a proyectos
-nuevos, pre-IA y legacy a preservar el conocimiento del producto junto al código, para
-que humanos e IA puedan construir con mejor contexto.
+Kaddo es un CLI open source que escanea tu repo, ayuda a extraer las capacidades del
+sistema, reconstruye el conocimiento del proyecto y lo mantiene conectado al código a
+medida que el proyecto cambia.
 </p>
 
 <p class="kaddo-badge">Proyectos nuevos · Bases de código pre-IA · Sistemas legacy</p>
@@ -32,7 +32,7 @@ que humanos e IA puedan construir con mejor contexto.
   <pre><code><span class="c-muted"># Proyecto nuevo</span>{"\n"}<span class="c-prompt">$</span> <span class="c-cmd">npx kaddo init</span>{"\n\n"}<span class="c-muted"># Proyecto existente o pre-IA</span>{"\n"}<span class="c-prompt">$</span> <span class="c-cmd">kaddo scan</span>{"\n\n"}<span class="c-muted"># Proyecto legacy</span>{"\n"}<span class="c-prompt">$</span> <span class="c-cmd">kaddo scan --legacy</span>{"\n\n"}<span class="c-muted"># Crea un work item ligero y detecta la deriva</span>{"\n"}<span class="c-prompt">$</span> <span class="c-cmd">kaddo create feature</span>{"\n"}<span class="c-prompt">$</span> <span class="c-cmd">kaddo guard</span>{"\n"}<span class="c-ok">FYI</span> src/payments/payments.service.ts coincide con WI-001{"\n"}<span class="c-muted">    WI-001 no se modificó en este diff — considera revisarlo.</span></code></pre>
 </div>
 
-<p class="kaddo-tagline-strong">Kaddo ayuda a que tu repo recuerde por qué existe el código.</p>
+<p class="kaddo-tagline-strong">De código disperso a conocimiento de producto observable.</p>
 
 ## ¿Por qué Kaddo?
 
@@ -64,15 +64,24 @@ cambia.
 
 ## Cómo funciona
 
+Kaddo no empieza creando tareas. Empieza entendiendo el estado del proyecto, y luego
+construye conocimiento de forma progresiva antes de que evoluciones el código.
+
 <CardGrid>
-  <Card title="1 · Clasifica" icon="pencil">
-    Declara el tipo de cambio y obtén un Nivel de Conocimiento sugerido (K0–K4).
+  <Card title="1 · Inicializa" icon="pencil">
+    Dile a Kaddo si tu proyecto es nuevo, pre-IA o legacy, el tamaño del equipo y la estructura del repo.
   </Card>
-  <Card title="2 · Captura" icon="document">
-    Responde solo las preguntas necesarias para ese nivel — Kaddo crea un work item ligero.
+  <Card title="2 · Escanea" icon="magnifier">
+    Kaddo detecta de forma determinística stack, estructura, dependencias y señales técnicas.
   </Card>
-  <Card title="3 · Observa" icon="magnifier">
-    Kaddo Guard detecta cuándo un cambio de código puede afectar al conocimiento relacionado.
+  <Card title="3 · Entiende" icon="open-book">
+    Los agentes ayudan a extraer capacidades, arquitectura, riesgos y preguntas abiertas. *(próximamente)*
+  </Card>
+  <Card title="4 · Planifica" icon="list-format">
+    Kaddo convierte la base de conocimiento en un roadmap. *(próximamente)*
+  </Card>
+  <Card title="5 · Evoluciona" icon="approve-check">
+    Crea work items y usa Guard para detectar cuándo el código puede alejarse del conocimiento.
   </Card>
 </CardGrid>
 
