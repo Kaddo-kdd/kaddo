@@ -47,6 +47,7 @@ export default defineConfig({
             { label: 'Introduction', translations: { es: 'Introducción' }, slug: 'introduction' },
             { label: 'Getting started', translations: { es: 'Primeros pasos' }, slug: 'getting-started' },
             { label: 'Knowledge Levels', translations: { es: 'Niveles de Conocimiento' }, slug: 'knowledge-levels' },
+            { label: 'KDD Manifesto', translations: { es: 'Manifiesto KDD' }, slug: 'manifesto' },
           ],
         },
         {
