@@ -10,6 +10,7 @@ hero:
     - text: Empezar
       link: /es/getting-started/
       icon: right-arrow
+      variant: primary
     - text: Ver en GitHub
       link: https://github.com/judlup/kaddo
       icon: external
@@ -17,6 +18,11 @@ hero:
 ---
 
 import { Card, CardGrid } from '@astrojs/starlight/components';
+
+<div class="kaddo-terminal">
+  <div class="kaddo-terminal__bar"><span></span><span></span><span></span><small>kaddo</small></div>
+  <pre><code><span class="c-prompt">$</span> <span class="c-cmd">kaddo create feature</span>{"\n"}<span class="c-muted"># 4 preguntas → WI-001 con el Nivel de Conocimiento correcto (K2)</span>{"\n\n"}<span class="c-prompt">$</span> <span class="c-cmd">kaddo guard</span>{"\n"}<span class="c-ok">FYI</span> src/payments/payments.service.ts coincide con WI-001{"\n"}<span class="c-muted">    WI-001 no se modificó en este diff — considera revisarlo.</span>{"\n\n"}<span class="c-prompt">$</span> <span class="c-cmd">kaddo explain --for agent</span>{"\n"}<span class="c-muted"># JSON estructurado para que tu IA parta de contexto real</span></code></pre>
+</div>
 
 ## Por qué Kaddo
 
@@ -39,3 +45,25 @@ mínimo necesario vivo, junto al código.
     `kaddo explain --for agent` emite JSON estructurado para que la IA parta de contexto real.
   </Card>
 </CardGrid>
+
+## Cómo funciona
+
+En tres pasos Kaddo convierte el contexto disperso en conocimiento observable.
+
+<CardGrid>
+  <Card title="1 · Capturar" icon="pencil">
+    `kaddo create` solo hace las preguntas acordes al tamaño del cambio.
+  </Card>
+  <Card title="2 · Poseer" icon="setting">
+    Cada artefacto declara los globs `code:` que posee — un Grafo de Conocimiento en tiempo de ejecución.
+  </Card>
+  <Card title="3 · Observar" icon="magnifier">
+    `kaddo guard` cruza el diff con ese grafo y revela la deriva.
+  </Card>
+</CardGrid>
+
+<div class="kaddo-cta">
+  ## Pon el conocimiento primero
+  <p>Instala Kaddo y mantén el contexto vivo junto a tu código.</p>
+  <a class="kaddo-btn" href="/es/getting-started/">Empezar →</a>
+</div>

@@ -1,0 +1,168 @@
+/* ── Kaddo landing (splash) styling ───────────────────────────── */
+
+/* Hero: brand gradient + amber glow behind the logo */
+.hero {
+  position: relative;
+  padding-block: clamp(2rem, 8vw, 5rem);
+}
+
+.hero::before {
+  content: '';
+  position: absolute;
+  inset: -10% -20% auto -20%;
+  height: 120%;
+  z-index: -1;
+  background:
+    radial-gradient(60% 60% at 70% 20%, rgba(244, 185, 66, 0.18), transparent 70%),
+    radial-gradient(50% 50% at 20% 80%, rgba(20, 27, 45, 0.25), transparent 70%);
+  pointer-events: none;
+}
+
+.hero img {
+  filter: drop-shadow(0 12px 40px rgba(20, 27, 45, 0.35));
+  max-height: 220px;
+  width: auto;
+}
+
+.hero h1,
+.hero .tagline {
+  font-family: var(--__kaddo-display);
+}
+
+.hero .tagline {
+  font-size: clamp(1.05rem, 2.4vw, 1.45rem);
+  max-width: 38ch;
+  color: var(--sl-color-gray-2);
+}
+
+/* CTA buttons */
+.hero .actions a {
+  border-radius: 0.65rem;
+  font-weight: 600;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+.hero .actions a[data-variant='primary'] {
+  background: var(--kaddo-amber);
+  border-color: var(--kaddo-amber);
+  color: var(--kaddo-navy);
+  box-shadow: 0 8px 24px rgba(244, 185, 66, 0.3);
+}
+.hero .actions a[data-variant='primary']:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 30px rgba(244, 185, 66, 0.4);
+}
+.hero .actions a[data-variant='minimal']:hover {
+  color: var(--kaddo-amber);
+}
+
+/* Section rhythm on the splash page */
+.sl-markdown-content h2 {
+  text-align: center;
+  font-family: var(--__kaddo-display);
+  margin-top: 4rem;
+  font-size: clamp(1.6rem, 3vw, 2.1rem);
+}
+
+.sl-markdown-content h2 + p {
+  text-align: center;
+  max-width: 60ch;
+  margin-inline: auto;
+  color: var(--sl-color-gray-3);
+}
+
+/* Feature cards: brand border + hover lift */
+.card-grid .card {
+  border: 1px solid var(--sl-color-hairline-shade);
+  border-radius: 1rem;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--sl-color-accent) 5%, transparent), transparent),
+    var(--sl-color-bg);
+  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+}
+.card-grid .card:hover {
+  transform: translateY(-4px);
+  border-color: var(--kaddo-amber);
+  box-shadow: 0 14px 40px rgba(20, 27, 45, 0.18);
+}
+.card-grid .card .icon {
+  color: var(--kaddo-amber);
+  background: color-mix(in srgb, var(--kaddo-amber) 14%, transparent);
+}
+
+/* Terminal demo block */
+.kaddo-terminal {
+  max-width: 760px;
+  margin: 2.5rem auto 0;
+  border-radius: 0.9rem;
+  overflow: hidden;
+  border: 1px solid var(--sl-color-hairline-shade);
+  box-shadow: 0 20px 60px rgba(20, 27, 45, 0.25);
+  background: #0e1422;
+}
+.kaddo-terminal__bar {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  padding: 0.7rem 1rem;
+  background: #161e31;
+  border-bottom: 1px solid #232c42;
+}
+.kaddo-terminal__bar span {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: inline-block;
+}
+.kaddo-terminal__bar span:nth-child(1) { background: #ff5f56; }
+.kaddo-terminal__bar span:nth-child(2) { background: #ffbd2e; }
+.kaddo-terminal__bar span:nth-child(3) { background: #27c93f; }
+.kaddo-terminal__bar small {
+  margin-left: auto;
+  color: #6b7280;
+  font-family: var(--sl-font-mono);
+  font-size: 0.75rem;
+}
+.kaddo-terminal pre {
+  margin: 0;
+  padding: 1.25rem 1.4rem;
+  background: transparent !important;
+  font-family: var(--sl-font-mono);
+  font-size: 0.9rem;
+  line-height: 1.7;
+  color: #e6e8ee;
+}
+.kaddo-terminal .c-prompt { color: var(--kaddo-amber); }
+.kaddo-terminal .c-cmd { color: #f8f6f0; }
+.kaddo-terminal .c-muted { color: #6b7280; }
+.kaddo-terminal .c-ok { color: #27c93f; }
+
+/* Closing CTA band */
+.kaddo-cta {
+  margin: 5rem auto 1rem;
+  text-align: center;
+  padding: 3rem 1.5rem;
+  border-radius: 1.25rem;
+  background: linear-gradient(135deg, #141b2d, #1c2740);
+  border: 1px solid #232c42;
+}
+.kaddo-cta h2 {
+  margin-top: 0 !important;
+  color: #f8f6f0;
+}
+.kaddo-cta p { color: #c0c4cf; }
+.kaddo-cta a.kaddo-btn {
+  display: inline-block;
+  margin-top: 1rem;
+  padding: 0.7rem 1.5rem;
+  border-radius: 0.65rem;
+  background: var(--kaddo-amber);
+  color: var(--kaddo-navy);
+  font-weight: 700;
+  text-decoration: none;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: 0 8px 24px rgba(244, 185, 66, 0.3);
+}
+.kaddo-cta a.kaddo-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 30px rgba(244, 185, 66, 0.45);
+}

@@ -13,7 +13,7 @@ export default defineConfig({
         replacesTitle: true,
       },
       favicon: '/favicon.png',
-      customCss: ['./src/styles/brand.css'],
+      customCss: ['./src/styles/brand.css', './src/styles/landing.css'],
       head: [
         {
           tag: 'link',

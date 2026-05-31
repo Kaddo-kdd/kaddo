@@ -10,6 +10,7 @@ hero:
     - text: Get started
       link: /getting-started/
       icon: right-arrow
+      variant: primary
     - text: View on GitHub
       link: https://github.com/judlup/kaddo
       icon: external
@@ -17,6 +18,11 @@ hero:
 ---
 
 import { Card, CardGrid } from '@astrojs/starlight/components';
+
+<div class="kaddo-terminal">
+  <div class="kaddo-terminal__bar"><span></span><span></span><span></span><small>kaddo</small></div>
+  <pre><code><span class="c-prompt">$</span> <span class="c-cmd">kaddo create feature</span>{"\n"}<span class="c-muted"># 4 questions → WI-001 with the right Knowledge Level (K2)</span>{"\n\n"}<span class="c-prompt">$</span> <span class="c-cmd">kaddo guard</span>{"\n"}<span class="c-ok">FYI</span> src/payments/payments.service.ts matches WI-001{"\n"}<span class="c-muted">    WI-001 was not modified in this diff — consider reviewing it.</span>{"\n\n"}<span class="c-prompt">$</span> <span class="c-cmd">kaddo explain --for agent</span>{"\n"}<span class="c-muted"># structured JSON so your AI starts with real context</span></code></pre>
+</div>
 
 ## Why Kaddo
 
@@ -38,3 +44,25 @@ they lack context. Kaddo keeps the minimum necessary context alive next to the c
     `kaddo explain --for agent` emits structured JSON so AI tools start with real context.
   </Card>
 </CardGrid>
+
+## How it works
+
+In three steps Kaddo turns scattered context into observable knowledge.
+
+<CardGrid>
+  <Card title="1 · Capture" icon="pencil">
+    `kaddo create` asks only the questions that match the size of the change.
+  </Card>
+  <Card title="2 · Own" icon="setting">
+    Each artifact declares the `code:` globs it owns — a runtime Knowledge Graph.
+  </Card>
+  <Card title="3 · Observe" icon="magnifier">
+    `kaddo guard` intersects the diff with that graph and surfaces drift.
+  </Card>
+</CardGrid>
+
+<div class="kaddo-cta">
+  ## Put knowledge first
+  <p>Install Kaddo and keep context alive next to your code.</p>
+  <a class="kaddo-btn" href="/getting-started/">Get started →</a>
+</div>
