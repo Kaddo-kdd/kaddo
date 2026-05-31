@@ -4,6 +4,7 @@ import { intro, outro, log, confirm } from '../utils/ui.js'
 import { parse as parseYaml, stringify as stringifyYaml } from 'yaml'
 import { buildBaseline, serializeBaseline, readProjectContext } from '../core/scan-baseline.js'
 import { renderInventory } from '../templates/inventory-template.js'
+import { loadConfig, describeProject, nextStepsForState, ConfigError } from '../core/config.js'
 
 function formatList(items: string[]): string {
   return items.length > 0 ? items.map((i) => `  - ${i}`).join('\n') : '  (none detected)'
@@ -117,6 +118,24 @@ async function writeBaselineArtifacts(dir: string, result: ScanResult): Promise<
   }
 }
 
+function printStateAwareNextStep(dir: string): void {
+  let config
+  try {
+    config = loadConfig(dir)
+  } catch (err) {
+    if (err instanceof ConfigError) {
+      log.warn(err.message)
+      return
+    }
+    throw err
+  }
+
+  if (!config) return
+
+  log.info(`This is a ${describeProject(config)}.`)
+  log.info(`Next: ${nextStepsForState(config.project.state)}`)
+}
+
 export async function runScan(): Promise<void> {
   const dir = cwd()
 
@@ -142,6 +161,8 @@ export async function runScan(): Promise<void> {
   } else {
     log.warn('No .kaddo/config.yml found. Run `kaddo init` first to record project context.')
   }
+
+  printStateAwareNextStep(dir)
 
   outro('Scan complete.')
 }

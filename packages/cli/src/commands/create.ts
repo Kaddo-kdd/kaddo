@@ -3,8 +3,25 @@ import { findWorkItemType } from '../modules/registry.js'
 import type { ModuleWorkItemType } from '../modules/types.js'
 import { exists, readDir, writeFile, join, cwd } from '../utils/fs.js'
 import { intro, outro, log, text } from '../utils/ui.js'
+import { loadConfig, createGuidanceForState, ConfigError } from '../core/config.js'
 
 const WORK_ITEMS_DIR = 'architecture/work-items'
+
+/** Print state-aware helper text if config exists. Best-effort, never blocks. */
+function printStateGuidance(dir: string): void {
+  let config
+  try {
+    config = loadConfig(dir)
+  } catch (err) {
+    if (err instanceof ConfigError) {
+      log.warn(err.message)
+      return
+    }
+    throw err
+  }
+  if (!config) return
+  log.info(createGuidanceForState(config.project.state))
+}
 
 function nextWorkItemId(dir: string): string {
   const wiDir = join(dir, WORK_ITEMS_DIR)
@@ -181,6 +198,7 @@ export async function runCreate(type: string): Promise<void> {
 
   intro(`kaddo create ${workItemType}`)
   log.info(`Knowledge level: ${level} — ${levelDef.description}`)
+  printStateGuidance(dir)
 
   const title = await text({
     message: 'Title for this work item',
@@ -224,6 +242,7 @@ export async function runCreate(type: string): Promise<void> {
 async function runCreateModule(dir: string, modType: ModuleWorkItemType): Promise<void> {
   intro(`kaddo create ${modType.name}`)
   log.info(`Knowledge level: ${modType.knowledgeLevel} — ${modType.description}`)
+  printStateGuidance(dir)
 
   if (!exists(join(dir, WORK_ITEMS_DIR))) {
     log.warn(`${WORK_ITEMS_DIR}/ not found. Run \`kaddo init\` first.`)

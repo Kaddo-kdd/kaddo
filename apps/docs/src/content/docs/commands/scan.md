@@ -25,6 +25,20 @@ prepares deterministic signals, and your LLM agents turn them into understanding
 > Scan does **not** interpret your system. It detects signals and asks confirmation
 > questions — it never claims to know your business capabilities or architecture.
 
+## State-aware next step
+
+If `.kaddo/config.yml` exists, `kaddo scan` reads the project state recorded by
+`kaddo init` and prints a next step tailored to it:
+
+- **new** → define initial knowledge, create your first work item, grow the roadmap gradually.
+- **pre-ai** → use this baseline to create a context pack and understand the system with LLM agents.
+- **legacy** → use this baseline to identify risks, unknowns and safe modernization candidates.
+
+```
+This is a pre-AI monorepo.
+Next: Use this baseline to create a context pack and understand the existing system with LLM agents.
+```
+
 Example `architecture/inventory.md`:
 
 ```markdown
