@@ -1,0 +1,40 @@
+---
+title: Kaddo
+description: Observable knowledge for evolving software with humans and AI.
+template: splash
+hero:
+  tagline: Observable knowledge for evolving software with humans and AI.
+  image:
+    file: ../../assets/banner.png
+  actions:
+    - text: Get started
+      link: /getting-started/
+      icon: right-arrow
+    - text: View on GitHub
+      link: https://github.com/judlup/kaddo
+      icon: external
+      variant: minimal
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+## Why Kaddo
+
+Projects degrade because knowledge is scattered across meetings, chats, tickets,
+and outdated documents. With AI, this gets worse: agents build on assumptions when
+they lack context. Kaddo keeps the minimum necessary context alive next to the code.
+
+<CardGrid stagger>
+  <Card title="Knowledge first" icon="open-book">
+    Work Items carry the minimum context for their Knowledge Level (K0–K4).
+  </Card>
+  <Card title="Ownership in front matter" icon="document">
+    Artifacts declare the code they own. No central mapping file.
+  </Card>
+  <Card title="Guard, not bureaucracy" icon="approve-check">
+    Guard reads `git diff` and shows a non-blocking FYI when code drifts from its knowledge.
+  </Card>
+  <Card title="Built for agents" icon="rocket">
+    `kaddo explain --for agent` emits structured JSON so AI tools start with real context.
+  </Card>
+</CardGrid>
