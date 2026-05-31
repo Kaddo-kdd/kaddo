@@ -1,6 +1,6 @@
 import path from 'path'
 import { exists, writeFile, ensureDir, readFile, cwd, join } from '../utils/fs.js'
-import { intro, outro, log, text, confirm } from '../utils/ui.js'
+import { intro, outro, log, text, confirm, select } from '../utils/ui.js'
 
 const KADDO_DIR = '.kaddo'
 const ARCH_DIR = 'architecture'
@@ -22,11 +22,22 @@ function hasGit(dir: string): boolean {
   return exists(join(dir, '.git'))
 }
 
-function buildConfig(projectName: string): string {
+interface ProjectMeta {
+  name: string
+  state: string
+  teamSize: string
+  structure: string
+}
+
+function buildConfig(meta: ProjectMeta): string {
   return `version: 1
 project:
-  name: "${projectName}"
+  name: "${meta.name}"
+  state: ${meta.state}
+  structure: ${meta.structure}
   domains: []
+team:
+  size: ${meta.teamSize}
 knowledge:
   default_level: K2
 guard:
@@ -115,9 +126,46 @@ export async function runInit(): Promise<void> {
     validate: (v) => (v.trim().length === 0 ? 'Project name is required.' : undefined),
   })
 
+  const state = await select<string>({
+    message: 'What kind of project is this?',
+    options: [
+      { value: 'new', label: 'New', hint: 'Starting from scratch' },
+      { value: 'pre-ai', label: 'Pre-AI', hint: 'Existing code, not prepared for agents' },
+      { value: 'legacy', label: 'Legacy', hint: 'Knowledge lives in people\'s heads' },
+    ],
+    initialValue: 'pre-ai',
+  })
+
+  const teamSize = await select<string>({
+    message: 'Team size',
+    options: [
+      { value: 'indie', label: 'Indie', hint: '1 person' },
+      { value: 'small', label: 'Small', hint: '2-5 people' },
+      { value: 'medium', label: 'Medium', hint: '6-20 people' },
+      { value: 'enterprise', label: 'Enterprise', hint: '20+ people' },
+    ],
+    initialValue: 'small',
+  })
+
+  const structure = await select<string>({
+    message: 'Repository structure',
+    options: [
+      { value: 'monorepo', label: 'Monorepo' },
+      { value: 'multirepo', label: 'Multirepo' },
+    ],
+    initialValue: 'monorepo',
+  })
+
+  const meta: ProjectMeta = {
+    name: projectName.trim(),
+    state,
+    teamSize,
+    structure,
+  }
+
   // Create .kaddo/
   const kaddoConfigPath = join(dir, KADDO_DIR, 'config.yml')
-  writeFile(kaddoConfigPath, buildConfig(projectName.trim()))
+  writeFile(kaddoConfigPath, buildConfig(meta))
 
   // Create architecture/
   ensureDir(join(dir, ARCH_DIR, 'work-items'))
