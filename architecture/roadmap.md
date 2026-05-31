@@ -27,6 +27,34 @@ updated_at: 2026-05-31
 | [v2.3.0](https://github.com/judlup/kaddo/releases/tag/v2.3.0) | 2026-05-31 | Multirepo Module Descriptor: `kaddo module --init` · `kaddo module --show` |
 | [v2.4.0](https://github.com/judlup/kaddo/releases/tag/v2.4.0) | 2026-05-31 | Módulos adicionales: `kaddo add contracts` · `kaddo add capabilities` · `kaddo add guard-advanced` |
 | [v2.5.0](https://github.com/judlup/kaddo/releases/tag/v2.5.0) | 2026-05-31 | Módulos agents + skills · `explain --type` · agent output enriquecido |
+| v2.6.0 _(unreleased)_ | 2026-05-31 | Knowledge Loop: `understand` · roadmap-agent output · `create --from roadmap` · Guard Lite end-to-end · `owners suggest` · project `explain` · docs realignment + use-case guides |
+
+---
+
+## v2.6 — Knowledge Loop ✅ DONE (unreleased)
+
+**Goal:** Close the first full Kaddo loop end-to-end and reduce the friction of declaring
+ownership, so knowledge flows from understanding to code and back:
+
+```txt
+scan → context → understand → agents → roadmap → work item → ownership → guard → drift
+```
+
+| Slice | Feature | Status | Description |
+|---|---|---|---|
+| VS-006 | `kaddo understand` | ✅ Done | Refreshes `.kaddo/context-pack.md` + writes `.kaddo/understand.md` handoff — CLI prepares context, the LLM creates the understanding |
+| VS-009 | Roadmap Agent output | ✅ Done | Standardized `roadmap-agent` prompt → structured `architecture/roadmap.md` (initiatives `RM-*`, candidate work items `WI-CANDIDATE-*`, knowledge levels, impact/risk, dependencies). No LLM in the CLI |
+| VS-010 | `kaddo create --from roadmap` | ✅ Done | Parses roadmap candidates, prefills a real Work Item (title, type, level, expected value, notes, initiative) with `source`/`source_id`/`source_initiative` traceability; asks only missing fields |
+| VS-012 | Guard Lite end-to-end | ✅ Done | Validated drift detection against real artifacts; clearer actionable FYI (drift heading, changed files, declared ownership, suggested action); suppressed when artifact also changed; cross-platform paths; non-blocking |
+| VS-011 | `kaddo owners suggest` | ✅ Done | Ownership Front Matter Assistant: finds Work Items missing `code:`, suggests globs from `.kaddo/scan.json` + `domains`/`capabilities`, manual entry fallback, preserves keys + body. Deterministic, no LLM |
+| VS-013 | Project `explain` | ✅ Done | Default `kaddo explain` summarizes project state from config/scan/knowledge/work-items/ownership, lists missing knowledge + next steps, `--for human`/`--for agent`, writes `.kaddo/explain.md` + `.kaddo/explain.json`. Pure module `core/project-explain.ts`, no LLM, no source-code loading. Focused `--scope/--type/--since` preserved |
+| VS-014 | Documentation realignment | ✅ Done | README, CLI README, docs homepage, getting-started and command overview realigned around the real loop; new Workflow page; CLI-vs-LLM split + project states made explicit; EN/ES aligned; no overpromise. Docs only |
+| VS-015 | Use-case guides + project scope | ✅ Done | New use-case pages (new / pre-AI / legacy / full workflow) + Project Scope page, EN/ES; homepage + README entry points; sidebar "Use Cases" group. Docs only |
+
+**Principles preserved:** deterministic CLI, no LLM in core, Guard non-blocking, no ownership
+inference, no Confidence Score, the human always confirms.
+
+**Tests:** 274 total · CLI build + docs build green.
 
 ---
 
@@ -391,7 +419,11 @@ Modules are optional. Core includes only what is needed to start.
 | 5 | `kaddo explain` | Converts the Knowledge Repository into context for humans and agents | ✅ v1.1.0 |
 | 5b | Transparent Evidence Score | Improves signal without inventing precision | ✅ v1.1.1 |
 | 6 | Cheap Classification Drift (`kaddo classify`) | Contrasts declared classification with simple signals | ✅ v1.2.0 |
-| 7 | Semantic plugins | Adds stack-specific intelligence when the base is installed | ⬜ planned |
+| 7 | Semantic plugins | Adds stack-specific intelligence when the base is installed | ✅ v2.1.0 |
+| 8 | `kaddo understand` | Hands off a deterministic context pack to the LLM | ✅ v2.6 (unreleased) |
+| 9 | Roadmap Agent output + `create --from roadmap` | Turns roadmap candidates into traceable Work Items | ✅ v2.6 (unreleased) |
+| 10 | Guard Lite end-to-end | Validates drift detection with clear, actionable, non-blocking FYIs | ✅ v2.6 (unreleased) |
+| 11 | `kaddo owners suggest` | Removes the friction of declaring `code:` ownership | ✅ v2.6 (unreleased) |
 
 ---
 
