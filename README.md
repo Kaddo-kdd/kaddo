@@ -1,12 +1,12 @@
+<p align="center">
+  <img src="assets/banner.png" alt="Kaddo — Knowledge Driven Development Toolkit" width="100%" />
+</p>
+
 # Kaddo — Knowledge Driven Development
 
-> Preserve and evolve product knowledge close to the code.
+> Observable knowledge for evolving software with humans and AI.
 
 Kaddo is an open source CLI toolkit based on **Knowledge Driven Development (KDD)**. It helps teams keep the minimum necessary context alive next to the code — without turning development into bureaucracy.
-
-```
-Classify → Capture → Structure → Build → Learn
-```
 
 ## Why Kaddo
 
@@ -171,15 +171,21 @@ artifact → code globs → git diff intersection
 
 ## Roadmap
 
-| Version | Commands |
+| Version | What shipped |
 |---|---|
-| v1.0 | `init`, `scan`, `create`, `guard` |
-| v1.1 | `status`, `explain`, `learn` |
-| v1.2 | `classify`, `history` |
-| v2.x | CI mode, semantic plugins, domain rules |
+| v1.0 | `init`, `scan`, `create`, `guard` (Guard Lite) |
+| v1.1 | `explain`, `status`, `learn`, Evidence Score |
+| v1.2 | `classify` (Classification Drift), `history` |
+| v1.4 | `guard --ci` (JSON output for CI/PR) |
+| v2.0 | Optional module system (`kaddo add`) |
+| v2.1 | Semantic plugins: `prisma`, `openapi` |
+| v2.2 | Domain Owners (`kaddo owners`) |
+| v2.3 | Multirepo Module Descriptor (`kaddo module`) |
+| v2.4–2.5 | Modules: `contracts`, `capabilities`, `guard-advanced`, `agents`, `skills` |
 
-**Modules (added with `kaddo add`):**
-`adr` · `rfc` · `incident` · `migration` · `contracts` · `capabilities` · `agents`
+**Optional modules (installed with `kaddo add`):**
+
+`adr` · `rfc` · `incident` · `migration` · `legacy` · `contracts` · `capabilities` · `guard-advanced` · `agents` · `skills`
 
 ## Contributing
 
