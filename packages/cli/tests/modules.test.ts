@@ -16,7 +16,7 @@ function makeProject(): string {
 }
 
 describe('module registry', () => {
-  it('lists all 8 modules', () => {
+  it('lists all 10 modules', () => {
     const mods = listModules()
     const names = mods.map((m) => m.name)
     expect(names).toContain('adr')
@@ -27,7 +27,9 @@ describe('module registry', () => {
     expect(names).toContain('contracts')
     expect(names).toContain('capabilities')
     expect(names).toContain('guard-advanced')
-    expect(mods.length).toBe(8)
+    expect(names).toContain('agents')
+    expect(names).toContain('skills')
+    expect(mods.length).toBe(10)
   })
 
   it('getModule returns undefined for unknown module', () => {
@@ -151,6 +153,34 @@ describe('module structure', () => {
     const rulesFile = mod.files.find((f) => f.path.endsWith('rules.yml'))
     expect(rulesFile).toBeDefined()
     expect(rulesFile!.content).toContain('ci_block_on_critical')
+  })
+
+  it('agents module includes README.md file', () => {
+    const mod = getModule('agents')!
+    const readme = mod.files.find((f) => f.path.endsWith('README.md'))
+    expect(readme).toBeDefined()
+    expect(readme!.content).toContain('agent')
+  })
+
+  it('skills module includes README.md file', () => {
+    const mod = getModule('skills')!
+    const readme = mod.files.find((f) => f.path.endsWith('README.md'))
+    expect(readme).toBeDefined()
+    expect(readme!.content).toContain('skill')
+  })
+
+  it('findWorkItemType finds agent type', () => {
+    const t = findWorkItemType('agent')
+    expect(t).toBeDefined()
+    expect(t!.knowledgeLevel).toBe('K3')
+    expect(t!.questions.length).toBe(3)
+  })
+
+  it('findWorkItemType finds skill type', () => {
+    const t = findWorkItemType('skill')
+    expect(t).toBeDefined()
+    expect(t!.knowledgeLevel).toBe('K3')
+    expect(t!.questions.length).toBe(3)
   })
 })
 

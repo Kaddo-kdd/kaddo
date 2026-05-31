@@ -1,14 +1,18 @@
 import { readArtifacts } from '../services/artifact-reader.js'
+import { loadOwners } from '../services/owners.js'
 import { exists, join, cwd, readFile } from '../utils/fs.js'
 import matter from 'gray-matter'
+import { parse as parseYaml } from 'yaml'
 
 const ARCH_DIR = 'architecture'
+const CONFIG_PATH = '.kaddo/config.yml'
 
 type ExplainMode = 'human' | 'agent'
 type ExplainOpts = {
   for?: ExplainMode
   scope?: string
   since?: string
+  type?: string
 }
 
 function readKnowledge(dir: string): { content: string; data: Record<string, unknown> } | null {
@@ -35,8 +39,17 @@ function readRoadmap(dir: string): string | null {
   }
 }
 
+function readConfig(dir: string): Record<string, unknown> {
+  const configPath = join(dir, CONFIG_PATH)
+  if (!exists(configPath)) return {}
+  try {
+    return parseYaml(readFile(configPath)) as Record<string, unknown>
+  } catch {
+    return {}
+  }
+}
+
 function filterBySince(artifacts: ReturnType<typeof readArtifacts>, since: string) {
-  // Simple date comparison — artifacts with created_at >= since
   return artifacts.filter((a) => {
     const fm = a as unknown as { created_at?: string }
     if (!fm.created_at) return true
@@ -51,8 +64,14 @@ function filterByScope(artifacts: ReturnType<typeof readArtifacts>, scope: strin
       a.domains.some((d) => d.toLowerCase().includes(scopeLower)) ||
       a.codeGlobs.some((g) => g.toLowerCase().includes(scopeLower)) ||
       a.title.toLowerCase().includes(scopeLower) ||
-      a.summary.toLowerCase().includes(scopeLower)
+      a.summary.toLowerCase().includes(scopeLower) ||
+      a.type.toLowerCase().includes(scopeLower)
   )
+}
+
+function filterByType(artifacts: ReturnType<typeof readArtifacts>, type: string) {
+  const typeLower = type.toLowerCase()
+  return artifacts.filter((a) => a.type.toLowerCase() === typeLower)
 }
 
 function explainForHuman(
@@ -65,13 +84,17 @@ function explainForHuman(
 
   console.log('')
 
-  // Project knowledge
-  if (knowledge) {
+  if (opts.scope) {
+    console.log(`Scope: ${opts.scope}${opts.type ? ` · type: ${opts.type}` : ''}`)
+    console.log(`Artifacts matched: ${artifacts.length}`)
+    console.log('')
+  }
+
+  if (knowledge && !opts.scope) {
     console.log(knowledge.content.trim())
     console.log('')
   }
 
-  // Active work items
   const workItems = artifacts.filter(
     (a) => a.type !== 'current-state' && a.type !== 'roadmap' && a.status === 'in-progress'
   )
@@ -88,8 +111,24 @@ function explainForHuman(
     console.log('')
   }
 
-  // Roadmap excerpt
-  if (roadmap && !opts.scope) {
+  // Non-work-item artifacts (ADRs, RFCs, etc.) when filtering by scope or type
+  if (opts.scope || opts.type) {
+    const otherArtifacts = artifacts.filter(
+      (a) => a.type !== 'current-state' && a.type !== 'roadmap' && a.status !== 'in-progress'
+    )
+    if (otherArtifacts.length > 0) {
+      console.log('## Related artifacts')
+      console.log('')
+      for (const a of otherArtifacts) {
+        const level = a.knowledgeLevel ? ` [${a.knowledgeLevel}]` : ''
+        const status = a.status ? ` (${a.status})` : ''
+        console.log(`- **${a.id || a.title}** [${a.type}]${level}${status} — ${a.summary || a.title}`)
+      }
+      console.log('')
+    }
+  }
+
+  if (roadmap && !opts.scope && !opts.type) {
     const nowSection = roadmap.match(/## Now[\s\S]*?(?=##|$)/)
     if (nowSection) {
       console.log('## Now (from roadmap)')
@@ -105,16 +144,19 @@ function explainForAgent(
   artifacts: ReturnType<typeof readArtifacts>,
   opts: ExplainOpts
 ): void {
-  // Structured minimal context — front matters + summaries, no full docs
   const knowledge = readKnowledge(dir)
+  const config = readConfig(dir)
+  const ownerMap = loadOwners(dir)
 
   const output: Record<string, unknown> = {
-    project: opts.scope ? `scope: ${opts.scope}` : 'full project',
+    project: config.project ?? 'unknown',
     generated_at: new Date().toISOString(),
+    scope: opts.scope ?? null,
+    type_filter: opts.type ?? null,
+    since: opts.since ?? null,
   }
 
   if (knowledge) {
-    // Extract first paragraph as project summary
     const firstParagraph = knowledge.content
       .trim()
       .split('\n\n')
@@ -122,7 +164,7 @@ function explainForAgent(
     output.knowledge_summary = firstParagraph?.trim() ?? ''
   }
 
-  const workItems = artifacts
+  const mappedArtifacts = artifacts
     .filter((a) => a.type !== 'current-state' && a.type !== 'roadmap')
     .map((a) => ({
       id: a.id,
@@ -135,9 +177,18 @@ function explainForAgent(
       code: a.codeGlobs,
     }))
 
-  output.artifacts = workItems
-  output.artifact_count = workItems.length
-  output.domains = [...new Set(artifacts.flatMap((a) => a.domains))]
+  output.artifacts = mappedArtifacts
+  output.artifact_count = mappedArtifacts.length
+  output.domains = [...new Set(artifacts.flatMap((a) => a.domains))].filter(Boolean)
+  output.domain_owners = ownerMap
+
+  // Installed modules from config
+  const modules = Array.isArray(config.modules) ? config.modules : []
+  output.installed_modules = modules
+
+  // Plugins
+  const plugins = Array.isArray(config.plugins) ? config.plugins : []
+  output.enabled_plugins = plugins
 
   console.log(JSON.stringify(output, null, 2))
 }
@@ -156,6 +207,10 @@ export function runExplain(opts: ExplainOpts): void {
 
   if (opts.scope) {
     artifacts = filterByScope(artifacts, opts.scope)
+  }
+
+  if (opts.type) {
+    artifacts = filterByType(artifacts, opts.type)
   }
 
   if (opts.since) {

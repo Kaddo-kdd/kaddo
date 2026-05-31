@@ -82,9 +82,10 @@ program
   .description('Explain the Knowledge Repository for humans or agents')
   .option('--for <audience>', 'Output format: human (default) or agent')
   .option('--scope <domain>', 'Limit to a specific domain or keyword')
+  .option('--type <type>', 'Limit to a specific artifact type (adr, rfc, feature, etc.)')
   .option('--since <date>', 'Limit to artifacts created since date (YYYY-MM-DD)')
-  .action((opts: { for?: string; scope?: string; since?: string }) => {
-    runExplain({ for: opts.for as 'human' | 'agent' | undefined, scope: opts.scope, since: opts.since })
+  .action((opts: { for?: string; scope?: string; type?: string; since?: string }) => {
+    runExplain({ for: opts.for as 'human' | 'agent' | undefined, scope: opts.scope, type: opts.type, since: opts.since })
   })
 
 program

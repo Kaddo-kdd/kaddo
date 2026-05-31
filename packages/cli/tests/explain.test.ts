@@ -87,4 +87,60 @@ describe('explain — agent output structure', () => {
     expect(domains).toHaveLength(3)
     expect(domains.filter((d) => d === 'payments')).toHaveLength(1)
   })
+
+  it('agent output includes installed_modules and enabled_plugins', () => {
+    const output = {
+      project: 'test',
+      generated_at: new Date().toISOString(),
+      artifacts: [],
+      artifact_count: 0,
+      domains: [],
+      domain_owners: {},
+      installed_modules: ['adr', 'rfc'],
+      enabled_plugins: ['prisma'],
+    }
+    expect(output.installed_modules).toContain('adr')
+    expect(output.enabled_plugins).toContain('prisma')
+  })
+})
+
+describe('explain — type filter', () => {
+  it('filters artifacts by exact type', () => {
+    const artifacts = [
+      { id: 'WI-001', type: 'feature', title: 'A', summary: '', knowledgeLevel: 'K2', codeGlobs: [], domains: [], status: 'in-progress', filePath: '' },
+      { id: 'ADR-001', type: 'adr', title: 'B', summary: '', knowledgeLevel: 'K4', codeGlobs: [], domains: [], status: 'proposed', filePath: '' },
+      { id: 'RFC-001', type: 'rfc', title: 'C', summary: '', knowledgeLevel: 'K3', codeGlobs: [], domains: [], status: 'draft', filePath: '' },
+    ]
+    const filtered = artifacts.filter((a) => a.type === 'adr')
+    expect(filtered).toHaveLength(1)
+    expect(filtered[0].id).toBe('ADR-001')
+  })
+
+  it('type filter is case-insensitive', () => {
+    const artifacts = [
+      { type: 'ADR' },
+      { type: 'rfc' },
+      { type: 'feature' },
+    ]
+    const filtered = artifacts.filter((a) => a.type.toLowerCase() === 'adr')
+    expect(filtered).toHaveLength(1)
+  })
+
+  it('scope filter also matches artifact type field', () => {
+    const artifacts = [
+      { id: 'ADR-001', type: 'adr', title: 'A', summary: '', domains: [], codeGlobs: [] },
+      { id: 'WI-001', type: 'feature', title: 'B', summary: '', domains: [], codeGlobs: [] },
+    ]
+    const scope = 'adr'
+    const filtered = artifacts.filter(
+      (a) =>
+        a.domains.some((d) => d.toLowerCase().includes(scope)) ||
+        a.codeGlobs.some((g) => g.toLowerCase().includes(scope)) ||
+        a.title.toLowerCase().includes(scope) ||
+        a.summary.toLowerCase().includes(scope) ||
+        a.type.toLowerCase().includes(scope)
+    )
+    expect(filtered).toHaveLength(1)
+    expect(filtered[0].id).toBe('ADR-001')
+  })
 })

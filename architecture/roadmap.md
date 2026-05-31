@@ -26,6 +26,7 @@ updated_at: 2026-05-31
 | [v2.2.0](https://github.com/judlup/kaddo/releases/tag/v2.2.0) | 2026-05-31 | Domain Owners: `kaddo owners`, guard notifies owners by domain |
 | [v2.3.0](https://github.com/judlup/kaddo/releases/tag/v2.3.0) | 2026-05-31 | Multirepo Module Descriptor: `kaddo module --init` · `kaddo module --show` |
 | [v2.4.0](https://github.com/judlup/kaddo/releases/tag/v2.4.0) | 2026-05-31 | Módulos adicionales: `kaddo add contracts` · `kaddo add capabilities` · `kaddo add guard-advanced` |
+| [v2.5.0](https://github.com/judlup/kaddo/releases/tag/v2.5.0) | 2026-05-31 | Módulos agents + skills · `explain --type` · agent output enriquecido |
 
 ---
 
@@ -288,6 +289,23 @@ Optional blocking CI when a critical domain artifact was not updated and Evidenc
 - `kaddo module` (no flags) — auto-detects: shows if descriptor exists, prompts init if not
 - Descriptor fields: `name`, `purpose`, `stack`, `responsibilities`, `contracts`, `dependencies`, `boundaries`, `ownership`, `related_artifacts`
 - 4 new tests, 154 total
+
+---
+
+## v2.5 — Agents, Skills y explain mejorado ✅ DONE
+> Tag: [v2.5.0](https://github.com/judlup/kaddo/releases/tag/v2.5.0)
+
+**Goal:** Completar el catálogo del manifiesto con agents y skills, y enriquecer `explain` para contextos de agentes.
+
+**Shipped:**
+- `kaddo add agents` — define agentes AI que operan sobre el Knowledge Repository (K3, 3 preguntas: purpose, knowledge_inputs, outputs)
+- `kaddo add skills` — define capacidades reutilizables entre agentes y equipos (K3, 3 preguntas: what_it_does, trigger, inputs_outputs)
+- `kaddo explain --type <type>` — filtra artefactos por tipo exacto (adr, rfc, feature, contract, etc.)
+- `explain --scope` ahora también coincide en el campo `type` del artefacto
+- Agent output (`--for agent`) ahora incluye: `domain_owners`, `installed_modules`, `enabled_plugins`, `scope`, `type_filter`
+- Human output muestra "Related artifacts" cuando se filtra por scope o type
+- Módulos totales: 10 — catálogo completo del manifiesto KDD v2.5
+- 168 tests totales
 
 ---
 
