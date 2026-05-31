@@ -1,9 +1,9 @@
 ---
 title: Kaddo
-description: Conocimiento observable para software que evoluciona con humanos e IA.
+description: Un CLI open source para mantener el conocimiento del proyecto sincronizado con tu código.
 template: splash
 hero:
-  tagline: Conocimiento observable para software que evoluciona con humanos e IA.
+  tagline: Mantén el conocimiento del proyecto sincronizado con el código.
   image:
     file: ../../../assets/logo-full-white.png
   actions:
@@ -19,51 +19,60 @@ hero:
 
 import { Card, CardGrid } from '@astrojs/starlight/components';
 
+<p class="kaddo-lede">
+Kaddo es un CLI open source para Knowledge Driven Development. Ayuda a los equipos a
+clasificar cambios, capturar el contexto mínimo que cada cambio necesita, crear work
+items ligeros y detectar cuándo un cambio de código puede dejar el conocimiento del
+producto desactualizado.
+</p>
+
 <div class="kaddo-terminal">
   <div class="kaddo-terminal__bar"><span></span><span></span><span></span><small>kaddo</small></div>
-  <pre><code><span class="c-muted"># 1 · Instala y prepara el repositorio de conocimiento</span>{"\n"}<span class="c-prompt">$</span> <span class="c-cmd">npm i -g @trycatch.tv/kaddo && kaddo init</span>{"\n\n"}<span class="c-muted"># 2 · Captura un cambio — 4 preguntas eligen el Nivel de Conocimiento</span>{"\n"}<span class="c-prompt">$</span> <span class="c-cmd">kaddo create feature</span>{"\n"}<span class="c-muted">  → WI-001 creado en K2, dueño de src/payments/**</span>{"\n\n"}<span class="c-muted"># 3 · Escribe tu código y revisa la deriva</span>{"\n"}<span class="c-prompt">$</span> <span class="c-cmd">kaddo guard</span>{"\n"}<span class="c-ok">FYI</span> src/payments/payments.service.ts coincide con WI-001{"\n"}<span class="c-muted">    WI-001 no se modificó en este diff — considera revisarlo.</span></code></pre>
+  <pre><code><span class="c-muted"># 1 · Inicializa Kaddo en tu repo</span>{"\n"}<span class="c-prompt">$</span> <span class="c-cmd">npx kaddo init</span>{"\n\n"}<span class="c-muted"># 2 · Crea un work item ligero</span>{"\n"}<span class="c-prompt">$</span> <span class="c-cmd">kaddo create feature</span>{"\n"}<span class="c-muted">  → WI-001 creado en K2, dueño de src/payments/**</span>{"\n\n"}<span class="c-muted"># 3 · Programa como siempre…</span>{"\n\n"}<span class="c-muted"># 4 · Revisa la deriva de conocimiento</span>{"\n"}<span class="c-prompt">$</span> <span class="c-cmd">kaddo guard</span>{"\n"}<span class="c-ok">FYI</span> src/payments/payments.service.ts coincide con WI-001{"\n"}<span class="c-muted">    WI-001 no se modificó en este diff — considera revisarlo.</span></code></pre>
 </div>
 
-## Por qué Kaddo
+<p class="kaddo-tagline-strong">Sin procesos pesados. Sin agentes obligatorios. Sin teatro de documentación.</p>
 
-Los proyectos se degradan porque el conocimiento queda disperso entre reuniones,
-chats, tickets y documentos desactualizados. Con la IA esto empeora: los agentes
-construyen sobre suposiciones cuando les falta contexto. Kaddo mantiene el contexto
-mínimo necesario vivo, junto al código.
+## ¿Por qué Kaddo?
+
+**Tu código cambia. Tu conocimiento muchas veces no.**
+
+Las decisiones de arquitectura, el contexto de producto, los contratos y los detalles
+de implementación suelen vivir en chats, tickets, reuniones o en la cabeza de alguien.
+Kaddo mantiene ese conocimiento junto a tu código y ayuda a detectar cuándo puede
+quedarse atrás.
 
 <CardGrid stagger>
-  <Card title="Conocimiento primero" icon="open-book">
-    Cada Work Item carga el contexto mínimo para su Nivel de Conocimiento (K0–K4).
+  <Card title="Contexto mínimo, no más docs" icon="open-book">
+    Kaddo usa Niveles de Conocimiento K0–K4 para pedir solo lo que cada cambio necesita.
   </Card>
-  <Card title="Propiedad en el front matter" icon="document">
-    Los artefactos declaran el código que poseen. Sin archivo de mapeo central.
+  <Card title="Work items junto al código" icon="document">
+    Crea artefactos ligeros y trazables para features, hotfixes, spikes y migraciones.
   </Card>
-  <Card title="Guard, no burocracia" icon="approve-check">
-    Guard lee el `git diff` y muestra un FYI no bloqueante cuando el código se aleja de su conocimiento.
+  <Card title="Guard contra la deriva" icon="approve-check">
+    Kaddo Guard cruza el `git diff` con el ownership de los artefactos y avisa cuando el conocimiento relacionado podría necesitar revisión.
   </Card>
-  <Card title="Pensado para agentes" icon="rocket">
-    `kaddo explain --for agent` emite JSON estructurado para que la IA parta de contexto real.
+  <Card title="Para humanos y agentes" icon="rocket">
+    El conocimiento estructurado ayuda a desarrolladores, equipos y herramientas de IA a trabajar con mejor contexto.
   </Card>
 </CardGrid>
 
 ## Cómo funciona
 
-En tres pasos Kaddo convierte el contexto disperso en conocimiento observable.
-
 <CardGrid>
-  <Card title="1 · Capturar" icon="pencil">
-    `kaddo create` solo hace las preguntas acordes al tamaño del cambio.
+  <Card title="1 · Clasifica" icon="pencil">
+    Declara el tipo de cambio y obtén un Nivel de Conocimiento sugerido.
   </Card>
-  <Card title="2 · Poseer" icon="setting">
-    Cada artefacto declara los globs `code:` que posee — un Grafo de Conocimiento en tiempo de ejecución.
+  <Card title="2 · Captura" icon="setting">
+    Responde solo las preguntas necesarias para ese nivel — Kaddo crea un work item ligero.
   </Card>
-  <Card title="3 · Observar" icon="magnifier">
-    `kaddo guard` cruza el diff con ese grafo y revela la deriva.
+  <Card title="3 · Observa" icon="magnifier">
+    Kaddo Guard detecta cuándo un cambio de código puede afectar al conocimiento relacionado.
   </Card>
 </CardGrid>
 
 <div class="kaddo-cta">
-  ## Pon el conocimiento primero
-  <p>Instala Kaddo y mantén el contexto vivo junto a tu código.</p>
+  ## Empieza con un repo que recuerda
+  <p>Instala Kaddo y haz del conocimiento del producto parte de tu flujo de desarrollo.</p>
   <a class="kaddo-btn" href="/es/getting-started/">Empezar →</a>
 </div>

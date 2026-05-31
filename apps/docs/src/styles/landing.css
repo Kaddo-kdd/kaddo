@@ -166,3 +166,23 @@
   transform: translateY(-2px);
   box-shadow: 0 12px 30px rgba(244, 185, 66, 0.45);
 }
+
+/* Hero lede paragraph — direct value proposition under the hero */
+.kaddo-lede {
+  max-width: 60ch;
+  margin: 0 auto 2rem;
+  text-align: center;
+  font-size: 1.15rem;
+  line-height: 1.6;
+  color: var(--sl-color-gray-2);
+}
+
+/* Punchy one-liner under the terminal */
+.kaddo-tagline-strong {
+  margin: 1.5rem auto 0;
+  text-align: center;
+  font-family: var(--__kaddo-display, 'Poppins', sans-serif);
+  font-weight: 600;
+  font-size: 1.05rem;
+  color: var(--kaddo-amber);
+}
