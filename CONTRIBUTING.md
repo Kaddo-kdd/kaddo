@@ -61,6 +61,13 @@ pnpm dev               # watch mode
 
 Open an issue before starting work on any of these.
 
+## OpenSpec: define before you build
+
+Relevant changes to the CLI are defined with OpenSpec **before** any code is written —
+a `proposal.md`, `design.md`, `spec.md` and `tasks.md` under
+`openspec/changes/<change-id>/`. Copy the templates in `openspec/templates/` to start.
+See [`openspec/README.md`](openspec/README.md) for the full convention.
+
 ## Commit style
 
 ```
