@@ -5,6 +5,7 @@ import { runCreate } from './commands/create.js'
 import { runGuard } from './commands/guard.js'
 import { runIgnore, runIgnoreList, runIgnoreRemove } from './commands/ignore.js'
 import { runExplain } from './commands/explain.js'
+import { runClassify } from './commands/classify.js'
 
 const program = new Command()
 
@@ -76,6 +77,16 @@ program
   .option('--since <date>', 'Limit to artifacts created since date (YYYY-MM-DD)')
   .action((opts: { for?: string; scope?: string; since?: string }) => {
     runExplain({ for: opts.for as 'human' | 'agent' | undefined, scope: opts.scope, since: opts.since })
+  })
+
+program
+  .command('classify')
+  .description('Check if the declared work item type is consistent with observed signals in the diff')
+  .option('--type <type>', 'Declared work item type (overrides active work item)')
+  .option('--level <level>', 'Declared knowledge level (used with --type)')
+  .option('--staged', 'Check only staged files')
+  .action(async (opts: { type?: string; level?: string; staged?: boolean }) => {
+    await runClassify(opts)
   })
 
 program.parseAsync(process.argv).catch((err) => {

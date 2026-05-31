@@ -18,6 +18,7 @@ updated_at: 2026-05-31
 | [v1.0.1](https://github.com/judlup/kaddo/releases/tag/v1.0.1) | 2026-05-31 | Ignore reason: guard FYIs ignorable with reason, `kaddo ignore` command |
 | [v1.1.0](https://github.com/judlup/kaddo/releases/tag/v1.1.0) | 2026-05-31 | `kaddo explain`: Knowledge Repository → context for humans and agents |
 | [v1.1.1](https://github.com/judlup/kaddo/releases/tag/v1.1.1) | 2026-05-31 | Evidence Score transparente en guard FYIs (señales observadas, sin porcentajes mágicos) |
+| [v1.2.0](https://github.com/judlup/kaddo/releases/tag/v1.2.0) | 2026-05-31 | `kaddo classify`: Classification Drift barato con señales observadas del diff |
 
 ---
 
@@ -50,6 +51,36 @@ updated_at: 2026-05-31
 | `kaddo ignore remove <id>` | ✅ Done | Remove an ignore entry |
 | `.kaddo/ignores.yml` | ✅ Done | Persisted ignore store, YAML, one entry per artifact |
 | `guard --no-interactive` | ✅ Done | Disable prompts for CI use |
+
+---
+
+## Build order step 6 — kaddo classify ✅ DONE
+> Tag: [v1.2.0](https://github.com/judlup/kaddo/releases/tag/v1.2.0)
+
+**Goal:** Contrast declared classification against cheap observed signals in git diff. No LLM. No semantic analysis.
+
+| Feature | Status | Description |
+|---|---|---|
+| `kaddo classify` | ✅ Done | Reads active work item + git diff, detects signal drift |
+| `kaddo classify --type <t>` | ✅ Done | Override without active work item |
+| `kaddo classify --staged` | ✅ Done | Staged-only diff mode |
+| DB migration signals | ✅ Done | supabase/migrations, prisma/migrations, db/migrations |
+| API/event contract signals | ✅ Done | openapi.*, swagger.*, events/, schemas/, contracts/ |
+| Infrastructure signals | ✅ Done | terraform/, docker-compose.yml, k8s/, .github/workflows/ |
+| Dependency signals | ✅ Done | package.json, lockfiles, requirements.txt, pyproject.toml |
+
+Output example when drift detected:
+```
+Declared:  bugfix / K2
+
+Observed signals:
+  - DB migration: supabase/migrations/add_payments_table.sql
+    → Data schema change — typically K4 or Migration type
+
+Suggested review:
+  This may be more than a bugfix. Signals suggest migration (K4). Review before closing.
+  Consider: migration / architecture-change
+```
 
 ---
 
@@ -243,7 +274,7 @@ Modules are optional. Core includes only what is needed to start.
 | 4 | Ignore reason | Converts false positives into learning | ✅ v1.0.1 |
 | 5 | `kaddo explain` | Converts the Knowledge Repository into context for humans and agents | ✅ v1.1.0 |
 | 5b | Transparent Evidence Score | Improves signal without inventing precision | ✅ v1.1.1 |
-| 6 | Cheap Classification Drift | Contrasts declared classification with simple signals | ⬜ next |
+| 6 | Cheap Classification Drift (`kaddo classify`) | Contrasts declared classification with simple signals | ✅ v1.2.0 |
 | 7 | Semantic plugins | Adds stack-specific intelligence when the base is installed | ⬜ planned |
 
 ---
