@@ -32,9 +32,7 @@ function isModuleInstalled(dir: string, configKey: string): boolean {
   }
 }
 
-export function runAdd(moduleName: string): void {
-  const dir = cwd()
-
+export function runAdd(moduleName: string, dir: string = cwd()): void {
   if (!moduleName) {
     console.log('')
     console.log('Available modules:')
@@ -54,29 +52,55 @@ export function runAdd(moduleName: string): void {
 
   intro(`kaddo add ${mod.name}`)
 
-  if (isModuleInstalled(dir, mod.configKey)) {
-    log.warn(`Module "${mod.name}" is already installed.`)
-    outro('Nothing changed.')
-    return
+  // Require an initialized project.
+  if (!exists(join(dir, CONFIG_PATH))) {
+    console.error('Kaddo is not initialized in this project.')
+    console.error('Run `kaddo init` first.')
+    process.exit(1)
   }
 
-  // Create directories
+  const alreadyInstalled = isModuleInstalled(dir, mod.configKey)
+
+  // Create directories (idempotent).
   for (const d of mod.dirs) {
     ensureDir(join(dir, d))
-    log.success(`Created ${d}/`)
   }
 
-  // Write files
+  // Write only files that do not exist — never overwrite user-edited files silently.
+  const written: string[] = []
+  const skipped: string[] = []
   for (const file of mod.files) {
     const fullPath = join(dir, file.path)
-    if (!exists(fullPath)) {
+    if (exists(fullPath)) {
+      skipped.push(file.path)
+    } else {
       writeFile(fullPath, file.content)
+      written.push(file.path)
     }
+  }
+
+  for (const p of written) log.success(`Created ${p}`)
+  for (const p of skipped) log.info(`Kept existing ${p}`)
+
+  if (alreadyInstalled && written.length === 0) {
+    outro(`Module "${mod.name}" is already installed. Nothing changed.`)
+    return
   }
 
   // Mark as installed in config
   markModuleInstalled(dir, mod.configKey, mod.name)
   log.success(`Module "${mod.name}" installed.`)
+
+  // Agents are prompt packs, not work items — show a tailored handoff.
+  if (mod.name === 'agents') {
+    log.info('Next:')
+    console.log('    1. Run `kaddo context`')
+    console.log('    2. Open your preferred LLM chat')
+    console.log('    3. Paste `.kaddo/context-pack.md`')
+    console.log('    4. Use the recommended agent for your project state')
+    outro('Agents installed. Kaddo prepares context — your LLM does the interpretation.')
+    return
+  }
 
   // Show new work item types
   if (mod.workItemTypes.length > 0) {

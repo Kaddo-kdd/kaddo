@@ -68,6 +68,7 @@ export default defineConfig({
           translations: { es: 'Módulos' },
           items: [
             { label: 'Overview', translations: { es: 'Resumen' }, slug: 'modules/overview' },
+            { label: 'Agent Prompt Packs', translations: { es: 'Agentes (Prompt Packs)' }, slug: 'modules/agents' },
             { label: 'Domain Owners', translations: { es: 'Domain Owners' }, slug: 'modules/owners' },
             { label: 'Multirepo', slug: 'modules/multirepo' },
           ],

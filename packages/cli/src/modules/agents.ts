@@ -1,32 +1,50 @@
-import type { KaddoModule } from './types.js'
+import type { KaddoModule, ModuleFile } from './types.js'
+import { AGENT_PROMPTS } from '../agents/prompts.js'
+
+const agentReadme: ModuleFile = {
+  path: 'architecture/agents/README.md',
+  content: [
+    '# Agents',
+    '',
+    'This directory contains Kaddo agent prompt packs — versionable Markdown prompts you',
+    'use in your preferred LLM chat (Claude, ChatGPT, Cursor, Copilot, Windsurf…).',
+    '',
+    '**Kaddo does not execute these agents.** The CLI prepares context; the LLM interprets.',
+    '',
+    '## How to use',
+    '',
+    '1. Run `kaddo scan` then `kaddo context` to generate `.kaddo/context-pack.md`.',
+    '2. Open your LLM chat.',
+    '3. Paste `.kaddo/context-pack.md` together with the agent prompt for your task.',
+    '4. Save the agent output to the location each prompt specifies.',
+    '',
+    '## Recommended order by project state',
+    '',
+    '- **new** → roadmap-agent → architecture-agent',
+    '- **pre-ai** → capability-agent → architecture-agent → roadmap-agent',
+    '- **legacy** → legacy-agent → architecture-agent → capability-agent → roadmap-agent',
+    '',
+    '## Installed agents',
+    '',
+    '- `capability-agent.md` — extract/propose system capabilities.',
+    '- `architecture-agent.md` — reconstruct/propose the architecture baseline.',
+    '- `roadmap-agent.md` — propose roadmap candidates.',
+    '- `legacy-agent.md` — analyze risks/unknowns before changing legacy code.',
+    '- `adr-agent.md` — propose candidate architecture decisions.',
+  ].join('\n'),
+}
+
+const agentFiles: ModuleFile[] = AGENT_PROMPTS.map((a) => ({
+  path: `architecture/agents/${a.fileName}`,
+  content: a.content,
+}))
 
 export const agentsModule: KaddoModule = {
   name: 'agents',
-  description: 'Reusable agents — define AI agents that operate over the Knowledge Repository',
+  description: 'Agent prompt packs — Markdown prompts to turn context packs into knowledge in your LLM',
   configKey: 'module_agents',
   dirs: ['architecture/agents'],
-  files: [
-    {
-      path: 'architecture/agents/.gitkeep',
-      content: '',
-    },
-    {
-      path: 'architecture/agents/README.md',
-      content: [
-        '# Agents',
-        '',
-        'This directory contains agent definitions for the Knowledge Repository.',
-        '',
-        'Each agent is a markdown file declaring:',
-        '- What the agent does',
-        '- What knowledge it needs',
-        '- What outputs it produces',
-        '- Which domains it operates in',
-        '',
-        'Agents are consumed by `kaddo explain --for agent` and external orchestrators.',
-      ].join('\n'),
-    },
-  ],
+  files: [agentReadme, ...agentFiles],
   workItemTypes: [
     {
       name: 'agent',

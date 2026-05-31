@@ -128,6 +128,7 @@ on real context instead of starting from scratch.
 kaddo init                        # state: new | pre-ai | legacy, team size, structure
 kaddo scan                        # deterministic technical inventory
 kaddo context                     # assemble an LLM context pack for agent handoff
+kaddo add agents                  # install agent prompt packs for your LLM chat
 kaddo understand                  # extract capabilities, risks, open questions  (upcoming)
 kaddo architecture                # reconstruct decisions → ADR candidates       (upcoming)
 kaddo roadmap                     # turn the baseline into a roadmap             (upcoming)
@@ -165,6 +166,49 @@ explicitly, and recommends which agents to use based on your project state:
 > `scan` collects technical signals. `context` packages those signals (plus knowledge and
 > work items) for an LLM. The upcoming `understand` will let agents turn the pack into
 > capabilities, architecture and roadmap candidates.
+
+---
+
+### `kaddo add agents`
+
+Install Kaddo agent prompt packs — versionable Markdown prompts you use **in your LLM
+chat** (Claude, ChatGPT, Cursor, Copilot, Windsurf…). Kaddo does not execute them.
+
+```bash
+kaddo add agents
+```
+
+Creates `architecture/agents/` with:
+
+- `capability-agent.md` — extract/propose system capabilities → `architecture/capabilities.md`
+- `architecture-agent.md` — reconstruct the architecture baseline → `architecture/current-state.md`
+- `roadmap-agent.md` — propose roadmap candidates → `architecture/roadmap.md`
+- `legacy-agent.md` — surface risks/unknowns before changing legacy code
+- `adr-agent.md` — propose candidate architecture decisions
+
+Each prompt declares its role, required input, expected output, constraints, output format,
+where to save the result, and a quality checklist. The primary input is always
+`.kaddo/context-pack.md`.
+
+**Workflow:**
+
+```bash
+kaddo scan          # technical signals
+kaddo context       # → .kaddo/context-pack.md
+kaddo add agents    # → architecture/agents/*.md
+# then: paste context-pack.md + an agent prompt into your LLM chat
+```
+
+Recommended agent order by project state:
+
+| State | Order |
+|---|---|
+| `new` | roadmap-agent → architecture-agent |
+| `pre-ai` | capability-agent → architecture-agent → roadmap-agent |
+| `legacy` | legacy-agent → architecture-agent → capability-agent → roadmap-agent |
+
+Existing agent files are never overwritten silently. `kaddo init` does not install agents —
+add them only when you need them.
 
 ---
 
