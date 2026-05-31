@@ -130,8 +130,7 @@ kaddo scan                        # deterministic technical inventory
 kaddo context                     # assemble an LLM context pack for agent handoff
 kaddo add agents                  # install agent prompt packs for your LLM chat
 kaddo understand                  # guide the CLI → LLM handoff with a state-aware plan
-kaddo architecture                # reconstruct decisions → ADR candidates       (upcoming)
-kaddo roadmap                     # turn the baseline into a roadmap             (upcoming)
+kaddo create --from roadmap       # turn a roadmap candidate into a real work item
 kaddo create feature              # work items grounded in capability + roadmap
 kaddo guard                       # detect knowledge drift
 ```
@@ -216,15 +215,15 @@ The `roadmap-agent` is the bridge between understanding and execution. In your L
 produces a **structured** `architecture/roadmap.md`:
 
 ```txt
-context pack → roadmap agent → architecture/roadmap.md → (future) kaddo create --from roadmap
+context pack → roadmap agent → architecture/roadmap.md → kaddo create --from roadmap
 ```
 
 Each initiative (`RM-001`, …) includes a goal, related capabilities, impact, risk, a
 suggested Knowledge Level (K1–K4), dependencies, and **candidate work items** (with type,
 suggested knowledge level, expected value and notes), plus assumptions, suggested execution
 order and the next recommended work item. Initiatives and work items are **candidates** for
-human review — not final commitments — and priorities adapt to the project state. A future
-`kaddo create --from roadmap` will read these candidates (not yet implemented).
+human review — not final commitments — and priorities adapt to the project state. Turn a
+candidate into a real Work Item with [`kaddo create --from roadmap`](#kaddo-create).
 
 ---
 
@@ -266,6 +265,21 @@ kaddo create bugfix    # K2: 4 questions
 kaddo create hotfix    # K1: 2 questions
 kaddo create spike     # K3: 4 questions
 ```
+
+**From a roadmap candidate:**
+
+```bash
+kaddo create --from roadmap          # pick a candidate from architecture/roadmap.md
+kaddo create feature --from roadmap  # same, with a default type
+```
+
+Reads `architecture/roadmap.md`, lets you select a candidate work item (`WI-CANDIDATE-001`,
+…), and prefills the Work Item from the roadmap (title, type, suggested Knowledge Level,
+expected value, notes, related capabilities/impact/risk/dependencies and the parent
+initiative). It asks only for the required fields the candidate does not provide and keeps
+source traceability in the front matter (`source: roadmap`, `source_id`, `source_initiative`).
+This closes the loop `scan → context → agents → roadmap → work item`. If the roadmap is
+missing or has no candidates, Kaddo shows a helpful message. No LLM is called.
 
 **Knowledge Levels:**
 
