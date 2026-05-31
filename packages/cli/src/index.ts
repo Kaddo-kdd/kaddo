@@ -1,6 +1,7 @@
 import { Command } from 'commander'
 import { runInit } from './commands/init.js'
 import { runScan } from './commands/scan.js'
+import { runCreate } from './commands/create.js'
 
 const program = new Command()
 
@@ -27,8 +28,8 @@ program
 program
   .command('create <type>')
   .description('Create a work item (feature, bugfix, hotfix, spike)')
-  .action(() => {
-    console.log('kaddo create — coming in Slice 3')
+  .action(async (type: string) => {
+    await runCreate(type)
   })
 
 program
