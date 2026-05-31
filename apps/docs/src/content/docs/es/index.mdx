@@ -1,0 +1,41 @@
+---
+title: Kaddo
+description: Conocimiento observable para software que evoluciona con humanos e IA.
+template: splash
+hero:
+  tagline: Conocimiento observable para software que evoluciona con humanos e IA.
+  image:
+    file: ../../../assets/logo-full-white.png
+  actions:
+    - text: Empezar
+      link: /es/getting-started/
+      icon: right-arrow
+    - text: Ver en GitHub
+      link: https://github.com/judlup/kaddo
+      icon: external
+      variant: minimal
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+## Por qué Kaddo
+
+Los proyectos se degradan porque el conocimiento queda disperso entre reuniones,
+chats, tickets y documentos desactualizados. Con la IA esto empeora: los agentes
+construyen sobre suposiciones cuando les falta contexto. Kaddo mantiene el contexto
+mínimo necesario vivo, junto al código.
+
+<CardGrid stagger>
+  <Card title="Conocimiento primero" icon="open-book">
+    Cada Work Item carga el contexto mínimo para su Nivel de Conocimiento (K0–K4).
+  </Card>
+  <Card title="Propiedad en el front matter" icon="document">
+    Los artefactos declaran el código que poseen. Sin archivo de mapeo central.
+  </Card>
+  <Card title="Guard, no burocracia" icon="approve-check">
+    Guard lee el `git diff` y muestra un FYI no bloqueante cuando el código se aleja de su conocimiento.
+  </Card>
+  <Card title="Pensado para agentes" icon="rocket">
+    `kaddo explain --for agent` emite JSON estructurado para que la IA parta de contexto real.
+  </Card>
+</CardGrid>

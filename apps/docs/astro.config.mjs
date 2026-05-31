@@ -34,19 +34,26 @@ export default defineConfig({
       social: {
         github: 'https://github.com/judlup/kaddo',
       },
+      defaultLocale: 'root',
+      locales: {
+        root: { label: 'English', lang: 'en' },
+        es: { label: 'Español', lang: 'es' },
+      },
       sidebar: [
         {
           label: 'Start here',
+          translations: { es: 'Empieza aquí' },
           items: [
-            { label: 'Introduction', slug: 'introduction' },
-            { label: 'Getting started', slug: 'getting-started' },
-            { label: 'Knowledge Levels', slug: 'knowledge-levels' },
+            { label: 'Introduction', translations: { es: 'Introducción' }, slug: 'introduction' },
+            { label: 'Getting started', translations: { es: 'Primeros pasos' }, slug: 'getting-started' },
+            { label: 'Knowledge Levels', translations: { es: 'Niveles de Conocimiento' }, slug: 'knowledge-levels' },
           ],
         },
         {
           label: 'Commands',
+          translations: { es: 'Comandos' },
           items: [
-            { label: 'Overview', slug: 'commands/overview' },
+            { label: 'Overview', translations: { es: 'Resumen' }, slug: 'commands/overview' },
             { label: 'init', slug: 'commands/init' },
             { label: 'scan', slug: 'commands/scan' },
             { label: 'create', slug: 'commands/create' },
@@ -56,9 +63,10 @@ export default defineConfig({
         },
         {
           label: 'Modules',
+          translations: { es: 'Módulos' },
           items: [
-            { label: 'Overview', slug: 'modules/overview' },
-            { label: 'Domain Owners', slug: 'modules/owners' },
+            { label: 'Overview', translations: { es: 'Resumen' }, slug: 'modules/overview' },
+            { label: 'Domain Owners', translations: { es: 'Domain Owners' }, slug: 'modules/owners' },
             { label: 'Multirepo', slug: 'modules/multirepo' },
           ],
         },
