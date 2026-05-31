@@ -1,0 +1,7 @@
+[build]
+  command = "pnpm --filter @kaddo/docs build"
+  publish = "apps/docs/dist"
+
+[build.environment]
+  NODE_VERSION = "20"
+  PNPM_VERSION = "9"
