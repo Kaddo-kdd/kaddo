@@ -17,6 +17,7 @@ updated_at: 2026-05-31
 | [v1.0.0](https://github.com/judlup/kaddo/releases/tag/v1.0.0) | 2026-05-31 | MVP: init · scan · create · guard (Guard Lite) |
 | [v1.0.1](https://github.com/judlup/kaddo/releases/tag/v1.0.1) | 2026-05-31 | Ignore reason: guard FYIs ignorable with reason, `kaddo ignore` command |
 | [v1.1.0](https://github.com/judlup/kaddo/releases/tag/v1.1.0) | 2026-05-31 | `kaddo explain`: Knowledge Repository → context for humans and agents |
+| [v1.1.1](https://github.com/judlup/kaddo/releases/tag/v1.1.1) | 2026-05-31 | Evidence Score transparente en guard FYIs (señales observadas, sin porcentajes mágicos) |
 
 ---
 
@@ -241,8 +242,8 @@ Modules are optional. Core includes only what is needed to start.
 | 3 | Guard Lite v1 | Delivers immediate value with glob intersection | ✅ v1.0.0 |
 | 4 | Ignore reason | Converts false positives into learning | ✅ v1.0.1 |
 | 5 | `kaddo explain` | Converts the Knowledge Repository into context for humans and agents | ✅ v1.1.0 |
-| 5b | Transparent Evidence Score | Improves signal without inventing precision | ⬜ next |
-| 6 | Cheap Classification Drift | Contrasts declared classification with simple signals | ⬜ planned |
+| 5b | Transparent Evidence Score | Improves signal without inventing precision | ✅ v1.1.1 |
+| 6 | Cheap Classification Drift | Contrasts declared classification with simple signals | ⬜ next |
 | 7 | Semantic plugins | Adds stack-specific intelligence when the base is installed | ⬜ planned |
 
 ---

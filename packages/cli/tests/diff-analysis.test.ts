@@ -87,6 +87,35 @@ describe('analyzeGuard — artifact modification detection', () => {
   })
 })
 
+describe('analyzeGuard — evidence score', () => {
+  it('includes evidence with matched glob count', () => {
+    const artifact = makeArtifact({ codeGlobs: ['src/payments/**', 'src/shared/**'] })
+    const result = analyzeGuard(['src/payments/payment.ts'], [artifact], true)
+    expect(result.matches[0].evidence.matched).toBe(1)
+    expect(result.matches[0].evidence.total).toBe(2)
+    expect(result.matches[0].evidence.label).toBe('1/2 globs matched')
+  })
+
+  it('evidence signals include knowledge level and domain', () => {
+    const artifact = makeArtifact({
+      codeGlobs: ['src/payments/**'],
+      knowledgeLevel: 'K2',
+      domains: ['payments'],
+    })
+    const result = analyzeGuard(['src/payments/payment.ts'], [artifact], true)
+    const { signals } = result.matches[0].evidence
+    expect(signals.join(' ')).toContain('K2')
+    expect(signals.join(' ')).toContain('payments')
+  })
+
+  it('evidence matched equals total when all globs hit', () => {
+    const artifact = makeArtifact({ codeGlobs: ['src/payments/**'] })
+    const result = analyzeGuard(['src/payments/payment.ts'], [artifact], true)
+    expect(result.matches[0].evidence.matched).toBe(1)
+    expect(result.matches[0].evidence.total).toBe(1)
+  })
+})
+
 describe('analyzeGuard — empty diff', () => {
   it('returns no matches for empty file list', () => {
     const artifact = makeArtifact({ codeGlobs: ['src/payments/**'] })

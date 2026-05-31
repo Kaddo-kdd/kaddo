@@ -31,11 +31,12 @@ function printHeader(touchedFiles: string[]) {
 }
 
 function printFYI(match: ArtifactMatch) {
-  const { artifact, matchedFiles } = match
+  const { artifact, matchedFiles, evidence } = match
   const id = artifact.id || artifact.title
   const extra = matchedFiles.length > 1 ? ` (+${matchedFiles.length - 1} more)` : ''
   console.log(`  FYI: ${matchedFiles[0]}${extra} matches ${id}`)
   console.log(`  ${id} was not modified in this diff.`)
+  console.log(`  Evidence: ${evidence.signals.join(' · ')}`)
   console.log(`  Consider reviewing whether ${id} still reflects the implementation.`)
   console.log('')
 }
