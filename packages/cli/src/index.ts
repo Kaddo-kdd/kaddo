@@ -11,6 +11,7 @@ import { runLearn } from './commands/learn.js'
 import { runHistory } from './commands/history.js'
 import { runAdd } from './commands/add.js'
 import { runOwners } from './commands/owners.js'
+import { runModuleDescriptor } from './commands/module-descriptor.js'
 
 const program = new Command()
 
@@ -122,6 +123,13 @@ program
   .description('List domain owners configured in .kaddo/config.yml')
   .option('--domain <domain>', 'Show owners for a specific domain')
   .action((opts: { domain?: string }) => { runOwners(opts) })
+
+program
+  .command('module')
+  .description('Show or initialize the multirepo module descriptor (architecture/module.yml)')
+  .option('--init', 'Create the module descriptor interactively')
+  .option('--show', 'Print the current module descriptor')
+  .action(async (opts: { init?: boolean; show?: boolean }) => { await runModuleDescriptor(opts) })
 
 program
   .command('add [module]')

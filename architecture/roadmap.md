@@ -24,6 +24,7 @@ updated_at: 2026-05-31
 | [v2.0.0](https://github.com/judlup/kaddo/releases/tag/v2.0.0) | 2026-05-31 | Optional module system: `kaddo add [adr\|incident\|rfc\|migration\|legacy]` |
 | [v2.1.0](https://github.com/judlup/kaddo/releases/tag/v2.1.0) | 2026-05-31 | Semantic plugins: `prisma` (destructive migrations) + `openapi` (breaking contracts) |
 | [v2.2.0](https://github.com/judlup/kaddo/releases/tag/v2.2.0) | 2026-05-31 | Domain Owners: `kaddo owners`, guard notifies owners by domain |
+| [v2.3.0](https://github.com/judlup/kaddo/releases/tag/v2.3.0) | 2026-05-31 | Multirepo Module Descriptor: `kaddo module --init` · `kaddo module --show` |
 
 ---
 
@@ -272,6 +273,20 @@ Optional blocking CI when a critical domain artifact was not updated and Evidenc
 - CI JSON includes `domain_owners` array with `{ domain, owners }` entries
 - Config format: `owners: { payments: [alice, bob], orders: [carol] }`
 - 13 new tests, 150 total
+
+---
+
+## v2.3 — Multirepo Module Descriptor ✅ DONE
+> Tag: [v2.3.0](https://github.com/judlup/kaddo/releases/tag/v2.3.0)
+
+**Goal:** Each repository declares its identity so dependent repos and agents can understand boundaries, contracts, and ownership.
+
+**Shipped:**
+- `kaddo module --init` — interactive wizard creates `architecture/module.yml`
+- `kaddo module --show` — prints the current descriptor in human-readable form
+- `kaddo module` (no flags) — auto-detects: shows if descriptor exists, prompts init if not
+- Descriptor fields: `name`, `purpose`, `stack`, `responsibilities`, `contracts`, `dependencies`, `boundaries`, `ownership`, `related_artifacts`
+- 4 new tests, 154 total
 
 ---
 
