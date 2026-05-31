@@ -19,6 +19,7 @@ updated_at: 2026-05-31
 | [v1.1.0](https://github.com/judlup/kaddo/releases/tag/v1.1.0) | 2026-05-31 | `kaddo explain`: Knowledge Repository → context for humans and agents |
 | [v1.1.1](https://github.com/judlup/kaddo/releases/tag/v1.1.1) | 2026-05-31 | Evidence Score transparente en guard FYIs (señales observadas, sin porcentajes mágicos) |
 | [v1.2.0](https://github.com/judlup/kaddo/releases/tag/v1.2.0) | 2026-05-31 | `kaddo classify`: Classification Drift barato con señales observadas del diff |
+| [v1.3.0](https://github.com/judlup/kaddo/releases/tag/v1.3.0) | 2026-05-31 | `kaddo status` · `kaddo learn` · `kaddo history` — observabilidad del Knowledge Repository |
 
 ---
 
@@ -95,6 +96,17 @@ Suggested review:
 | `kaddo explain --for agent` | ✅ Done | Structured JSON: front matters + summaries + domains, no full docs |
 | `kaddo explain --scope <domain>` | ✅ Done | Filters artifacts by domain, code glob, or keyword |
 | `kaddo explain --since <date>` | ✅ Done | Limits output to artifacts created since a given date |
+
+---
+
+## v1.3 — Knowledge Visibility ✅ DONE
+> Tag: [v1.3.0](https://github.com/judlup/kaddo/releases/tag/v1.3.0)
+
+| Command | Status | Description |
+|---|---|---|
+| `kaddo status` | ✅ Done | Project name, stack, work item counts by status, ownership coverage, active items |
+| `kaddo learn [id]` | ✅ Done | Closes a work item, records learning, marks `status: done` |
+| `kaddo history` | ✅ Done | Lists all work items sorted by date with filters: `--domain`, `--type`, `--status`, `--limit` |
 
 ---
 

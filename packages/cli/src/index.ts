@@ -6,6 +6,9 @@ import { runGuard } from './commands/guard.js'
 import { runIgnore, runIgnoreList, runIgnoreRemove } from './commands/ignore.js'
 import { runExplain } from './commands/explain.js'
 import { runClassify } from './commands/classify.js'
+import { runStatus } from './commands/status.js'
+import { runLearn } from './commands/learn.js'
+import { runHistory } from './commands/history.js'
 
 const program = new Command()
 
@@ -77,6 +80,27 @@ program
   .option('--since <date>', 'Limit to artifacts created since date (YYYY-MM-DD)')
   .action((opts: { for?: string; scope?: string; since?: string }) => {
     runExplain({ for: opts.for as 'human' | 'agent' | undefined, scope: opts.scope, since: opts.since })
+  })
+
+program
+  .command('status')
+  .description('Show the current state of the Knowledge Repository')
+  .action(() => { runStatus() })
+
+program
+  .command('learn [artifact-id]')
+  .description('Close a work item and record what was learned')
+  .action(async (artifactId?: string) => { await runLearn(artifactId) })
+
+program
+  .command('history')
+  .description('List work items with optional filters')
+  .option('--domain <domain>', 'Filter by domain')
+  .option('--type <type>', 'Filter by type (feature, bugfix, hotfix, spike...)')
+  .option('--status <status>', 'Filter by status (in-progress, done, cancelled)')
+  .option('--limit <n>', 'Limit number of results', parseInt)
+  .action((opts: { domain?: string; type?: string; status?: string; limit?: number }) => {
+    runHistory(opts)
   })
 
 program
