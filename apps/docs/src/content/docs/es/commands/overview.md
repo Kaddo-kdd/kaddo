@@ -3,15 +3,24 @@ title: Resumen de comandos
 description: La superficie de la CLI de Kaddo.
 ---
 
+Comandos en orden del flujo de trabajo:
+
 | Comando | Qué hace |
 |---|---|
 | `kaddo init` | Inicializa Kaddo en el proyecto actual |
 | `kaddo scan` | Detecta el stack del proyecto y sugiere dominios |
-| `kaddo context` | Genera un paquete de contexto para entregar a un agente LLM |
+| `kaddo context` | Genera un context pack para entregar a un agente LLM |
+| `kaddo add agents` | Instala los agent prompt packs para tu chat LLM |
 | `kaddo understand` | Guía el handoff CLI → LLM con un plan de agentes según el estado |
-| `kaddo create <type>` | Crea un Work Item (feature, bugfix, hotfix, spike) |
-| `kaddo guard` | Revisa si el código modificado tiene artefactos relacionados desactualizados |
-| `kaddo explain` | Explica el Repositorio de Conocimiento para humanos o agentes |
+| `kaddo create <type>` / `--from roadmap` | Crea un Work Item (feature, bugfix, hotfix, spike) |
+| `kaddo owners suggest` | Asistente para declarar propiedad `code:` en artefactos |
+| `kaddo guard` | Revisa si el código modificado tiene artefactos relacionados sin actualizar |
+| `kaddo explain` | Resume lo que Kaddo sabe actualmente del proyecto |
+
+Comandos de apoyo:
+
+| Comando | Qué hace |
+|---|---|
 | `kaddo status` | Muestra el estado actual del Repositorio de Conocimiento |
 | `kaddo learn` | Cierra un Work Item y registra lo aprendido |
 | `kaddo classify` | Detecta deriva de clasificación en el diff |

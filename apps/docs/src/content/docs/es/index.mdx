@@ -45,22 +45,24 @@ vivir en la cabeza de las personas.
 Kaddo acerca ese conocimiento al código y ayuda a mantenerlo vivo mientras el sistema
 cambia.
 
-## Para cada etapa del proyecto
+## Elige tu punto de partida
 
 <CardGrid stagger>
-  <Card title="Proyectos nuevos" icon="rocket">
-    Empieza con una estructura mínima de conocimiento — roadmap, work items y contexto mínimo — sin crear sobrecarga de proceso.
+  <Card title="Proyecto nuevo" icon="rocket">
+    Empieza con conocimiento estructurado desde el día uno. → [Proyecto nuevo](/es/use-cases/new-project/)
   </Card>
-  <Card title="Proyectos pre-IA" icon="setting">
-    Escanea tu repo, organiza el contexto y haz que el proyecto sea más fácil de entender para las herramientas de IA.
+  <Card title="Proyecto pre-IA" icon="setting">
+    Prepara un repo existente para personas y agentes LLM. → [Proyecto pre-IA](/es/use-cases/pre-ai-project/)
   </Card>
-  <Card title="Proyectos legacy" icon="open-book">
-    Mapea el ownership de forma gradual y entiende las zonas de riesgo antes de cambiarlas.
+  <Card title="Proyecto legacy" icon="open-book">
+    Entiende antes de cambiar sistemas riesgosos. → [Proyecto legacy](/es/use-cases/legacy-project/)
   </Card>
-  <Card title="Guard contra la deriva" icon="approve-check">
-    Kaddo Guard cruza el `git diff` con el ownership de los artefactos y avisa cuando el conocimiento relacionado podría necesitar revisión.
+  <Card title="Mira el loop completo" icon="approve-check">
+    El flujo completo de principio a fin con los artefactos esperados. → [Flujo completo](/es/use-cases/full-workflow/)
   </Card>
 </CardGrid>
+
+¿No sabes qué hace y qué no hace Kaddo? Lee el [Alcance del proyecto](/es/project-scope/).
 
 ## CLI + Agentes LLM
 
@@ -83,22 +85,39 @@ Kaddo no empieza creando tareas. Empieza entendiendo el estado del proyecto, y l
 construye conocimiento de forma progresiva antes de que evoluciones el código.
 
 <CardGrid>
-  <Card title="1 · Inicializa con el CLI" icon="pencil">
-    Dile a Kaddo si tu proyecto es nuevo, pre-IA o legacy, el tamaño del equipo y la estructura del repo.
+  <Card title="1 · Inicializa y escanea" icon="pencil">
+    `kaddo init` y luego `kaddo scan` — dile a Kaddo el estado del proyecto y detecta stack, estructura y señales técnicas de forma determinística.
   </Card>
-  <Card title="2 · Escanea el código" icon="magnifier">
-    El CLI detecta de forma determinística stack, estructura, dependencias y señales técnicas.
+  <Card title="2 · Prepara el contexto" icon="list-format">
+    `kaddo context` arma un context pack para el LLM y `kaddo add agents` instala los prompts de agentes.
   </Card>
   <Card title="3 · Entiende con agentes" icon="open-book">
-    Usa los agentes de Kaddo en tu chat LLM favorito para extraer capacidades, arquitectura, riesgos y candidatos de roadmap. *(próximamente)*
+    `kaddo understand` guía el handoff — luego usa los agentes de Kaddo en tu chat LLM para extraer capacidades, arquitectura, riesgos y un roadmap.
   </Card>
-  <Card title="4 · Guarda el conocimiento" icon="list-format">
-    Kaddo mantiene el conocimiento generado cerca del código.
+  <Card title="4 · Crea desde el roadmap" icon="rocket">
+    `kaddo create --from roadmap` convierte un candidato del roadmap en un Work Item; `kaddo owners suggest` declara el ownership del código.
   </Card>
-  <Card title="5 · Evoluciona con seguridad" icon="approve-check">
-    Crea work items y usa Guard para detectar cuándo el código puede alejarse del conocimiento.
+  <Card title="5 · Guard y explain" icon="approve-check">
+    `kaddo guard` detecta cuándo el código puede alejarse del conocimiento; `kaddo explain` resume lo que el proyecto sabe actualmente.
   </Card>
 </CardGrid>
+
+### El flujo completo
+
+```bash
+kaddo init          # estado: new | pre-ai | legacy, tamaño de equipo, estructura
+kaddo scan          # inventario técnico determinístico
+kaddo context       # context pack para el handoff al LLM
+kaddo add agents    # instala los agent prompt packs
+kaddo understand    # plan guiado de handoff CLI → LLM
+# usa tu LLM con el context pack + agentes para crear capacidades, arquitectura y roadmap
+kaddo create --from roadmap
+kaddo owners suggest
+kaddo guard
+kaddo explain
+```
+
+El CLI prepara el contexto; tu LLM lo interpreta. Kaddo nunca llama a un LLM por sí mismo.
 
 <div class="kaddo-cta">
   ## Empieza con un repo que recuerda

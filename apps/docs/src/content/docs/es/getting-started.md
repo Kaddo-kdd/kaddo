@@ -33,9 +33,28 @@ architecture/
   config.yml        ← configuración del proyecto
 ```
 
-## Siguientes pasos
+## El flujo completo
 
-1. Ejecuta `kaddo scan` para detectar tu stack y sugerir dominios.
-2. Ejecuta `kaddo create feature` para crear tu primer Work Item.
-3. Agrega globs en `code:` del front matter para activar Guard Lite.
-4. Ejecuta `kaddo guard` antes de hacer commit.
+```bash
+kaddo init          # estado: new | pre-ai | legacy, tamaño de equipo, estructura
+kaddo scan          # inventario técnico determinístico → .kaddo/scan.json
+kaddo context       # context pack para el LLM → .kaddo/context-pack.md
+kaddo add agents    # instala los agent prompt packs
+kaddo understand    # plan guiado de handoff CLI → LLM
+```
+
+Luego usa tu LLM (Claude, ChatGPT, Cursor, Copilot, Windsurf…) con el context pack
+generado y los agentes de Kaddo para crear capacidades, arquitectura y un roadmap. El CLI
+nunca llama a un LLM — prepara el contexto; tu LLM hace la interpretación.
+
+De vuelta en el CLI, convierte el entendimiento en evolución del código:
+
+```bash
+kaddo create --from roadmap   # convierte un candidato del roadmap en un Work Item
+kaddo owners suggest          # declara el ownership (code:) en el Work Item
+kaddo guard                   # detecta posible deriva antes de hacer commit
+kaddo explain                 # resume lo que Kaddo sabe actualmente
+```
+
+Mira la página de [Flujo de trabajo](/es/workflow/) para el reparto CLI vs LLM y cómo
+Kaddo apoya proyectos nuevos, pre-IA y legacy.

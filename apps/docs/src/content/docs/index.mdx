@@ -44,22 +44,24 @@ prepared for agents. In legacy projects, knowledge often lives in people's heads
 Kaddo brings that knowledge closer to the code and helps keep it alive as the system
 changes.
 
-## For every project stage
+## Choose your starting point
 
 <CardGrid stagger>
-  <Card title="New projects" icon="rocket">
-    Start with a minimal knowledge structure — roadmap, work items and minimum context — without creating process overhead.
+  <Card title="New project" icon="rocket">
+    Start with structured knowledge from day one. → [New project](/use-cases/new-project/)
   </Card>
-  <Card title="Pre-AI projects" icon="setting">
-    Scan your repo, organize context and make the project easier for AI tools to understand.
+  <Card title="Pre-AI project" icon="setting">
+    Prepare an existing repo for humans and LLM agents. → [Pre-AI project](/use-cases/pre-ai-project/)
   </Card>
-  <Card title="Legacy projects" icon="open-book">
-    Map ownership gradually and understand risky areas before changing them.
+  <Card title="Legacy project" icon="open-book">
+    Understand before changing risky systems. → [Legacy project](/use-cases/legacy-project/)
   </Card>
-  <Card title="Guard against drift" icon="approve-check">
-    Kaddo Guard checks `git diff` against artifact ownership and warns when related knowledge may need review.
+  <Card title="See the full loop" icon="approve-check">
+    The complete end-to-end workflow with expected artifacts. → [Full workflow](/use-cases/full-workflow/)
   </Card>
 </CardGrid>
+
+Not sure what Kaddo does and does not do? Read the [Project scope](/project-scope/).
 
 ## CLI + LLM Agents
 
@@ -80,22 +82,39 @@ Kaddo does not start by creating tasks. It starts by understanding the state of 
 project, then builds knowledge progressively before you evolve the code.
 
 <CardGrid>
-  <Card title="1 · Initialize with the CLI" icon="pencil">
-    Tell Kaddo if your project is new, pre-AI or legacy, your team size and repo structure.
+  <Card title="1 · Initialize & scan" icon="pencil">
+    `kaddo init` then `kaddo scan` — tell Kaddo your project state and detect stack, structure and technical signals deterministically.
   </Card>
-  <Card title="2 · Scan the codebase" icon="magnifier">
-    The CLI detects stack, structure, dependencies and technical signals deterministically.
+  <Card title="2 · Prepare context" icon="list-format">
+    `kaddo context` builds an LLM context pack and `kaddo add agents` installs agent prompts.
   </Card>
   <Card title="3 · Understand with agents" icon="open-book">
-    Use Kaddo agents in your preferred LLM chat to extract capabilities, architecture, risks and roadmap candidates. *(upcoming)*
+    `kaddo understand` guides the handoff — then use Kaddo agents in your LLM chat to extract capabilities, architecture, risks and a roadmap.
   </Card>
-  <Card title="4 · Store the knowledge" icon="list-format">
-    Kaddo keeps the generated knowledge close to the code.
+  <Card title="4 · Create from roadmap" icon="rocket">
+    `kaddo create --from roadmap` turns a roadmap candidate into a Work Item; `kaddo owners suggest` declares code ownership.
   </Card>
-  <Card title="5 · Evolve safely" icon="approve-check">
-    Create work items and use Guard to detect when code may drift from knowledge.
+  <Card title="5 · Guard & explain" icon="approve-check">
+    `kaddo guard` detects when code may drift from knowledge; `kaddo explain` summarizes what the project currently knows.
   </Card>
 </CardGrid>
+
+### The full workflow
+
+```bash
+kaddo init          # state: new | pre-ai | legacy, team size, structure
+kaddo scan          # deterministic technical inventory
+kaddo context       # LLM context pack for agent handoff
+kaddo add agents    # install agent prompt packs
+kaddo understand    # guided CLI → LLM handoff plan
+# use your LLM with the context pack + agents to create capabilities, architecture & roadmap
+kaddo create --from roadmap
+kaddo owners suggest
+kaddo guard
+kaddo explain
+```
+
+The CLI prepares context; your LLM interprets it. Kaddo never calls an LLM by itself.
 
 <div class="kaddo-cta">
   ## Start with a repo that remembers

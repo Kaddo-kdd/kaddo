@@ -120,7 +120,6 @@ Cursor, Copilot, Windsurf…):
 - architecture notes
 - roadmap candidates
 
-This agent-assisted stage is on the roadmap (`understand`, `architecture`, `roadmap`).
 Once the baseline exists and artifacts declare ownership, `create` and `guard` operate
 on real context instead of starting from scratch.
 
@@ -130,10 +129,15 @@ kaddo scan                        # deterministic technical inventory
 kaddo context                     # assemble an LLM context pack for agent handoff
 kaddo add agents                  # install agent prompt packs for your LLM chat
 kaddo understand                  # guide the CLI → LLM handoff with a state-aware plan
+# ── use your LLM with the context pack + agents to create the baseline + roadmap ──
 kaddo create --from roadmap       # turn a roadmap candidate into a real work item
-kaddo create feature              # work items grounded in capability + roadmap
-kaddo guard                       # detect knowledge drift
+kaddo owners suggest              # declare code: ownership on the work item
+kaddo guard                       # detect possible knowledge drift
+kaddo explain                     # summarize what Kaddo currently knows
 ```
+
+The CLI prepares context; your LLM interprets it; Kaddo turns understanding into Work
+Items; Guard warns on drift; Explain summarizes the state. Kaddo does not call an LLM.
 
 ---
 
@@ -322,12 +326,21 @@ Guard Lite reads `git diff`, finds artifacts with matching `code:` globs, and sh
 Touched files:
   - src/payments/payments.service.ts
 
-  FYI: src/payments/payments.service.ts matches WI-001
-  WI-001 was not modified in this diff.
-  Consider reviewing whether WI-001 still reflects the implementation.
+  ⚠ Possible knowledge drift: WI-001 (feature, K2)
+    Changed code matching this artifact:
+      - src/payments/payments.service.ts
+    Declared ownership:
+      - src/payments/**
+    WI-001 was not updated in this diff.
+    Evidence: 1/1 globs matched · artifact K2 · domain: payments
+    Suggested action: review WI-001 and update it if the behavior changed,
+    or ignore this artifact below if the change does not affect the knowledge.
 ```
 
-Guard is **silent** when no artifacts declare ownership. No noise on day one.
+Guard acts only on **declared ownership** (the `code:` globs) — it performs **no inference**
+and is **advisory/non-blocking** (it never fails your command or CI). If the artifact was
+also changed in the same diff, no FYI is shown. Guard is **silent** when no artifacts declare
+ownership. No noise on day one.
 
 ---
 
@@ -355,11 +368,50 @@ Kaddo builds a simple Knowledge Graph from these front matters at runtime:
 artifact → code globs → git diff intersection
 ```
 
+### Declaring ownership with the assistant
+
+You don't have to edit YAML by hand. The ownership assistant proposes `code:` globs and
+updates the front matter for you:
+
+```bash
+kaddo owners suggest
+```
+
+It lists Work Items missing ownership, suggests candidate globs from `.kaddo/scan.json` and
+the artifact's `domains`/`capabilities`, and lets you pick or type globs. It updates **only**
+the front matter (the body is preserved), is fully **deterministic** (no LLM, no source
+changes), and works with manual entry when no scan baseline exists.
+
+```
+create work item → kaddo owners suggest → kaddo guard
+```
+
+---
+
+### `kaddo explain`
+
+Summarize what Kaddo currently knows about the project — useful for onboarding,
+handoff, project review or preparing an agent.
+
+```bash
+kaddo explain               # project explanation (human-readable)
+kaddo explain --for agent   # compact structured JSON
+```
+
+Run without filters, it reports project metadata, detected stack (from
+`.kaddo/scan.json`), knowledge status (inventory, context pack, capabilities,
+architecture baseline, roadmap, agents), work items, **ownership coverage**, the
+**missing knowledge** and **suggested next steps**. It also writes
+`.kaddo/explain.md` and `.kaddo/explain.json`. No LLM is called.
+
+`context` vs `explain`: `kaddo context` prepares input for an LLM agent;
+`kaddo explain` summarizes what Kaddo already knows. The focused flags
+(`--scope`, `--type`, `--since`) still explain a subset of artifacts.
+
 ## Roadmap
 
-Foundation commands (`init`, `scan`, `create`, `guard`) ship today. The knowledge
-baseline stage (`understand`, `architecture`, `roadmap`) is the next narrative step:
-Kaddo should understand a project's state before you build tasks on top of it.
+The full knowledge loop ships today: `scan → context → agents → understand → roadmap →
+create --from roadmap → owners → guard → explain`.
 
 | Version | What shipped |
 |---|---|
@@ -372,16 +424,7 @@ Kaddo should understand a project's state before you build tasks on top of it.
 | v2.2 | Domain Owners (`kaddo owners`) |
 | v2.3 | Multirepo Module Descriptor (`kaddo module`) |
 | v2.4–2.5 | Modules: `contracts`, `capabilities`, `guard-advanced`, `agents`, `skills` |
-
-**Planned — knowledge baseline (agent-assisted):**
-
-| Version | Planned |
-|---|---|
-| next | `init` asks project state (new / pre-AI / legacy), team size and structure |
-| next | `understand` — extract capabilities, modules, risks and open questions |
-| next | `architecture` — reconstruct existing decisions into ADR candidates |
-| next | `roadmap` — turn the knowledge baseline into a prioritized roadmap |
-| next | `create --from roadmap` / `create --capability <name>` |
+| v2.6 | Knowledge loop: `context`, `understand`, `add agents`, roadmap output, `create --from roadmap`, Guard Lite end-to-end, `owners suggest`, project `explain` |
 
 **Optional modules (installed with `kaddo add`):**
 

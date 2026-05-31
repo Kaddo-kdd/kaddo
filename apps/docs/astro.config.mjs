@@ -46,8 +46,20 @@ export default defineConfig({
           items: [
             { label: 'Introduction', translations: { es: 'Introducción' }, slug: 'introduction' },
             { label: 'Getting started', translations: { es: 'Primeros pasos' }, slug: 'getting-started' },
+            { label: 'Workflow', translations: { es: 'Flujo de trabajo' }, slug: 'workflow' },
+            { label: 'Project scope', translations: { es: 'Alcance del proyecto' }, slug: 'project-scope' },
             { label: 'Knowledge Levels', translations: { es: 'Niveles de Conocimiento' }, slug: 'knowledge-levels' },
             { label: 'KDD Manifesto', translations: { es: 'Manifiesto KDD' }, slug: 'manifesto' },
+          ],
+        },
+        {
+          label: 'Use Cases',
+          translations: { es: 'Casos de uso' },
+          items: [
+            { label: 'New project', translations: { es: 'Proyecto nuevo' }, slug: 'use-cases/new-project' },
+            { label: 'Pre-AI project', translations: { es: 'Proyecto pre-IA' }, slug: 'use-cases/pre-ai-project' },
+            { label: 'Legacy project', translations: { es: 'Proyecto legacy' }, slug: 'use-cases/legacy-project' },
+            { label: 'Full workflow', translations: { es: 'Flujo completo' }, slug: 'use-cases/full-workflow' },
           ],
         },
         {

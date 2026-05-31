@@ -4,228 +4,148 @@
 
 # Kaddo — Knowledge Driven Development
 
-> Observable knowledge for evolving software with humans and AI.
+> **Prepare any codebase for AI-assisted evolution.**
+> Kaddo helps your repo remember why the code exists.
 
-Kaddo is an open source CLI toolkit based on **Knowledge Driven Development (KDD)**. It helps teams keep the minimum necessary context alive next to the code — without turning development into bureaucracy.
+Kaddo is an open-source **CLI and agent prompt toolkit** that helps new, pre-AI and legacy
+projects build a living knowledge layer close to the code. The CLI prepares and structures the
+context; your LLM agents turn it into product understanding.
 
-## Why Kaddo
+## What is Kaddo?
 
-Projects fail or degrade because knowledge is scattered across meetings, chats, tickets, emails, and outdated documents. With AI, this problem gets worse: agents build on assumptions when they lack context.
+A practical toolkit for **Knowledge Driven Development (KDD)**. It scans your repo, prepares
+context for your LLM, guides agent-based understanding, turns roadmap candidates into Work
+Items, declares ownership and warns when code changes may leave knowledge behind.
 
-Kaddo puts knowledge first, then lets AI help you build.
+It works in two layers:
 
-**The central question:** *How does Kaddo know the right knowledge was impacted by this change?*
+- **The CLI** does the deterministic work — no AI, no API key.
+- **Your LLM** does the interpretation — using Kaddo agents in your chat (Claude, ChatGPT,
+  Cursor, Copilot, Windsurf…).
 
-## What Kaddo is not
+> Kaddo does not try to make the CLI "understand everything". The CLI collects and structures
+> signals. The LLM agents turn those signals into product understanding.
 
-- Not a code generator
-- Not an agent framework
-- Not a replacement for Jira, Linear, or documentation tools
-- Not a platform
+## Why Kaddo?
 
-Kaddo occupies a different layer:
+**Your code changes. Your project knowledge often does not.**
 
-```
-Execution tools
-      ↓
-Agent frameworks
-      ↓
-Specifications
-      ↓
-Kaddo
-      ↓
-Product knowledge
-```
+Projects degrade because knowledge is scattered across meetings, chats, tickets and outdated
+docs. With AI, this gets worse: agents build on assumptions when they lack context. Kaddo
+keeps the minimum necessary context alive next to the code — without turning development into
+bureaucracy.
 
 ## Install
 
 ```bash
 npx kaddo init
+# or
+npm install -g kaddo && kaddo --help
 ```
 
-Or install globally:
+## Full workflow
 
 ```bash
-npm install -g kaddo
-kaddo --help
+kaddo init                   # state: new | pre-ai | legacy, team size, structure
+kaddo scan                   # deterministic technical inventory → .kaddo/scan.json
+kaddo context                # LLM context pack → .kaddo/context-pack.md
+kaddo add agents             # install agent prompt packs
+kaddo understand             # guided CLI → LLM handoff plan
+# ── use your LLM with the context pack + agents to create
+#    capabilities, architecture and a roadmap ──
+kaddo create --from roadmap  # turn a roadmap candidate into a Work Item
+kaddo owners suggest         # declare code: ownership on the Work Item
+kaddo guard                  # detect possible knowledge drift
+kaddo explain                # summarize what Kaddo currently knows
 ```
+
+The loop in one sentence: **scan the repo → prepare context → use agents in your LLM → create
+roadmap-driven work items → connect knowledge to code → guard against drift → explain the
+state.**
+
+## Choose your use case
+
+Pick the guide closest to your situation:
+
+- [**New project**](https://kaddo.trycatch.tv/use-cases/new-project/) — start with structured knowledge from day one.
+- [**Pre-AI project**](https://kaddo.trycatch.tv/use-cases/pre-ai-project/) — prepare an existing repo for humans and LLM agents.
+- [**Legacy project**](https://kaddo.trycatch.tv/use-cases/legacy-project/) — understand before changing risky systems.
+- [**Full workflow**](https://kaddo.trycatch.tv/use-cases/full-workflow/) — the complete loop with expected artifacts.
+- [**Project scope**](https://kaddo.trycatch.tv/project-scope/) — exactly what Kaddo does and does not do.
+
+## New vs Pre-AI vs Legacy
+
+| Project state | What Kaddo does |
+|---|---|
+| **new** | Start with a minimal knowledge structure (roadmap, work items, minimum context) without process overhead. |
+| **pre-AI** | Scan the repo, prepare a context pack and understand it with agents before evolving. |
+| **legacy** | Map ownership gradually and identify risky areas before changing code. |
+
+## CLI vs LLM agents
+
+| Layer | Responsibility |
+|---|---|
+| **Kaddo CLI (deterministic)** | init, scan, context, add agents, understand handoff, create, owners, guard, explain |
+| **LLM chat (interpretation)** | extract capabilities, reconstruct architecture, propose roadmap, identify risks, draft artifacts |
+
+**Kaddo does not** call an LLM by default, require API keys, generate code automatically,
+replace human review, or replace Jira / Linear / GitHub Issues.
 
 ## Commands
 
-### `kaddo init`
+| Command | What it does |
+|---|---|
+| `kaddo init` | Initialize Kaddo in the current project |
+| `kaddo scan` | Detect stack and suggest domains; writes `.kaddo/scan.json` + `architecture/inventory.md` |
+| `kaddo context` | Generate an LLM context pack for agent handoff |
+| `kaddo add agents` | Install agent prompt packs |
+| `kaddo understand` | Guide the CLI → LLM handoff with a state-aware agent plan |
+| `kaddo create [--from roadmap]` | Create a Work Item (feature, bugfix, hotfix, spike) |
+| `kaddo owners [suggest]` | List domain owners, or declare `code:` ownership on artifacts |
+| `kaddo guard` | Detect when modified code has related artifacts that were not updated |
+| `kaddo explain` | Summarize what Kaddo currently knows about the project |
 
-Initialize Kaddo in the current project.
+Supporting commands: `kaddo status`, `kaddo learn`, `kaddo classify`, `kaddo history`,
+`kaddo module`, `kaddo add <module>`.
 
-```bash
-kaddo init
-```
+## How ownership and Guard work
 
-Creates:
-```
-architecture/
-  knowledge.md      ← current state of the product
-  roadmap.md        ← intentions and priorities
-  work-items/       ← one file per work item
-.kaddo/
-  config.yml        ← project config
-```
-
----
-
-### `kaddo scan`
-
-Detect your project stack deterministically.
-
-```bash
-kaddo scan
-```
-
-Detects language, framework, package manager, code dirs, migration dirs, contract files, infra and test dirs. Suggests domains for human confirmation — never assumes.
-
-It also persists a reusable baseline of the project:
-
-- **`.kaddo/scan.json`** — structured, machine-readable (for the CLI and future context-pack commands).
-- **`architecture/inventory.md`** — human-readable inventory you can paste into an LLM chat.
-
-Scan detects signals and asks confirmation questions — it never claims to understand your business capabilities or architecture.
-
----
-
-## CLI + LLM Agents
-
-Kaddo works in two layers:
-
-- **The CLI** handles deterministic work: initializing the knowledge repository,
-  scanning the codebase, creating work items, reading git diff and detecting possible
-  knowledge drift. No AI needed.
-- **Your LLM** handles interpretation: using Kaddo agents to extract capabilities,
-  reconstruct architecture, identify risks and propose a roadmap from the project context.
-
-> Kaddo does not try to make the CLI "understand everything". The CLI collects and
-> structures signals. The LLM agents turn those signals into product understanding.
-
-## From scan to knowledge baseline
-
-`kaddo scan` gives Kaddo a technical inventory. But inventory is not understanding.
-
-Kaddo does not start by creating tasks — it starts by understanding the state of the
-project. For pre-AI and legacy projects, the next step is to turn that inventory into a
-knowledge baseline using Kaddo agents in your preferred LLM chat (Claude, ChatGPT,
-Cursor, Copilot, Windsurf…):
-
-- capabilities
-- modules
-- risks and unknowns
-- ownership candidates
-- architecture notes
-- roadmap candidates
-
-This agent-assisted stage is on the roadmap (`understand`, `architecture`, `roadmap`).
-Once the baseline exists and artifacts declare ownership, `create` and `guard` operate
-on real context instead of starting from scratch.
-
-```bash
-kaddo init                        # state: new | pre-ai | legacy, team size, structure
-kaddo scan                        # deterministic technical inventory
-kaddo understand                  # extract capabilities, risks, open questions  (upcoming)
-kaddo architecture                # reconstruct decisions → ADR candidates       (upcoming)
-kaddo roadmap                     # turn the baseline into a roadmap             (upcoming)
-kaddo create feature              # work items grounded in capability + roadmap
-kaddo guard                       # detect knowledge drift
-```
-
----
-
-### `kaddo create`
-
-Create a Work Item with the minimum context for its Knowledge Level.
-
-```bash
-kaddo create feature   # K2: 4 questions
-kaddo create bugfix    # K2: 4 questions
-kaddo create hotfix    # K1: 2 questions
-kaddo create spike     # K3: 4 questions
-```
-
-**Knowledge Levels:**
-
-| Level | When | Questions |
-|---|---|---|
-| K0 | Trivial change | None |
-| K1 | Hotfix / simple fix | Problem + expected result |
-| K2 | Feature or bugfix with functional impact | + impact + acceptance criteria |
-| K3 | Capability or significant change | + design |
-| K4 | Architecture change or migration | + risks |
-
-The generated file includes front matter, Definition of Done, and a Learning section.
-
-**To activate Guard Lite**, add code globs to the `code:` field of the generated front matter:
-
-```yaml
----
-type: feature
-id: WI-001
-code:
-  - src/payments/**
-  - src/shared/payment/**
----
-```
-
----
-
-### `kaddo guard`
-
-Check if modified code has related artifacts that were not updated.
-
-```bash
-kaddo guard           # checks staged + unstaged files
-kaddo guard --staged  # checks only staged files
-```
-
-Guard Lite reads `git diff`, finds artifacts with matching `code:` globs, and shows a **non-blocking FYI** if the artifact was not updated in the same diff.
-
-```
-Touched files:
-  - src/payments/payments.service.ts
-
-  FYI: src/payments/payments.service.ts matches WI-001
-  WI-001 was not modified in this diff.
-  Consider reviewing whether WI-001 still reflects the implementation.
-```
-
-Guard is **silent** when no artifacts declare ownership. No noise on day one.
-
----
-
-## How ownership works
-
-Ownership is declared in the front matter of each artifact — no central mapping file.
+Ownership is declared in the front matter of each artifact — no central mapping file:
 
 ```yaml
 ---
 type: feature
 id: WI-001
 title: "Add payment retry logic"
-knowledge_level: K2
 status: in-progress
 code:
   - src/payments/**
   - src/shared/payment/**
-summary: "Adds retry policy for failed payment attempts."
 ---
 ```
 
-Kaddo builds a simple Knowledge Graph from these front matters at runtime:
+Guard Lite reads `git diff`, finds artifacts whose `code:` globs match the changed files, and
+shows a **non-blocking FYI** when the artifact was not updated in the same diff:
 
 ```
-artifact → code globs → git diff intersection
+  ⚠ Possible knowledge drift: WI-001 (feature, K2)
+    Changed code matching this artifact:
+      - src/payments/payments.service.ts
+    WI-001 was not updated in this diff.
 ```
+
+Guard is **silent** when no artifacts declare ownership — no noise on day one. Run
+`kaddo owners suggest` to declare globs without editing YAML by hand.
+
+## What Kaddo does not do
+
+- Not a code generator
+- Not an agent execution framework (it ships agent *prompts*, it does not run them)
+- Not a replacement for Jira, Linear or documentation tools
+- Not a platform
+- Does not call an LLM or require an API key
 
 ## Roadmap
-
-Foundation commands (`init`, `scan`, `create`, `guard`) ship today. The knowledge
-baseline stage (`understand`, `architecture`, `roadmap`) is the next narrative step:
-Kaddo should understand a project's state before you build tasks on top of it.
 
 | Version | What shipped |
 |---|---|
@@ -238,20 +158,11 @@ Kaddo should understand a project's state before you build tasks on top of it.
 | v2.2 | Domain Owners (`kaddo owners`) |
 | v2.3 | Multirepo Module Descriptor (`kaddo module`) |
 | v2.4–2.5 | Modules: `contracts`, `capabilities`, `guard-advanced`, `agents`, `skills` |
-
-**Planned — knowledge baseline (agent-assisted):**
-
-| Version | Planned |
-|---|---|
-| next | `init` asks project state (new / pre-AI / legacy), team size and structure |
-| next | `understand` — extract capabilities, modules, risks and open questions |
-| next | `architecture` — reconstruct existing decisions into ADR candidates |
-| next | `roadmap` — turn the knowledge baseline into a prioritized roadmap |
-| next | `create --from roadmap` / `create --capability <name>` |
+| v2.6 | Knowledge loop: `context`, `understand`, `add agents`, roadmap output, `create --from roadmap`, Guard Lite end-to-end, `owners suggest`, project `explain` |
 
 **Optional modules (installed with `kaddo add`):**
-
-`adr` · `rfc` · `incident` · `migration` · `legacy` · `contracts` · `capabilities` · `guard-advanced` · `agents` · `skills`
+`adr` · `rfc` · `incident` · `migration` · `legacy` · `contracts` · `capabilities` ·
+`guard-advanced` · `agents` · `skills`
 
 ## Contributing
 
