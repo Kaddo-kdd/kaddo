@@ -2,6 +2,8 @@ import { scan, type ScanResult } from '../services/scanner.js'
 import { exists, readFile, writeFile, join, cwd } from '../utils/fs.js'
 import { intro, outro, log, confirm } from '../utils/ui.js'
 import { parse as parseYaml, stringify as stringifyYaml } from 'yaml'
+import { buildBaseline, serializeBaseline, readProjectContext } from '../core/scan-baseline.js'
+import { renderInventory } from '../templates/inventory-template.js'
 
 function formatList(items: string[]): string {
   return items.length > 0 ? items.map((i) => `  - ${i}`).join('\n') : '  (none detected)'
@@ -32,6 +34,11 @@ function printResult(result: ScanResult): void {
   if (result.infraFiles.length > 0) {
     console.log(`  Infrastructure:`)
     result.infraFiles.forEach((f) => console.log(`    ${f}`))
+  }
+
+  if (result.testDirs.length > 0) {
+    console.log(`  Test dirs:`)
+    result.testDirs.forEach((d) => console.log(`    ${d}/`))
   }
 
   console.log('')
@@ -81,6 +88,35 @@ function updateConfig(dir: string, result: ScanResult): void {
   }
 }
 
+async function writeBaselineArtifacts(dir: string, result: ScanResult): Promise<void> {
+  const context = readProjectContext(dir)
+  const baseline = buildBaseline(result, context)
+
+  // .kaddo/scan.json — machine-generated, always regenerated.
+  const scanJsonPath = join(dir, '.kaddo', 'scan.json')
+  writeFile(scanJsonPath, serializeBaseline(baseline))
+  log.success('Wrote .kaddo/scan.json')
+
+  // architecture/inventory.md — human-readable; guard overwrite of user-authored content.
+  const inventoryPath = join(dir, 'architecture', 'inventory.md')
+  const inventoryExists = exists(inventoryPath)
+  let writeInventory = true
+
+  if (inventoryExists) {
+    writeInventory = await confirm({
+      message: 'architecture/inventory.md already exists. Overwrite it?',
+      initialValue: true,
+    })
+  }
+
+  if (writeInventory) {
+    writeFile(inventoryPath, renderInventory(baseline))
+    log.success(`${inventoryExists ? 'Updated' : 'Wrote'} architecture/inventory.md`)
+  } else {
+    log.info('Kept existing architecture/inventory.md.')
+  }
+}
+
 export async function runScan(): Promise<void> {
   const dir = cwd()
 
@@ -88,6 +124,9 @@ export async function runScan(): Promise<void> {
 
   const result = scan(dir)
   printResult(result)
+
+  // Generate the reusable baseline artifacts (scan.json + inventory.md).
+  await writeBaselineArtifacts(dir, result)
 
   const kaddoExists = exists(join(dir, '.kaddo', 'config.yml'))
 
@@ -101,7 +140,7 @@ export async function runScan(): Promise<void> {
       log.success('Scan results saved to .kaddo/config.yml')
     }
   } else {
-    log.warn('No .kaddo/config.yml found. Run `kaddo init` first to save results.')
+    log.warn('No .kaddo/config.yml found. Run `kaddo init` first to record project context.')
   }
 
   outro('Scan complete.')

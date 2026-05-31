@@ -27,6 +27,7 @@ export type ScanResult = {
   migrationDirs: string[]
   contractFiles: string[]
   infraFiles: string[]
+  testDirs: string[]
   hasGit: boolean
   suggestedDomains: string[]
 }
@@ -151,6 +152,11 @@ function detectInfraFiles(dir: string): string[] {
   return found
 }
 
+function detectTestDirs(dir: string): string[] {
+  const candidates = ['tests', 'test', '__tests__', 'spec', 'e2e', 'cypress']
+  return candidates.filter((d) => isDir(join(dir, d)))
+}
+
 // Suggest domains from code dirs, package.json workspaces, or top-level src subdirs
 function suggestDomains(dir: string, codeDirs: string[]): string[] {
   const domains = new Set<string>()
@@ -193,6 +199,7 @@ export function scan(dir: string): ScanResult {
   const migrationDirs = detectMigrationDirs(dir)
   const contractFiles = detectContractFiles(dir)
   const infraFiles = detectInfraFiles(dir)
+  const testDirs = detectTestDirs(dir)
   const hasGit = isDir(join(dir, '.git'))
   const suggestedDomains = suggestDomains(dir, codeDirs)
 
@@ -204,6 +211,7 @@ export function scan(dir: string): ScanResult {
     migrationDirs,
     contractFiles,
     infraFiles,
+    testDirs,
     hasGit,
     suggestedDomains,
   }

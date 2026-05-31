@@ -80,7 +80,14 @@ Detect your project stack deterministically.
 kaddo scan
 ```
 
-Detects language, framework, package manager, code dirs, migration dirs, contract files, and infra. Suggests domains for human confirmation — never assumes.
+Detects language, framework, package manager, code dirs, migration dirs, contract files, infra and test dirs. Suggests domains for human confirmation — never assumes.
+
+It also persists a reusable baseline of the project:
+
+- **`.kaddo/scan.json`** — structured, machine-readable (for the CLI and future context-pack commands).
+- **`architecture/inventory.md`** — human-readable inventory you can paste into an LLM chat.
+
+Scan detects signals and asks confirmation questions — it never claims to understand your business capabilities or architecture.
 
 ---
 
