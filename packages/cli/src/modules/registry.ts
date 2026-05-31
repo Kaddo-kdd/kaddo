@@ -3,6 +3,9 @@ import { incidentModule } from './incident.js'
 import { rfcModule } from './rfc.js'
 import { migrationModule } from './migration.js'
 import { legacyModule } from './legacy.js'
+import { contractsModule } from './contracts.js'
+import { capabilitiesModule } from './capabilities.js'
+import { guardAdvancedModule } from './guard-advanced.js'
 import type { KaddoModule, ModuleWorkItemType } from './types.js'
 
 export const MODULES: Record<string, KaddoModule> = {
@@ -11,6 +14,9 @@ export const MODULES: Record<string, KaddoModule> = {
   rfc: rfcModule,
   migration: migrationModule,
   legacy: legacyModule,
+  contracts: contractsModule,
+  capabilities: capabilitiesModule,
+  'guard-advanced': guardAdvancedModule,
 }
 
 export function getModule(name: string): KaddoModule | undefined {

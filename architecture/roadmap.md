@@ -25,6 +25,7 @@ updated_at: 2026-05-31
 | [v2.1.0](https://github.com/judlup/kaddo/releases/tag/v2.1.0) | 2026-05-31 | Semantic plugins: `prisma` (destructive migrations) + `openapi` (breaking contracts) |
 | [v2.2.0](https://github.com/judlup/kaddo/releases/tag/v2.2.0) | 2026-05-31 | Domain Owners: `kaddo owners`, guard notifies owners by domain |
 | [v2.3.0](https://github.com/judlup/kaddo/releases/tag/v2.3.0) | 2026-05-31 | Multirepo Module Descriptor: `kaddo module --init` · `kaddo module --show` |
+| [v2.4.0](https://github.com/judlup/kaddo/releases/tag/v2.4.0) | 2026-05-31 | Módulos adicionales: `kaddo add contracts` · `kaddo add capabilities` · `kaddo add guard-advanced` |
 
 ---
 
@@ -287,6 +288,20 @@ Optional blocking CI when a critical domain artifact was not updated and Evidenc
 - `kaddo module` (no flags) — auto-detects: shows if descriptor exists, prompts init if not
 - Descriptor fields: `name`, `purpose`, `stack`, `responsibilities`, `contracts`, `dependencies`, `boundaries`, `ownership`, `related_artifacts`
 - 4 new tests, 154 total
+
+---
+
+## v2.4 — Módulos adicionales del manifiesto ✅ DONE
+> Tag: [v2.4.0](https://github.com/judlup/kaddo/releases/tag/v2.4.0)
+
+**Goal:** Completar el catálogo de módulos opcionales definidos en el manifiesto KDD v2.5.
+
+**Shipped:**
+- `kaddo add contracts` — documenta contratos API, eventos e integraciones compartidas (K4, 4 preguntas)
+- `kaddo add capabilities` — mapea capacidades de producto a dominios e ingeniería (K3, 3 preguntas)
+- `kaddo add guard-advanced` — instala `architecture/guard-rules/rules.yml` con configuración de reglas CI, bloqueo en artefactos críticos y umbrales por dominio
+- Módulos totales: 8 (`adr`, `incident`, `rfc`, `migration`, `legacy`, `contracts`, `capabilities`, `guard-advanced`)
+- 160 tests totales
 
 ---
 

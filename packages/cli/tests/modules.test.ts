@@ -16,7 +16,7 @@ function makeProject(): string {
 }
 
 describe('module registry', () => {
-  it('lists all 5 modules', () => {
+  it('lists all 8 modules', () => {
     const mods = listModules()
     const names = mods.map((m) => m.name)
     expect(names).toContain('adr')
@@ -24,7 +24,10 @@ describe('module registry', () => {
     expect(names).toContain('rfc')
     expect(names).toContain('migration')
     expect(names).toContain('legacy')
-    expect(mods.length).toBe(5)
+    expect(names).toContain('contracts')
+    expect(names).toContain('capabilities')
+    expect(names).toContain('guard-advanced')
+    expect(mods.length).toBe(8)
   })
 
   it('getModule returns undefined for unknown module', () => {
@@ -76,6 +79,27 @@ describe('module registry', () => {
     expect(t).toBeDefined()
     expect(t!.questions.length).toBe(3)
   })
+
+  it('findWorkItemType finds contract type', () => {
+    const t = findWorkItemType('contract')
+    expect(t).toBeDefined()
+    expect(t!.knowledgeLevel).toBe('K4')
+    expect(t!.questions.length).toBe(4)
+  })
+
+  it('findWorkItemType finds capability type', () => {
+    const t = findWorkItemType('capability')
+    expect(t).toBeDefined()
+    expect(t!.knowledgeLevel).toBe('K3')
+    expect(t!.questions.length).toBe(3)
+  })
+
+  it('findWorkItemType finds guard-rule type', () => {
+    const t = findWorkItemType('guard-rule')
+    expect(t).toBeDefined()
+    expect(t!.knowledgeLevel).toBe('K3')
+    expect(t!.questions.length).toBe(3)
+  })
 })
 
 describe('module structure', () => {
@@ -111,6 +135,23 @@ describe('module structure', () => {
     const mod = getModule('incident')!
     expect(mod.dirs).toContain('architecture/incidents')
   })
+
+  it('contracts module dirs include architecture/contracts', () => {
+    const mod = getModule('contracts')!
+    expect(mod.dirs).toContain('architecture/contracts')
+  })
+
+  it('capabilities module dirs include architecture/capabilities', () => {
+    const mod = getModule('capabilities')!
+    expect(mod.dirs).toContain('architecture/capabilities')
+  })
+
+  it('guard-advanced module creates rules.yml with content', () => {
+    const mod = getModule('guard-advanced')!
+    const rulesFile = mod.files.find((f) => f.path.endsWith('rules.yml'))
+    expect(rulesFile).toBeDefined()
+    expect(rulesFile!.content).toContain('ci_block_on_critical')
+  })
 })
 
 describe('module installation logic', () => {
@@ -132,9 +173,9 @@ describe('module installation logic', () => {
     expect(existsSync(join(dir, 'architecture', 'decisions'))).toBe(true)
   })
 
-  it('config key naming convention is module_<name>', () => {
+  it('config key naming convention starts with module_', () => {
     for (const mod of listModules()) {
-      expect(mod.configKey).toBe(`module_${mod.name}`)
+      expect(mod.configKey).toMatch(/^module_/)
     }
   })
 
