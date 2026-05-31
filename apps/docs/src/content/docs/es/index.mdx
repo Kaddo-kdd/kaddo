@@ -3,7 +3,7 @@ title: Kaddo
 description: Un CLI open source que ayuda a proyectos nuevos, pre-IA y legacy a mantener el conocimiento del producto junto al código.
 template: splash
 hero:
-  tagline: Prepara proyectos nuevos, pre-IA y legacy para evolucionar con humanos e IA.
+  tagline: Prepara cualquier base de código para evolucionar con ayuda de IA.
   image:
     file: ../../../assets/logo-full-white.png
   actions:
@@ -20,9 +20,9 @@ hero:
 import { Card, CardGrid } from '@astrojs/starlight/components';
 
 <p class="kaddo-lede">
-Kaddo es un CLI open source que escanea tu repo, ayuda a extraer las capacidades del
-sistema, reconstruye el conocimiento del proyecto y lo mantiene conectado al código a
-medida que el proyecto cambia.
+Kaddo es un CLI y toolkit de agentes open source que ayuda a proyectos nuevos, pre-IA y
+legacy a construir una capa de conocimiento viva cerca del código. El CLI prepara y
+estructura el contexto; tus agentes LLM lo convierten en entendimiento del producto.
 </p>
 
 <p class="kaddo-badge">Proyectos nuevos · Bases de código pre-IA · Sistemas legacy</p>
@@ -62,25 +62,40 @@ cambia.
   </Card>
 </CardGrid>
 
+## CLI + Agentes LLM
+
+Kaddo trabaja en dos capas.
+
+El **CLI** se encarga de lo determinístico: inicializar el repositorio de conocimiento,
+escanear el código, crear work items y detectar posibles desviaciones entre código y
+conocimiento.
+
+El **LLM** se encarga del entendimiento: usando agentes de Kaddo para extraer
+capacidades, reconstruir arquitectura, identificar riesgos y proponer un roadmap a
+partir del contexto del proyecto.
+
+> Kaddo no intenta que el CLI "entienda todo". El CLI recoge y estructura señales. Los
+> agentes en el LLM convierten esas señales en entendimiento del producto.
+
 ## Cómo funciona
 
 Kaddo no empieza creando tareas. Empieza entendiendo el estado del proyecto, y luego
 construye conocimiento de forma progresiva antes de que evoluciones el código.
 
 <CardGrid>
-  <Card title="1 · Inicializa" icon="pencil">
+  <Card title="1 · Inicializa con el CLI" icon="pencil">
     Dile a Kaddo si tu proyecto es nuevo, pre-IA o legacy, el tamaño del equipo y la estructura del repo.
   </Card>
-  <Card title="2 · Escanea" icon="magnifier">
-    Kaddo detecta de forma determinística stack, estructura, dependencias y señales técnicas.
+  <Card title="2 · Escanea el código" icon="magnifier">
+    El CLI detecta de forma determinística stack, estructura, dependencias y señales técnicas.
   </Card>
-  <Card title="3 · Entiende" icon="open-book">
-    Los agentes ayudan a extraer capacidades, arquitectura, riesgos y preguntas abiertas. *(próximamente)*
+  <Card title="3 · Entiende con agentes" icon="open-book">
+    Usa los agentes de Kaddo en tu chat LLM favorito para extraer capacidades, arquitectura, riesgos y candidatos de roadmap. *(próximamente)*
   </Card>
-  <Card title="4 · Planifica" icon="list-format">
-    Kaddo convierte la base de conocimiento en un roadmap. *(próximamente)*
+  <Card title="4 · Guarda el conocimiento" icon="list-format">
+    Kaddo mantiene el conocimiento generado cerca del código.
   </Card>
-  <Card title="5 · Evoluciona" icon="approve-check">
+  <Card title="5 · Evoluciona con seguridad" icon="approve-check">
     Crea work items y usa Guard para detectar cuándo el código puede alejarse del conocimiento.
   </Card>
 </CardGrid>

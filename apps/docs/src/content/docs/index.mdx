@@ -3,7 +3,7 @@ title: Kaddo
 description: An open-source CLI that helps new, pre-AI and legacy projects keep product knowledge close to the code.
 template: splash
 hero:
-  tagline: Prepare new, pre-AI and legacy projects to evolve with humans and AI.
+  tagline: Prepare any codebase for AI-assisted evolution.
   image:
     file: ../../assets/logo-full-white.png
   actions:
@@ -20,9 +20,9 @@ hero:
 import { Card, CardGrid } from '@astrojs/starlight/components';
 
 <p class="kaddo-lede">
-Kaddo is an open-source CLI that scans your repo, helps extract system capabilities,
-reconstructs project knowledge, and keeps that knowledge connected to the code as the
-project changes.
+Kaddo is an open-source CLI and agent toolkit that helps new, pre-AI and legacy
+projects build a living knowledge layer close to the code. The CLI prepares and
+structures the context; your LLM agents turn it into product understanding.
 </p>
 
 <p class="kaddo-badge">New projects · Pre-AI codebases · Legacy systems</p>
@@ -61,25 +61,38 @@ changes.
   </Card>
 </CardGrid>
 
+## CLI + LLM Agents
+
+Kaddo works in two layers.
+
+The **CLI** handles deterministic work: initializing the knowledge repository, scanning
+the codebase, creating work items and detecting possible knowledge drift.
+
+Your **LLM** handles interpretation: using Kaddo agents to extract capabilities,
+reconstruct architecture, identify risks and propose a roadmap from the project context.
+
+> Kaddo does not try to make the CLI "understand everything". The CLI collects and
+> structures signals. The LLM agents turn those signals into product understanding.
+
 ## How it works
 
 Kaddo does not start by creating tasks. It starts by understanding the state of the
 project, then builds knowledge progressively before you evolve the code.
 
 <CardGrid>
-  <Card title="1 · Initialize" icon="pencil">
+  <Card title="1 · Initialize with the CLI" icon="pencil">
     Tell Kaddo if your project is new, pre-AI or legacy, your team size and repo structure.
   </Card>
-  <Card title="2 · Scan" icon="magnifier">
-    Kaddo deterministically detects stack, structure, dependencies and technical signals.
+  <Card title="2 · Scan the codebase" icon="magnifier">
+    The CLI detects stack, structure, dependencies and technical signals deterministically.
   </Card>
-  <Card title="3 · Understand" icon="open-book">
-    Agents help extract capabilities, architecture, risks and open questions. *(upcoming)*
+  <Card title="3 · Understand with agents" icon="open-book">
+    Use Kaddo agents in your preferred LLM chat to extract capabilities, architecture, risks and roadmap candidates. *(upcoming)*
   </Card>
-  <Card title="4 · Plan" icon="list-format">
-    Kaddo turns the knowledge baseline into a roadmap. *(upcoming)*
+  <Card title="4 · Store the knowledge" icon="list-format">
+    Kaddo keeps the generated knowledge close to the code.
   </Card>
-  <Card title="5 · Evolve" icon="approve-check">
+  <Card title="5 · Evolve safely" icon="approve-check">
     Create work items and use Guard to detect when code may drift from knowledge.
   </Card>
 </CardGrid>

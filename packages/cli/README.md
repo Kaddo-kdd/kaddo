@@ -84,13 +84,27 @@ Detects language, framework, package manager, code dirs, migration dirs, contrac
 
 ---
 
+## CLI + LLM Agents
+
+Kaddo works in two layers:
+
+- **The CLI** handles deterministic work: initializing the knowledge repository,
+  scanning the codebase, creating work items, reading git diff and detecting possible
+  knowledge drift. No AI needed.
+- **Your LLM** handles interpretation: using Kaddo agents to extract capabilities,
+  reconstruct architecture, identify risks and propose a roadmap from the project context.
+
+> Kaddo does not try to make the CLI "understand everything". The CLI collects and
+> structures signals. The LLM agents turn those signals into product understanding.
+
 ## From scan to knowledge baseline
 
 `kaddo scan` gives Kaddo a technical inventory. But inventory is not understanding.
 
 Kaddo does not start by creating tasks — it starts by understanding the state of the
 project. For pre-AI and legacy projects, the next step is to turn that inventory into a
-knowledge baseline:
+knowledge baseline using Kaddo agents in your preferred LLM chat (Claude, ChatGPT,
+Cursor, Copilot, Windsurf…):
 
 - capabilities
 - modules
