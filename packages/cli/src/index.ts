@@ -1,5 +1,6 @@
 import { Command } from 'commander'
 import { runInit } from './commands/init.js'
+import { runScan } from './commands/scan.js'
 
 const program = new Command()
 
@@ -19,8 +20,8 @@ program
 program
   .command('scan')
   .description('Detect project stack and suggest domains')
-  .action(() => {
-    console.log('kaddo scan — coming in Slice 2')
+  .action(async () => {
+    await runScan()
   })
 
 program
