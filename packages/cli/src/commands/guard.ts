@@ -1,17 +1,16 @@
 import { getModifiedFiles, isGitRepo } from '../services/git.js'
 import { readArtifacts } from '../services/artifact-reader.js'
-import { analyzeGuard } from '../core/diff-analysis.js'
-import { exists, join, cwd } from '../utils/fs.js'
+import { analyzeGuard, type ArtifactMatch } from '../core/diff-analysis.js'
+import { loadIgnores, saveIgnore, isIgnored } from '../services/ignore-store.js'
+import { exists, join, cwd, readFile } from '../utils/fs.js'
 import { parse as parseYaml } from 'yaml'
-import { readFile } from '../utils/fs.js'
+import { confirm, text, log } from '../utils/ui.js'
 
 const ARCH_DIR = 'architecture'
 const CONFIG_PATH = '.kaddo/config.yml'
 
 type KaddoConfig = {
-  guard?: {
-    silent_without_ownership?: boolean
-  }
+  guard?: { silent_without_ownership?: boolean }
 }
 
 function loadConfig(dir: string): KaddoConfig {
@@ -31,17 +30,48 @@ function printHeader(touchedFiles: string[]) {
   console.log('')
 }
 
-function printFYI(artifactPath: string, artifactId: string, matchedFiles: string[]) {
-  const fallback = artifactPath.split('/').pop()?.replace('.md', '') ?? artifactPath
-  const id = artifactId || fallback
-  console.log(`  FYI: ${matchedFiles[0]}${matchedFiles.length > 1 ? ` (+${matchedFiles.length - 1} more)` : ''} matches ${id}`)
+function printFYI(match: ArtifactMatch) {
+  const { artifact, matchedFiles } = match
+  const id = artifact.id || artifact.title
+  const extra = matchedFiles.length > 1 ? ` (+${matchedFiles.length - 1} more)` : ''
+  console.log(`  FYI: ${matchedFiles[0]}${extra} matches ${id}`)
   console.log(`  ${id} was not modified in this diff.`)
   console.log(`  Consider reviewing whether ${id} still reflects the implementation.`)
   console.log('')
 }
 
-export async function runGuard(opts: { staged?: boolean } = {}): Promise<void> {
+function printIgnored(artifactId: string, reason: string) {
+  console.log(`  ↷ ${artifactId} ignored — ${reason}`)
+}
+
+async function offerIgnore(dir: string, match: ArtifactMatch): Promise<boolean> {
+  const id = match.artifact.id || match.artifact.title
+  const shouldIgnore = await confirm({
+    message: `Ignore ${id} in future guard runs?`,
+    initialValue: false,
+  })
+  if (!shouldIgnore) return false
+
+  const reason = await text({
+    message: 'Reason for ignoring',
+    placeholder: 'e.g. This file was moved, not functionally changed',
+    validate: (v) => (v.trim().length === 0 ? 'Reason is required.' : undefined),
+  })
+
+  saveIgnore(dir, {
+    artifact_id: id,
+    reason: reason.trim(),
+    created_at: new Date().toISOString().split('T')[0],
+    files: match.matchedFiles,
+  })
+
+  log.success(`${id} added to .kaddo/ignores.yml`)
+  return true
+}
+
+export async function runGuard(opts: { staged?: boolean; interactive?: boolean } = {}): Promise<void> {
   const dir = cwd()
+  const interactive = opts.interactive !== false
 
   const isRepo = await isGitRepo(dir)
   if (!isRepo) {
@@ -51,6 +81,7 @@ export async function runGuard(opts: { staged?: boolean } = {}): Promise<void> {
 
   const config = loadConfig(dir)
   const silentWithoutOwnership = config.guard?.silent_without_ownership ?? true
+  const ignores = loadIgnores(dir)
 
   const mode = opts.staged ? 'staged' : 'head'
   const touchedFiles = await getModifiedFiles(mode)
@@ -69,10 +100,7 @@ export async function runGuard(opts: { staged?: boolean } = {}): Promise<void> {
   const artifacts = readArtifacts(archDir)
   const result = analyzeGuard(touchedFiles, artifacts, silentWithoutOwnership)
 
-  if (result.silenced) {
-    // No artifacts with ownership — stay silent per config
-    return
-  }
+  if (result.silenced) return
 
   if (result.matches.length === 0) {
     printHeader(touchedFiles)
@@ -82,16 +110,38 @@ export async function runGuard(opts: { staged?: boolean } = {}): Promise<void> {
 
   printHeader(touchedFiles)
 
-  let fyiCount = 0
+  const fyiMatches = result.matches.filter((m) => !m.artifactWasModified)
+  const alreadyIgnoredMatches = fyiMatches.filter((m) =>
+    isIgnored(ignores, m.artifact.id || m.artifact.title)
+  )
+  const activeMatches = fyiMatches.filter(
+    (m) => !isIgnored(ignores, m.artifact.id || m.artifact.title)
+  )
 
-  for (const match of result.matches) {
-    if (!match.artifactWasModified) {
-      printFYI(match.artifact.filePath, match.artifact.id || match.artifact.title, match.matchedFiles)
-      fyiCount++
-    }
+  // Show active FYIs
+  for (const match of activeMatches) {
+    printFYI(match)
   }
 
-  if (fyiCount === 0) {
+  // Show already-ignored artifacts (compact)
+  if (alreadyIgnoredMatches.length > 0) {
+    for (const match of alreadyIgnoredMatches) {
+      const id = match.artifact.id || match.artifact.title
+      const entry = isIgnored(ignores, id)!
+      printIgnored(id, entry.reason)
+    }
+    console.log('')
+  }
+
+  if (fyiMatches.length === 0) {
     console.log('  All matched artifacts were updated in this diff.')
+    return
+  }
+
+  // Offer to ignore active FYIs interactively
+  if (interactive && activeMatches.length > 0) {
+    for (const match of activeMatches) {
+      await offerIgnore(dir, match)
+    }
   }
 }

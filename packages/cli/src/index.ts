@@ -3,6 +3,7 @@ import { runInit } from './commands/init.js'
 import { runScan } from './commands/scan.js'
 import { runCreate } from './commands/create.js'
 import { runGuard } from './commands/guard.js'
+import { runIgnore, runIgnoreList, runIgnoreRemove } from './commands/ignore.js'
 
 const program = new Command()
 
@@ -18,7 +19,6 @@ program
     await runInit()
   })
 
-// Placeholder for upcoming commands — implemented in later slices
 program
   .command('scan')
   .description('Detect project stack and suggest domains')
@@ -37,8 +37,34 @@ program
   .command('guard')
   .description('Check if modified code has related artifacts that were not updated')
   .option('--staged', 'Check only staged files')
-  .action(async (opts: { staged?: boolean }) => {
+  .option('--no-interactive', 'Disable interactive ignore prompts')
+  .action(async (opts: { staged?: boolean; interactive?: boolean }) => {
     await runGuard(opts)
+  })
+
+const ignoreCmd = program
+  .command('ignore')
+  .description('Manage guard ignore list')
+
+ignoreCmd
+  .command('add <artifact-id> <reason>')
+  .description('Ignore an artifact in future guard runs')
+  .action((artifactId: string, reason: string) => {
+    runIgnore(artifactId, reason)
+  })
+
+ignoreCmd
+  .command('list')
+  .description('List all active ignores')
+  .action(() => {
+    runIgnoreList()
+  })
+
+ignoreCmd
+  .command('remove <artifact-id>')
+  .description('Remove an artifact from the ignore list')
+  .action((artifactId: string) => {
+    runIgnoreRemove(artifactId)
   })
 
 program.parseAsync(process.argv).catch((err) => {

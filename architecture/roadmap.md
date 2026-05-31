@@ -10,7 +10,17 @@ updated_at: 2026-05-31
 
 ---
 
+## Released versions
+
+| Tag | Date | Description |
+|---|---|---|
+| [v1.0.0](https://github.com/judlup/kaddo/releases/tag/v1.0.0) | 2026-05-31 | MVP: init · scan · create · guard (Guard Lite) |
+| [v1.0.1](https://github.com/judlup/kaddo/releases/tag/v1.0.1) | 2026-05-31 | Ignore reason: guard FYIs ignorable with reason, `kaddo ignore` command |
+
+---
+
 ## v1.0 — MVP instalable ✅ DONE
+> Tag: [v1.0.0](https://github.com/judlup/kaddo/releases/tag/v1.0.0)
 
 **Goal:** Minimum installable version. A person can run the four core commands and feel the flow doesn't get in the way.
 
@@ -24,6 +34,20 @@ updated_at: 2026-05-31
 **Knowledge Levels implemented:** K0, K1, K2, K3, K4 definitions  
 **Work item types:** `feature`, `bugfix`, `hotfix`, `spike`  
 **Guard Lite rules:** no Confidence Score, no semantic diff, non-blocking, silent without ownership
+
+## Build order step 4 — Ignore reason ✅ DONE
+> Tag: [v1.0.1](https://github.com/judlup/kaddo/releases/tag/v1.0.1)
+
+**Goal:** Convert false positives into learning. Guard FYIs can be ignored with an explicit reason.
+
+| Feature | Status | Description |
+|---|---|---|
+| Interactive ignore after FYI | ✅ Done | Guard offers to ignore each FYI immediately after showing it |
+| `kaddo ignore add <id> <reason>` | ✅ Done | Non-interactive: add an ignore from CLI or scripts |
+| `kaddo ignore list` | ✅ Done | Show all active ignores with reason and date |
+| `kaddo ignore remove <id>` | ✅ Done | Remove an ignore entry |
+| `.kaddo/ignores.yml` | ✅ Done | Persisted ignore store, YAML, one entry per artifact |
+| `guard --no-interactive` | ✅ Done | Disable prompts for CI use |
 
 ---
 
@@ -195,15 +219,15 @@ Modules are optional. Core includes only what is needed to start.
 
 ## Build order (from manifesto §21)
 
-| Step | Deliverable | Why first |
-|---|---|---|
-| 1 ✅ | Work Items + K-Levels | Allows classifying changes and requesting minimum context |
-| 2 ✅ | Ownership front matter | Allows declaring what each artifact protects without a central file |
-| 3 ✅ | Guard Lite v1 | Delivers immediate value with glob intersection |
-| 4 | Ignore reason | Converts false positives into learning |
-| 5 | Transparent Evidence Score | Improves signal without inventing precision |
-| 6 | Cheap Classification Drift | Contrasts declared classification with simple signals |
-| 7 | Semantic plugins | Adds stack-specific intelligence when the base is installed |
+| Step | Deliverable | Why first | Status |
+|---|---|---|---|
+| 1 | Work Items + K-Levels | Allows classifying changes and requesting minimum context | ✅ v1.0.0 |
+| 2 | Ownership front matter | Allows declaring what each artifact protects without a central file | ✅ v1.0.0 |
+| 3 | Guard Lite v1 | Delivers immediate value with glob intersection | ✅ v1.0.0 |
+| 4 | Ignore reason | Converts false positives into learning | ✅ v1.0.1 |
+| 5 | Transparent Evidence Score | Improves signal without inventing precision | ⬜ next |
+| 6 | Cheap Classification Drift | Contrasts declared classification with simple signals | ⬜ planned |
+| 7 | Semantic plugins | Adds stack-specific intelligence when the base is installed | ⬜ planned |
 
 ---
 
