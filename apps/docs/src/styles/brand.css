@@ -1,0 +1,81 @@
+/* Kaddo brand — from the brand kit */
+:root {
+  --kaddo-navy: #141b2d;
+  --kaddo-amber: #f4b942;
+  --kaddo-warm-white: #f8f6f0;
+  --kaddo-soft-black: #232122;
+  --kaddo-tech-gray: #6b7280;
+
+  --sl-font: 'Inter', system-ui, -apple-system, sans-serif;
+  --sl-font-mono: ui-monospace, SFMono-Regular, 'Cascadia Code', monospace;
+}
+
+/* Display/headings use Poppins */
+:root {
+  --__kaddo-display: 'Poppins', 'Inter', system-ui, sans-serif;
+}
+.site-title,
+h1, h2, h3,
+.hero h1,
+.hero .tagline {
+  font-family: var(--__kaddo-display);
+  letter-spacing: -0.01em;
+}
+
+/* Dark theme — navy surfaces, amber accent */
+:root[data-theme='dark'] {
+  --sl-color-accent-low: #3a2f12;
+  --sl-color-accent: var(--kaddo-amber);
+  --sl-color-accent-high: #f9d488;
+
+  --sl-color-white: #f8f6f0;
+  --sl-color-gray-1: #e6e8ee;
+  --sl-color-gray-2: #c0c4cf;
+  --sl-color-gray-3: #8a90a0;
+  --sl-color-gray-4: #565d70;
+  --sl-color-gray-5: #2b3245;
+  --sl-color-gray-6: #1c2335;
+  --sl-color-black: #141b2d;
+  --sl-color-bg: #141b2d;
+  --sl-color-bg-nav: #11172580;
+  --sl-color-bg-sidebar: #161e31;
+  --sl-color-hairline-shade: #232c42;
+}
+
+/* Light theme — warm white surfaces, amber accent, navy text */
+:root[data-theme='light'] {
+  --sl-color-accent-low: #fbe9c2;
+  --sl-color-accent: #c8860a;
+  --sl-color-accent-high: #5a3c05;
+
+  --sl-color-white: #141b2d;
+  --sl-color-gray-1: #232122;
+  --sl-color-gray-2: #3a3f4c;
+  --sl-color-gray-3: #6b7280;
+  --sl-color-gray-4: #9aa0ac;
+  --sl-color-gray-5: #d7d4cb;
+  --sl-color-gray-6: #ece9e1;
+  --sl-color-gray-7: #f3f1ea;
+  --sl-color-black: #f8f6f0;
+  --sl-color-bg: #f8f6f0;
+  --sl-color-bg-nav: #f8f6f0cc;
+  --sl-color-bg-sidebar: #f3f1ea;
+  --sl-color-hairline-shade: #e2dfd5;
+}
+
+/* Hero call-to-action buttons in amber */
+.hero .actions a[data-variant='primary'] {
+  background: var(--kaddo-amber);
+  border-color: var(--kaddo-amber);
+  color: var(--kaddo-navy);
+}
+.hero .actions a[data-variant='primary']:hover {
+  background: #f9d488;
+  border-color: #f9d488;
+}
+
+/* Inline code + selection in brand tones */
+::selection {
+  background: var(--kaddo-amber);
+  color: var(--kaddo-navy);
+}

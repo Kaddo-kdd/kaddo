@@ -2,16 +2,36 @@ import { defineConfig } from 'astro/config'
 import starlight from '@astrojs/starlight'
 
 export default defineConfig({
-  site: 'https://docs.kaddo.trycatch.tv',
+  site: 'https://kaddo.trycatch.tv',
   integrations: [
     starlight({
       title: 'Kaddo',
       description: 'Observable knowledge for evolving software with humans and AI.',
       logo: {
-        src: './src/assets/banner.png',
+        light: './src/assets/logo-light.png',
+        dark: './src/assets/logo-dark.png',
         alt: 'Kaddo',
         replacesTitle: true,
       },
+      favicon: '/favicon.png',
+      customCss: ['./src/styles/brand.css'],
+      head: [
+        {
+          tag: 'link',
+          attrs: { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
+        },
+        {
+          tag: 'link',
+          attrs: { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: true },
+        },
+        {
+          tag: 'link',
+          attrs: {
+            rel: 'stylesheet',
+            href: 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700;800&display=swap',
+          },
+        },
+      ],
       social: {
         github: 'https://github.com/judlup/kaddo',
       },
