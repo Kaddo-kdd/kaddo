@@ -6,6 +6,7 @@ import { exists, join, cwd, readFile } from '../utils/fs.js'
 import { parse as parseYaml } from 'yaml'
 import { confirm, text, log } from '../utils/ui.js'
 import { resolvePlugins, runPlugins, type PluginSignal } from '../plugins/registry.js'
+import { loadOwners, resolveAffectedOwners, collectMatchedDomains } from '../services/owners.js'
 
 const ARCH_DIR = 'architecture'
 const CONFIG_PATH = '.kaddo/config.yml'
@@ -87,7 +88,8 @@ function printCIJson(
   touchedFiles: string[],
   activeMatches: ArtifactMatch[],
   ignoredCount: number,
-  pluginSignals: PluginSignal[]
+  pluginSignals: PluginSignal[],
+  affectedOwners: Array<{ domain: string; owners: string[] }>
 ): void {
   const output = {
     kaddo_guard: true,
@@ -96,6 +98,7 @@ function printCIJson(
     fyi_count: activeMatches.length,
     ignored_count: ignoredCount,
     plugin_signals: pluginSignals,
+    domain_owners: affectedOwners,
     findings: activeMatches.map((m) => ({
       artifact_id: m.artifact.id || m.artifact.title,
       artifact_type: m.artifact.type,
@@ -167,7 +170,10 @@ export async function runGuard(opts: { staged?: boolean; interactive?: boolean; 
 
   // JSON / CI mode
   if (jsonMode) {
-    printCIJson(touchedFiles, activeMatches, alreadyIgnoredMatches.length, pluginSignals)
+    const ownerMapCI = loadOwners(dir)
+    const matchedDomainsCI = collectMatchedDomains(activeMatches.map((m) => m.artifact.domains))
+    const affectedOwnersCI = resolveAffectedOwners(matchedDomainsCI, ownerMapCI)
+    printCIJson(touchedFiles, activeMatches, alreadyIgnoredMatches.length, pluginSignals, affectedOwnersCI)
     return
   }
 
@@ -188,6 +194,18 @@ export async function runGuard(opts: { staged?: boolean; interactive?: boolean; 
 
   // Show plugin signals
   printPluginSignals(pluginSignals)
+
+  // Show domain owners for matched domains
+  const ownerMap = loadOwners(dir)
+  const matchedDomains = collectMatchedDomains(activeMatches.map((m) => m.artifact.domains))
+  const affectedOwners = resolveAffectedOwners(matchedDomains, ownerMap)
+  if (affectedOwners.length > 0) {
+    console.log('Domain owners to notify:')
+    for (const { domain, owners } of affectedOwners) {
+      console.log(`  ${owners.join(', ')}  (${domain})`)
+    }
+    console.log('')
+  }
 
   if (fyiMatches.length === 0) {
     if (pluginSignals.length === 0) {

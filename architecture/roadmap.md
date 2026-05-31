@@ -23,6 +23,7 @@ updated_at: 2026-05-31
 | [v1.4.0](https://github.com/judlup/kaddo/releases/tag/v1.4.0) | 2026-05-31 | `kaddo guard --ci` — output JSON para CI/PR, no bloqueante |
 | [v2.0.0](https://github.com/judlup/kaddo/releases/tag/v2.0.0) | 2026-05-31 | Optional module system: `kaddo add [adr\|incident\|rfc\|migration\|legacy]` |
 | [v2.1.0](https://github.com/judlup/kaddo/releases/tag/v2.1.0) | 2026-05-31 | Semantic plugins: `prisma` (destructive migrations) + `openapi` (breaking contracts) |
+| [v2.2.0](https://github.com/judlup/kaddo/releases/tag/v2.2.0) | 2026-05-31 | Domain Owners: `kaddo owners`, guard notifies owners by domain |
 
 ---
 
@@ -256,6 +257,21 @@ Rule: the number only appears with its explanation. If it cannot be explained, i
 Optional blocking CI when a critical domain artifact was not updated and Evidence Score is high.
 - Requires explicit `critical: true` in artifact front matter
 - Domain owners can configure blocking rules per domain
+
+---
+
+## v2.2 — Domain Owners ✅ DONE
+> Tag: [v2.2.0](https://github.com/judlup/kaddo/releases/tag/v2.2.0)
+
+**Goal:** Surface who should review a change based on which domains' artifacts matched in guard.
+
+**Shipped:**
+- `kaddo owners` — lists all domain owners configured in `.kaddo/config.yml`
+- `kaddo owners --domain <name>` — shows owners for a specific domain
+- Guard integration: after FYIs, prints "Domain owners to notify: alice, bob (payments)"
+- CI JSON includes `domain_owners` array with `{ domain, owners }` entries
+- Config format: `owners: { payments: [alice, bob], orders: [carol] }`
+- 13 new tests, 150 total
 
 ---
 
