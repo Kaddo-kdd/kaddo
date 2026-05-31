@@ -49,8 +49,8 @@ Los agentes recomendados se adaptan al estado del proyecto definido en `kaddo in
 
 - **`scan`** recolecta señales técnicas deterministas.
 - **`context`** empaqueta esas señales (más conocimiento y work items) en un pack listo para el LLM.
-- **`understand`** (próximamente) permite a los agentes convertir el pack en capacidades,
-  arquitectura y candidatos de roadmap.
+- **`understand`** lo integra todo: refresca el pack y te dice qué agente ejecutar a
+  continuación, en qué orden, según el estado de tu proyecto.
 
 ## Flags
 

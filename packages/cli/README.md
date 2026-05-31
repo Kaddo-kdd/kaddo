@@ -129,7 +129,7 @@ kaddo init                        # state: new | pre-ai | legacy, team size, str
 kaddo scan                        # deterministic technical inventory
 kaddo context                     # assemble an LLM context pack for agent handoff
 kaddo add agents                  # install agent prompt packs for your LLM chat
-kaddo understand                  # extract capabilities, risks, open questions  (upcoming)
+kaddo understand                  # guide the CLI → LLM handoff with a state-aware plan
 kaddo architecture                # reconstruct decisions → ADR candidates       (upcoming)
 kaddo roadmap                     # turn the baseline into a roadmap             (upcoming)
 kaddo create feature              # work items grounded in capability + roadmap
@@ -164,8 +164,8 @@ explicitly, and recommends which agents to use based on your project state:
 | `legacy` | legacy-agent → architecture-agent → capability-agent |
 
 > `scan` collects technical signals. `context` packages those signals (plus knowledge and
-> work items) for an LLM. The upcoming `understand` will let agents turn the pack into
-> capabilities, architecture and roadmap candidates.
+> work items) for an LLM. `understand` ties it together — it refreshes the pack and tells
+> you which agent to run next, in what order, for your project state.
 
 ---
 
@@ -209,6 +209,34 @@ Recommended agent order by project state:
 
 Existing agent files are never overwritten silently. `kaddo init` does not install agents —
 add them only when you need them.
+
+---
+
+### `kaddo understand`
+
+Guide the handoff from the CLI (deterministic context) to your LLM (interpretation).
+
+```bash
+kaddo understand
+```
+
+It refreshes the context pack, recommends which agents to use — in what order — based on
+your project state, flags any agents not yet installed, and writes a reusable guide:
+
+- **`.kaddo/context-pack.md`** / **`.kaddo/context-pack.json`** — the input for agents.
+- **`.kaddo/understand.md`** — the step-by-step handoff guide (recommended flow, expected
+  outputs, copy/paste instructions).
+
+`kaddo understand` is **deterministic** — it does not call an LLM, execute agents, or
+auto-generate architecture artifacts. It works even when context is incomplete: if the scan
+baseline or some agents are missing, it still produces a plan and tells you the next
+concrete step (`kaddo scan` or `kaddo add agents`).
+
+| State | Recommended flow |
+|---|---|
+| `new` | roadmap-agent → architecture-agent |
+| `pre-ai` | capability-agent → architecture-agent → roadmap-agent |
+| `legacy` | legacy-agent → architecture-agent → capability-agent → roadmap-agent |
 
 ---
 

@@ -8,6 +8,7 @@ description: La superficie de la CLI de Kaddo.
 | `kaddo init` | Inicializa Kaddo en el proyecto actual |
 | `kaddo scan` | Detecta el stack del proyecto y sugiere dominios |
 | `kaddo context` | Genera un paquete de contexto para entregar a un agente LLM |
+| `kaddo understand` | Guía el handoff CLI → LLM con un plan de agentes según el estado |
 | `kaddo create <type>` | Crea un Work Item (feature, bugfix, hotfix, spike) |
 | `kaddo guard` | Revisa si el código modificado tiene artefactos relacionados desactualizados |
 | `kaddo explain` | Explica el Repositorio de Conocimiento para humanos o agentes |

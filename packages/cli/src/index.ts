@@ -6,6 +6,7 @@ import { runGuard } from './commands/guard.js'
 import { runIgnore, runIgnoreList, runIgnoreRemove } from './commands/ignore.js'
 import { runExplain } from './commands/explain.js'
 import { runContext } from './commands/context.js'
+import { runUnderstand } from './commands/understand.js'
 import { runClassify } from './commands/classify.js'
 import { runStatus } from './commands/status.js'
 import { runLearn } from './commands/learn.js'
@@ -95,6 +96,13 @@ program
   .option('--format <format>', 'Output format: markdown, json (default: both)')
   .action((opts: { format?: string }) => {
     runContext(opts)
+  })
+
+program
+  .command('understand')
+  .description('Guide the CLI → LLM handoff: refresh the context pack and recommend agents by project state')
+  .action(() => {
+    runUnderstand()
   })
 
 program

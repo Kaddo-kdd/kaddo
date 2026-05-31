@@ -49,8 +49,8 @@ Recommended agents adapt to the project state recorded by `kaddo init`:
 
 - **`scan`** collects deterministic technical signals.
 - **`context`** packages those signals (plus knowledge and work items) into an LLM-ready pack.
-- **`understand`** (upcoming) lets agents turn the pack into capabilities, architecture and
-  roadmap candidates.
+- **`understand`** ties it together: refreshes the pack and tells you which agent to run
+  next, in what order, for your project state.
 
 ## Flags
 

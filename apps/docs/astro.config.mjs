@@ -58,6 +58,7 @@ export default defineConfig({
             { label: 'init', slug: 'commands/init' },
             { label: 'scan', slug: 'commands/scan' },
             { label: 'context', slug: 'commands/context' },
+            { label: 'understand', slug: 'commands/understand' },
             { label: 'create', slug: 'commands/create' },
             { label: 'guard', slug: 'commands/guard' },
             { label: 'explain', slug: 'commands/explain' },
