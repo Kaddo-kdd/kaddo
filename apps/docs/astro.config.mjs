@@ -8,8 +8,7 @@ export default defineConfig({
       title: 'Kaddo',
       description: 'Observable knowledge for evolving software with humans and AI.',
       logo: {
-        light: './src/assets/logo-light.png',
-        dark: './src/assets/logo-dark.png',
+        src: './src/assets/logo-full-white.png',
         alt: 'Kaddo',
         replacesTitle: true,
       },
