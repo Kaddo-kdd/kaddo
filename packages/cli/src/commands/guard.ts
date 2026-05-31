@@ -5,12 +5,14 @@ import { loadIgnores, saveIgnore, isIgnored } from '../services/ignore-store.js'
 import { exists, join, cwd, readFile } from '../utils/fs.js'
 import { parse as parseYaml } from 'yaml'
 import { confirm, text, log } from '../utils/ui.js'
+import { resolvePlugins, runPlugins, type PluginSignal } from '../plugins/registry.js'
 
 const ARCH_DIR = 'architecture'
 const CONFIG_PATH = '.kaddo/config.yml'
 
 type KaddoConfig = {
   guard?: { silent_without_ownership?: boolean }
+  plugins?: string[]
 }
 
 function loadConfig(dir: string): KaddoConfig {
@@ -45,6 +47,17 @@ function printIgnored(artifactId: string, reason: string) {
   console.log(`  ↷ ${artifactId} ignored — ${reason}`)
 }
 
+function printPluginSignals(signals: PluginSignal[]) {
+  if (signals.length === 0) return
+  console.log('Plugin signals:')
+  for (const s of signals) {
+    const icon = s.severity === 'critical' ? '⚠' : s.severity === 'warn' ? '!' : 'i'
+    console.log(`  [${s.plugin}] ${icon} ${s.file}`)
+    console.log(`    ${s.message}`)
+  }
+  console.log('')
+}
+
 async function offerIgnore(dir: string, match: ArtifactMatch): Promise<boolean> {
   const id = match.artifact.id || match.artifact.title
   const shouldIgnore = await confirm({
@@ -73,7 +86,8 @@ async function offerIgnore(dir: string, match: ArtifactMatch): Promise<boolean> 
 function printCIJson(
   touchedFiles: string[],
   activeMatches: ArtifactMatch[],
-  ignoredCount: number
+  ignoredCount: number,
+  pluginSignals: PluginSignal[]
 ): void {
   const output = {
     kaddo_guard: true,
@@ -81,6 +95,7 @@ function printCIJson(
     touched_files: touchedFiles.length,
     fyi_count: activeMatches.length,
     ignored_count: ignoredCount,
+    plugin_signals: pluginSignals,
     findings: activeMatches.map((m) => ({
       artifact_id: m.artifact.id || m.artifact.title,
       artifact_type: m.artifact.type,
@@ -107,6 +122,7 @@ export async function runGuard(opts: { staged?: boolean; interactive?: boolean; 
   const config = loadConfig(dir)
   const silentWithoutOwnership = config.guard?.silent_without_ownership ?? true
   const ignores = loadIgnores(dir)
+  const plugins = resolvePlugins(config.plugins ?? [])
 
   const mode = opts.staged ? 'staged' : 'head'
   const touchedFiles = await getModifiedFiles(mode)
@@ -125,9 +141,15 @@ export async function runGuard(opts: { staged?: boolean; interactive?: boolean; 
   const artifacts = readArtifacts(archDir)
   const result = analyzeGuard(touchedFiles, artifacts, silentWithoutOwnership)
 
-  if (result.silenced) return
+  // Run plugins — always, regardless of artifact matches
+  const pluginSignals = runPlugins(plugins, touchedFiles, (filePath) => {
+    const abs = join(dir, filePath)
+    try { return exists(abs) ? readFile(abs) : null } catch { return null }
+  })
 
-  if (result.matches.length === 0) {
+  if (result.silenced && pluginSignals.length === 0) return
+
+  if (result.matches.length === 0 && pluginSignals.length === 0) {
     printHeader(touchedFiles)
     console.log('  No artifact ownership matches found.')
     return
@@ -145,7 +167,7 @@ export async function runGuard(opts: { staged?: boolean; interactive?: boolean; 
 
   // JSON / CI mode
   if (jsonMode) {
-    printCIJson(touchedFiles, activeMatches, alreadyIgnoredMatches.length)
+    printCIJson(touchedFiles, activeMatches, alreadyIgnoredMatches.length, pluginSignals)
     return
   }
 
@@ -164,8 +186,13 @@ export async function runGuard(opts: { staged?: boolean; interactive?: boolean; 
     console.log('')
   }
 
+  // Show plugin signals
+  printPluginSignals(pluginSignals)
+
   if (fyiMatches.length === 0) {
-    console.log('  All matched artifacts were updated in this diff.')
+    if (pluginSignals.length === 0) {
+      console.log('  All matched artifacts were updated in this diff.')
+    }
     return
   }
 

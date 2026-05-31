@@ -22,6 +22,7 @@ updated_at: 2026-05-31
 | [v1.3.0](https://github.com/judlup/kaddo/releases/tag/v1.3.0) | 2026-05-31 | `kaddo status` · `kaddo learn` · `kaddo history` — observabilidad del Knowledge Repository |
 | [v1.4.0](https://github.com/judlup/kaddo/releases/tag/v1.4.0) | 2026-05-31 | `kaddo guard --ci` — output JSON para CI/PR, no bloqueante |
 | [v2.0.0](https://github.com/judlup/kaddo/releases/tag/v2.0.0) | 2026-05-31 | Optional module system: `kaddo add [adr\|incident\|rfc\|migration\|legacy]` |
+| [v2.1.0](https://github.com/judlup/kaddo/releases/tag/v2.1.0) | 2026-05-31 | Semantic plugins: `prisma` (destructive migrations) + `openapi` (breaking contracts) |
 
 ---
 
@@ -231,9 +232,20 @@ Rule: the number only appears with its explanation. If it cannot be explained, i
 
 ---
 
-## v2.1 — Semantic Plugins
+## v2.1 — Semantic Plugins ✅ DONE
+> Tag: [v2.1.0](https://github.com/judlup/kaddo/releases/tag/v2.1.0)
 
 **Goal:** Add stack-specific semantic analysis via optional plugins. Core stays deterministic.
+
+**Shipped:**
+- `KaddoPlugin` interface — `detect(files, readFile): PluginSignal[]`
+- `plugin-prisma` — detects DROP COLUMN, DROP TABLE, RENAME COLUMN, ALTER TYPE, TRUNCATE in migration files
+- `plugin-openapi` — detects modified OpenAPI/Swagger contract files, flags breaking diff patterns
+- Plugin registry: `resolvePlugins(names)`, `runPlugins(plugins, files, readFile)` — non-fatal on plugin failure
+- Guard integration: plugins run on every `kaddo guard` call, signals shown after FYIs
+- CI JSON output includes `plugin_signals` array
+- Enable via `.kaddo/config.yml`: `plugins: [prisma, openapi]`
+- 17 new tests, 137 total
 
 ### Semantic diff plugins
 - `@kaddo/plugin-prisma` — detects destructive migrations (column removal, type change)
