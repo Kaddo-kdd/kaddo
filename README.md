@@ -38,9 +38,9 @@ bureaucracy.
 ## Install
 
 ```bash
-npx kaddo init
+npx @trycatch.tv/kaddo init
 # or
-npm install -g kaddo && kaddo --help
+npm install -g @trycatch.tv/kaddo && kaddo --help
 ```
 
 ## Full workflow

@@ -40,13 +40,13 @@ Product knowledge
 ## Install
 
 ```bash
-npx kaddo init
+npx @trycatch.tv/kaddo init
 ```
 
 Or install globally:
 
 ```bash
-npm install -g kaddo
+npm install -g @trycatch.tv/kaddo
 kaddo --help
 ```
 
