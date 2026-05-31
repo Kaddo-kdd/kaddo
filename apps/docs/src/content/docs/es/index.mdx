@@ -1,9 +1,9 @@
 ---
 title: Kaddo
-description: Un CLI open source para mantener el conocimiento del proyecto sincronizado con tu código.
+description: Un CLI open source que ayuda a proyectos nuevos, pre-IA y legacy a mantener el conocimiento del producto junto al código.
 template: splash
 hero:
-  tagline: Mantén el conocimiento del proyecto sincronizado con el código.
+  tagline: Haz que cualquier proyecto de software sea más fácil de entender y evolucionar.
   image:
     file: ../../../assets/logo-full-white.png
   actions:
@@ -20,40 +20,45 @@ hero:
 import { Card, CardGrid } from '@astrojs/starlight/components';
 
 <p class="kaddo-lede">
-Kaddo es un CLI open source para Knowledge Driven Development. Ayuda a los equipos a
-clasificar cambios, capturar el contexto mínimo que cada cambio necesita, crear work
-items ligeros y detectar cuándo un cambio de código puede dejar el conocimiento del
-producto desactualizado.
+Kaddo es un CLI open source para Knowledge Driven Development. Ayuda a proyectos
+nuevos, pre-IA y legacy a preservar el conocimiento del producto junto al código, para
+que humanos e IA puedan construir con mejor contexto.
 </p>
+
+<p class="kaddo-badge">Proyectos nuevos · Bases de código pre-IA · Sistemas legacy</p>
 
 <div class="kaddo-terminal">
   <div class="kaddo-terminal__bar"><span></span><span></span><span></span><small>kaddo</small></div>
-  <pre><code><span class="c-muted"># 1 · Inicializa Kaddo en tu repo</span>{"\n"}<span class="c-prompt">$</span> <span class="c-cmd">npx kaddo init</span>{"\n\n"}<span class="c-muted"># 2 · Crea un work item ligero</span>{"\n"}<span class="c-prompt">$</span> <span class="c-cmd">kaddo create feature</span>{"\n"}<span class="c-muted">  → WI-001 creado en K2, dueño de src/payments/**</span>{"\n\n"}<span class="c-muted"># 3 · Programa como siempre…</span>{"\n\n"}<span class="c-muted"># 4 · Revisa la deriva de conocimiento</span>{"\n"}<span class="c-prompt">$</span> <span class="c-cmd">kaddo guard</span>{"\n"}<span class="c-ok">FYI</span> src/payments/payments.service.ts coincide con WI-001{"\n"}<span class="c-muted">    WI-001 no se modificó en este diff — considera revisarlo.</span></code></pre>
+  <pre><code><span class="c-muted"># Proyecto nuevo</span>{"\n"}<span class="c-prompt">$</span> <span class="c-cmd">npx kaddo init</span>{"\n\n"}<span class="c-muted"># Proyecto existente o pre-IA</span>{"\n"}<span class="c-prompt">$</span> <span class="c-cmd">kaddo scan</span>{"\n\n"}<span class="c-muted"># Proyecto legacy</span>{"\n"}<span class="c-prompt">$</span> <span class="c-cmd">kaddo scan --legacy</span>{"\n\n"}<span class="c-muted"># Crea un work item ligero y detecta la deriva</span>{"\n"}<span class="c-prompt">$</span> <span class="c-cmd">kaddo create feature</span>{"\n"}<span class="c-prompt">$</span> <span class="c-cmd">kaddo guard</span>{"\n"}<span class="c-ok">FYI</span> src/payments/payments.service.ts coincide con WI-001{"\n"}<span class="c-muted">    WI-001 no se modificó en este diff — considera revisarlo.</span></code></pre>
 </div>
 
-<p class="kaddo-tagline-strong">Sin procesos pesados. Sin agentes obligatorios. Sin teatro de documentación.</p>
+<p class="kaddo-tagline-strong">Kaddo ayuda a que tu repo recuerde por qué existe el código.</p>
 
 ## ¿Por qué Kaddo?
 
-**Tu código cambia. Tu conocimiento muchas veces no.**
+**Tu proyecto ya tiene conocimiento. Solo está disperso.**
 
-Las decisiones de arquitectura, el contexto de producto, los contratos y los detalles
-de implementación suelen vivir en chats, tickets, reuniones o en la cabeza de alguien.
-Kaddo mantiene ese conocimiento junto a tu código y ayuda a detectar cuándo puede
-quedarse atrás.
+En proyectos nuevos, las decisiones desaparecen rápido. En proyectos pre-IA, el
+contexto nunca se preparó para los agentes. En proyectos legacy, el conocimiento suele
+vivir en la cabeza de las personas.
+
+Kaddo acerca ese conocimiento al código y ayuda a mantenerlo vivo mientras el sistema
+cambia.
+
+## Para cada etapa del proyecto
 
 <CardGrid stagger>
-  <Card title="Contexto mínimo, no más docs" icon="open-book">
-    Kaddo usa Niveles de Conocimiento K0–K4 para pedir solo lo que cada cambio necesita.
+  <Card title="Proyectos nuevos" icon="rocket">
+    Empieza con una estructura mínima de conocimiento — roadmap, work items y contexto mínimo — sin crear sobrecarga de proceso.
   </Card>
-  <Card title="Work items junto al código" icon="document">
-    Crea artefactos ligeros y trazables para features, hotfixes, spikes y migraciones.
+  <Card title="Proyectos pre-IA" icon="setting">
+    Escanea tu repo, organiza el contexto y haz que el proyecto sea más fácil de entender para las herramientas de IA.
+  </Card>
+  <Card title="Proyectos legacy" icon="open-book">
+    Mapea el ownership de forma gradual y entiende las zonas de riesgo antes de cambiarlas.
   </Card>
   <Card title="Guard contra la deriva" icon="approve-check">
     Kaddo Guard cruza el `git diff` con el ownership de los artefactos y avisa cuando el conocimiento relacionado podría necesitar revisión.
-  </Card>
-  <Card title="Para humanos y agentes" icon="rocket">
-    El conocimiento estructurado ayuda a desarrolladores, equipos y herramientas de IA a trabajar con mejor contexto.
   </Card>
 </CardGrid>
 
@@ -61,9 +66,9 @@ quedarse atrás.
 
 <CardGrid>
   <Card title="1 · Clasifica" icon="pencil">
-    Declara el tipo de cambio y obtén un Nivel de Conocimiento sugerido.
+    Declara el tipo de cambio y obtén un Nivel de Conocimiento sugerido (K0–K4).
   </Card>
-  <Card title="2 · Captura" icon="setting">
+  <Card title="2 · Captura" icon="document">
     Responde solo las preguntas necesarias para ese nivel — Kaddo crea un work item ligero.
   </Card>
   <Card title="3 · Observa" icon="magnifier">
@@ -73,6 +78,6 @@ quedarse atrás.
 
 <div class="kaddo-cta">
   ## Empieza con un repo que recuerda
-  <p>Instala Kaddo y haz del conocimiento del producto parte de tu flujo de desarrollo.</p>
+  <p>Desde proyectos nuevos hasta sistemas legacy, Kaddo mantiene el conocimiento del producto junto al código.</p>
   <a class="kaddo-btn" href="/es/getting-started/">Empezar →</a>
 </div>

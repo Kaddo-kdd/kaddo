@@ -1,9 +1,9 @@
 ---
 title: Kaddo
-description: An open-source CLI to keep project knowledge in sync with your code.
+description: An open-source CLI that helps new, pre-AI and legacy projects keep product knowledge close to the code.
 template: splash
 hero:
-  tagline: Keep project knowledge in sync with code.
+  tagline: Make any software project easier to understand and evolve.
   image:
     file: ../../assets/logo-full-white.png
   actions:
@@ -20,38 +20,44 @@ hero:
 import { Card, CardGrid } from '@astrojs/starlight/components';
 
 <p class="kaddo-lede">
-Kaddo is an open-source CLI for Knowledge Driven Development. It helps teams
-classify changes, capture the minimum context each change needs, create lightweight
-work items, and detect when code changes may leave product knowledge outdated.
+Kaddo is an open-source CLI for Knowledge Driven Development. It helps new, pre-AI and
+legacy projects preserve product knowledge close to the code, so humans and AI can
+build with better context.
 </p>
+
+<p class="kaddo-badge">New projects · Pre-AI codebases · Legacy systems</p>
 
 <div class="kaddo-terminal">
   <div class="kaddo-terminal__bar"><span></span><span></span><span></span><small>kaddo</small></div>
-  <pre><code><span class="c-muted"># 1 · Initialize Kaddo in your repo</span>{"\n"}<span class="c-prompt">$</span> <span class="c-cmd">npx kaddo init</span>{"\n\n"}<span class="c-muted"># 2 · Create a lightweight work item</span>{"\n"}<span class="c-prompt">$</span> <span class="c-cmd">kaddo create feature</span>{"\n"}<span class="c-muted">  → WI-001 created at K2, owning src/payments/**</span>{"\n\n"}<span class="c-muted"># 3 · Code as usual…</span>{"\n\n"}<span class="c-muted"># 4 · Check for knowledge drift</span>{"\n"}<span class="c-prompt">$</span> <span class="c-cmd">kaddo guard</span>{"\n"}<span class="c-ok">FYI</span> src/payments/payments.service.ts matches WI-001{"\n"}<span class="c-muted">    WI-001 was not modified in this diff — consider reviewing it.</span></code></pre>
+  <pre><code><span class="c-muted"># New project</span>{"\n"}<span class="c-prompt">$</span> <span class="c-cmd">npx kaddo init</span>{"\n\n"}<span class="c-muted"># Existing or pre-AI project</span>{"\n"}<span class="c-prompt">$</span> <span class="c-cmd">kaddo scan</span>{"\n\n"}<span class="c-muted"># Legacy project</span>{"\n"}<span class="c-prompt">$</span> <span class="c-cmd">kaddo scan --legacy</span>{"\n\n"}<span class="c-muted"># Create a lightweight work item, then detect drift</span>{"\n"}<span class="c-prompt">$</span> <span class="c-cmd">kaddo create feature</span>{"\n"}<span class="c-prompt">$</span> <span class="c-cmd">kaddo guard</span>{"\n"}<span class="c-ok">FYI</span> src/payments/payments.service.ts matches WI-001{"\n"}<span class="c-muted">    WI-001 was not modified in this diff — consider reviewing it.</span></code></pre>
 </div>
 
-<p class="kaddo-tagline-strong">No heavy process. No mandatory agents. No documentation theater.</p>
+<p class="kaddo-tagline-strong">Kaddo helps your repo remember why the code exists.</p>
 
 ## Why Kaddo?
 
-**Your code changes. Your knowledge often does not.**
+**Your project already has knowledge. It is just scattered.**
 
-Architecture decisions, product context, contracts, and implementation details usually
-live in chats, tickets, meetings, or someone's head. Kaddo keeps that knowledge close
-to your code and helps detect when it may fall behind.
+In new projects, decisions disappear fast. In pre-AI projects, context was never
+prepared for agents. In legacy projects, knowledge often lives in people's heads.
+
+Kaddo brings that knowledge closer to the code and helps keep it alive as the system
+changes.
+
+## For every project stage
 
 <CardGrid stagger>
-  <Card title="Minimum context, not more docs" icon="open-book">
-    Kaddo uses Knowledge Levels K0–K4 to ask only what each change needs.
+  <Card title="New projects" icon="rocket">
+    Start with a minimal knowledge structure — roadmap, work items and minimum context — without creating process overhead.
   </Card>
-  <Card title="Work items close to code" icon="document">
-    Create lightweight, traceable artifacts for features, hotfixes, spikes, and migrations.
+  <Card title="Pre-AI projects" icon="setting">
+    Scan your repo, organize context and make the project easier for AI tools to understand.
   </Card>
-  <Card title="Guard against knowledge drift" icon="approve-check">
+  <Card title="Legacy projects" icon="open-book">
+    Map ownership gradually and understand risky areas before changing them.
+  </Card>
+  <Card title="Guard against drift" icon="approve-check">
     Kaddo Guard checks `git diff` against artifact ownership and warns when related knowledge may need review.
-  </Card>
-  <Card title="Built for humans and agents" icon="rocket">
-    Structured knowledge helps developers, teams, and AI tools work with better context.
   </Card>
 </CardGrid>
 
@@ -59,9 +65,9 @@ to your code and helps detect when it may fall behind.
 
 <CardGrid>
   <Card title="1 · Classify" icon="pencil">
-    Declare the type of change and get a suggested Knowledge Level.
+    Declare the type of change and get a suggested Knowledge Level (K0–K4).
   </Card>
-  <Card title="2 · Capture" icon="setting">
+  <Card title="2 · Capture" icon="document">
     Answer only the questions needed for that level — Kaddo creates a lightweight work item.
   </Card>
   <Card title="3 · Observe" icon="magnifier">
@@ -71,6 +77,6 @@ to your code and helps detect when it may fall behind.
 
 <div class="kaddo-cta">
   ## Start with a repo that remembers
-  <p>Install Kaddo and make product knowledge part of your development workflow.</p>
+  <p>From new projects to legacy systems, Kaddo keeps product knowledge close to the code.</p>
   <a class="kaddo-btn" href="/getting-started/">Get started →</a>
 </div>

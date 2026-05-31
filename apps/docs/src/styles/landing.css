@@ -186,3 +186,15 @@
   font-size: 1.05rem;
   color: var(--kaddo-amber);
 }
+
+/* Project-stage badge under the hero lede */
+.kaddo-badge {
+  margin: -1rem auto 2.5rem;
+  text-align: center;
+  font-family: var(--__kaddo-display, 'Poppins', sans-serif);
+  font-weight: 600;
+  font-size: 0.8rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--kaddo-amber);
+}
