@@ -30,7 +30,7 @@ no ownership inference · no Confidence Score · the human always confirms.
 | [v2.3.0](https://github.com/judlup/kaddo/releases/tag/v2.3.0) | Multirepo Module Descriptor: `kaddo module --init` · `--show` |
 | [v2.4.0](https://github.com/judlup/kaddo/releases/tag/v2.4.0) | Modules: `contracts` · `capabilities` · `guard-advanced` |
 | [v2.5.0](https://github.com/judlup/kaddo/releases/tag/v2.5.0) | Modules `agents` + `skills` · `explain --type` · richer agent output |
-| v2.6.0 _(unreleased)_ | Knowledge Loop end-to-end + templates, multirepo modules, demo examples (see below) |
+| v2.6.0 _(unreleased)_ | Knowledge Loop end-to-end + templates, multirepo modules, demo examples, docs polish (see below) |
 
 ---
 
@@ -57,6 +57,7 @@ scan → context → understand → agents → roadmap → work item → ownersh
 | VS-018 | Templates registry | Typed registry of 23 templates (core/architecture/module/operations/legacy) + Templates docs |
 | VS-019 | Demo examples | 4 example repos (new/pre-ai/legacy/multirepo) + "Writing a custom agent" guide; docs only |
 | VS-020 | Example prompt flows | `prompt-flow.md` per example: Mermaid diagram, CLI↔LLM split, input/output table, prompt handoffs, artifact chain; docs links; no CLI/agent changes |
+| VS-021 | Mermaid click-to-zoom | Docs-site lightbox for Mermaid diagrams (scroll/pinch zoom · drag pan · Esc close); docs only |
 
 **Tests:** 299 passing · CLI build + docs build green.
 

@@ -86,3 +86,68 @@ h1, h2, h3,
   text-justify: inter-word;
   hyphens: auto;
 }
+
+/* Click-to-zoom Mermaid diagrams (see public/mermaid-zoom.js) */
+.sl-markdown-content .mermaid svg[data-kaddo-zoom] {
+  transition: filter 0.15s ease;
+}
+.sl-markdown-content .mermaid svg[data-kaddo-zoom]:hover {
+  filter: brightness(1.08);
+}
+
+.kaddo-mermaid-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(20, 27, 45, 0.92);
+  backdrop-filter: blur(2px);
+  overflow: hidden;
+}
+.kaddo-mermaid-overlay.is-open {
+  display: flex;
+}
+.kaddo-mermaid-stage {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  touch-action: none;
+}
+.kaddo-mermaid-stage svg {
+  max-width: 92vw;
+  max-height: 88vh;
+  will-change: transform;
+}
+.kaddo-mermaid-close {
+  position: absolute;
+  top: 1rem;
+  right: 1.25rem;
+  width: 2.5rem;
+  height: 2.5rem;
+  border: none;
+  border-radius: 50%;
+  background: var(--kaddo-amber);
+  color: var(--kaddo-navy);
+  font-size: 1.6rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.kaddo-mermaid-close:hover {
+  background: #f9d488;
+}
+.kaddo-mermaid-hint {
+  position: absolute;
+  bottom: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.8rem;
+  color: var(--kaddo-warm-white);
+  opacity: 0.7;
+  pointer-events: none;
+  text-align: center;
+}
