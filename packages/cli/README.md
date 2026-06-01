@@ -425,10 +425,13 @@ create --from roadmap → owners → guard → explain`.
 | v2.3 | Multirepo Module Descriptor (`kaddo module`) |
 | v2.4–2.5 | Modules: `contracts`, `capabilities`, `guard-advanced`, `agents`, `skills` |
 | v2.6 | Knowledge loop: `context`, `understand`, `add agents`, roadmap output, `create --from roadmap`, Guard Lite end-to-end, `owners suggest`, project `explain` |
+| v2.6 | Multirepo modules (`modules map/list`), global `standards`/`security`/`stack`/`git-strategy` artifacts, six operational agents |
+| v2.6 | Central template registry (23 templates, five categories) |
+| v2.6 | Demo example repositories, prompt flows and a diagram-first Visual Guide (docs) |
 
 **Optional modules (installed with `kaddo add`):**
 
-`adr` · `rfc` · `incident` · `migration` · `legacy` · `contracts` · `capabilities` · `guard-advanced` · `agents` · `skills`
+`adr` · `rfc` · `incident` · `migration` · `legacy` · `contracts` · `capabilities` · `guard-advanced` · `agents` · `skills` · `standards` · `security` · `stack` · `git-strategy`
 
 ## Contributing
 
