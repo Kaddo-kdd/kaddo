@@ -66,6 +66,55 @@ Cada prompt declara: Role · When to Use · Input Required · Expected Output ·
 Constraints · Output Format · Where to Save the Result · Quality Checklist. El input
 principal siempre es `.kaddo/context-pack.md`.
 
+## Escribir un agente custom
+
+Un agente es un prompt Markdown versionable — no código. Para crear el tuyo, agrega un
+archivo `<nombre>-agent.md` en `architecture/agents/` siguiendo la estructura canónica de
+abajo. Estas nueve secciones son **obligatorias** (los agentes propios de Kaddo se validan
+contra ellas), así que consérvalas por consistencia:
+
+```markdown
+# <Nombre> Agent
+
+## Role
+Quién es el agente y qué hace. Indica siempre: no escribe código, no inventa hechos
+de negocio, infiere con cautela y marca supuestos.
+
+## When to Use
+Qué comandos lo preceden (p. ej. `kaddo scan` + `kaddo context`) y en qué estados
+de proyecto (new / pre-ai / legacy).
+
+## Input Required
+Input principal: `.kaddo/context-pack.md`. Opcional: README, docs, OpenAPI, notas.
+
+## Expected Output
+El artefacto que produce y dónde corresponde.
+
+## Instructions
+Pasos numerados de qué analizar y producir.
+
+## Constraints
+Qué NO hacer (no inventar negocio, marcar supuestos, no generar código, etc.).
+
+## Output Format
+La forma exacta de la salida (un bloque markdown con las secciones del artefacto).
+
+## Where to Save the Result
+La ruta destino — debe coincidir con el `outputPath` de la plantilla relacionada.
+
+## Quality Checklist
+- [ ] criterios de calidad de la salida
+```
+
+Cuatro reglas mantienen un agente custom alineado con Kaddo:
+
+1. **Incluye las nueve secciones** de arriba (título + los encabezados `##`).
+2. **Referencia `.kaddo/context-pack.md`** como input principal — Kaddo nunca llama a un
+   LLM, así que el humano pega el prompt en su propio chat.
+3. **Haz coincidir la ruta de salida** en *Where to Save the Result* con el `outputPath`
+   de la plantilla relacionada, preservando la trazabilidad agente ↔ plantilla.
+4. Mantenlo como **prompt, no código**: declarativo, versionable, sin ejecución.
+
 ## Flujo
 
 ```bash

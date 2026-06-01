@@ -1,0 +1,14 @@
+version: 1
+project:
+  name: "Old Orders"
+  state: legacy
+  structure: monorepo
+  domains:
+    - orders
+    - invoicing
+team:
+  size: medium
+knowledge:
+  default_level: K3
+guard:
+  silent_without_ownership: true

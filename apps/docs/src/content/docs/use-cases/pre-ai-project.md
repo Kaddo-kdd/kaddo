@@ -51,3 +51,6 @@ architecture/work-items/*.md
 Start with the highest-value capabilities, declare ownership on the artifacts that map to real
 code, and let `kaddo guard` warn you when changes drift from the documented knowledge. See the
 [Full workflow](/use-cases/full-workflow/).
+
+See it in action: the [**Loyalty Lite**](https://github.com/judlup/kaddo/tree/main/examples/pre-ai-project)
+demo repo (includes a Guard drift demo), or browse all [Examples](/examples/).

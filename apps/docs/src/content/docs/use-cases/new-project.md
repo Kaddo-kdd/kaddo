@@ -50,3 +50,6 @@ architecture/work-items/*.md
 Keep creating Work Items from the roadmap, declare ownership as the code lands, and run
 `kaddo guard` before commits so knowledge stays connected to code. See the
 [Full workflow](/use-cases/full-workflow/) for the complete loop.
+
+See it in action: the [**Task Pilot**](https://github.com/judlup/kaddo/tree/main/examples/new-project)
+demo repo, or browse all [Examples](/examples/).

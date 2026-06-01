@@ -52,3 +52,6 @@ architecture/work-items/*.md
 Prefer small Work Items, capture unknowns as you learn, and declare ownership on the riskiest
 areas first so `kaddo guard` flags changes that may need knowledge review. See the
 [Full workflow](/use-cases/full-workflow/).
+
+See it in action: the [**Old Orders**](https://github.com/judlup/kaddo/tree/main/examples/legacy-project)
+demo repo, or browse all [Examples](/examples/).

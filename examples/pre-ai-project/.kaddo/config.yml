@@ -1,0 +1,14 @@
+version: 1
+project:
+  name: "Loyalty Lite"
+  state: pre-ai
+  structure: monorepo
+  domains:
+    - loyalty
+    - rewards
+team:
+  size: small
+knowledge:
+  default_level: K2
+guard:
+  silent_without_ownership: true

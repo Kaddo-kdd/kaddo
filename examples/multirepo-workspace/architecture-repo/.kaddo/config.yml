@@ -1,0 +1,15 @@
+version: 1
+project:
+  name: "Commerce Stack"
+  state: existing
+  structure: multirepo
+  domains:
+    - catalog
+    - orders
+    - fulfillment
+team:
+  size: medium
+knowledge:
+  default_level: K3
+guard:
+  silent_without_ownership: true

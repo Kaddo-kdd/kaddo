@@ -65,6 +65,7 @@ export default defineConfig({
             { label: 'Pre-AI project', translations: { es: 'Proyecto pre-IA' }, slug: 'use-cases/pre-ai-project' },
             { label: 'Legacy project', translations: { es: 'Proyecto legacy' }, slug: 'use-cases/legacy-project' },
             { label: 'Full workflow', translations: { es: 'Flujo completo' }, slug: 'use-cases/full-workflow' },
+            { label: 'Examples', translations: { es: 'Ejemplos' }, slug: 'examples' },
           ],
         },
         {

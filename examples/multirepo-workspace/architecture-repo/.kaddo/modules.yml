@@ -1,0 +1,70 @@
+version: 1
+modules:
+  - id: storefront-web
+    name: Storefront Web
+    repoPath: ../frontend
+    type: frontend
+    status: active
+    mainTechnology: Next.js
+    owner: web-team
+    capabilities:
+      - browse-catalog
+      - checkout
+    code:
+      - ../frontend/**
+    docs:
+      moduleDesign: architecture/modules/storefront-web/module-design.md
+      stack: architecture/modules/storefront-web/stack.md
+      security: architecture/modules/storefront-web/security.md
+      standards: architecture/modules/storefront-web/standards.md
+  - id: orders-api
+    name: Orders API
+    repoPath: ../backend
+    type: backend
+    status: active
+    mainTechnology: NestJS
+    owner: orders-team
+    capabilities:
+      - place-order
+      - order-status
+    code:
+      - ../backend/**
+    docs:
+      moduleDesign: architecture/modules/orders-api/module-design.md
+      stack: architecture/modules/orders-api/stack.md
+      security: architecture/modules/orders-api/security.md
+      standards: architecture/modules/orders-api/standards.md
+  - id: fulfillment-worker
+    name: Fulfillment Worker
+    repoPath: ../worker
+    type: worker
+    status: active
+    mainTechnology: Node.js
+    owner: fulfillment-team
+    capabilities:
+      - reserve-stock
+      - ship-order
+    code:
+      - ../worker/**
+    docs:
+      moduleDesign: architecture/modules/fulfillment-worker/module-design.md
+      stack: architecture/modules/fulfillment-worker/stack.md
+      security: architecture/modules/fulfillment-worker/security.md
+      standards: architecture/modules/fulfillment-worker/standards.md
+  - id: platform-infra
+    name: Platform Infra
+    repoPath: ../infra
+    type: infrastructure
+    status: active
+    mainTechnology: Terraform
+    owner: platform-team
+    capabilities:
+      - provisioning
+      - event-bus
+    code:
+      - ../infra/**
+    docs:
+      moduleDesign: architecture/modules/platform-infra/module-design.md
+      stack: architecture/modules/platform-infra/stack.md
+      security: architecture/modules/platform-infra/security.md
+      standards: architecture/modules/platform-infra/standards.md

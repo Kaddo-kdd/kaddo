@@ -161,6 +161,22 @@ documentation theater — they are guides, not mandatory forms. Each carries a p
 when-to-use, output path, related command/agent and a quality checklist. See the
 [Templates docs](https://kaddo.trycatch.tv/templates/overview/).
 
+## Examples
+
+The [`examples/`](examples/) folder has reproducible demo repositories — open one and see
+how Kaddo turns a project into operative knowledge, with committed `.kaddo/` and
+`architecture/` artifacts so you can inspect the output without running anything:
+
+| Example | Scenario | State | Highlights |
+|---|---|---|---|
+| [Task Pilot](examples/new-project/) | Greenfield app | `new` | Structured knowledge from day one; full loop |
+| [Loyalty Lite](examples/pre-ai-project/) | Existing app | `pre-ai` | `scan` + agents + Guard drift demo |
+| [Old Orders](examples/legacy-project/) | Legacy MVC app | `legacy` | Understand-before-change; legacy risks/unknowns |
+| [Commerce Stack](examples/multirepo-workspace/) | Many repos | `multirepo` | `modules map` + per-module artifacts |
+
+CLI artifacts are exactly what `kaddo` writes; agent outputs are clearly marked as
+illustrative. See the [Examples docs](https://kaddo.trycatch.tv/examples/).
+
 ## How ownership and Guard work
 
 Ownership is declared in the front matter of each artifact — no central mapping file:
@@ -213,6 +229,8 @@ Guard is **silent** when no artifacts declare ownership — no noise on day one.
 | v2.4–2.5 | Modules: `contracts`, `capabilities`, `guard-advanced`, `agents`, `skills` |
 | v2.6 | Knowledge loop: `context`, `understand`, `add agents`, roadmap output, `create --from roadmap`, Guard Lite end-to-end, `owners suggest`, project `explain` |
 | v2.6 | Multirepo modules (`modules map/list`), global standards/security/stack/git-strategy artifacts, six operational agents |
+| v2.6 | Central template registry (23 templates, five categories) |
+| v2.6 | Demo example repositories (`examples/`): new, pre-AI, legacy, multirepo |
 
 **Optional modules (installed with `kaddo add`):**
 `adr` · `rfc` · `incident` · `migration` · `legacy` · `contracts` · `capabilities` ·

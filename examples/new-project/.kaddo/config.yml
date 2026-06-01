@@ -1,0 +1,12 @@
+version: 1
+project:
+  name: "Task Pilot"
+  state: new
+  structure: monorepo
+  domains: []
+team:
+  size: indie
+knowledge:
+  default_level: K2
+guard:
+  silent_without_ownership: true

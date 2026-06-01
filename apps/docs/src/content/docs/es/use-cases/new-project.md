@@ -50,3 +50,6 @@ architecture/work-items/*.md
 Sigue creando Work Items desde el roadmap, declara ownership a medida que llega el código y
 ejecuta `kaddo guard` antes de los commits para que el conocimiento siga conectado al código.
 Mira el [Flujo completo](/es/use-cases/full-workflow/).
+
+Míralo en acción: el repo de demo [**Task Pilot**](https://github.com/judlup/kaddo/tree/main/examples/new-project),
+o explora todos los [Ejemplos](/es/examples/).

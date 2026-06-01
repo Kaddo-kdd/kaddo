@@ -80,9 +80,8 @@ h1, h2, h3,
   color: var(--kaddo-navy);
 }
 
-/* Justify body paragraphs in documentation content */
-.sl-markdown-content p,
-.sl-markdown-content li {
+/* Justify body paragraphs in documentation content (lists stay left-aligned) */
+.sl-markdown-content p {
   text-align: justify;
   text-justify: inter-word;
   hyphens: auto;

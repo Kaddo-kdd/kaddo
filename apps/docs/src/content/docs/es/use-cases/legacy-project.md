@@ -53,3 +53,6 @@ architecture/work-items/*.md
 Prefiere Work Items pequeños, captura las incógnitas a medida que aprendes y declara ownership
 primero en las zonas más riesgosas para que `kaddo guard` marque los cambios que puedan
 necesitar revisión de conocimiento. Mira el [Flujo completo](/es/use-cases/full-workflow/).
+
+Míralo en acción: el repo de demo [**Old Orders**](https://github.com/judlup/kaddo/tree/main/examples/legacy-project),
+o explora todos los [Ejemplos](/es/examples/).

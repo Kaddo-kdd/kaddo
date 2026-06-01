@@ -1,0 +1,24 @@
+{
+  "project": {
+    "state": "pre-ai",
+    "structure": "monorepo",
+    "teamSize": "small"
+  },
+  "detected": {
+    "languages": ["TypeScript"],
+    "frameworks": ["Next.js", "Express"],
+    "packageManagers": ["pnpm"],
+    "sourceDirectories": ["sample/src"],
+    "migrationDirectories": ["sample/migrations"],
+    "contractFiles": ["sample/openapi.yaml"],
+    "infrastructureFiles": [],
+    "testDirectories": ["sample/tests"]
+  },
+  "suggestions": {
+    "possibleDomains": ["loyalty", "rewards", "auth"],
+    "openQuestions": [
+      "Where are loyalty points calculated?",
+      "Is there a rewards catalog service?"
+    ]
+  }
+}

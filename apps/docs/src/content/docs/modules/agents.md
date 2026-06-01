@@ -66,6 +66,55 @@ Each prompt declares: Role · When to Use · Input Required · Expected Output �
 Constraints · Output Format · Where to Save the Result · Quality Checklist. The primary
 input is always `.kaddo/context-pack.md`.
 
+## Writing a custom agent
+
+An agent is a versionable Markdown prompt — not code. To add your own, drop a
+`<name>-agent.md` file in `architecture/agents/` following the canonical structure
+below. These nine sections are **required** (Kaddo's own agents are validated against
+them), so keep them for consistency:
+
+```markdown
+# <Name> Agent
+
+## Role
+Who the agent is and what it does. Always state: it does not write code, does not
+invent business facts, infers cautiously and marks assumptions.
+
+## When to Use
+Which commands precede it (e.g. `kaddo scan` + `kaddo context`) and in which
+project states (new / pre-ai / legacy).
+
+## Input Required
+Primary input: `.kaddo/context-pack.md`. Optional: README, docs, OpenAPI, notes.
+
+## Expected Output
+The artifact it produces and where it belongs.
+
+## Instructions
+Numbered steps describing what to analyze and produce.
+
+## Constraints
+What NOT to do (don't invent business context, mark assumptions, no code, etc.).
+
+## Output Format
+The exact output shape (a markdown block with the artifact's sections).
+
+## Where to Save the Result
+The destination path — it must match the `outputPath` of the related template.
+
+## Quality Checklist
+- [ ] quality criteria for the output
+```
+
+Four rules keep a custom agent aligned with Kaddo:
+
+1. **Include all nine sections** above (title + the `##` headings).
+2. **Reference `.kaddo/context-pack.md`** as the primary input — Kaddo never calls an
+   LLM, so the human pastes the prompt into their own chat.
+3. **Match the output path** in *Where to Save the Result* to the related template's
+   `outputPath`, preserving the agent ↔ template traceability.
+4. Keep it a **prompt, not code**: declarative, versionable, no execution.
+
 ## Workflow
 
 ```bash
