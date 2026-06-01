@@ -3,7 +3,10 @@ import fs from 'fs'
 import os from 'os'
 import path from 'path'
 import { parse as parseYaml } from 'yaml'
-import { mapModule, readModulesDescriptor, slugify } from '../src/commands/modules-map.js'
+import matter from 'gray-matter'
+import { mapModule, readModulesDescriptor, slugify, renderModuleArtifact } from '../src/commands/modules-map.js'
+
+const MODULE_FILES = ['module-design.md', 'stack.md', 'security.md', 'standards.md'] as const
 
 let dir: string
 
@@ -95,5 +98,77 @@ describe('mapModule — structure generation', () => {
     const res = mapModule(dir, { name: 'Infra', repoPath: '../infra', type: 'infrastructure' })
     expect(res.module.id).toBe('infra')
     expect(res.written.length).toBeGreaterThan(0)
+  })
+})
+
+describe('mapModule — registry-based artifacts (VS align-module-generation)', () => {
+  function read(id: string, file: string): string {
+    return fs.readFileSync(path.join(dir, 'architecture', 'modules', id, file), 'utf8')
+  }
+
+  it('every module artifact starts with front matter', () => {
+    mapModule(dir, { name: 'Storefront Web', repoPath: '../frontend', type: 'frontend' })
+    for (const f of MODULE_FILES) {
+      expect(read('storefront-web', f).startsWith('---\n'), f).toBe(true)
+    }
+  })
+
+  it('front matter carries module id, repoPath and code globs', () => {
+    mapModule(dir, {
+      name: 'Storefront Web',
+      repoPath: '../frontend',
+      type: 'frontend',
+      owner: 'web-team',
+      capabilities: ['checkout', 'customer-portal'],
+    })
+    for (const f of MODULE_FILES) {
+      const { data } = matter(read('storefront-web', f))
+      expect(data.module, f).toBe('storefront-web')
+      expect(data.repoPath, f).toBe('../frontend')
+      expect(data.status, f).toBe('draft')
+      expect(Array.isArray(data.code) && data.code.includes('../frontend/**'), f).toBe(true)
+    }
+    const design = matter(read('storefront-web', 'module-design.md')).data
+    expect(design.type).toBe('module-design')
+    expect(design.owner).toBe('web-team')
+    expect(design.moduleType).toBe('frontend')
+    expect(design.capabilities).toEqual(['checkout', 'customer-portal'])
+  })
+
+  it('generated artifacts include a quality checklist', () => {
+    mapModule(dir, { name: 'Backend', repoPath: '../backend', type: 'backend' })
+    for (const f of MODULE_FILES) {
+      expect(read('backend', f).toLowerCase()).toContain('## quality checklist')
+    }
+  })
+
+  it('empty owner/capabilities render safe defaults', () => {
+    mapModule(dir, { name: 'Worker', repoPath: '../worker', type: 'worker' })
+    const design = matter(read('worker', 'module-design.md')).data
+    expect(design.owner).toBe('unknown')
+    expect(design.capabilities).toEqual([])
+  })
+
+  it('renderModuleArtifact uses the registry template body', () => {
+    const out = renderModuleArtifact('module-design', {
+      id: 'backend',
+      name: 'Backend',
+      repoPath: '../backend',
+      type: 'backend',
+      status: 'active',
+      mainTechnology: 'NestJS',
+      owner: 'unknown',
+      capabilities: [],
+      code: ['../backend/**'],
+      docs: {
+        moduleDesign: 'architecture/modules/backend/module-design.md',
+        stack: 'architecture/modules/backend/stack.md',
+        security: 'architecture/modules/backend/security.md',
+        standards: 'architecture/modules/backend/standards.md',
+      },
+    })
+    expect(out).toContain('# Backend — Design')
+    expect(out).toContain('mainTechnology: NestJS')
+    expect(out).toContain('## Quality checklist')
   })
 })

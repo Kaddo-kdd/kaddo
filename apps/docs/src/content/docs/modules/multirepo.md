@@ -29,8 +29,8 @@ capabilities. It then:
 
 1. Records the module in `.kaddo/modules.yml` (upsert by id — re-mapping updates
    in place, never duplicates).
-2. Generates a starter knowledge structure (existing files are **never**
-   overwritten — they are reported as kept):
+2. Generates a knowledge structure from the **central template registry** (existing
+   files are **never** overwritten — they are reported as kept):
 
 ```
 architecture/modules/<id>/
@@ -42,8 +42,30 @@ architecture/modules/<id>/
   adrs/.gitkeep
 ```
 
-Each module also records a `code:` glob (`<repoPath>/**`) so guard and explain can
-relate code in the secondary repo to its module knowledge.
+The generated `.md` files use the official `module-design`, `module-stack`,
+`module-security` and `module-standards` templates, with **front matter prefilled**
+from the module metadata — including a `code:` glob (`<repoPath>/**`):
+
+```yaml
+---
+type: module-design
+module: storefront-web
+name: Storefront Web
+status: draft
+owner: web-team
+repoPath: ../frontend
+moduleType: frontend
+mainTechnology: Next.js
+capabilities:
+  - checkout
+code:
+  - ../frontend/**
+---
+```
+
+> The `code:` globs declare ownership consistently, but **default `kaddo guard` still
+> reads only the current repo's `git diff`** — it does not yet aggregate changes from
+> sibling repos. Cross-repo / workspace Guard is a separate future capability.
 
 ## Example: architecture-repo + frontend + backend + infra
 
@@ -66,9 +88,11 @@ architecture/modules/
   infra/   {module-design,stack,security,standards}.md  diagrams/  adrs/
 ```
 
-The starter templates are deliberately thin — refine each one with the matching
+The generated templates are deliberately thin — refine each one with the matching
 Kaddo agent (`module-design-agent`, `stack-agent`, `security-agent`,
-`standards-agent`) in your LLM, using `.kaddo/context-pack.md` as input.
+`standards-agent`) in your LLM, using `.kaddo/context-pack.md` as input. The front
+matter and quality checklist come from the template registry, so module artifacts stay
+consistent with the rest of Kaddo.
 
 ## Global vs module-level artifacts
 

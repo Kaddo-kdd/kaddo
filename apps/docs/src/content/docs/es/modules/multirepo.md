@@ -30,8 +30,8 @@ relacionadas. Luego:
 
 1. Registra el módulo en `.kaddo/modules.yml` (upsert por id — re-mapear actualiza
    en sitio, nunca duplica).
-2. Genera una estructura de conocimiento inicial (los archivos existentes **nunca**
-   se sobrescriben — se reportan como conservados):
+2. Genera una estructura de conocimiento desde el **registro central de plantillas**
+   (los archivos existentes **nunca** se sobrescriben — se reportan como conservados):
 
 ```
 architecture/modules/<id>/
@@ -43,8 +43,31 @@ architecture/modules/<id>/
   adrs/.gitkeep
 ```
 
-Cada módulo también registra un glob `code:` (`<repoPath>/**`) para que guard y
-explain puedan relacionar el código del repo secundario con su conocimiento.
+Los `.md` generados usan las plantillas oficiales `module-design`, `module-stack`,
+`module-security` y `module-standards`, con **front matter prellenado** desde la
+metadata del módulo — incluyendo un glob `code:` (`<repoPath>/**`):
+
+```yaml
+---
+type: module-design
+module: storefront-web
+name: Storefront Web
+status: draft
+owner: web-team
+repoPath: ../frontend
+moduleType: frontend
+mainTechnology: Next.js
+capabilities:
+  - checkout
+code:
+  - ../frontend/**
+---
+```
+
+> Los globs `code:` declaran ownership de forma consistente, pero **`kaddo guard` por
+> defecto sigue leyendo solo el `git diff` del repo actual** — todavía no agrega los
+> cambios de los repos hermanos. El Guard cross-repo / de workspace es una capacidad
+> futura aparte.
 
 ## Ejemplo: architecture-repo + frontend + backend + infra
 
@@ -67,9 +90,11 @@ architecture/modules/
   infra/   {module-design,stack,security,standards}.md  diagrams/  adrs/
 ```
 
-Las plantillas iniciales son deliberadamente ligeras — refina cada una con el agente
+Las plantillas generadas son deliberadamente ligeras — refina cada una con el agente
 de Kaddo correspondiente (`module-design-agent`, `stack-agent`, `security-agent`,
-`standards-agent`) en tu LLM, usando `.kaddo/context-pack.md` como input.
+`standards-agent`) en tu LLM, usando `.kaddo/context-pack.md` como input. El front
+matter y el checklist de calidad vienen del registro de plantillas, así los artefactos
+de módulo se mantienen consistentes con el resto de Kaddo.
 
 ## Artefactos globales vs por módulo
 

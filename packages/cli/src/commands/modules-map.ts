@@ -1,6 +1,7 @@
 import { cwd, exists, join, writeFile, readFile, ensureDir } from '../utils/fs.js'
 import { intro, outro, log, text, select } from '../utils/ui.js'
 import { parse as parseYaml, stringify as stringifyYaml } from 'yaml'
+import { getTemplate } from '../templates/registry.js'
 
 const DESCRIPTOR_PATH = '.kaddo/modules.yml'
 const CONFIG_PATH = '.kaddo/config.yml'
@@ -99,95 +100,99 @@ function buildModule(input: MappedModuleInput): MappedModule {
   }
 }
 
+/** Strip the leading `---` front matter block from a template body, if present. */
+function stripFrontMatter(content: string): string {
+  if (!content.startsWith('---\n')) return content
+  const end = content.indexOf('\n---', 4)
+  if (end === -1) return content
+  return content.slice(end + 4).replace(/^\n+/, '')
+}
+
+/** Render a YAML scalar list, or `key: []` when empty. */
+function yamlList(key: string, items: string[]): string[] {
+  if (items.length === 0) return [`${key}: []`]
+  return [`${key}:`, ...items.map((i) => `  - ${i}`)]
+}
+
+function frontMatter(lines: string[]): string {
+  return ['---', ...lines, '---', ''].join('\n')
+}
+
+/** Fill the descriptive placeholder lines in a registry template body. */
+function interpolateBody(body: string, mod: MappedModule): string {
+  return body
+    .replace(/<Module>/g, mod.name)
+    .replace(/^\*\*Type:\*\*.*$/m, `**Type:** ${mod.type}`)
+    .replace(/^\*\*Repository:\*\*.*$/m, `**Repository:** ${mod.repoPath}`)
+    .replace(/^\*\*Main technology:\*\*.*$/m, `**Main technology:** ${mod.mainTechnology}`)
+    .replace(/^\*\*Owner:\*\*.*$/m, `**Owner:** ${mod.owner}`)
+}
+
+function buildModuleFrontMatter(templateId: string, mod: MappedModule): string {
+  const code = yamlList('code', mod.code)
+  switch (templateId) {
+    case 'module-design':
+      return frontMatter([
+        'type: module-design',
+        `module: ${mod.id}`,
+        `name: ${mod.name}`,
+        'status: draft',
+        `owner: ${mod.owner}`,
+        `repoPath: ${mod.repoPath}`,
+        `moduleType: ${mod.type}`,
+        `mainTechnology: ${mod.mainTechnology}`,
+        ...yamlList('capabilities', mod.capabilities),
+        ...code,
+      ])
+    case 'module-stack':
+      return frontMatter([
+        'type: module-stack',
+        `module: ${mod.id}`,
+        'status: draft',
+        `repoPath: ${mod.repoPath}`,
+        `mainTechnology: ${mod.mainTechnology}`,
+        ...code,
+      ])
+    case 'module-security':
+      return frontMatter([
+        'type: module-security',
+        `module: ${mod.id}`,
+        'status: draft',
+        `repoPath: ${mod.repoPath}`,
+        `owner: ${mod.owner}`,
+        ...code,
+      ])
+    case 'module-standards':
+      return frontMatter([
+        'type: module-standards',
+        `module: ${mod.id}`,
+        'status: draft',
+        `repoPath: ${mod.repoPath}`,
+        ...code,
+      ])
+    default:
+      return frontMatter([`type: ${templateId}`, `module: ${mod.id}`, ...code])
+  }
+}
+
+/**
+ * Render a module artifact from the central template registry: generated front matter
+ * (authoritative metadata + `code:` globs) followed by the registry template body
+ * (headings + quality checklist). Deterministic — no LLM, no templating engine.
+ */
+export function renderModuleArtifact(templateId: string, mod: MappedModule): string {
+  const tpl = getTemplate(templateId)
+  const body = tpl ? interpolateBody(stripFrontMatter(tpl.content), mod) : ''
+  const rendered = buildModuleFrontMatter(templateId, mod) + body
+  return rendered.endsWith('\n') ? rendered : `${rendered}\n`
+}
+
 function moduleArtifactFiles(mod: MappedModule): { path: string; content: string }[] {
-  const title = mod.name
   return [
-    {
-      path: mod.docs.moduleDesign,
-      content: [
-        `# ${title} — Design`,
-        '',
-        '> Starter template. Refine it with the Kaddo `module-design-agent` in your LLM.',
-        '',
-        `**Type:** ${mod.type}`,
-        `**Repository:** ${mod.repoPath}`,
-        `**Main technology:** ${mod.mainTechnology}`,
-        `**Owner:** ${mod.owner}`,
-        '',
-        '## Purpose',
-        '',
-        '## Boundaries',
-        '',
-        '## Inputs / Outputs',
-        '',
-        '## Dependencies',
-        '',
-        '## Related capabilities',
-        '',
-        ...(mod.capabilities.length ? mod.capabilities.map((c) => `- ${c}`) : ['- TODO']),
-        '',
-        '## Ownership',
-        '',
-        '## Diagrams to create',
-        '',
-        '## Risks & open questions',
-        '',
-      ].join('\n'),
-    },
-    {
-      path: mod.docs.stack,
-      content: [
-        `# ${title} — Stack`,
-        '',
-        '> Starter template. Refine it with the Kaddo `stack-agent` in your LLM.',
-        '',
-        `**Main technology:** ${mod.mainTechnology}`,
-        '',
-        '## Languages',
-        '',
-        '## Frameworks',
-        '',
-        '## Data',
-        '',
-        '## Infrastructure',
-        '',
-        '## Unknowns / needs confirmation',
-        '',
-      ].join('\n'),
-    },
-    {
-      path: mod.docs.security,
-      content: [
-        `# ${title} — Security Considerations`,
-        '',
-        '> Starter template. Refine it with the Kaddo `security-agent` in your LLM.',
-        '> Kaddo does **not** perform security scanning.',
-        '',
-        '## Authentication & authorization',
-        '',
-        '## Data sensitivity',
-        '',
-        '## Secrets handling',
-        '',
-        '## Open questions',
-        '',
-      ].join('\n'),
-    },
-    {
-      path: mod.docs.standards,
-      content: [
-        `# ${title} — Standards`,
-        '',
-        '> Starter template. Refine it with the Kaddo `standards-agent` in your LLM.',
-        '',
-        '## Coding standards',
-        '',
-        '## Testing expectations',
-        '',
-        '## PR checklist',
-        '',
-      ].join('\n'),
-    },
+    { path: mod.docs.moduleDesign, content: renderModuleArtifact('module-design', mod) },
+    { path: mod.docs.stack, content: renderModuleArtifact('module-stack', mod) },
+    { path: mod.docs.security, content: renderModuleArtifact('module-security', mod) },
+    { path: mod.docs.standards, content: renderModuleArtifact('module-standards', mod) },
     { path: `${moduleDir(mod.id)}/diagrams/.gitkeep`, content: '' },
     { path: `${moduleDir(mod.id)}/adrs/.gitkeep`, content: '' },
   ]
