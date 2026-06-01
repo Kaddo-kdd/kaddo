@@ -116,7 +116,36 @@ replace human review, or replace Jira / Linear / GitHub Issues.
 | `kaddo explain` | Summarize what Kaddo currently knows about the project |
 
 Supporting commands: `kaddo status`, `kaddo learn`, `kaddo classify`, `kaddo history`,
-`kaddo module`, `kaddo add <module>`.
+`kaddo module`, `kaddo modules map|list`, `kaddo add <module>`.
+
+## Multirepo modules & global artifacts
+
+Map secondary repositories as living modules of one system from the architecture repo:
+
+```bash
+kaddo modules map    # register a secondary repo (frontend/backend/infra…) as a module
+kaddo modules list   # list mapped modules
+```
+
+This records the module in `.kaddo/modules.yml` and generates a per-module knowledge
+structure under `architecture/modules/<id>/` (`module-design.md`, `stack.md`,
+`security.md`, `standards.md`, `diagrams/`, `adrs/`). Existing files are never
+overwritten.
+
+Install **global** artifacts for the whole system on demand:
+
+```bash
+kaddo add standards    # architecture/standards.md
+kaddo add security     # architecture/security.md  (documents concerns — no scanning)
+kaddo add stack        # architecture/stack.md
+kaddo add git-strategy # architecture/git-strategy.md + .kaddo/git.yml
+```
+
+Git strategy default is **GitHub Flow + Conventional Commits + SemVer**, customizable
+via `.kaddo/git.yml` — Kaddo recommends, it does not enforce. Six **operational agents**
+(`work-item`, `git-strategy`, `security`, `standards`, `stack`, `module-design`) ship with
+`kaddo add agents` to refine these artifacts in your LLM. Kaddo never scans repos, calls a
+Git/GitHub API, or runs a security scan.
 
 ## How ownership and Guard work
 
@@ -169,10 +198,11 @@ Guard is **silent** when no artifacts declare ownership — no noise on day one.
 | v2.3 | Multirepo Module Descriptor (`kaddo module`) |
 | v2.4–2.5 | Modules: `contracts`, `capabilities`, `guard-advanced`, `agents`, `skills` |
 | v2.6 | Knowledge loop: `context`, `understand`, `add agents`, roadmap output, `create --from roadmap`, Guard Lite end-to-end, `owners suggest`, project `explain` |
+| v2.6 | Multirepo modules (`modules map/list`), global standards/security/stack/git-strategy artifacts, six operational agents |
 
 **Optional modules (installed with `kaddo add`):**
 `adr` · `rfc` · `incident` · `migration` · `legacy` · `contracts` · `capabilities` ·
-`guard-advanced` · `agents` · `skills`
+`guard-advanced` · `agents` · `skills` · `standards` · `security` · `stack` · `git-strategy`
 
 ## Contributing
 

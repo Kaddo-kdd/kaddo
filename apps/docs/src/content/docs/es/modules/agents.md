@@ -21,17 +21,25 @@ Kaddo en conocimiento estructurado del proyecto.
 ```
 architecture/agents/
   README.md
+  # Agentes de entendimiento
   capability-agent.md
   architecture-agent.md
   roadmap-agent.md
   legacy-agent.md
   adr-agent.md
+  # Agentes operativos
+  work-item-agent.md
+  git-strategy-agent.md
+  security-agent.md
+  standards-agent.md
+  stack-agent.md
+  module-design-agent.md
 ```
 
 Los archivos existentes nunca se sobrescriben en silencio — al re-ejecutar solo se instalan
 los que falten. `kaddo init` **no** instala agentes; agrégalos cuando los necesites.
 
-## Los agentes
+## Agentes de entendimiento
 
 | Agente | Propósito | Guarda en |
 |---|---|---|
@@ -40,6 +48,19 @@ los que falten. `kaddo init` **no** instala agentes; agrégalos cuando los neces
 | `roadmap-agent` | Proponer candidatos de roadmap | `architecture/roadmap.md` |
 | `legacy-agent` | Detectar riesgos/incógnitas antes de tocar código legacy | `architecture/legacy/*.md` |
 | `adr-agent` | Proponer decisiones de arquitectura candidatas | `architecture/decision-candidates.md` |
+
+## Agentes operativos
+
+Apoyan la ejecución diaria y los artefactos multirepo / globales (VS-017).
+
+| Agente | Propósito | Guarda en |
+|---|---|---|
+| `work-item-agent` | Redactar y refinar un work item desde el contexto | work item activo |
+| `git-strategy-agent` | Refinar la estrategia de Git | `architecture/git-strategy.md` |
+| `security-agent` | Documentar consideraciones de seguridad (sin escaneo) | `architecture/security.md` |
+| `standards-agent` | Definir estándares ligeros | `architecture/standards.md` |
+| `stack-agent` | Documentar el stack | `architecture/stack.md` |
+| `module-design-agent` | Completar el diseño de un módulo | `architecture/modules/<id>/module-design.md` |
 
 Cada prompt declara: Role · When to Use · Input Required · Expected Output · Instructions ·
 Constraints · Output Format · Where to Save the Result · Quality Checklist. El input

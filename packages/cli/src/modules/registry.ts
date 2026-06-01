@@ -8,6 +8,7 @@ import { capabilitiesModule } from './capabilities.js'
 import { guardAdvancedModule } from './guard-advanced.js'
 import { agentsModule } from './agents.js'
 import { skillsModule } from './skills.js'
+import { standardsModule, securityModule, stackModule, gitStrategyModule } from './global-docs.js'
 import type { KaddoModule, ModuleWorkItemType } from './types.js'
 
 export const MODULES: Record<string, KaddoModule> = {
@@ -21,6 +22,10 @@ export const MODULES: Record<string, KaddoModule> = {
   'guard-advanced': guardAdvancedModule,
   agents: agentsModule,
   skills: skillsModule,
+  standards: standardsModule,
+  security: securityModule,
+  stack: stackModule,
+  'git-strategy': gitStrategyModule,
 }
 
 export function getModule(name: string): KaddoModule | undefined {

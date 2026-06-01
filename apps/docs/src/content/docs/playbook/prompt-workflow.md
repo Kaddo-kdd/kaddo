@@ -18,6 +18,9 @@ deterministic and need no LLM.
 | Ownership | work item + scan | none | front matter ownership | updated Work Item |
 | Guard | `git diff` + ownership | none | drift warning | terminal output |
 | Explain | Kaddo artifacts | none | project summary | `.kaddo/explain.md` |
+| Module design | `kaddo modules map` | `module-design-agent` | module design | `architecture/modules/<id>/module-design.md` |
+| Standards / security / stack | `kaddo add <topic>` | `standards-` / `security-` / `stack-agent` | global artifact | `architecture/<topic>.md` |
+| Git strategy | `kaddo add git-strategy` | `git-strategy-agent` | git strategy | `architecture/git-strategy.md` |
 
 > Kaddo never calls an LLM for you. You run the agents in your own chat (Claude, ChatGPT,
 > Cursor, Copilot, Windsurf…), then save the output to the artifact path above.

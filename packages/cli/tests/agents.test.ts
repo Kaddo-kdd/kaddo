@@ -42,9 +42,9 @@ afterEach(() => {
 })
 
 describe('agents module — prompt pack source', () => {
-  it('defines the five base agents', () => {
+  it('defines the five base understanding agents first', () => {
     const names = AGENT_PROMPTS.map((a) => a.fileName)
-    expect(names).toEqual([
+    expect(names.slice(0, 5)).toEqual([
       'capability-agent.md',
       'architecture-agent.md',
       'roadmap-agent.md',

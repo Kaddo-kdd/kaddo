@@ -18,6 +18,9 @@ son totalmente determinísticos y no necesitan LLM.
 | Ownership | work item + scan | ninguno | ownership en front matter | Work Item actualizado |
 | Guard | `git diff` + ownership | ninguno | aviso de drift | salida de terminal |
 | Explain | artefactos de Kaddo | ninguno | resumen del proyecto | `.kaddo/explain.md` |
+| Diseño de módulo | `kaddo modules map` | `module-design-agent` | diseño del módulo | `architecture/modules/<id>/module-design.md` |
+| Estándares / seguridad / stack | `kaddo add <tema>` | `standards-` / `security-` / `stack-agent` | artefacto global | `architecture/<tema>.md` |
+| Estrategia de Git | `kaddo add git-strategy` | `git-strategy-agent` | estrategia de git | `architecture/git-strategy.md` |
 
 > Kaddo nunca llama a un LLM por ti. Tú ejecutas los agentes en tu propio chat (Claude,
 > ChatGPT, Cursor, Copilot, Windsurf…) y luego guardas el output en la ruta de artefacto de

@@ -21,17 +21,25 @@ structured project knowledge.
 ```
 architecture/agents/
   README.md
+  # Understanding agents
   capability-agent.md
   architecture-agent.md
   roadmap-agent.md
   legacy-agent.md
   adr-agent.md
+  # Operational agents
+  work-item-agent.md
+  git-strategy-agent.md
+  security-agent.md
+  standards-agent.md
+  stack-agent.md
+  module-design-agent.md
 ```
 
 Existing agent files are never overwritten silently — re-running the command only installs
 missing files. `kaddo init` does **not** install agents; add them when you need them.
 
-## The agents
+## Understanding agents
 
 | Agent | Purpose | Saves to |
 |---|---|---|
@@ -40,6 +48,19 @@ missing files. `kaddo init` does **not** install agents; add them when you need 
 | `roadmap-agent` | Propose roadmap candidates | `architecture/roadmap.md` |
 | `legacy-agent` | Surface risks/unknowns before changing legacy code | `architecture/legacy/*.md` |
 | `adr-agent` | Propose candidate architecture decisions | `architecture/decision-candidates.md` |
+
+## Operational agents
+
+These support day-to-day execution and the multirepo / global artifacts (VS-017).
+
+| Agent | Purpose | Saves to |
+|---|---|---|
+| `work-item-agent` | Draft and refine a work item from context | active work item |
+| `git-strategy-agent` | Refine the Git strategy | `architecture/git-strategy.md` |
+| `security-agent` | Document security considerations (no scanning) | `architecture/security.md` |
+| `standards-agent` | Define lightweight standards | `architecture/standards.md` |
+| `stack-agent` | Document the stack | `architecture/stack.md` |
+| `module-design-agent` | Fill in a module's design | `architecture/modules/<id>/module-design.md` |
 
 Each prompt declares: Role · When to Use · Input Required · Expected Output · Instructions ·
 Constraints · Output Format · Where to Save the Result · Quality Checklist. The primary

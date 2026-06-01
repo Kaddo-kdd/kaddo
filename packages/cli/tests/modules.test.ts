@@ -16,7 +16,7 @@ function makeProject(): string {
 }
 
 describe('module registry', () => {
-  it('lists all 10 modules', () => {
+  it('lists all 14 modules', () => {
     const mods = listModules()
     const names = mods.map((m) => m.name)
     expect(names).toContain('adr')
@@ -29,7 +29,11 @@ describe('module registry', () => {
     expect(names).toContain('guard-advanced')
     expect(names).toContain('agents')
     expect(names).toContain('skills')
-    expect(mods.length).toBe(10)
+    expect(names).toContain('standards')
+    expect(names).toContain('security')
+    expect(names).toContain('stack')
+    expect(names).toContain('git-strategy')
+    expect(mods.length).toBe(14)
   })
 
   it('getModule returns undefined for unknown module', () => {
@@ -106,11 +110,15 @@ describe('module registry', () => {
 
 describe('module structure', () => {
   it('each module has required fields', () => {
+    // Doc-only modules (VS-017 global artifacts) ship templates, not work item types.
+    const docOnly = new Set(['standards', 'security', 'stack', 'git-strategy'])
     for (const mod of listModules()) {
       expect(mod.name).toBeTruthy()
       expect(mod.configKey).toBeTruthy()
       expect(mod.dirs.length).toBeGreaterThan(0)
-      expect(mod.workItemTypes.length).toBeGreaterThan(0)
+      if (!docOnly.has(mod.name)) {
+        expect(mod.workItemTypes.length, mod.name).toBeGreaterThan(0)
+      }
     }
   })
 

@@ -14,6 +14,7 @@ import { runHistory } from './commands/history.js'
 import { runAdd } from './commands/add.js'
 import { runOwners, runOwnersSuggest } from './commands/owners.js'
 import { runModuleDescriptor } from './commands/module-descriptor.js'
+import { runModulesMap, runModulesList } from './commands/modules-map.js'
 
 const program = new Command()
 
@@ -156,9 +157,23 @@ program
   .option('--show', 'Print the current module descriptor')
   .action(async (opts: { init?: boolean; show?: boolean }) => { await runModuleDescriptor(opts) })
 
+const modulesCmd = program
+  .command('modules')
+  .description('Map and list secondary repositories as modules of the system (multirepo)')
+
+modulesCmd
+  .command('map')
+  .description('Register a secondary repository as a module and generate its knowledge structure')
+  .action(async () => { await runModulesMap() })
+
+modulesCmd
+  .command('list')
+  .description('List mapped modules')
+  .action(() => { runModulesList() })
+
 program
   .command('add [module]')
-  .description('Install an optional Kaddo module (adr, incident, rfc, migration, legacy)')
+  .description('Install an optional Kaddo module (adr, incident, rfc, migration, legacy, agents, standards, security, stack, git-strategy)')
   .action((moduleName?: string) => { runAdd(moduleName ?? '') })
 
 program.parseAsync(process.argv).catch((err) => {
