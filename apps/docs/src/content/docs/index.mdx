@@ -144,6 +144,40 @@ Browse them in the [Examples](/examples/) guide, or explore the
 [Templates](/templates/overview/) that capture minimum sufficient knowledge for each
 artifact.
 
+## Scale to multirepo
+
+Kaddo also models a system that spans many repositories. From the architecture repo you
+map secondary repos as modules and keep their knowledge close to the code:
+
+```bash
+kaddo modules map        # register a secondary repo (frontend/backend/infra…) as a module
+kaddo modules list       # list mapped modules
+kaddo add standards|security|stack|git-strategy   # global, system-wide artifacts
+```
+
+<CardGrid>
+  <Card title="Per-module knowledge" icon="document">
+    `modules map` generates template-based `module-design`, `stack`, `security` and
+    `standards` artifacts under `architecture/modules/<id>/`, with front matter and
+    `code:` ownership globs.
+  </Card>
+  <Card title="Module-aware context & explain" icon="list-format">
+    `kaddo context` and `kaddo explain` surface mapped modules and their artifact
+    coverage — distinct from add-on modules installed with `kaddo add`.
+  </Card>
+  <Card title="Workspace Guard" icon="approve-check">
+    Opt-in `kaddo guard --workspace` checks local mapped repos and flags possible drift
+    against `code:` globs — non-blocking, no cloning, no remote APIs.
+  </Card>
+  <Card title="Global artifacts" icon="seti:config">
+    Standards, security, stack and a recommended Git strategy document cross-cutting
+    concerns once for the whole system.
+  </Card>
+</CardGrid>
+
+See the [Multirepo modules](/modules/multirepo/) guide and the
+[Visual Guide](/visual-guide/) for the full system map.
+
 <div class="kaddo-cta">
   ## Start with a repo that remembers
   <p>From new projects to legacy systems, Kaddo keeps product knowledge close to the code.</p>

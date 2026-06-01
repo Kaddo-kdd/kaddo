@@ -146,6 +146,41 @@ Explóralos en la guía de [Ejemplos](/es/examples/), o revisa las
 [Plantillas](/es/templates/overview/) que capturan el conocimiento mínimo suficiente
 para cada artefacto.
 
+## Escala a multirepo
+
+Kaddo también modela un sistema repartido en muchos repositorios. Desde el repo de
+arquitectura mapeas repos secundarios como módulos y mantienes su conocimiento junto al
+código:
+
+```bash
+kaddo modules map        # registra un repo secundario (frontend/backend/infra…) como módulo
+kaddo modules list       # lista los módulos mapeados
+kaddo add standards|security|stack|git-strategy   # artefactos globales del sistema
+```
+
+<CardGrid>
+  <Card title="Conocimiento por módulo" icon="document">
+    `modules map` genera artefactos basados en plantillas (`module-design`, `stack`,
+    `security`, `standards`) bajo `architecture/modules/<id>/`, con front matter y globs
+    `code:` de ownership.
+  </Card>
+  <Card title="Context y explain module-aware" icon="list-format">
+    `kaddo context` y `kaddo explain` muestran los módulos mapeados y su cobertura de
+    artefactos — distintos de los add-ons instalados con `kaddo add`.
+  </Card>
+  <Card title="Guard de workspace" icon="approve-check">
+    El opt-in `kaddo guard --workspace` revisa los repos locales mapeados y señala posible
+    drift contra los globs `code:` — no bloqueante, sin clonar, sin APIs remotas.
+  </Card>
+  <Card title="Artefactos globales" icon="seti:config">
+    Estándares, seguridad, stack y una estrategia de Git recomendada documentan lo
+    transversal una sola vez para todo el sistema.
+  </Card>
+</CardGrid>
+
+Mira la guía de [Módulos multirepo](/es/modules/multirepo/) y la
+[Guía visual](/es/visual-guide/) para el mapa completo del sistema.
+
 <div class="kaddo-cta">
   ## Empieza con un repo que recuerda
   <p>Desde proyectos nuevos hasta sistemas legacy, Kaddo mantiene el conocimiento del producto junto al código.</p>
