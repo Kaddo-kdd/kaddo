@@ -174,8 +174,11 @@ how Kaddo turns a project into operative knowledge, with committed `.kaddo/` and
 | [Old Orders](examples/legacy-project/) | Legacy MVC app | `legacy` | Understand-before-change; legacy risks/unknowns |
 | [Commerce Stack](examples/multirepo-workspace/) | Many repos | `multirepo` | `modules map` + per-module artifacts |
 
-CLI artifacts are exactly what `kaddo` writes; agent outputs are clearly marked as
-illustrative. See the [Examples docs](https://kaddo.trycatch.tv/examples/).
+Each example also ships a `prompt-flow.md` — a Mermaid diagram, the CLI↔LLM split, an
+input/output table and copy/paste prompt handoffs — so you can reproduce the full loop
+without guessing which prompt to use. CLI artifacts are exactly what `kaddo` writes;
+agent outputs are clearly marked as illustrative. See the
+[Examples docs](https://kaddo.trycatch.tv/examples/).
 
 ## How ownership and Guard work
 

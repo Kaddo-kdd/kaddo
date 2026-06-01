@@ -56,6 +56,7 @@ scan → context → understand → agents → roadmap → work item → ownersh
 | VS-017 | Multirepo & operational agents | `kaddo modules map/list`; global standards/security/stack/git-strategy; 6 operational agents |
 | VS-018 | Templates registry | Typed registry of 23 templates (core/architecture/module/operations/legacy) + Templates docs |
 | VS-019 | Demo examples | 4 example repos (new/pre-ai/legacy/multirepo) + "Writing a custom agent" guide; docs only |
+| VS-020 | Example prompt flows | `prompt-flow.md` per example: Mermaid diagram, CLI↔LLM split, input/output table, prompt handoffs, artifact chain; docs links; no CLI/agent changes |
 
 **Tests:** 299 passing · CLI build + docs build green.
 

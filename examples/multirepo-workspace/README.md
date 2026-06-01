@@ -46,4 +46,5 @@ refine those docs with the `module-design-agent` in your LLM.
 - **Illustrative** (hand-written for the demo): the filled-in module designs, the
   sample source files in each code repo, and `expected-flow.md`.
 
-See [`expected-flow.md`](./expected-flow.md) for the step-by-step walkthrough.
+See [`expected-flow.md`](./expected-flow.md) for the step-by-step walkthrough, and
+[`prompt-flow.md`](./prompt-flow.md) for the prompts, diagram and per-module handoff.

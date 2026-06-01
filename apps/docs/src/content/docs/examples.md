@@ -21,6 +21,10 @@ see exactly what Kaddo produces before running anything.
 
 - `README.md` — the scenario, the commands to run, and what to inspect.
 - `expected-flow.md` — a `command → output → artifact → next step` walkthrough.
+- `prompt-flow.md` — the **prompt flow**: a Mermaid diagram, the CLI↔LLM split, an
+  input/output table (CLI command / LLM agent / input / output / save as), copy/paste
+  prompt handoffs and the artifact chain — so you can reproduce the loop without
+  guessing which prompt to use.
 - committed sample files (`.kaddo/`, `architecture/`, `sample/`) so the artifacts
   are visible without running anything.
 

@@ -59,4 +59,5 @@ Guard is **silent** until an artifact declares `code:` ownership — no noise on
 | `sample-agent-outputs/roadmap.md` | **Illustrative** LLM output |
 | `architecture/work-items/WI-001-loyalty-tiers.md` | CLI (`create --from roadmap`) |
 
-See [`expected-flow.md`](./expected-flow.md).
+See [`expected-flow.md`](./expected-flow.md), and
+[`prompt-flow.md`](./prompt-flow.md) for the prompts, diagram and Guard drift demo.

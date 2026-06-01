@@ -20,7 +20,8 @@ kaddo owners suggest             # declare code: globs on the work item
 kaddo explain                    # → .kaddo/explain.md
 ```
 
-See [`expected-flow.md`](./expected-flow.md) for the step-by-step output.
+See [`expected-flow.md`](./expected-flow.md) for the step-by-step output, and
+[`prompt-flow.md`](./prompt-flow.md) for the prompts, diagram and CLI↔LLM handoff.
 
 ## What to inspect
 

@@ -41,4 +41,5 @@ and propose a roadmap.
 | `sample-agent-outputs/current-state.md` | **Illustrative** `architecture-agent` output |
 | `architecture/work-items/WI-001-add-order-status-logging.md` | CLI (`create`) — a low-risk first step |
 
-See [`expected-flow.md`](./expected-flow.md).
+See [`expected-flow.md`](./expected-flow.md), and
+[`prompt-flow.md`](./prompt-flow.md) for the prompts, diagram and safe-change guidance.

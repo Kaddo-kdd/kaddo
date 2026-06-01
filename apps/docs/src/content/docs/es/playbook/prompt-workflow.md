@@ -84,5 +84,9 @@ Mantenlo conciso. Salida en Markdown para un artefacto ADR.
 
 ---
 
+Míralo de punta a punta: cada [ejemplo](/es/examples/) incluye un `prompt-flow.md` con un
+diagrama Mermaid, una tabla input/output y handoffs de prompts para copiar/pegar según su
+escenario.
+
 Siguiente: [Trazabilidad de Work Items](/es/playbook/work-item-traceability/) — cómo se
 mantiene conectado el loop.

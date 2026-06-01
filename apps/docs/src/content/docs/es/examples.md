@@ -22,6 +22,10 @@ exactamente lo que Kaddo produce antes de ejecutar nada.
 
 - `README.md` — el escenario, los comandos a ejecutar y qué inspeccionar.
 - `expected-flow.md` — un recorrido `comando → salida → artefacto → siguiente paso`.
+- `prompt-flow.md` — el **flujo de prompts**: un diagrama Mermaid, el reparto CLI↔LLM,
+  una tabla input/output (comando CLI / agente LLM / input / output / dónde guardar),
+  handoffs de prompts para copiar/pegar y la cadena de artefactos — para reproducir el
+  loop sin adivinar qué prompt usar.
 - archivos de muestra versionados (`.kaddo/`, `architecture/`, `sample/`) para que
   los artefactos se vean sin ejecutar nada.
 

@@ -17,6 +17,8 @@ Each folder contains:
 
 - `README.md` — the scenario, the commands to run, and what to inspect.
 - `expected-flow.md` — a `command → output → artifact → next step` table.
+- `prompt-flow.md` — the **prompt flow**: a Mermaid diagram, the CLI↔LLM split, an
+  input/output table, copy/paste prompt handoffs and the artifact chain.
 - committed sample files (`.kaddo/`, `architecture/`, `sample/`) so you can see the
   artifacts without running anything.
 

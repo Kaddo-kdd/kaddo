@@ -82,5 +82,8 @@ it concise. Output Markdown for an ADR artifact.
 
 ---
 
+See it end-to-end: each [example](/examples/) ships a `prompt-flow.md` with a Mermaid
+diagram, an input/output table and copy/paste prompt handoffs for its scenario.
+
 Next: [Work Item Traceability](/playbook/work-item-traceability/) — how the loop stays
 connected.
