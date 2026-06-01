@@ -63,6 +63,17 @@ export default defineConfig({
           ],
         },
         {
+          label: 'Playbook',
+          translations: { es: 'Playbook' },
+          items: [
+            { label: 'Concepts', translations: { es: 'Conceptos' }, slug: 'playbook/concepts' },
+            { label: 'Prompt Workflow', slug: 'playbook/prompt-workflow' },
+            { label: 'Work Item Traceability', translations: { es: 'Trazabilidad de Work Items' }, slug: 'playbook/work-item-traceability' },
+            { label: 'Examples with Other Tools', translations: { es: 'Ejemplos con otras herramientas' }, slug: 'playbook/tool-examples' },
+            { label: 'Collaboration Guide', translations: { es: 'Guía de colaboración' }, slug: 'playbook/collaboration' },
+          ],
+        },
+        {
           label: 'Commands',
           translations: { es: 'Comandos' },
           items: [

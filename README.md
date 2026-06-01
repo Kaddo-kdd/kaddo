@@ -73,6 +73,16 @@ Pick the guide closest to your situation:
 - [**Full workflow**](https://kaddo.trycatch.tv/use-cases/full-workflow/) — the complete loop with expected artifacts.
 - [**Project scope**](https://kaddo.trycatch.tv/project-scope/) — exactly what Kaddo does and does not do.
 
+## Playbook
+
+How to actually operate Kaddo with prompts, traceability and team collaboration:
+
+- [**Concepts**](https://kaddo.trycatch.tv/playbook/concepts/) — Work Item, Knowledge Level, Context Pack, Ownership, Knowledge Drift and more.
+- [**Prompt Workflow**](https://kaddo.trycatch.tv/playbook/prompt-workflow/) — CLI input → prompt/agent → expected output → where to save it.
+- [**Work Item Traceability**](https://kaddo.trycatch.tv/playbook/work-item-traceability/) — roadmap → work item → ownership → guard → learning.
+- [**Examples with Other Tools**](https://kaddo.trycatch.tv/playbook/tool-examples/) — GitHub Issues, Jira/Linear, OpenSpec, agent frameworks, LLM chats.
+- [**Collaboration Guide**](https://kaddo.trycatch.tv/playbook/collaboration/) — governance by exception, roles and a lightweight PR checklist.
+
 ## New vs Pre-AI vs Legacy
 
 | Project state | What Kaddo does |

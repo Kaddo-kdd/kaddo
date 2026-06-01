@@ -27,7 +27,7 @@ updated_at: 2026-05-31
 | [v2.3.0](https://github.com/judlup/kaddo/releases/tag/v2.3.0) | 2026-05-31 | Multirepo Module Descriptor: `kaddo module --init` · `kaddo module --show` |
 | [v2.4.0](https://github.com/judlup/kaddo/releases/tag/v2.4.0) | 2026-05-31 | Módulos adicionales: `kaddo add contracts` · `kaddo add capabilities` · `kaddo add guard-advanced` |
 | [v2.5.0](https://github.com/judlup/kaddo/releases/tag/v2.5.0) | 2026-05-31 | Módulos agents + skills · `explain --type` · agent output enriquecido |
-| v2.6.0 _(unreleased)_ | 2026-05-31 | Knowledge Loop: `understand` · roadmap-agent output · `create --from roadmap` · Guard Lite end-to-end · `owners suggest` · project `explain` · docs realignment + use-case guides |
+| v2.6.0 _(unreleased)_ | 2026-05-31 | Knowledge Loop: `understand` · roadmap-agent output · `create --from roadmap` · Guard Lite end-to-end · `owners suggest` · project `explain` · docs realignment + use-case guides + prompt playbook |
 
 ---
 
@@ -50,6 +50,7 @@ scan → context → understand → agents → roadmap → work item → ownersh
 | VS-013 | Project `explain` | ✅ Done | Default `kaddo explain` summarizes project state from config/scan/knowledge/work-items/ownership, lists missing knowledge + next steps, `--for human`/`--for agent`, writes `.kaddo/explain.md` + `.kaddo/explain.json`. Pure module `core/project-explain.ts`, no LLM, no source-code loading. Focused `--scope/--type/--since` preserved |
 | VS-014 | Documentation realignment | ✅ Done | README, CLI README, docs homepage, getting-started and command overview realigned around the real loop; new Workflow page; CLI-vs-LLM split + project states made explicit; EN/ES aligned; no overpromise. Docs only |
 | VS-015 | Use-case guides + project scope | ✅ Done | New use-case pages (new / pre-AI / legacy / full workflow) + Project Scope page, EN/ES; homepage + README entry points; sidebar "Use Cases" group. Docs only |
+| VS-016 | Prompt Playbook + Work Item traceability | ✅ Done | New Playbook section (Concepts, Prompt Workflow, Work Item Traceability, Examples with Other Tools, Collaboration Guide), EN/ES; sidebar "Playbook" group + README links; defines Kaddo vocabulary, CLI-input→prompt→output→artifact table, traceability chain, tool usage patterns (not official integrations), governance-by-exception collaboration. Docs only, no overpromise |
 
 **Principles preserved:** deterministic CLI, no LLM in core, Guard non-blocking, no ownership
 inference, no Confidence Score, the human always confirms.
