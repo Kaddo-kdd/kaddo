@@ -147,6 +147,20 @@ via `.kaddo/git.yml` — Kaddo recommends, it does not enforce. Six **operationa
 `kaddo add agents` to refine these artifacts in your LLM. Kaddo never scans repos, calls a
 Git/GitHub API, or runs a security scan.
 
+## Templates
+
+Kaddo ships templates for its main artifacts — Work Items, roadmaps, capabilities,
+architecture baselines, ADRs, multirepo modules, security, standards, stack, Git
+strategy, incidents, runbooks and legacy risks/unknowns/modernization candidates. They
+live in a central registry (`packages/cli/src/templates/registry.ts`) and are organized
+into five categories: **core**, **architecture**, **module**, **operations** and
+**legacy**.
+
+Templates are designed to capture **minimum sufficient knowledge** without creating
+documentation theater — they are guides, not mandatory forms. Each carries a purpose,
+when-to-use, output path, related command/agent and a quality checklist. See the
+[Templates docs](https://kaddo.trycatch.tv/templates/overview/).
+
 ## How ownership and Guard work
 
 Ownership is declared in the front matter of each artifact — no central mapping file:

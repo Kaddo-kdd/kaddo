@@ -93,6 +93,18 @@ export default defineConfig({
           ],
         },
         {
+          label: 'Templates',
+          translations: { es: 'Plantillas' },
+          items: [
+            { label: 'Overview', translations: { es: 'Resumen' }, slug: 'templates/overview' },
+            { label: 'Core', translations: { es: 'Core' }, slug: 'templates/core' },
+            { label: 'Architecture', translations: { es: 'Arquitectura' }, slug: 'templates/architecture' },
+            { label: 'Module', translations: { es: 'Módulo' }, slug: 'templates/module' },
+            { label: 'Operations', translations: { es: 'Operaciones' }, slug: 'templates/operations' },
+            { label: 'Legacy', translations: { es: 'Legacy' }, slug: 'templates/legacy' },
+          ],
+        },
+        {
           label: 'Modules',
           translations: { es: 'Módulos' },
           items: [
