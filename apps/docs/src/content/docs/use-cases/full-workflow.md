@@ -19,6 +19,104 @@ contributes, and the artifact it produces.
 | 9 | Guard | `kaddo guard` | drift FYI on `git diff` |
 | 10 | Explain | `kaddo explain` | `.kaddo/explain.md`, `.kaddo/explain.json` |
 
+## The loop in detail
+
+```mermaid
+flowchart TD
+    A[Request / Need] --> B[Initial discovery]
+
+    B --> B1[Stakeholders explain context]
+    B --> B2[CLI surfaces existing signals]
+    B2 --> B3[kaddo scan]
+    B3 --> B4[Technical inventory<br/>.kaddo/scan.json<br/>architecture/inventory.md]
+
+    B1 --> C[Context Pack]
+    B4 --> C
+    C --> C1[kaddo context<br/>.kaddo/context-pack.md]
+
+    C1 --> D[Understanding with LLM + Agents]
+    D --> D1[Capability Agent]
+    D --> D2[Architecture Agent]
+    D --> D3[Legacy Agent if applicable]
+    D --> D4[ADR Agent if applicable]
+
+    D1 --> E1[architecture/capabilities.md]
+    D2 --> E2[architecture/current-state.md]
+    D3 --> E3[architecture/legacy/risks.md<br/>unknowns.md<br/>modernization-candidates.md]
+    D4 --> E4[architecture/decision-candidates.md]
+
+    E1 --> F[Prioritization]
+    E2 --> F
+    E3 --> F
+    E4 --> F
+
+    F --> F1[Roadmap Agent]
+    F1 --> F2[architecture/roadmap.md]
+    F2 --> F3[Roadmap initiatives<br/>RM-001, RM-002...]
+    F3 --> F4[Candidate Work Items<br/>WI-CANDIDATE-001...]
+
+    F4 --> G[Classification]
+    G --> G1{Change type}
+
+    G1 -->|Feature| H1[K2]
+    G1 -->|Bugfix| H2[K2]
+    G1 -->|Hotfix| H3[K1]
+    G1 -->|Spike| H4[K2/K3]
+    G1 -->|Architecture Change| H5[K4]
+    G1 -->|Migration| H6[K4]
+    G1 -->|Incident follow-up| H7[K2/K3]
+
+    H1 --> I[Create Work Item]
+    H2 --> I
+    H3 --> I
+    H4 --> I
+    H5 --> I
+    H6 --> I
+    H7 --> I
+
+    I --> I1[kaddo create --from roadmap]
+    I1 --> I2[architecture/work-items/WI-*.md]
+
+    I2 --> J[Capture minimum sufficient knowledge]
+    J --> J1[Problem]
+    J --> J2[Expected result]
+    J --> J3[Impact]
+    J --> J4[Acceptance criteria]
+    J --> J5[Design / Risk if applicable]
+
+    J --> K[Ownership]
+    K --> K1[kaddo owners suggest]
+    K1 --> K2[Updated front matter]
+    K2 --> K3[code:<br/>- src/module/**]
+
+    K3 --> L[Build]
+    L --> L1[Implementation in code]
+    L1 --> L2[Tests / Validation]
+    L2 --> L3[Pull Request]
+
+    L3 --> M[Guard Lite]
+    M --> M1[kaddo guard]
+    M1 --> M2{Code changed and related artifact did not?}
+
+    M2 -->|Yes| N[Possible Knowledge Drift]
+    N --> N1[Check if the artifact is still valid]
+    N1 --> O[Update knowledge or justify no impact]
+
+    M2 -->|No| P[No warning]
+
+    O --> Q[Release / Merge]
+    P --> Q
+
+    Q --> R[Learning]
+    R --> R1[Update Learning in Work Item]
+    R --> R2[Update roadmap / architecture if applicable]
+    R --> R3[kaddo explain]
+
+    R3 --> S[Project explained and knowledge updated]
+    S --> T[New evolution cycle]
+    T --> A
+```
+
 ## The commands
 
 ```bash

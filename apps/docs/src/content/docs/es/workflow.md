@@ -23,6 +23,24 @@ En una frase: **escanea el repo → prepara el contexto → usa agentes en tu LL
 items guiados por el roadmap → conecta el conocimiento al código → vigila la deriva →
 explica el estado.**
 
+```mermaid
+flowchart LR
+    A[Petición] --> B[Discovery]
+    B --> C[Scan]
+    C --> D[Context Pack]
+    D --> E[Agentes LLM]
+    E --> F[Capacidades / Arquitectura / Riesgos]
+    F --> G[Roadmap]
+    G --> H[Clasificación]
+    H --> I[Work Item]
+    I --> J[Ownership]
+    J --> K[Build]
+    K --> L[Guard]
+    L --> M[Aprendizaje]
+    M --> N[Explain]
+    N --> A
+```
+
 ## CLI vs agentes LLM
 
 Kaddo trabaja en dos capas, y el reparto es intencional.

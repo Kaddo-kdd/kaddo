@@ -23,6 +23,33 @@ an indie project may skip most of the roles below.
 On a solo or indie project, one person plays all roles — the value is the same: a repo that
 remembers why the code exists.
 
+```mermaid
+flowchart TD
+    A[Stakeholder<br/>Requests a change] --> B[Product / PO<br/>Discovery and context]
+    B --> C[Process Owner / TL / Architect<br/>Classifies the request]
+    C --> D{Type and impact}
+
+    D -->|Low impact| E[K1/K2<br/>Simple Work Item]
+    D -->|Medium impact| F[K2/K3<br/>Feature / Spike]
+    D -->|High impact| G[K4<br/>ADR / Architecture Change]
+
+    E --> H[Developer<br/>Implements]
+    F --> H
+    G --> I[Architect / TL<br/>Validates decision]
+    I --> H
+
+    H --> J[kaddo owners suggest<br/>Connects artifact to code]
+    J --> K[Pull Request]
+    K --> L[kaddo guard<br/>Detects possible drift]
+
+    L --> M{Is there drift?}
+    M -->|Yes| N[Update artifact<br/>or justify no impact]
+    M -->|No| O[Merge]
+
+    N --> O
+    O --> P[kaddo explain<br/>Updated project state]
+```
+
 ## Rules
 
 - Do not document everything.

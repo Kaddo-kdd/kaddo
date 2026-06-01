@@ -23,6 +23,33 @@ contexto — un proyecto indie puede omitir la mayoría de los roles de abajo.
 En un proyecto solo o indie, una persona cumple todos los roles — el valor es el mismo: un
 repo que recuerda por qué existe el código.
 
+```mermaid
+flowchart TD
+    A[Stakeholder<br/>Solicita cambio] --> B[Product / PO<br/>Discovery y contexto]
+    B --> C[Process Owner / TL / Architect<br/>Clasifica la petición]
+    C --> D{Tipo e impacto}
+
+    D -->|Bajo impacto| E[K1/K2<br/>Work Item simple]
+    D -->|Medio impacto| F[K2/K3<br/>Feature / Spike]
+    D -->|Alto impacto| G[K4<br/>ADR / Architecture Change]
+
+    E --> H[Developer<br/>Implementa]
+    F --> H
+    G --> I[Architect / TL<br/>Valida decisión]
+    I --> H
+
+    H --> J[kaddo owners suggest<br/>Relaciona artifact con código]
+    J --> K[Pull Request]
+    K --> L[kaddo guard<br/>Detecta posible drift]
+
+    L --> M{¿Hay drift?}
+    M -->|Sí| N[Actualizar artifact<br/>o justificar no impacto]
+    M -->|No| O[Merge]
+
+    N --> O
+    O --> P[kaddo explain<br/>Estado actualizado del proyecto]
+```
+
 ## Reglas
 
 - No documentes todo.
