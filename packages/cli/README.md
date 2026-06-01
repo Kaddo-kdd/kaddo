@@ -428,6 +428,7 @@ create --from roadmap → owners → guard → explain`.
 | v2.6 | Multirepo modules (`modules map/list`), global `standards`/`security`/`stack`/`git-strategy` artifacts, six operational agents |
 | v2.6 | Central template registry (23 templates, five categories) |
 | v2.6 | Demo example repositories, prompt flows and a diagram-first Visual Guide (docs) |
+| v2.7 | Multirepo hardening: module artifacts from the template registry, module-aware `context`/`explain`, opt-in `guard --workspace` |
 
 **Optional modules (installed with `kaddo add`):**
 
