@@ -2,7 +2,9 @@ import { getModifiedFiles, isGitRepo } from '../services/git.js'
 import { readArtifacts } from '../services/artifact-reader.js'
 import { analyzeGuard, type ArtifactMatch } from '../core/diff-analysis.js'
 import { loadIgnores, saveIgnore, isIgnored } from '../services/ignore-store.js'
+import { collectWorkspaceChanges, type WorkspaceScan } from '../services/workspace-guard.js'
 import { exists, join, cwd, readFile } from '../utils/fs.js'
+import path from 'path'
 import { parse as parseYaml } from 'yaml'
 import { confirm, text, log } from '../utils/ui.js'
 import { resolvePlugins, runPlugins, type PluginSignal } from '../plugins/registry.js'
@@ -33,9 +35,29 @@ function printHeader(touchedFiles: string[]) {
   console.log('')
 }
 
-function printFYI(match: ArtifactMatch) {
+/** Stable identifier for an artifact: id, then title, then its workspace-relative path. */
+function artifactLabel(artifact: ArtifactMatch['artifact'], dir: string): string {
+  if (artifact.id) return artifact.id
+  if (artifact.title) return artifact.title
+  const rel = path.relative(dir, artifact.filePath).split(path.sep).join('/')
+  return rel || artifact.filePath
+}
+
+function printWorkspaceHeader(scan: WorkspaceScan) {
+  console.log('Workspace mode enabled.')
+  console.log('Checking mapped modules from .kaddo/modules.yml.')
+  console.log(
+    `  Modules checked: ${scan.modulesChecked} · skipped: ${scan.modulesSkipped}`
+  )
+  for (const s of scan.skippedModules) {
+    console.log(`  ↷ skipped ${s.id} (${s.repoPath || '—'}) — ${s.reason}`)
+  }
+  console.log('')
+}
+
+function printFYI(match: ArtifactMatch, dir: string) {
   const { artifact, matchedFiles, evidence } = match
-  const id = artifact.id || artifact.title
+  const id = artifactLabel(artifact, dir)
   const descriptor = [artifact.type, artifact.knowledgeLevel].filter(Boolean).join(', ')
   const heading = descriptor ? `${id} (${descriptor})` : id
 
@@ -94,13 +116,15 @@ async function offerIgnore(dir: string, match: ArtifactMatch): Promise<boolean> 
 }
 
 function printCIJson(
+  dir: string,
   touchedFiles: string[],
   activeMatches: ArtifactMatch[],
   ignoredCount: number,
   pluginSignals: PluginSignal[],
-  affectedOwners: Array<{ domain: string; owners: string[] }>
+  affectedOwners: Array<{ domain: string; owners: string[] }>,
+  workspace: WorkspaceScan | null
 ): void {
-  const output = {
+  const output: Record<string, unknown> = {
     kaddo_guard: true,
     ci: true,
     touched_files: touchedFiles.length,
@@ -108,19 +132,31 @@ function printCIJson(
     ignored_count: ignoredCount,
     plugin_signals: pluginSignals,
     domain_owners: affectedOwners,
-    findings: activeMatches.map((m) => ({
-      artifact_id: m.artifact.id || m.artifact.title,
-      artifact_type: m.artifact.type,
-      knowledge_level: m.artifact.knowledgeLevel,
-      matched_files: m.matchedFiles,
-      evidence: m.evidence.signals,
-      message: `${m.artifact.id || m.artifact.title} was not modified in this diff`,
-    })),
+    findings: activeMatches.map((m) => {
+      const label = artifactLabel(m.artifact, dir)
+      return {
+        artifact_id: label,
+        artifact_type: m.artifact.type,
+        knowledge_level: m.artifact.knowledgeLevel,
+        matched_files: m.matchedFiles,
+        ownership: m.artifact.codeGlobs,
+        evidence: m.evidence.signals,
+        message: `${label} was not modified in this diff`,
+      }
+    }),
+  }
+  if (workspace) {
+    output.workspace = {
+      enabled: true,
+      modulesChecked: workspace.modulesChecked,
+      modulesSkipped: workspace.modulesSkipped,
+      skippedModules: workspace.skippedModules,
+    }
   }
   console.log(JSON.stringify(output, null, 2))
 }
 
-export async function runGuard(opts: { staged?: boolean; interactive?: boolean; ci?: boolean; json?: boolean } = {}): Promise<void> {
+export async function runGuard(opts: { staged?: boolean; interactive?: boolean; ci?: boolean; json?: boolean; workspace?: boolean } = {}): Promise<void> {
   const dir = cwd()
   const interactive = opts.interactive !== false && !opts.ci && !opts.json
   const jsonMode = opts.json || opts.ci
@@ -137,9 +173,23 @@ export async function runGuard(opts: { staged?: boolean; interactive?: boolean; 
   const plugins = resolvePlugins(config.plugins ?? [])
 
   const mode = opts.staged ? 'staged' : 'head'
-  const touchedFiles = await getModifiedFiles(mode)
+  const currentFiles = await getModifiedFiles(mode)
+
+  // Workspace mode (opt-in): also collect diffs from local mapped module repos.
+  let workspaceScan: WorkspaceScan | null = null
+  if (opts.workspace) {
+    workspaceScan = await collectWorkspaceChanges(dir, mode)
+  }
+  const workspaceFiles = workspaceScan
+    ? workspaceScan.changedFiles.map((c) => c.normalizedPath)
+    : []
+
+  // Merged set drives artifact matching; plugins still run on current-repo files only
+  // (workspace mode never reads sibling repo source contents).
+  const touchedFiles = [...new Set([...currentFiles, ...workspaceFiles])]
 
   if (touchedFiles.length === 0) {
+    if (workspaceScan) printWorkspaceHeader(workspaceScan)
     console.log('kaddo guard: no modified files detected.')
     return
   }
@@ -153,21 +203,11 @@ export async function runGuard(opts: { staged?: boolean; interactive?: boolean; 
   const artifacts = readArtifacts(archDir)
   const result = analyzeGuard(touchedFiles, artifacts, silentWithoutOwnership)
 
-  // Run plugins — always, regardless of artifact matches
-  const pluginSignals = runPlugins(plugins, touchedFiles, (filePath) => {
+  // Run plugins on current-repo files only — workspace mode never reads sibling source.
+  const pluginSignals = runPlugins(plugins, currentFiles, (filePath) => {
     const abs = join(dir, filePath)
     try { return exists(abs) ? readFile(abs) : null } catch { return null }
   })
-
-  if (result.silenced && pluginSignals.length === 0) return
-
-  if (result.matches.length === 0 && pluginSignals.length === 0) {
-    printHeader(touchedFiles)
-    console.log('  No artifact ownership matches found.')
-    return
-  }
-
-  printHeader(touchedFiles)
 
   const fyiMatches = result.matches.filter((m) => !m.artifactWasModified)
   const alreadyIgnoredMatches = fyiMatches.filter((m) =>
@@ -177,18 +217,33 @@ export async function runGuard(opts: { staged?: boolean; interactive?: boolean; 
     (m) => !isIgnored(ignores, m.artifact.id || m.artifact.title)
   )
 
-  // JSON / CI mode
+  // JSON / CI mode — emit clean JSON early (no human headers), always when requested.
   if (jsonMode) {
     const ownerMapCI = loadOwners(dir)
     const matchedDomainsCI = collectMatchedDomains(activeMatches.map((m) => m.artifact.domains))
     const affectedOwnersCI = resolveAffectedOwners(matchedDomainsCI, ownerMapCI)
-    printCIJson(touchedFiles, activeMatches, alreadyIgnoredMatches.length, pluginSignals, affectedOwnersCI)
+    printCIJson(dir, touchedFiles, activeMatches, alreadyIgnoredMatches.length, pluginSignals, affectedOwnersCI, workspaceScan)
     return
   }
 
+  if (result.silenced && pluginSignals.length === 0) {
+    if (workspaceScan) printWorkspaceHeader(workspaceScan)
+    return
+  }
+
+  if (result.matches.length === 0 && pluginSignals.length === 0) {
+    if (workspaceScan) printWorkspaceHeader(workspaceScan)
+    printHeader(touchedFiles)
+    console.log('  No artifact ownership matches found.')
+    return
+  }
+
+  if (workspaceScan) printWorkspaceHeader(workspaceScan)
+  printHeader(touchedFiles)
+
   // Show active FYIs
   for (const match of activeMatches) {
-    printFYI(match)
+    printFYI(match, dir)
   }
 
   // Show already-ignored artifacts (compact)

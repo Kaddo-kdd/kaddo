@@ -63,6 +63,7 @@ scan → context → understand → agents → roadmap → work item → ownersh
 | VS-024 | Artifact examples in docs | git-strategy: example `.kaddo/git.yml` for gitflow/trunk-based/custom; standards/security/stack: starter + filled file examples (EN/ES); docs only |
 | VS-025 | Align module generation | `kaddo modules map` renders module artifacts from the template registry: front matter + module metadata + `code:` globs + quality checklist; no-overwrite preserved; Guard unchanged |
 | VS-026 | Module-aware context & explain | `context` + `explain` surface mapped modules from `.kaddo/modules.yml` with per-module artifact coverage; `mapped_modules` separate from `installed_modules`; no secondary-repo scan; Guard unchanged |
+| VS-027 | Workspace Guard (multirepo) | opt-in `kaddo guard --workspace`: runs local `git diff` in mapped module repos, matches normalized cross-repo paths vs `code:` globs; non-blocking; skips missing/non-git repos; `--ci` workspace metadata; no remote APIs, no source reads; default guard unchanged |
 
 **Tests:** 299 passing · CLI build + docs build green.
 

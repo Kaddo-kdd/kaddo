@@ -4,9 +4,10 @@ description: Check if modified code has related artifacts that were not updated.
 ---
 
 ```bash
-kaddo guard           # checks staged + unstaged files
-kaddo guard --staged  # checks only staged files
-kaddo guard --ci      # JSON output for CI/PR, non-blocking
+kaddo guard              # checks staged + unstaged files in the current repo
+kaddo guard --staged     # checks only staged files
+kaddo guard --ci         # JSON output for CI/PR, non-blocking
+kaddo guard --workspace  # also check local mapped module repos (multirepo, opt-in)
 ```
 
 Guard Lite reads `git diff`, finds artifacts with matching `code:` globs, and shows
@@ -49,3 +50,40 @@ code:
 
 Guard is **advisory and non-blocking**: it never fails your command or CI, and it performs
 **no inference** — only deterministic glob matching.
+
+## Workspace mode (multirepo)
+
+By default Guard checks **only the current repository**. In a multirepo workspace, module
+artifacts may own code in sibling repos via globs like `code: ["../frontend/**"]`. Opt in
+with `--workspace`:
+
+```bash
+kaddo guard --workspace
+kaddo guard --workspace --ci
+```
+
+In workspace mode Guard reads `.kaddo/modules.yml`, runs `git diff` **inside each local
+mapped module repo**, normalizes the changed paths (e.g. `../frontend/src/checkout.ts`)
+and matches them against artifact `code:` globs — emitting the same non-blocking FYI when
+a module artifact was not updated.
+
+```
+Workspace mode enabled.
+Checking mapped modules from .kaddo/modules.yml.
+  Modules checked: 3 · skipped: 1
+  ↷ skipped worker (../worker) — not a git repository
+
+  ⚠ Possible knowledge drift: architecture/modules/storefront-web/module-design.md
+    Changed code matching this artifact:
+      - ../frontend/src/checkout/checkout.ts
+    Declared ownership:
+      - ../frontend/**
+```
+
+Modules whose repo path is missing, is not a Git repository, or whose diff fails are
+**skipped with a warning** — never fatal. The `--workspace --ci` JSON adds a `workspace`
+object (`modulesChecked`, `modulesSkipped`, `skippedModules`).
+
+> Workspace Guard only reads **changed file paths** from local repos. It never reads
+> source contents, never clones, and never calls a Git/GitHub API. `kaddo guard` without
+> `--workspace` behaves exactly as before.

@@ -64,10 +64,12 @@ code:
 ---
 ```
 
-> Los globs `code:` declaran ownership de forma consistente, pero **`kaddo guard` por
-> defecto sigue leyendo solo el `git diff` del repo actual** — todavía no agrega los
-> cambios de los repos hermanos. El Guard cross-repo / de workspace es una capacidad
-> futura aparte.
+> Los globs `code:` declaran ownership de forma consistente. **`kaddo guard` por defecto
+> sigue leyendo solo el `git diff` del repo actual**, pero el opt-in
+> `kaddo guard --workspace` también revisa los repos de módulos locales mapeados y matchea
+> sus cambios contra estos globs — ver
+> [guard → Modo workspace](/es/commands/guard/#modo-workspace-multirepo). Nunca clona ni
+> llama a APIs remotas.
 
 ## Ejemplo: architecture-repo + frontend + backend + infra
 

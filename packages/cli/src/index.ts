@@ -52,7 +52,8 @@ program
   .option('--no-interactive', 'Disable interactive ignore prompts')
   .option('--ci', 'CI mode: output JSON, no prompts, non-blocking')
   .option('--json', 'Output JSON (alias for --ci)')
-  .action(async (opts: { staged?: boolean; interactive?: boolean; ci?: boolean; json?: boolean }) => {
+  .option('--workspace', 'Also check local mapped module repos from .kaddo/modules.yml (opt-in)')
+  .action(async (opts: { staged?: boolean; interactive?: boolean; ci?: boolean; json?: boolean; workspace?: boolean }) => {
     await runGuard(opts)
   })
 
