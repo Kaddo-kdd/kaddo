@@ -1,4 +1,5 @@
 import type { ContextPack } from '../core/context-pack.js'
+import { presentArtifacts } from '../services/mapped-modules.js'
 
 function stateLabel(state: string): string {
   return state === 'pre-ai' ? 'pre-AI' : state
@@ -88,6 +89,24 @@ export function renderContextPack(pack: ContextPack): string {
     parts.push(lines.join('\n') + '\n')
   } else {
     parts.push('No artifacts declare code ownership yet.\n')
+  }
+
+  // 6b. Mapped Modules (multirepo)
+  if (pack.mappedModules.length > 0) {
+    parts.push('## Mapped Modules\n')
+    parts.push('This project has mapped modules registered in `.kaddo/modules.yml`.\n')
+    const header = '| Module | Type | Repo path | Owner | Capabilities | Artifacts |'
+    const sep = '|---|---|---|---|---|---|'
+    const rows = pack.mappedModules.map((m) => {
+      const caps = m.capabilities.length > 0 ? m.capabilities.join(', ') : '—'
+      const arts = presentArtifacts(m.artifacts)
+      return `| ${m.id} | ${m.type ?? '—'} | ${m.repoPath || '—'} | ${m.owner ?? '—'} | ${caps} | ${arts.length > 0 ? arts.join(', ') : 'none'} |`
+    })
+    parts.push([header, sep, ...rows].join('\n') + '\n')
+    parts.push(
+      'Note: Kaddo does not scan secondary repositories during `context`. Mapped modules ' +
+        'come from `.kaddo/modules.yml` and module artifacts only.\n'
+    )
   }
 
   // 7. Missing Context

@@ -167,3 +167,61 @@ describe('context-pack — renderContextPack', () => {
     expect(md).toContain('No work items found.')
   })
 })
+
+describe('context pack — mapped modules (module-aware)', () => {
+  function writeModules() {
+    write(
+      '.kaddo/modules.yml',
+      [
+        'version: 1',
+        'modules:',
+        '  - id: storefront-web',
+        '    name: Storefront Web',
+        '    repoPath: ../frontend',
+        '    type: frontend',
+        '    owner: web-team',
+        '    capabilities:',
+        '      - checkout',
+        '    code:',
+        '      - ../frontend/**',
+        '  - id: orders-api',
+        '    repoPath: ../backend',
+        '    type: backend',
+        '    code:',
+        '      - ../backend/**',
+      ].join('\n')
+    )
+  }
+
+  it('omits the section when there are no mapped modules', () => {
+    writeConfig()
+    const pack = build()
+    expect(pack.mappedModules).toEqual([])
+    expect(renderContextPack(pack)).not.toContain('## Mapped Modules')
+  })
+
+  it('includes mapped modules in the pack object and markdown', () => {
+    writeConfig()
+    writeModules()
+    // one module has its design artifact present
+    write('architecture/modules/storefront-web/module-design.md', '---\ntype: module-design\n---\n')
+    const pack = build()
+    expect(pack.mappedModules.map((m) => m.id)).toEqual(['storefront-web', 'orders-api'])
+    const md = renderContextPack(pack)
+    expect(md).toContain('## Mapped Modules')
+    expect(md).toContain('storefront-web')
+    expect(md).toContain('../frontend')
+    expect(md).toContain('does not scan secondary repositories')
+    expect(pack.mappedModules[0].artifacts.moduleDesign).toBe(true)
+    expect(pack.mappedModules[1].artifacts.moduleDesign).toBe(false)
+  })
+
+  it('serializes mappedModules into context-pack.json', () => {
+    writeConfig()
+    writeModules()
+    const json = JSON.parse(serializeContextPackJson(build()))
+    expect(Array.isArray(json.mappedModules)).toBe(true)
+    expect(json.mappedModules[0].repoPath).toBe('../frontend')
+    expect(json.mappedModules[0].artifacts).toHaveProperty('stack')
+  })
+})

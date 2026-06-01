@@ -65,4 +65,27 @@ With `--scope`, `--type` or `--since`, `explain` keeps its focused behavior:
 it explains a subset of artifacts (a domain, an artifact type, or recent
 changes) instead of the whole project. The `--for agent` output of focused mode
 is structured JSON including artifacts, domains, `domain_owners`,
-`installed_modules` and `enabled_plugins`.
+`installed_modules`, `mapped_modules` and `enabled_plugins`.
+
+## Mapped modules (multirepo)
+
+When the project has modules registered with `kaddo modules map`, `explain` reports
+them — separately from add-on modules installed with `kaddo add`:
+
+```
+## Mapped Modules
+
+- storefront-web — frontend — ../frontend — owner: web-team
+- orders-api — backend — ../backend — owner: api-team
+
+## Module Artifact Coverage
+
+- storefront-web: module-design, stack, security, standards
+- orders-api: module-design, stack
+```
+
+The `--for agent` output exposes a structured `mapped_modules` array (with per-module
+`artifacts` coverage), distinct from `installed_modules`.
+
+> `explain` reads mapped modules from `.kaddo/modules.yml` and the
+> `architecture/modules/<id>/` artifacts only. It never scans the secondary repos.

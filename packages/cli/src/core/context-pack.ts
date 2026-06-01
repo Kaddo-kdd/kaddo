@@ -2,6 +2,7 @@ import matter from 'gray-matter'
 import { exists, readFile, join } from '../utils/fs.js'
 import { loadConfig, type KaddoConfig, type ProjectState } from './config.js'
 import { readArtifacts, type Artifact } from '../services/artifact-reader.js'
+import { loadMappedModules, type MappedModuleWithCoverage } from '../services/mapped-modules.js'
 
 export const CONTEXT_PACK_VERSION = '1'
 
@@ -48,6 +49,7 @@ export type ContextPack = {
     workItems: ContextWorkItem[]
     artifacts: ContextArtifact[]
   }
+  mappedModules: MappedModuleWithCoverage[]
   missing: string[]
   handoff: {
     recommendedAgents: string[]
@@ -202,6 +204,10 @@ export function buildContextPack(
 
   const state = config.project.state
 
+  // Multirepo modules from `.kaddo/modules.yml` (descriptor + artifact coverage only —
+  // secondary repos are never scanned).
+  const mappedModules = loadMappedModules(dir)
+
   return {
     version: CONTEXT_PACK_VERSION,
     generatedAt: now.toISOString(),
@@ -228,6 +234,7 @@ export function buildContextPack(
       workItems: workItems.map(toContextWorkItem),
       artifacts: workItems.filter((a) => a.codeGlobs.length > 0).map(toContextArtifact),
     },
+    mappedModules,
     missing,
     handoff: {
       recommendedAgents: recommendedAgentsForState(state),

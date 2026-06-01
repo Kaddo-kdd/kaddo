@@ -191,3 +191,53 @@ describe('renderExplanationAgent', () => {
     expect(out).not.toContain('do-not-read')
   })
 })
+
+describe('project explain — mapped modules (module-aware)', () => {
+  function writeModules() {
+    write(
+      '.kaddo/modules.yml',
+      [
+        'version: 1',
+        'modules:',
+        '  - id: storefront-web',
+        '    name: Storefront Web',
+        '    repoPath: ../frontend',
+        '    type: frontend',
+        '    owner: web-team',
+        '    capabilities:',
+        '      - checkout',
+        '    code:',
+        '      - ../frontend/**',
+      ].join('\n')
+    )
+  }
+
+  it('reports zero mapped modules when none are registered', () => {
+    initConfig()
+    const exp = buildProjectExplanation(tmpDir)
+    expect(exp.mappedModules).toEqual([])
+    expect(renderExplanationHuman(exp)).toContain('Mapped modules: 0')
+  })
+
+  it('includes mapped modules and artifact coverage in human output', () => {
+    initConfig()
+    writeModules()
+    write('architecture/modules/storefront-web/module-design.md', '---\ntype: module-design\n---\n')
+    write('architecture/modules/storefront-web/stack.md', '---\ntype: module-stack\n---\n')
+    const md = renderExplanationHuman(buildProjectExplanation(tmpDir))
+    expect(md).toContain('## Mapped Modules')
+    expect(md).toContain('storefront-web — frontend — ../frontend — owner: web-team')
+    expect(md).toContain('## Module Artifact Coverage')
+    expect(md).toContain('storefront-web: module-design, stack')
+  })
+
+  it('exposes mapped_modules in agent JSON, separate from add-ons', () => {
+    initConfig()
+    writeModules()
+    const json = JSON.parse(renderExplanationAgent(buildProjectExplanation(tmpDir)))
+    expect(Array.isArray(json.mapped_modules)).toBe(true)
+    expect(json.mapped_modules[0].id).toBe('storefront-web')
+    expect(json.mapped_modules[0].artifacts).toHaveProperty('security')
+    expect(json).not.toHaveProperty('mappedModules')
+  })
+})

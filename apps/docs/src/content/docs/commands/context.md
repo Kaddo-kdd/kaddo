@@ -20,6 +20,7 @@ The command reads (each is optional except config):
 ```
 .kaddo/config.yml          # required — run `kaddo init` first
 .kaddo/scan.json           # scan baseline
+.kaddo/modules.yml         # mapped multirepo modules (if any)
 architecture/inventory.md  # technical inventory
 architecture/knowledge.md  # current knowledge
 architecture/roadmap.md    # roadmap
@@ -28,6 +29,14 @@ architecture/work-items/   # work item metadata (front matter only)
 
 Missing files do not stop the command — their sections are marked under **Missing
 Context** so the LLM knows what is not yet available.
+
+## Mapped modules (multirepo)
+
+If the project has modules registered with `kaddo modules map`, the pack adds a
+`## Mapped Modules` section (and a `mappedModules` array in the JSON) listing each
+module's type, repo path, owner, capabilities and which `architecture/modules/<id>/`
+artifacts exist. Kaddo reads `.kaddo/modules.yml` and the module artifacts only — it
+**never scans the secondary repositories**.
 
 ## Deterministic, no LLM
 

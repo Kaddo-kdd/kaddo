@@ -7,6 +7,11 @@
 import { exists, readFile, readDir, join, isFile } from '../utils/fs.js'
 import { loadConfig } from './config.js'
 import { readArtifacts } from '../services/artifact-reader.js'
+import {
+  loadMappedModules,
+  presentArtifacts,
+  type MappedModuleWithCoverage,
+} from '../services/mapped-modules.js'
 
 const ARCH_DIR = 'architecture'
 
@@ -56,6 +61,7 @@ export type ProjectExplanation = {
     workItemsMissingOwnership: number
   }
   domains: string[]
+  mappedModules: MappedModuleWithCoverage[]
   missingKnowledge: string[]
   suggestedNextSteps: string[]
 }
@@ -173,6 +179,10 @@ export function buildProjectExplanation(dir: string): ProjectExplanation {
 
   const domains = [...new Set(workItemArtifacts.flatMap((a) => a.domains))].filter(Boolean)
 
+  // Multirepo modules registered with `kaddo modules map` (distinct from add-on modules
+  // installed with `kaddo add`). Secondary repos are never scanned.
+  const mappedModules = loadMappedModules(dir)
+
   const missingKnowledge: string[] = []
   if (!knowledge.hasScan) missingKnowledge.push('Scan baseline (.kaddo/scan.json)')
   if (!knowledge.hasContextPack) missingKnowledge.push('Context pack (.kaddo/context-pack.md)')
@@ -218,6 +228,7 @@ export function buildProjectExplanation(dir: string): ProjectExplanation {
     workItems,
     ownership,
     domains,
+    mappedModules,
     missingKnowledge,
     suggestedNextSteps,
   }
@@ -285,6 +296,24 @@ export function renderExplanationHuman(exp: ProjectExplanation): string {
     lines.push('')
   }
 
+  lines.push('## Mapped Modules')
+  if (exp.mappedModules.length > 0) {
+    for (const m of exp.mappedModules) {
+      const owner = m.owner ? ` — owner: ${m.owner}` : ''
+      lines.push(`- ${m.id} — ${m.type ?? 'unknown'} — ${m.repoPath || '—'}${owner}`)
+    }
+    lines.push('')
+    lines.push('## Module Artifact Coverage')
+    for (const m of exp.mappedModules) {
+      const present = presentArtifacts(m.artifacts)
+      lines.push(`- ${m.id}: ${present.length > 0 ? present.join(', ') : 'none'}`)
+    }
+    lines.push('')
+  } else {
+    lines.push('- Mapped modules: 0')
+    lines.push('')
+  }
+
   if (exp.missingKnowledge.length > 0) {
     lines.push('## Missing Knowledge')
     for (const m of exp.missingKnowledge) lines.push(`- ${m}`)
@@ -301,5 +330,8 @@ export function renderExplanationHuman(exp: ProjectExplanation): string {
 }
 
 export function renderExplanationAgent(exp: ProjectExplanation): string {
-  return JSON.stringify(exp, null, 2) + '\n'
+  // Expose mapped modules under a stable snake_case key for agents, distinct from add-on
+  // `installed_modules`. The rest of the explanation is emitted as-is.
+  const { mappedModules, ...rest } = exp
+  return JSON.stringify({ ...rest, mapped_modules: mappedModules }, null, 2) + '\n'
 }

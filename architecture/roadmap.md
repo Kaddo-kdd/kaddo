@@ -62,6 +62,7 @@ scan → context → understand → agents → roadmap → work item → ownersh
 | VS-023 | Visual Guide | Diagram-first docs page (EN/ES): knowledge loop, CLI↔LLM, sequence, artifact graph, project states, multirepo, Guard, governance, mindmap; docs only |
 | VS-024 | Artifact examples in docs | git-strategy: example `.kaddo/git.yml` for gitflow/trunk-based/custom; standards/security/stack: starter + filled file examples (EN/ES); docs only |
 | VS-025 | Align module generation | `kaddo modules map` renders module artifacts from the template registry: front matter + module metadata + `code:` globs + quality checklist; no-overwrite preserved; Guard unchanged |
+| VS-026 | Module-aware context & explain | `context` + `explain` surface mapped modules from `.kaddo/modules.yml` with per-module artifact coverage; `mapped_modules` separate from `installed_modules`; no secondary-repo scan; Guard unchanged |
 
 **Tests:** 299 passing · CLI build + docs build green.
 

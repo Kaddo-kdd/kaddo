@@ -1,5 +1,6 @@
 import { readArtifacts } from '../services/artifact-reader.js'
 import { loadOwners } from '../services/owners.js'
+import { loadMappedModules } from '../services/mapped-modules.js'
 import { exists, join, cwd, readFile, writeFile } from '../utils/fs.js'
 import matter from 'gray-matter'
 import { parse as parseYaml } from 'yaml'
@@ -187,9 +188,12 @@ function explainForAgent(
   output.domains = [...new Set(artifacts.flatMap((a) => a.domains))].filter(Boolean)
   output.domain_owners = ownerMap
 
-  // Installed modules from config
+  // Installed add-on modules from config (`kaddo add`) — distinct from mapped modules.
   const modules = Array.isArray(config.modules) ? config.modules : []
   output.installed_modules = modules
+
+  // Mapped multirepo modules (`kaddo modules map`) from `.kaddo/modules.yml`.
+  output.mapped_modules = loadMappedModules(dir)
 
   // Plugins
   const plugins = Array.isArray(config.plugins) ? config.plugins : []

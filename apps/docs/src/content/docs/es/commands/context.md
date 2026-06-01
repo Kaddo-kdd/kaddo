@@ -20,6 +20,7 @@ El comando lee (todo es opcional salvo la config):
 ```
 .kaddo/config.yml          # requerido — ejecuta `kaddo init` primero
 .kaddo/scan.json           # baseline técnico
+.kaddo/modules.yml         # módulos multirepo mapeados (si hay)
 architecture/inventory.md  # inventario técnico
 architecture/knowledge.md  # conocimiento actual
 architecture/roadmap.md    # roadmap
@@ -28,6 +29,14 @@ architecture/work-items/   # metadata de work items (solo front matter)
 
 Si falta algún archivo, el comando igual se ejecuta — esas secciones se marcan en
 **Missing Context** para que el LLM sepa qué falta.
+
+## Módulos mapeados (multirepo)
+
+Si el proyecto tiene módulos registrados con `kaddo modules map`, el pack agrega una
+sección `## Mapped Modules` (y un arreglo `mappedModules` en el JSON) con el tipo, ruta
+del repo, owner, capacidades y qué artefactos de `architecture/modules/<id>/` existen.
+Kaddo lee `.kaddo/modules.yml` y los artefactos del módulo solamente — **nunca escanea
+los repositorios secundarios**.
 
 ## Determinista, sin LLM
 
