@@ -58,6 +58,7 @@ scan → context → understand → agents → roadmap → work item → ownersh
 | VS-019 | Demo examples | 4 example repos (new/pre-ai/legacy/multirepo) + "Writing a custom agent" guide; docs only |
 | VS-020 | Example prompt flows | `prompt-flow.md` per example: Mermaid diagram, CLI↔LLM split, input/output table, prompt handoffs, artifact chain; docs links; no CLI/agent changes |
 | VS-021 | Mermaid click-to-zoom | Docs-site lightbox for Mermaid diagrams (scroll/pinch zoom · drag pan · Esc close); docs only |
+| VS-022 | Landing refresh | Landing "See it in action" section: 4 demo repos + prompt flows + Templates links (EN/ES); docs only |
 
 **Tests:** 299 passing · CLI build + docs build green.
 

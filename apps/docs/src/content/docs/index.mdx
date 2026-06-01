@@ -116,6 +116,32 @@ kaddo explain
 
 The CLI prepares context; your LLM interprets it. Kaddo never calls an LLM by itself.
 
+## See it in action
+
+Four reproducible demo repositories ship with committed `.kaddo/` and `architecture/`
+artifacts — open one and inspect exactly what Kaddo produces. Each includes a
+`prompt-flow.md` with a Mermaid diagram, the CLI↔LLM split and copy/paste prompt
+handoffs for its scenario.
+
+<CardGrid>
+  <Card title="Task Pilot" icon="rocket">
+    Greenfield app · `new` — structured knowledge from day one; full loop.
+  </Card>
+  <Card title="Loyalty Lite" icon="setting">
+    Existing app · `pre-ai` — `scan` + agents + a Guard drift demo.
+  </Card>
+  <Card title="Old Orders" icon="open-book">
+    Legacy MVC app · `legacy` — understand-before-change; risks & unknowns.
+  </Card>
+  <Card title="Commerce Stack" icon="puzzle">
+    Many repos · `multirepo` — `modules map` + per-module artifacts.
+  </Card>
+</CardGrid>
+
+Browse them in the [Examples](/examples/) guide, or explore the
+[Templates](/templates/overview/) that capture minimum sufficient knowledge for each
+artifact.
+
 <div class="kaddo-cta">
   ## Start with a repo that remembers
   <p>From new projects to legacy systems, Kaddo keeps product knowledge close to the code.</p>

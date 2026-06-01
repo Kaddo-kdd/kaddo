@@ -119,6 +119,32 @@ kaddo explain
 
 El CLI prepara el contexto; tu LLM lo interpreta. Kaddo nunca llama a un LLM por sí mismo.
 
+## Míralo en acción
+
+Cuatro repositorios de demostración reproducibles vienen con artefactos `.kaddo/` y
+`architecture/` ya versionados — abre uno e inspecciona exactamente lo que produce
+Kaddo. Cada uno incluye un `prompt-flow.md` con un diagrama Mermaid, el reparto
+CLI↔LLM y handoffs de prompts para copiar/pegar según su escenario.
+
+<CardGrid>
+  <Card title="Task Pilot" icon="rocket">
+    App nueva · `new` — conocimiento estructurado desde el día uno; loop completo.
+  </Card>
+  <Card title="Loyalty Lite" icon="setting">
+    App existente · `pre-ai` — `scan` + agentes + demo de drift con Guard.
+  </Card>
+  <Card title="Old Orders" icon="open-book">
+    App MVC legacy · `legacy` — entender antes de cambiar; riesgos e incógnitas.
+  </Card>
+  <Card title="Commerce Stack" icon="puzzle">
+    Varios repos · `multirepo` — `modules map` + artefactos por módulo.
+  </Card>
+</CardGrid>
+
+Explóralos en la guía de [Ejemplos](/es/examples/), o revisa las
+[Plantillas](/es/templates/overview/) que capturan el conocimiento mínimo suficiente
+para cada artefacto.
+
 <div class="kaddo-cta">
   ## Empieza con un repo que recuerda
   <p>Desde proyectos nuevos hasta sistemas legacy, Kaddo mantiene el conocimiento del producto junto al código.</p>
