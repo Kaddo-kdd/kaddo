@@ -43,5 +43,75 @@ tags:
   pattern: "v{version}"
 ```
 
+## Other strategies
+
+Copy one of these into `.kaddo/git.yml` as a starting point and adjust the patterns to
+match how your team actually works. All fields are descriptive — Kaddo reads them as
+documentation, it does not act on them.
+
+### Git Flow
+
+Long-lived `main`/`develop` with `release/*` and `hotfix/*` branches.
+
+```yaml
+strategy: gitflow
+branchNaming:
+  pattern: "{type}/{workItemId}-{slug}"
+  mainBranch: main
+  developBranch: develop
+  releasePrefix: release/
+  hotfixPrefix: hotfix/
+commits:
+  convention: conventional-commits
+  requireWorkItemReference: true
+tags:
+  strategy: semver
+  pattern: "v{version}"
+release:
+  notesFrom:
+    - work-items
+    - conventional-commits
+```
+
+### Trunk-based
+
+Short-lived branches merged into a single trunk; releases are tagged off the trunk.
+
+```yaml
+strategy: trunk-based
+branchNaming:
+  pattern: "{workItemId}-{slug}"
+  mainBranch: main
+  maxBranchLifetimeDays: 2
+commits:
+  convention: conventional-commits
+  requireWorkItemReference: true
+tags:
+  strategy: semver
+  pattern: "v{version}"
+release:
+  notesFrom:
+    - conventional-commits
+```
+
+### Custom
+
+Bring your own conventions — for teams that do not follow a named model.
+
+```yaml
+strategy: custom
+branchNaming:
+  pattern: "{team}/{workItemId}-{slug}"
+commits:
+  convention: custom
+  requireWorkItemReference: false
+tags:
+  strategy: calver
+  pattern: "{YYYY}.{MM}.{patch}"
+release:
+  notesFrom:
+    - work-items
+```
+
 > Kaddo does **not** enforce the strategy in CI, and never creates branches or tags
 > for you. Refine the strategy with the `git-strategy-agent` in your LLM.

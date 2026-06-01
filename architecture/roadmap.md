@@ -59,6 +59,8 @@ scan → context → understand → agents → roadmap → work item → ownersh
 | VS-020 | Example prompt flows | `prompt-flow.md` per example: Mermaid diagram, CLI↔LLM split, input/output table, prompt handoffs, artifact chain; docs links; no CLI/agent changes |
 | VS-021 | Mermaid click-to-zoom | Docs-site lightbox for Mermaid diagrams (scroll/pinch zoom · drag pan · Esc close); docs only |
 | VS-022 | Landing refresh | Landing "See it in action" section: 4 demo repos + prompt flows + Templates links (EN/ES); docs only |
+| VS-023 | Visual Guide | Diagram-first docs page (EN/ES): knowledge loop, CLI↔LLM, sequence, artifact graph, project states, multirepo, Guard, governance, mindmap; docs only |
+| VS-024 | Artifact examples in docs | git-strategy: example `.kaddo/git.yml` for gitflow/trunk-based/custom; standards/security/stack: starter + filled file examples (EN/ES); docs only |
 
 **Tests:** 299 passing · CLI build + docs build green.
 
