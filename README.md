@@ -63,6 +63,9 @@ The loop in one sentence: **scan the repo → prepare context → use agents in 
 roadmap-driven work items → connect knowledge to code → guard against drift → explain the
 state.**
 
+Prefer to see it first? The [**Visual Guide**](https://kaddo.trycatch.tv/visual-guide/) maps
+the whole loop, the CLI/LLM split, the artifact graph and Guard as diagrams.
+
 ## Choose your use case
 
 Pick the guide closest to your situation:
