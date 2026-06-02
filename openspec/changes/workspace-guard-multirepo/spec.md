@@ -66,6 +66,6 @@ registering `storefront-web → ../frontend`, and a module artifact declaring
 ## Validation
 
 ```bash
-pnpm --filter "@trycatch.tv/kaddo" test
+pnpm --filter "@kaddo/cli" test
 pnpm -r build
 ```

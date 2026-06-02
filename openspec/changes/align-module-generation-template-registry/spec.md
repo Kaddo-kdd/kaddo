@@ -80,6 +80,6 @@ code:
 ## Validation
 
 ```bash
-pnpm --filter "@trycatch.tv/kaddo" test
+pnpm --filter "@kaddo/cli" test
 pnpm -r build
 ```

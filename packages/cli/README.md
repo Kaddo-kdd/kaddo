@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/judlup/kaddo/main/assets/banner.png" alt="Kaddo — Knowledge Driven Development Toolkit" width="100%" />
+  <img src="https://raw.githubusercontent.com/Kaddo-kdd/kaddo/main/assets/banner.png" alt="Kaddo — Knowledge Driven Development Toolkit" width="100%" />
 </p>
 
 # Kaddo — Knowledge Driven Development
@@ -40,13 +40,13 @@ Product knowledge
 ## Install
 
 ```bash
-npx @trycatch.tv/kaddo init
+npx @kaddo/cli init
 ```
 
 Or install globally:
 
 ```bash
-npm install -g @trycatch.tv/kaddo
+npm install -g @kaddo/cli
 kaddo --help
 ```
 

@@ -50,11 +50,11 @@ Docs clarify templates are guides, not mandatory forms (Minimum Sufficient Knowl
 Template documentation exists in English and Spanish.
 
 ### AC13 — Build and tests pass
-`pnpm --filter "@trycatch.tv/kaddo" test` and `pnpm -r build` succeed.
+`pnpm --filter "@kaddo/cli" test` and `pnpm -r build` succeed.
 
 ## Validation
 
 ```bash
-pnpm --filter "@trycatch.tv/kaddo" test
+pnpm --filter "@kaddo/cli" test
 pnpm -r build
 ```

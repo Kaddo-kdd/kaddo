@@ -41,7 +41,7 @@ export default defineConfig({
         },
       ],
       social: {
-        github: 'https://github.com/judlup/kaddo',
+        github: 'https://github.com/Kaddo-kdd/kaddo',
       },
       defaultLocale: 'root',
       locales: {

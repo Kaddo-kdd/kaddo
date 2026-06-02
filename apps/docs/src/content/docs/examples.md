@@ -4,7 +4,7 @@ description: Real, reproducible demo repositories showing Kaddo applied to new, 
 ---
 
 These are not "let me explain the concept" pages — they are **demo repositories you
-can open and inspect**. Each lives under [`examples/`](https://github.com/judlup/kaddo/tree/main/examples)
+can open and inspect**. Each lives under [`examples/`](https://github.com/Kaddo-kdd/kaddo/tree/main/examples)
 in the Kaddo repo, with committed `.kaddo/` and `architecture/` artifacts so you can
 see exactly what Kaddo produces before running anything.
 
@@ -12,10 +12,10 @@ see exactly what Kaddo produces before running anything.
 
 | Example | Scenario | State | Highlights |
 | --- | --- | --- | --- |
-| [Task Pilot](https://github.com/judlup/kaddo/tree/main/examples/new-project) | Greenfield app | `new` | Structured knowledge from day one; full loop |
-| [Loyalty Lite](https://github.com/judlup/kaddo/tree/main/examples/pre-ai-project) | Existing app | `pre-ai` | `scan` + agents + **Guard drift demo** |
-| [Old Orders](https://github.com/judlup/kaddo/tree/main/examples/legacy-project) | Legacy MVC app | `legacy` | Understand-before-change; legacy risks/unknowns |
-| [Commerce Stack](https://github.com/judlup/kaddo/tree/main/examples/multirepo-workspace) | Many repos | `multirepo` | `modules map` + per-module artifacts |
+| [Task Pilot](https://github.com/Kaddo-kdd/kaddo/tree/main/examples/new-project) | Greenfield app | `new` | Structured knowledge from day one; full loop |
+| [Loyalty Lite](https://github.com/Kaddo-kdd/kaddo/tree/main/examples/pre-ai-project) | Existing app | `pre-ai` | `scan` + agents + **Guard drift demo** |
+| [Old Orders](https://github.com/Kaddo-kdd/kaddo/tree/main/examples/legacy-project) | Legacy MVC app | `legacy` | Understand-before-change; legacy risks/unknowns |
+| [Commerce Stack](https://github.com/Kaddo-kdd/kaddo/tree/main/examples/multirepo-workspace) | Many repos | `multirepo` | `modules map` + per-module artifacts |
 
 ## How each example is laid out
 

@@ -36,5 +36,5 @@
 
 ## Validation
 
-- [x] Run `pnpm --filter "@trycatch.tv/kaddo" test`.
+- [x] Run `pnpm --filter "@kaddo/cli" test`.
 - [x] Run `pnpm -r build`.

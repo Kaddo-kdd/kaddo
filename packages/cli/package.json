@@ -1,11 +1,16 @@
 {
-  "name": "@trycatch.tv/kaddo",
+  "name": "@kaddo/cli",
   "version": "2.7.0",
   "description": "Knowledge Driven Development toolkit",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/judlup/kaddo"
+    "url": "git+https://github.com/Kaddo-kdd/kaddo.git",
+    "directory": "packages/cli"
+  },
+  "homepage": "https://kaddo.trycatch.tv",
+  "bugs": {
+    "url": "https://github.com/Kaddo-kdd/kaddo/issues"
   },
   "keywords": [
     "kdd",

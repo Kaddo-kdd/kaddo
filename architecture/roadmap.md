@@ -17,21 +17,21 @@ no ownership inference · no Confidence Score · the human always confirms.
 
 | Tag | Description |
 |---|---|
-| [v1.0.0](https://github.com/judlup/kaddo/releases/tag/v1.0.0) | MVP: `init` · `scan` · `create` · `guard` (Guard Lite) |
-| [v1.0.1](https://github.com/judlup/kaddo/releases/tag/v1.0.1) | Ignore reason: ignore guard FYIs with a reason (`kaddo ignore`) |
-| [v1.1.0](https://github.com/judlup/kaddo/releases/tag/v1.1.0) | `kaddo explain`: Knowledge Repository → context for humans and agents |
-| [v1.1.1](https://github.com/judlup/kaddo/releases/tag/v1.1.1) | Transparent Evidence Score in guard FYIs (observed signals, no magic %) |
-| [v1.2.0](https://github.com/judlup/kaddo/releases/tag/v1.2.0) | `kaddo classify`: cheap Classification Drift from diff signals |
-| [v1.3.0](https://github.com/judlup/kaddo/releases/tag/v1.3.0) | `kaddo status` · `learn` · `history` — Knowledge Repository observability |
-| [v1.4.0](https://github.com/judlup/kaddo/releases/tag/v1.4.0) | `kaddo guard --ci` — non-blocking JSON output for CI/PR |
-| [v2.0.0](https://github.com/judlup/kaddo/releases/tag/v2.0.0) | Optional module system: `kaddo add [adr\|incident\|rfc\|migration\|legacy]` |
-| [v2.1.0](https://github.com/judlup/kaddo/releases/tag/v2.1.0) | Semantic plugins: `prisma` (destructive migrations) + `openapi` (breaking contracts) |
-| [v2.2.0](https://github.com/judlup/kaddo/releases/tag/v2.2.0) | Domain Owners: `kaddo owners`, guard notifies owners by domain |
-| [v2.3.0](https://github.com/judlup/kaddo/releases/tag/v2.3.0) | Multirepo Module Descriptor: `kaddo module --init` · `--show` |
-| [v2.4.0](https://github.com/judlup/kaddo/releases/tag/v2.4.0) | Modules: `contracts` · `capabilities` · `guard-advanced` |
-| [v2.5.0](https://github.com/judlup/kaddo/releases/tag/v2.5.0) | Modules `agents` + `skills` · `explain --type` · richer agent output |
-| [v2.6.0](https://github.com/judlup/kaddo/releases/tag/v2.6.0) | Knowledge Loop end-to-end + templates, multirepo modules, demo examples, docs polish (see below) |
-| [v2.7.0](https://github.com/judlup/kaddo/releases/tag/v2.7.0) | Multirepo hardening: module artifacts from the template registry, module-aware `context`/`explain`, opt-in `guard --workspace` (VS-025→VS-027) |
+| [v1.0.0](https://github.com/Kaddo-kdd/kaddo/releases/tag/v1.0.0) | MVP: `init` · `scan` · `create` · `guard` (Guard Lite) |
+| [v1.0.1](https://github.com/Kaddo-kdd/kaddo/releases/tag/v1.0.1) | Ignore reason: ignore guard FYIs with a reason (`kaddo ignore`) |
+| [v1.1.0](https://github.com/Kaddo-kdd/kaddo/releases/tag/v1.1.0) | `kaddo explain`: Knowledge Repository → context for humans and agents |
+| [v1.1.1](https://github.com/Kaddo-kdd/kaddo/releases/tag/v1.1.1) | Transparent Evidence Score in guard FYIs (observed signals, no magic %) |
+| [v1.2.0](https://github.com/Kaddo-kdd/kaddo/releases/tag/v1.2.0) | `kaddo classify`: cheap Classification Drift from diff signals |
+| [v1.3.0](https://github.com/Kaddo-kdd/kaddo/releases/tag/v1.3.0) | `kaddo status` · `learn` · `history` — Knowledge Repository observability |
+| [v1.4.0](https://github.com/Kaddo-kdd/kaddo/releases/tag/v1.4.0) | `kaddo guard --ci` — non-blocking JSON output for CI/PR |
+| [v2.0.0](https://github.com/Kaddo-kdd/kaddo/releases/tag/v2.0.0) | Optional module system: `kaddo add [adr\|incident\|rfc\|migration\|legacy]` |
+| [v2.1.0](https://github.com/Kaddo-kdd/kaddo/releases/tag/v2.1.0) | Semantic plugins: `prisma` (destructive migrations) + `openapi` (breaking contracts) |
+| [v2.2.0](https://github.com/Kaddo-kdd/kaddo/releases/tag/v2.2.0) | Domain Owners: `kaddo owners`, guard notifies owners by domain |
+| [v2.3.0](https://github.com/Kaddo-kdd/kaddo/releases/tag/v2.3.0) | Multirepo Module Descriptor: `kaddo module --init` · `--show` |
+| [v2.4.0](https://github.com/Kaddo-kdd/kaddo/releases/tag/v2.4.0) | Modules: `contracts` · `capabilities` · `guard-advanced` |
+| [v2.5.0](https://github.com/Kaddo-kdd/kaddo/releases/tag/v2.5.0) | Modules `agents` + `skills` · `explain --type` · richer agent output |
+| [v2.6.0](https://github.com/Kaddo-kdd/kaddo/releases/tag/v2.6.0) | Knowledge Loop end-to-end + templates, multirepo modules, demo examples, docs polish (see below) |
+| [v2.7.0](https://github.com/Kaddo-kdd/kaddo/releases/tag/v2.7.0) | Multirepo hardening: module artifacts from the template registry, module-aware `context`/`explain`, opt-in `guard --workspace` (VS-025→VS-027) |
 
 ---
 

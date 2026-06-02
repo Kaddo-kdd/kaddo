@@ -61,6 +61,6 @@ mapped modules in `.kaddo/context-pack.md` and `.kaddo/context-pack.json`, and
 ## Validation
 
 ```bash
-pnpm --filter "@trycatch.tv/kaddo" test
+pnpm --filter "@kaddo/cli" test
 pnpm -r build
 ```

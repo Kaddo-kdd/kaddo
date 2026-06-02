@@ -5,7 +5,7 @@ description: Repositorios de demostración reales y reproducibles que muestran K
 
 Estas no son páginas de "déjame explicarte el concepto": son **repositorios de
 demostración que puedes abrir e inspeccionar**. Cada uno vive en
-[`examples/`](https://github.com/judlup/kaddo/tree/main/examples) dentro del repo de
+[`examples/`](https://github.com/Kaddo-kdd/kaddo/tree/main/examples) dentro del repo de
 Kaddo, con artefactos `.kaddo/` y `architecture/` ya versionados para que veas
 exactamente lo que Kaddo produce antes de ejecutar nada.
 
@@ -13,10 +13,10 @@ exactamente lo que Kaddo produce antes de ejecutar nada.
 
 | Ejemplo | Escenario | Estado | Destacados |
 | --- | --- | --- | --- |
-| [Task Pilot](https://github.com/judlup/kaddo/tree/main/examples/new-project) | App nueva | `new` | Conocimiento estructurado desde el día uno; loop completo |
-| [Loyalty Lite](https://github.com/judlup/kaddo/tree/main/examples/pre-ai-project) | App existente | `pre-ai` | `scan` + agentes + **demo de drift con Guard** |
-| [Old Orders](https://github.com/judlup/kaddo/tree/main/examples/legacy-project) | App MVC legacy | `legacy` | Entender antes de cambiar; riesgos/incógnitas legacy |
-| [Commerce Stack](https://github.com/judlup/kaddo/tree/main/examples/multirepo-workspace) | Varios repos | `multirepo` | `modules map` + artefactos por módulo |
+| [Task Pilot](https://github.com/Kaddo-kdd/kaddo/tree/main/examples/new-project) | App nueva | `new` | Conocimiento estructurado desde el día uno; loop completo |
+| [Loyalty Lite](https://github.com/Kaddo-kdd/kaddo/tree/main/examples/pre-ai-project) | App existente | `pre-ai` | `scan` + agentes + **demo de drift con Guard** |
+| [Old Orders](https://github.com/Kaddo-kdd/kaddo/tree/main/examples/legacy-project) | App MVC legacy | `legacy` | Entender antes de cambiar; riesgos/incógnitas legacy |
+| [Commerce Stack](https://github.com/Kaddo-kdd/kaddo/tree/main/examples/multirepo-workspace) | Varios repos | `multirepo` | `modules map` + artefactos por módulo |
 
 ## Cómo está organizado cada ejemplo
 

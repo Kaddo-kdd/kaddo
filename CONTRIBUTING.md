@@ -3,7 +3,7 @@
 ## Setup
 
 ```bash
-git clone https://github.com/judlup/kaddo
+git clone https://github.com/Kaddo-kdd/kaddo
 cd kaddo
 pnpm install
 pnpm build

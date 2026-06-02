@@ -6,13 +6,13 @@ description: Instala Kaddo e inicialízalo en tu proyecto.
 ## Instalación
 
 ```bash
-npx @trycatch.tv/kaddo init
+npx @kaddo/cli init
 ```
 
 O instala globalmente:
 
 ```bash
-npm install -g @trycatch.tv/kaddo
+npm install -g @kaddo/cli
 kaddo --help
 ```
 
