@@ -91,7 +91,7 @@ describe('template registry', () => {
   })
 
   it('templatesByCategory partitions the registry', () => {
-    const cats: TemplateCategory[] = ['core', 'architecture', 'module', 'operations', 'legacy']
+    const cats: TemplateCategory[] = ['core', 'business', 'architecture', 'module', 'operations', 'legacy']
     const total = cats.reduce((n, c) => n + templatesByCategory(c).length, 0)
     expect(total).toBe(listTemplates().length)
     expect(templatesByCategory('core').map((t) => t.id)).toContain('work-item')

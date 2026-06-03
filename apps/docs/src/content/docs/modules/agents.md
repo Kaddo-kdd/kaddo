@@ -49,6 +49,17 @@ missing files. `kaddo init` does **not** install agents; add them when you need 
 | `legacy-agent` | Surface risks/unknowns before changing legacy code | `architecture/legacy/*.md` |
 | `adr-agent` | Propose candidate architecture decisions | `architecture/decision-candidates.md` |
 
+## Bootstrap agents
+
+For new projects, these refine the knowledge base created by
+[`kaddo bootstrap`](/commands/bootstrap/) across Business → Architecture → Codebase → Development.
+
+| Agent | Purpose | Saves to |
+|---|---|---|
+| `business-agent` | Turn an idea into a business definition | `architecture/business/*.md` |
+| `bootstrap-agent` | Go from business to capabilities, quality attributes and roadmap | `architecture/bootstrap-summary.md`, `capabilities.md`, `roadmap.md` |
+| `codebase-foundation-agent` | Propose a codebase foundation (no code) | `architecture/codebase-foundation.md` |
+
 ## Operational agents
 
 These support day-to-day execution and the multirepo / global artifacts (VS-017).

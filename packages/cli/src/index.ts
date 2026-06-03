@@ -15,6 +15,7 @@ import { runAdd } from './commands/add.js'
 import { runOwners, runOwnersSuggest } from './commands/owners.js'
 import { runModuleDescriptor } from './commands/module-descriptor.js'
 import { runModulesMap, runModulesList } from './commands/modules-map.js'
+import { runBootstrap } from './commands/bootstrap.js'
 
 const program = new Command()
 
@@ -35,6 +36,13 @@ program
   .description('Detect project stack and suggest domains')
   .action(async () => {
     await runScan()
+  })
+
+program
+  .command('bootstrap')
+  .description('Build the initial knowledge base for a new project (Business → Architecture → Codebase → Development)')
+  .action(async () => {
+    await runBootstrap()
   })
 
 program

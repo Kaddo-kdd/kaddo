@@ -10,11 +10,12 @@ dispersas desde el día uno — una capa de conocimiento ligera que crece con el
 
 ```bash
 kaddo init          # estado: new, tamaño de equipo, estructura
+kaddo bootstrap     # base de conocimiento inicial: Business → Architecture → Codebase → Development
 kaddo context       # context pack para el LLM → .kaddo/context-pack.md
 kaddo add agents    # instala los agent prompt packs
 kaddo understand    # plan guiado de handoff CLI → LLM
-# ── en tu LLM, usa roadmap-agent y architecture-agent para redactar
-#    architecture/roadmap.md y architecture/current-state.md ──
+# ── en tu LLM, usa business-agent + bootstrap-agent para refinar la base de conocimiento,
+#    luego roadmap-agent y architecture-agent para redactar el roadmap y la arquitectura ──
 kaddo create --from roadmap   # convierte un candidato del roadmap en un Work Item
 kaddo owners suggest          # declara el ownership (code:) en el Work Item
 kaddo guard                   # detecta posible deriva del conocimiento

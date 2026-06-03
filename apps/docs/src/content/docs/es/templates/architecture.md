@@ -10,6 +10,9 @@ Plantillas para capturar y decidir arquitectura.
 | Current State | Baseline de arquitectura reconstruido | `architecture/current-state.md` | `architecture-agent` |
 | Notas de arquitectura | Notas de trabajo, aún sin decidir | `architecture/architecture-notes.md` | — |
 | Decision Candidates | Decisiones candidatas para revisión | `architecture/decision-candidates.md` | `adr-agent` |
+| Quality Attributes | Atributos de calidad priorizados + trade-offs | `architecture/quality-attributes.md` | `bootstrap-agent` |
+| Codebase Foundation | Estructura prevista del codebase (sin código) | `architecture/codebase-foundation.md` | `codebase-foundation-agent` |
+| Bootstrap Summary | Índice de la base de conocimiento inicial | `architecture/bootstrap-summary.md` | `bootstrap-agent` |
 | ADR | Una decisión aceptada | `architecture/decisions/` | — |
 
 ## Current State
@@ -26,6 +29,13 @@ Promuévelas a Decision Candidate o ADR cuando estén listas.
 
 Entradas `DC-001` con contexto, opciones, opción recomendada y trade-offs. Promueve las
 candidatas aceptadas a ADRs individuales.
+
+## Quality Attributes, Codebase Foundation y Bootstrap Summary
+
+Generadas por [`kaddo bootstrap`](/es/commands/bootstrap/) para proyectos nuevos: atributos
+de calidad priorizados (nada de "todo alto"), la base de codebase prevista (estructura y
+convenciones, **nunca** código fuente) y un índice de la base de conocimiento inicial con
+el siguiente paso.
 
 ## ADR
 

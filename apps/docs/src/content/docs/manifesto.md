@@ -28,6 +28,22 @@ Every change should be able to answer:
 
 The goal is not to write more documentation. The goal is to preserve the minimum sufficient knowledge so that humans and artificial intelligence can build software with less ambiguity, less rework, and more traceability.
 
+## The macro flow of a project
+
+Beneath that per-change cycle, Kaddo frames the project as a whole through four macro layers:
+
+**Business → Architecture → Codebase → Development**
+
+This is the macro concept that governs the project end to end: intent comes before structure, structure comes before code, and code comes before evolution. Knowledge flows down these layers, and each layer stays connected to the one above it — so architecture answers to business, the codebase answers to architecture, and development answers to all three.
+
+Every project state enters and traverses these layers differently:
+
+- **new** — start at Business and build the layers from an idea (this is what `kaddo bootstrap` does today).
+- **pre-AI** — _phases to be defined._ The layers already exist implicitly in the code; Kaddo reconstructs them upward into explicit knowledge.
+- **legacy** — _phases to be defined._ The layers are entered cautiously, understanding before changing.
+
+The per-change cycle (Classify → Capture → Structure → Build → Learn) operates _inside_ these layers; the layers give the project its shape, the cycle keeps it alive.
+
 ## The problem Kaddo wants to solve
 
 Many teams do not have a tooling problem. They have a context problem.
@@ -206,6 +222,8 @@ In a new project, Guard Lite can stay silent until the first artifact with decla
 
 The rule is `touch the domain, improve the graph`: when you touch a domain, you improve the knowledge of that domain. Not before, not all at once, not as punishment. The graph grows with real work.
 
+For new projects, Kaddo offers a guided bootstrap so a project can be born with context: it captures the minimum sufficient knowledge across the base layers — `Business → Architecture → Codebase → Development` — before code is written, without generating code or deciding the architecture automatically.
+
 ## Quality Gates
 
 A Quality Gate in Kaddo does not validate the amount of documentation; it validates knowledge sufficiency. For K0 there may be no gate; for K1 problem and expected result are enough; for K2 acceptance criteria are needed; for K3 sufficient design and reviewed related artifacts are needed; and for K4 ADR, risks, alternatives, and a mitigation or rollback plan are needed.
@@ -240,6 +258,7 @@ It can detect stack, framework, dependencies, project structure, migration folde
 Expected commands:
 
 - `kaddo init` — Initializes the base structure.
+- `kaddo bootstrap` — For new projects: builds the initial knowledge base across Business → Architecture → Codebase → Development.
 - `kaddo scan` — Detects structure, stack, and possible domains.
 - `kaddo create` — Creates Work Items or artifacts.
 - `kaddo guard` — Checks changes against declared ownership.

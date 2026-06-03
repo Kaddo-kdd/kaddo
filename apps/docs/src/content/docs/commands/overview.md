@@ -8,6 +8,7 @@ Commands in workflow order:
 | Command | What it does |
 |---|---|
 | `kaddo init` | Initialize Kaddo in the current project |
+| `kaddo bootstrap` | Build the initial knowledge base for a new project (Business → Architecture → Codebase → Development) |
 | `kaddo scan` | Detect project stack and suggest domains |
 | `kaddo context` | Generate an LLM context pack for agent handoff |
 | `kaddo add agents` | Install agent prompt packs for your LLM chat |

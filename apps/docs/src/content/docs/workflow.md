@@ -7,6 +7,7 @@ Kaddo has one practical loop:
 
 ```bash
 kaddo init          # state: new | pre-ai | legacy, team size, structure
+kaddo bootstrap     # new projects: initial knowledge base (Business → Architecture → Codebase → Development)
 kaddo scan          # deterministic technical inventory → .kaddo/scan.json
 kaddo context       # LLM context pack → .kaddo/context-pack.md
 kaddo add agents    # install agent prompt packs

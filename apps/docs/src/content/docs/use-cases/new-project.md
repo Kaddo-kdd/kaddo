@@ -10,11 +10,12 @@ decisions from day one — a lightweight knowledge layer that grows with the cod
 
 ```bash
 kaddo init          # state: new, team size, structure
+kaddo bootstrap     # initial knowledge base: Business → Architecture → Codebase → Development
 kaddo context       # LLM context pack → .kaddo/context-pack.md
 kaddo add agents    # install agent prompt packs
 kaddo understand    # guided CLI → LLM handoff plan
-# ── in your LLM, use roadmap-agent and architecture-agent to draft
-#    architecture/roadmap.md and architecture/current-state.md ──
+# ── in your LLM, use business-agent + bootstrap-agent to refine the knowledge base,
+#    then roadmap-agent and architecture-agent to draft the roadmap and architecture ──
 kaddo create --from roadmap   # turn a roadmap candidate into a Work Item
 kaddo owners suggest          # declare code: ownership on the Work Item
 kaddo guard                   # detect possible knowledge drift

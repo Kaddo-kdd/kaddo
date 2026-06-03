@@ -8,7 +8,13 @@
 // Design rule: a complete template is not a long template. It guides well, avoids
 // ambiguity and keeps traceability — without becoming a bureaucratic form.
 
-export type TemplateCategory = 'core' | 'architecture' | 'module' | 'operations' | 'legacy'
+export type TemplateCategory =
+  | 'core'
+  | 'business'
+  | 'architecture'
+  | 'module'
+  | 'operations'
+  | 'legacy'
 
 export type KaddoTemplate = {
   /** Stable id, e.g. `work-item`. */
@@ -730,6 +736,370 @@ ${QUALITY}
 - [ ] Marked as candidates, not decisions.
 `
 
+// ---------------------------------------------------------------------------
+// Business (project knowledge bootstrap)
+// ---------------------------------------------------------------------------
+
+const BUSINESS_PRODUCT_BRIEF = `---
+type: product-brief
+status: draft
+---
+
+# Product Brief
+
+> Created by \`kaddo bootstrap\`. Refine with the business-agent. Mark unknowns as TBD.
+
+## What is this product?
+
+TBD
+
+## Problem it solves
+
+TBD
+
+## Target users
+
+TBD
+
+## Value proposition
+
+TBD
+
+## Out of scope (for the MVP)
+
+- TBD
+
+## Assumptions
+
+- ...
+
+## Open questions
+
+- ...
+
+${QUALITY}
+
+- [ ] The product can be described in one paragraph.
+- [ ] The MVP boundary is explicit.
+`
+
+const BUSINESS_PROBLEM = `---
+type: problem
+status: draft
+---
+
+# Problem Statement
+
+> Refine with the business-agent. Do not invent facts.
+
+## Problem
+
+TBD
+
+## Who has it
+
+TBD
+
+## Why it matters now
+
+TBD
+
+## Current alternatives
+
+- TBD
+
+## Assumptions
+
+- ...
+
+## Open questions
+
+- ...
+
+${QUALITY}
+
+- [ ] The problem is stated without assuming the solution.
+- [ ] The affected users are named.
+`
+
+const BUSINESS_USERS = `---
+type: users
+status: draft
+---
+
+# Users & Personas
+
+> Refine with the business-agent.
+
+## Primary users
+
+- TBD
+
+## Secondary users
+
+- TBD
+
+## Needs & goals
+
+- TBD
+
+## Assumptions
+
+- ...
+
+## Open questions
+
+- ...
+
+${QUALITY}
+
+- [ ] Each persona has a goal, not just a label.
+- [ ] Primary vs secondary users are distinguished.
+`
+
+const BUSINESS_VALUE_PROPOSITION = `---
+type: value-proposition
+status: draft
+---
+
+# Value Proposition
+
+> Refine with the business-agent.
+
+## For whom
+
+TBD
+
+## What we offer
+
+TBD
+
+## Why it is better / different
+
+TBD
+
+## Assumptions
+
+- ...
+
+## Open questions
+
+- ...
+
+${QUALITY}
+
+- [ ] The value is specific, not generic.
+- [ ] It maps to a real user need.
+`
+
+const BUSINESS_RULES = `---
+type: business-rules
+status: draft
+---
+
+# Business Rules
+
+> Refine with the business-agent. These are product rules, not implementation details.
+
+## Core rules
+
+- TBD
+
+## Edge cases
+
+- TBD
+
+## Assumptions
+
+- ...
+
+## Open questions
+
+- ...
+
+${QUALITY}
+
+- [ ] Rules are testable statements.
+- [ ] No implementation detail leaks in.
+`
+
+const BUSINESS_CONSTRAINTS = `---
+type: constraints
+status: draft
+---
+
+# Constraints
+
+> Refine with the business-agent.
+
+## Business constraints
+
+- TBD
+
+## Regulatory / compliance
+
+- TBD
+
+## Time / budget / team
+
+- TBD
+
+## Assumptions
+
+- ...
+
+## Open questions
+
+- ...
+
+${QUALITY}
+
+- [ ] Constraints are real, not aspirational.
+- [ ] Hard limits are separated from preferences.
+`
+
+const BUSINESS_GLOSSARY = `---
+type: glossary
+status: draft
+---
+
+# Glossary
+
+> Refine with the business-agent. One shared vocabulary avoids ambiguity.
+
+| Term | Definition |
+|---|---|
+| TBD | TBD |
+
+## Open questions
+
+- ...
+
+${QUALITY}
+
+- [ ] Each term has a single agreed definition.
+- [ ] Ambiguous terms are flagged.
+`
+
+const QUALITY_ATTRIBUTES = `---
+type: quality-attributes
+status: draft
+---
+
+# Quality Attributes
+
+> Created by \`kaddo bootstrap\`. Refine with the bootstrap-agent. Prioritize honestly.
+
+## What matters most
+
+- TBD (e.g. reliability, performance, security, maintainability, cost)
+
+## Trade-offs accepted
+
+- TBD
+
+## Measurable targets (if known)
+
+- TBD
+
+## Assumptions
+
+- ...
+
+## Open questions
+
+- ...
+
+${QUALITY}
+
+- [ ] Attributes are prioritized, not all "high".
+- [ ] Trade-offs are explicit.
+`
+
+const CODEBASE_FOUNDATION = `---
+type: codebase-foundation
+status: draft
+---
+
+# Codebase Foundation
+
+> Created by \`kaddo bootstrap\`. Refine with the codebase-foundation-agent.
+> This describes the intended base — it does **not** generate code.
+
+## Suggested structure
+
+TBD
+
+## Initial modules / boundaries
+
+- TBD
+
+## Conventions
+
+- TBD
+
+## Git strategy
+
+See \`architecture/git-strategy.md\`.
+
+## Minimum criteria to start development
+
+- [ ] TBD
+
+## Assumptions
+
+- ...
+
+## Open questions
+
+- ...
+
+${QUALITY}
+
+- [ ] Structure follows the business and architecture, not a framework default.
+- [ ] No production code is described here — only the foundation.
+`
+
+const BOOTSTRAP_SUMMARY = `---
+type: bootstrap-summary
+status: draft
+---
+
+# Bootstrap Summary
+
+> Created by \`kaddo bootstrap\`. Index of the initial knowledge base and next steps.
+
+## Layers
+
+- **Business** — \`architecture/business/\`
+- **Architecture** — capabilities, quality-attributes, stack, current-state, decisions
+- **Codebase** — codebase-foundation, standards, git-strategy
+- **Development** — roadmap, work-items
+
+## Status
+
+- [ ] Business defined
+- [ ] Initial architecture proposed
+- [ ] Codebase foundation drafted
+- [ ] Roadmap and first Work Items prepared
+
+## Next steps
+
+1. Run \`kaddo context\` and \`kaddo add agents\`.
+2. Refine the artifacts with the business-agent, bootstrap-agent and
+   codebase-foundation-agent in your LLM.
+3. Run \`kaddo create --from roadmap\` to create the first Work Items.
+
+## Open questions
+
+- ...
+
+${QUALITY}
+
+- [ ] Every generated artifact is listed.
+- [ ] The next step is clear.
+`
+
 export const KADDO_TEMPLATES: KaddoTemplate[] = [
   // core
   {
@@ -774,6 +1144,84 @@ export const KADDO_TEMPLATES: KaddoTemplate[] = [
     relatedCommand: 'kaddo init',
     content: KNOWLEDGE,
   },
+  // business (bootstrap)
+  {
+    id: 'business-product-brief',
+    name: 'Product Brief',
+    category: 'business',
+    outputPath: 'architecture/business/product-brief.md',
+    description: 'The product in one page: problem, users, value, MVP boundary.',
+    whenToUse: 'At the start of a new project (kaddo bootstrap).',
+    relatedCommand: 'kaddo bootstrap',
+    relatedAgent: 'business-agent',
+    content: BUSINESS_PRODUCT_BRIEF,
+  },
+  {
+    id: 'business-problem',
+    name: 'Problem Statement',
+    category: 'business',
+    outputPath: 'architecture/business/problem.md',
+    description: 'The problem the product solves, without assuming the solution.',
+    whenToUse: 'When defining a new project (kaddo bootstrap).',
+    relatedCommand: 'kaddo bootstrap',
+    relatedAgent: 'business-agent',
+    content: BUSINESS_PROBLEM,
+  },
+  {
+    id: 'business-users',
+    name: 'Users & Personas',
+    category: 'business',
+    outputPath: 'architecture/business/users.md',
+    description: 'Primary and secondary users with goals.',
+    whenToUse: 'When defining a new project (kaddo bootstrap).',
+    relatedCommand: 'kaddo bootstrap',
+    relatedAgent: 'business-agent',
+    content: BUSINESS_USERS,
+  },
+  {
+    id: 'business-value-proposition',
+    name: 'Value Proposition',
+    category: 'business',
+    outputPath: 'architecture/business/value-proposition.md',
+    description: 'For whom, what we offer and why it is better.',
+    whenToUse: 'When defining a new project (kaddo bootstrap).',
+    relatedCommand: 'kaddo bootstrap',
+    relatedAgent: 'business-agent',
+    content: BUSINESS_VALUE_PROPOSITION,
+  },
+  {
+    id: 'business-rules',
+    name: 'Business Rules',
+    category: 'business',
+    outputPath: 'architecture/business/business-rules.md',
+    description: 'Product rules as testable statements.',
+    whenToUse: 'When defining a new project (kaddo bootstrap).',
+    relatedCommand: 'kaddo bootstrap',
+    relatedAgent: 'business-agent',
+    content: BUSINESS_RULES,
+  },
+  {
+    id: 'business-constraints',
+    name: 'Business Constraints',
+    category: 'business',
+    outputPath: 'architecture/business/constraints.md',
+    description: 'Business, regulatory and resource constraints.',
+    whenToUse: 'When defining a new project (kaddo bootstrap).',
+    relatedCommand: 'kaddo bootstrap',
+    relatedAgent: 'business-agent',
+    content: BUSINESS_CONSTRAINTS,
+  },
+  {
+    id: 'business-glossary',
+    name: 'Glossary',
+    category: 'business',
+    outputPath: 'architecture/business/glossary.md',
+    description: 'Shared vocabulary for the project.',
+    whenToUse: 'When defining a new project (kaddo bootstrap).',
+    relatedCommand: 'kaddo bootstrap',
+    relatedAgent: 'business-agent',
+    content: BUSINESS_GLOSSARY,
+  },
   // architecture
   {
     id: 'current-state',
@@ -803,6 +1251,39 @@ export const KADDO_TEMPLATES: KaddoTemplate[] = [
     whenToUse: 'When surfacing decisions that may become ADRs.',
     relatedAgent: 'adr-agent',
     content: DECISION_CANDIDATES,
+  },
+  {
+    id: 'quality-attributes',
+    name: 'Quality Attributes',
+    category: 'architecture',
+    outputPath: 'architecture/quality-attributes.md',
+    description: 'Prioritized quality attributes and accepted trade-offs.',
+    whenToUse: 'During bootstrap, to record what matters most technically.',
+    relatedCommand: 'kaddo bootstrap',
+    relatedAgent: 'bootstrap-agent',
+    content: QUALITY_ATTRIBUTES,
+  },
+  {
+    id: 'codebase-foundation',
+    name: 'Codebase Foundation',
+    category: 'architecture',
+    outputPath: 'architecture/codebase-foundation.md',
+    description: 'Intended codebase structure and conventions (no source code).',
+    whenToUse: 'During bootstrap, before writing code.',
+    relatedCommand: 'kaddo bootstrap',
+    relatedAgent: 'codebase-foundation-agent',
+    content: CODEBASE_FOUNDATION,
+  },
+  {
+    id: 'bootstrap-summary',
+    name: 'Bootstrap Summary',
+    category: 'architecture',
+    outputPath: 'architecture/bootstrap-summary.md',
+    description: 'Index of the initial knowledge base and next steps.',
+    whenToUse: 'Generated by kaddo bootstrap.',
+    relatedCommand: 'kaddo bootstrap',
+    relatedAgent: 'bootstrap-agent',
+    content: BOOTSTRAP_SUMMARY,
   },
   {
     id: 'adr',

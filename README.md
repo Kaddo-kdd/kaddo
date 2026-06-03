@@ -109,6 +109,7 @@ replace human review, or replace Jira / Linear / GitHub Issues.
 | Command | What it does |
 |---|---|
 | `kaddo init` | Initialize Kaddo in the current project |
+| `kaddo bootstrap` | Build the initial knowledge base for a new project (Business → Architecture → Codebase → Development) |
 | `kaddo scan` | Detect stack and suggest domains; writes `.kaddo/scan.json` + `architecture/inventory.md` |
 | `kaddo context` | Generate an LLM context pack for agent handoff |
 | `kaddo add agents` | Install agent prompt packs |
@@ -153,11 +154,12 @@ Git/GitHub API, or runs a security scan.
 ## Templates
 
 Kaddo ships templates for its main artifacts — Work Items, roadmaps, capabilities,
-architecture baselines, ADRs, multirepo modules, security, standards, stack, Git
+business definition (product brief, problem, users…), architecture baselines, quality
+attributes, codebase foundation, ADRs, multirepo modules, security, standards, stack, Git
 strategy, incidents, runbooks and legacy risks/unknowns/modernization candidates. They
 live in a central registry (`packages/cli/src/templates/registry.ts`) and are organized
-into five categories: **core**, **architecture**, **module**, **operations** and
-**legacy**.
+into six categories: **core**, **business**, **architecture**, **module**, **operations**
+and **legacy**.
 
 Templates are designed to capture **minimum sufficient knowledge** without creating
 documentation theater — they are guides, not mandatory forms. Each carries a purpose,

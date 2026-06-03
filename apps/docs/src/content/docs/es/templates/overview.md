@@ -33,7 +33,8 @@ nunca inventes la estructura desde cero. Viven en un registro central
 ## Categorías
 
 - [Plantillas core](/es/templates/core/) — work item, roadmap, capacidades, knowledge.
-- [Plantillas de arquitectura](/es/templates/architecture/) — current state, notas, decision candidates, ADR.
+- [Plantillas de negocio](/es/templates/business/) — product brief, problema, usuarios, propuesta de valor, reglas, restricciones, glosario.
+- [Plantillas de arquitectura](/es/templates/architecture/) — current state, notas, decision candidates, quality attributes, codebase foundation, ADR.
 - [Plantillas de módulo](/es/templates/module/) — diseño, stack, seguridad, estándares, ADR por repo.
 - [Plantillas de operaciones](/es/templates/operations/) — seguridad, estándares, stack, estrategia de git, incidente, runbook.
 - [Plantillas legacy](/es/templates/legacy/) — riesgos, incógnitas, candidatos de modernización.

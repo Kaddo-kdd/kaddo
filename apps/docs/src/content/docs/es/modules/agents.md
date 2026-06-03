@@ -49,6 +49,17 @@ los que falten. `kaddo init` **no** instala agentes; agrégalos cuando los neces
 | `legacy-agent` | Detectar riesgos/incógnitas antes de tocar código legacy | `architecture/legacy/*.md` |
 | `adr-agent` | Proponer decisiones de arquitectura candidatas | `architecture/decision-candidates.md` |
 
+## Agentes de bootstrap
+
+Para proyectos nuevos, refinan la base de conocimiento creada por
+[`kaddo bootstrap`](/es/commands/bootstrap/) en las capas Business → Architecture → Codebase → Development.
+
+| Agente | Propósito | Guarda en |
+|---|---|---|
+| `business-agent` | Convertir una idea en definición de negocio | `architecture/business/*.md` |
+| `bootstrap-agent` | De negocio a capacidades, atributos de calidad y roadmap | `architecture/bootstrap-summary.md`, `capabilities.md`, `roadmap.md` |
+| `codebase-foundation-agent` | Proponer una base de codebase (sin código) | `architecture/codebase-foundation.md` |
+
 ## Agentes operativos
 
 Apoyan la ejecución diaria y los artefactos multirepo / globales (VS-017).

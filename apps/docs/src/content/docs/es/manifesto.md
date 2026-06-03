@@ -28,6 +28,22 @@ Cada cambio debería poder responder:
 
 El objetivo no es escribir más documentación. El objetivo es preservar el conocimiento mínimo suficiente para que humanos e inteligencia artificial puedan construir software con menos ambigüedad, menos retrabajo y más trazabilidad.
 
+## El macro-flujo de un proyecto
+
+Por debajo de ese ciclo por cambio, Kaddo enmarca el proyecto como un todo a través de cuatro capas macro:
+
+**Business → Architecture → Codebase → Development**
+
+Este es el macro-concepto que gobierna el proyecto de punta a punta: la intención antecede a la estructura, la estructura antecede al código y el código antecede a la evolución. El conocimiento fluye hacia abajo por estas capas, y cada capa se mantiene conectada con la de arriba — así la arquitectura responde al negocio, el codebase responde a la arquitectura y el desarrollo responde a las tres.
+
+Cada estado de proyecto entra y recorre estas capas de forma distinta:
+
+- **new** — empieza en Business y construye las capas desde una idea (es lo que hace `kaddo bootstrap` hoy).
+- **pre-AI** — _fases por definir._ Las capas ya existen implícitas en el código; Kaddo las reconstruye hacia arriba como conocimiento explícito.
+- **legacy** — _fases por definir._ Las capas se entran con cautela, entendiendo antes de cambiar.
+
+El ciclo por cambio (Clasifica → Captura → Estructura → Construye → Aprende) opera _dentro_ de estas capas; las capas le dan forma al proyecto, el ciclo lo mantiene vivo.
+
 ## El problema que Kaddo quiere resolver
 
 Muchos equipos no tienen un problema de herramientas. Tienen un problema de contexto.
@@ -206,6 +222,8 @@ En un proyecto nuevo, Guard Lite puede estar silencioso hasta que exista el prim
 
 La regla es `touch the domain, improve the graph`: cuando tocas un dominio, mejoras el conocimiento de ese dominio. No antes, no todo de golpe, no como castigo. El grafo crece con el trabajo real.
 
+Para proyectos nuevos, Kaddo ofrece un bootstrap guiado para que un proyecto pueda nacer con contexto: captura el conocimiento mínimo suficiente a lo largo de las capas base — `Business → Architecture → Codebase → Development` — antes de escribir código, sin generar código ni decidir la arquitectura automáticamente.
+
 ## Quality Gates
 
 Un Quality Gate en Kaddo no valida cantidad de documentación; valida suficiencia de conocimiento. Para K0 puede no haber gate; para K1 basta con problema y resultado esperado; para K2 se necesitan criterios de aceptación; para K3 se necesita diseño suficiente y artifacts relacionados revisados; y para K4 se necesitan ADR, riesgos, alternativas y plan de mitigación o rollback.
@@ -240,6 +258,7 @@ Puede detectar stack, framework, dependencias, estructura del proyecto, carpetas
 Comandos esperados:
 
 - `kaddo init` — Inicializa la estructura base.
+- `kaddo bootstrap` — Para proyectos nuevos: construye la base de conocimiento inicial en las capas Business → Architecture → Codebase → Development.
 - `kaddo scan` — Detecta estructura, stack y posibles dominios.
 - `kaddo create` — Crea Work Items o artifacts.
 - `kaddo guard` — Revisa cambios contra ownership declarado.

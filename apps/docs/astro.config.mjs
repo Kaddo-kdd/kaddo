@@ -91,6 +91,7 @@ export default defineConfig({
             { label: 'Overview', translations: { es: 'Resumen' }, slug: 'commands/overview' },
             { label: 'init', slug: 'commands/init' },
             { label: 'scan', slug: 'commands/scan' },
+            { label: 'bootstrap', slug: 'commands/bootstrap' },
             { label: 'context', slug: 'commands/context' },
             { label: 'understand', slug: 'commands/understand' },
             { label: 'create', slug: 'commands/create' },
@@ -104,6 +105,7 @@ export default defineConfig({
           items: [
             { label: 'Overview', translations: { es: 'Resumen' }, slug: 'templates/overview' },
             { label: 'Core', translations: { es: 'Core' }, slug: 'templates/core' },
+            { label: 'Business', translations: { es: 'Negocio' }, slug: 'templates/business' },
             { label: 'Architecture', translations: { es: 'Arquitectura' }, slug: 'templates/architecture' },
             { label: 'Module', translations: { es: 'Módulo' }, slug: 'templates/module' },
             { label: 'Operations', translations: { es: 'Operaciones' }, slug: 'templates/operations' },
