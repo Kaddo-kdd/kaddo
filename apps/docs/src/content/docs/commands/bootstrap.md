@@ -50,6 +50,10 @@ That is **all** bootstrap creates. It does **not** generate specialized files
 those specialized templates stay in the registry as **advanced** templates. Knowledge
 grows progressively; you are never forced to start with everything.
 
+**Consolidated artifacts are valid knowledge.** Kaddo recognizes `business.md`,
+`product.md` and `codebase.md` by their front-matter `type`, so `explain`/`understand`
+report them as real knowledge (status *Consolidated*) — not as "missing".
+
 ## Behavior
 
 - Requires `kaddo init` first (otherwise: `Run 'kaddo init' first.`).

@@ -90,3 +90,22 @@ de `artifacts` por módulo), distinto de `installed_modules`.
 
 > `explain` lee los módulos mapeados desde `.kaddo/modules.yml` y los artefactos de
 > `knowledge/tech/modules/<id>/` solamente. Nunca escanea los repos secundarios.
+
+## Madurez del conocimiento (reconocimiento semántico)
+
+`explain` reconoce el conocimiento por el **`type` del front-matter**, no por el nombre o la
+ruta del archivo — así un `business.md` consolidado (`type: business`) se reconoce aunque no
+sea una carpeta de archivos separados, y las `capabilities` se detectan donde sea que viva
+un artefacto `type: capabilities`. Cada capa obtiene un estado de madurez:
+
+| Estado | Significado |
+|---|---|
+| **Missing** | Aún no hay conocimiento para esta capa. |
+| **Consolidated** | Existe un archivo consolidado de la capa (`business.md`, `product.md`, `codebase.md`). |
+| **Structured** | Existen artefactos especializados (`capabilities`, `current-state`, ADRs). |
+| **Partial** (Delivery) | Hay roadmap, pero aún no hay Work Items materializados. |
+| **Traceable** (Delivery) | Roadmap + Work Items (y ADRs / ownership). |
+
+Prioridad de descubrimiento: **type del front-matter → convenciones de Kaddo → ruta →
+nombre** — nunca al revés. Los Work Items se reconocen por su tipo de work-item bajo
+`knowledge/delivery/work-items/` (los ADRs y archivos sin tipo nunca son Work Items).

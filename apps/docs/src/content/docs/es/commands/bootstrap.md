@@ -50,6 +50,10 @@ en `problem.md`, `users.md`, … y `product.md` en `product-brief.md`, `capabili
 esos templates especializados quedan en el registry como templates **avanzados**. El
 conocimiento crece progresivamente; nunca estás obligado a empezar con todo.
 
+**Los artefactos consolidados son conocimiento válido.** Kaddo reconoce `business.md`,
+`product.md` y `codebase.md` por su `type` de front-matter, así `explain`/`understand` los
+reportan como conocimiento real (estado *Consolidated*) — no como "missing".
+
 ## Comportamiento
 
 - Requiere `kaddo init` primero (si no: `Run 'kaddo init' first.`).

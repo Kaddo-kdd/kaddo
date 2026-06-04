@@ -29,6 +29,17 @@ flowchart TD
 `kaddo bootstrap` seeds the minimal base (Business + Product + `tech/codebase.md`);
 Delivery and decisions emerge later through agents and real work.
 
+## Knowledge maturity
+
+Kaddo recognizes knowledge by **front-matter type** (not file name) and reports a maturity
+per layer. Knowledge grows from consolidated to traceable as the project earns it.
+
+```mermaid
+flowchart LR
+    A[Consolidated<br/>business.md · product.md · codebase.md] --> B[Structured<br/>capabilities · current-state · ADRs]
+    B --> C[Traceable<br/>roadmap · work-items · ownership]
+```
+
 ## Kaddo Knowledge Loop
 
 The full loop, from a raw repo to an explained knowledge state. CLI steps are

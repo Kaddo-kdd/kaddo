@@ -30,6 +30,18 @@ flowchart TD
 `kaddo bootstrap` siembra la base mínima (Business + Product + `tech/codebase.md`);
 Delivery y las decisiones emergen después vía agentes y trabajo real.
 
+## Madurez del conocimiento
+
+Kaddo reconoce el conocimiento por el **type del front-matter** (no por el nombre) y reporta
+una madurez por capa. El conocimiento crece de consolidado a trazable a medida que el
+proyecto lo gana.
+
+```mermaid
+flowchart LR
+    A[Consolidated<br/>business.md · product.md · codebase.md] --> B[Structured<br/>capabilities · current-state · ADRs]
+    B --> C[Traceable<br/>roadmap · work-items · ownership]
+```
+
 ## Kaddo Knowledge Loop
 
 El loop completo, desde un repo en crudo hasta un estado de conocimiento explicado. Los

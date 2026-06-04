@@ -89,3 +89,22 @@ The `--for agent` output exposes a structured `mapped_modules` array (with per-m
 
 > `explain` reads mapped modules from `.kaddo/modules.yml` and the
 > `knowledge/tech/modules/<id>/` artifacts only. It never scans the secondary repos.
+
+## Knowledge maturity (semantic recognition)
+
+`explain` recognizes knowledge by **front-matter `type`**, not by file name or path — so a
+consolidated `business.md` (`type: business`) is recognized even though it is not a folder
+of separate files, and `capabilities` are detected wherever a `type: capabilities` artifact
+lives. Each layer gets a maturity status:
+
+| Status | Meaning |
+|---|---|
+| **Missing** | No knowledge for this layer yet. |
+| **Consolidated** | One consolidated layer file exists (e.g. `business.md`, `product.md`, `codebase.md`). |
+| **Structured** | Specialized artifacts exist (e.g. `capabilities`, `current-state`, ADRs). |
+| **Partial** (Delivery) | A roadmap exists, but no Work Items are materialized yet. |
+| **Traceable** (Delivery) | Roadmap + Work Items (and ADRs / ownership) exist. |
+
+Discovery priority: **front-matter type → Kaddo conventions → path → file name** — never the
+other way around. Work Items are recognized by their work-item type under
+`knowledge/delivery/work-items/` (ADRs and untyped files are never Work Items).
