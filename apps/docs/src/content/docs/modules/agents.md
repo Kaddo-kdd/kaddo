@@ -18,22 +18,17 @@ structured project knowledge.
 
 `kaddo add agents` creates `knowledge/agents/`:
 
+Agents install into **per-layer folders**:
+
 ```
 knowledge/agents/
   README.md
-  # Understanding agents
-  capability-agent.md
-  architecture-agent.md
-  roadmap-agent.md
-  legacy-agent.md
-  adr-agent.md
-  # Operational agents
-  work-item-agent.md
-  git-strategy-agent.md
-  security-agent.md
-  standards-agent.md
-  stack-agent.md
-  module-design-agent.md
+  business/   business-agent.md
+  product/    bootstrap-agent.md · capability-agent.md
+  tech/       architecture-agent.md · codebase-agent.md · stack-agent.md ·
+              security-agent.md · standards-agent.md · module-design-agent.md · adr-agent.md
+  delivery/   roadmap-agent.md · work-item-agent.md · git-strategy-agent.md
+  utilities/  legacy-agent.md
 ```
 
 Existing agent files are never overwritten silently — re-running the command only installs

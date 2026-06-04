@@ -18,22 +18,17 @@ Kaddo en conocimiento estructurado del proyecto.
 
 `kaddo add agents` crea `knowledge/agents/`:
 
+Los agentes se instalan en **carpetas por capa**:
+
 ```
 knowledge/agents/
   README.md
-  # Agentes de entendimiento
-  capability-agent.md
-  architecture-agent.md
-  roadmap-agent.md
-  legacy-agent.md
-  adr-agent.md
-  # Agentes operativos
-  work-item-agent.md
-  git-strategy-agent.md
-  security-agent.md
-  standards-agent.md
-  stack-agent.md
-  module-design-agent.md
+  business/   business-agent.md
+  product/    bootstrap-agent.md · capability-agent.md
+  tech/       architecture-agent.md · codebase-agent.md · stack-agent.md ·
+              security-agent.md · standards-agent.md · module-design-agent.md · adr-agent.md
+  delivery/   roadmap-agent.md · work-item-agent.md · git-strategy-agent.md
+  utilities/  legacy-agent.md
 ```
 
 Los archivos existentes nunca se sobrescriben en silencio — al re-ejecutar solo se instalan

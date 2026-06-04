@@ -71,6 +71,7 @@ scan → context → understand → agents → roadmap → work item → ownersh
 | VS-028 | Project Knowledge Bootstrap | `kaddo bootstrap` for new projects: Business → Architecture → Codebase → Development knowledge base from the template registry; business/quality-attributes/codebase-foundation/bootstrap-summary templates; business/bootstrap/codebase-foundation agents; no LLM, no code gen, no-overwrite |
 | VS-029 | Knowledge Repository Realignment | `architecture/` → `knowledge/`; macro layers Business → Product → Tech → Delivery; layer reorg (product/tech/delivery); templates recategorized; context/explain grouped by layer; bootstrap reduced to minimal base; docs + examples + manifesto realigned. Breaking (clean cut) |
 | VS-030 | Bootstrap Minimal Artifacts & Agent Groups | bootstrap generates one consolidated file per layer (business.md/product.md/codebase.md), specialized templates kept as advanced; agents grouped by layer with progressive `add agents` (state default · `--all` · `--group`); `understand` shows current phase. Minimum Sufficient Knowledge |
+| VS-031 | New Project Flow Hardening | agents install in per-layer folders; `new` recommends capability + architecture (+adr) agents; explain counts Work Items only under `delivery/work-items/` with a valid type (no ADRs/untyped); intent (`codebase.md`) vs reality (`current-state.md`) documented; command responsibilities + ownership flow docs; `understand` next steps |
 
 **Tests:** 299 passing · CLI build + docs build green.
 

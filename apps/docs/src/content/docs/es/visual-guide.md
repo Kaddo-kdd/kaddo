@@ -211,6 +211,20 @@ flowchart TD
     K --> K1["stack · security · standards · diagrams · adrs"]
 ```
 
+## Flujo de ownership
+
+El ownership lo propone un agente a partir de las señales del scan y lo **confirma un
+humano** antes de registrarlo en el artefacto. `code:` acepta múltiples globs.
+
+```mermaid
+flowchart LR
+    A[kaddo scan] --> B[kaddo owners suggest]
+    B --> C[el agente interpreta señales]
+    C --> D[el humano confirma]
+    D --> E[ownership registrado en el artefacto: globs code:]
+    E --> F[kaddo guard relaciona los cambios de código]
+```
+
 ## Guard Lite
 
 Guard lee `git diff`, matchea los archivos cambiados contra los globs `code:` declarados y

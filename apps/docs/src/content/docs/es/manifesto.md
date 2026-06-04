@@ -233,6 +233,8 @@ Para proyectos nuevos, Kaddo ofrece un bootstrap guiado para que un proyecto pue
 
 **El conocimiento crece progresivamente.** No todo el conocimiento debe existir desde el inicio. Bootstrap crea solo un archivo consolidado por capa (`business.md`, `product.md`, `codebase.md`); los documentos especializados (`problem.md`, `users.md`, `capabilities.md`, …) y el resto de los agentes aparecen después, a medida que el proyecto los gana. Kaddo debe sentirse ligero al comienzo y crecer con el trabajo real — nunca más archivos que conocimiento, nunca más agentes que necesidades.
 
+**El conocimiento se descubre progresivamente, pero la realidad y la intención deben permanecer distintas.** Lo que planeamos (`codebase.md`) no es lo mismo que lo que está construido de verdad (`current-state.md`), y ninguno es lo mismo que por qué lo decidimos (un ADR) o qué detectaron las herramientas (`scan.json`). Kaddo las mantiene separadas para que el proyecto nunca confunda un plan con la verdad.
+
 ## Quality Gates
 
 Un Quality Gate en Kaddo no valida cantidad de documentación; valida suficiencia de conocimiento. Para K0 puede no haber gate; para K1 basta con problema y resultado esperado; para K2 se necesitan criterios de aceptación; para K3 se necesita diseño suficiente y artifacts relacionados revisados; y para K4 se necesitan ADR, riesgos, alternativas y plan de mitigación o rollback.

@@ -54,6 +54,51 @@ Kaddo trabaja en dos capas, y el reparto es intencional.
 > El CLI prepara y guarda el contexto. Tu LLM lo interpreta usando los agentes de Kaddo.
 > **Kaddo no llama a un LLM por defecto** y nunca requiere una API key.
 
+## Qué hace cada comando
+
+Estos cuatro comandos suelen confundirse — hacen cosas distintas:
+
+| Comando | Qué hace | Actualiza |
+|---|---|---|
+| `kaddo scan` | Detecta la estructura técnica (stack, carpetas, señales) | `.kaddo/scan.json`, `knowledge/inventory.md` |
+| `kaddo context` | Empaqueta el conocimiento existente para tu LLM | `.kaddo/context-pack.md` / `.json` |
+| `kaddo understand` | Recomienda los siguientes pasos y agentes para tu fase actual | `.kaddo/understand.md` |
+| `kaddo explain` | Resume lo que Kaddo sabe (por capa) | `.kaddo/explain.md` / `.json` |
+
+## Intención vs realidad
+
+Kaddo mantiene **intención** y **realidad** separadas — responden preguntas distintas:
+
+| Artefacto | Significado |
+|---|---|
+| `knowledge/tech/codebase.md` | **Intención** — cómo planeamos construirlo |
+| `knowledge/tech/current-state.md` | **Realidad** — cómo está construido de verdad (opcional, recomendado) |
+| ADR (`knowledge/tech/decisions/`) | **Razón de la decisión** — por qué se decidió |
+| `.kaddo/scan.json` | **Señales** — lo que detectó el CLI |
+
+`current-state.md` no reemplaza a `codebase.md`: uno es el plan, el otro la verdad.
+
+## Declarar ownership
+
+El ownership se declara en los artefactos y lo confirma un humano:
+
+```txt
+kaddo scan → kaddo owners suggest → el agente interpreta → el humano confirma → ownership registrado
+```
+
+`code:` acepta **múltiples globs**:
+
+```yaml
+code:
+  - src/tasks/**
+  - src/projects/**
+  - tests/tasks/**
+```
+
+Los agentes (instalados en `knowledge/agents/<capa>/`) proponen los globs a partir de las
+señales del scan; tú los confirmas. Luego Guard relaciona los cambios de código con el
+artefacto dueño.
+
 ## Proyectos nuevos, pre-IA y legacy
 
 Kaddo se adapta al estado de tu proyecto.
