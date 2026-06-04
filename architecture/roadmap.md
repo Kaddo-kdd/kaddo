@@ -33,6 +33,7 @@ no ownership inference · no Confidence Score · the human always confirms.
 | [v2.6.0](https://github.com/Kaddo-kdd/kaddo/releases/tag/v2.6.0) | Knowledge Loop end-to-end + templates, multirepo modules, demo examples, docs polish (see below) |
 | [v2.7.0](https://github.com/Kaddo-kdd/kaddo/releases/tag/v2.7.0) | Multirepo hardening: module artifacts from the template registry, module-aware `context`/`explain`, opt-in `guard --workspace` (VS-025→VS-027) |
 | [v2.8.0](https://github.com/Kaddo-kdd/kaddo/releases/tag/v2.8.0) | Project Knowledge Bootstrap: `kaddo bootstrap` for new projects (Business → Architecture → Codebase → Development), business templates + bootstrap agents (VS-028) |
+| [v3.0.0](https://github.com/Kaddo-kdd/kaddo/releases/tag/v3.0.0) | Knowledge Repository Realignment: `architecture/` → `knowledge/`, layers Business → Product → Tech → Delivery, context/explain by layer (VS-029, breaking) |
 
 ---
 
