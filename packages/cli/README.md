@@ -433,6 +433,7 @@ create --from roadmap → owners → guard → explain`.
 | v2.8 | `kaddo bootstrap` for new projects (Business → Product → Tech → Delivery); business templates + bootstrap agents |
 | v3.0 | Knowledge-centric realignment: `architecture/` → `knowledge/` with layers Business → Product → Tech → Delivery; context/explain by layer (breaking) |
 | v3.1 | Minimum Sufficient Knowledge: bootstrap one consolidated file per layer; progressive `add agents` by group (state default, `--all`, `--group`) |
+| v3.2 | New-project flow hardening: agents in per-layer folders; `new` recommends capability+architecture agents; explain Work Item parser fix; intent vs reality (codebase vs current-state) |
 
 **Optional modules (installed with `kaddo add`):**
 
