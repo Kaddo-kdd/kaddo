@@ -151,14 +151,19 @@ export function buildProjectExplanation(dir: string): ProjectExplanation {
       }
     : null
 
+  // Layer presence is discovered by meaning (front-matter type), not exact file names, so
+  // consolidated artifacts (business.md / product.md / codebase.md) count as real knowledge.
+  const layers = knowledgeLayers(dir)
+  const layerStatus = (name: string) => layers.find((l) => l.layer === name)?.status ?? 'Missing'
+
   const knowledge = {
     hasScan: scan !== null,
     hasInventory: exists(join(dir, ARCH_DIR, 'inventory.md')),
     hasContextPack: exists(join(dir, '.kaddo', 'context-pack.md')),
     hasUnderstand: exists(join(dir, '.kaddo', 'understand.md')),
-    hasCapabilities: exists(join(dir, ARCH_DIR, 'product', 'capabilities.md')),
-    hasArchitecture: exists(join(dir, ARCH_DIR, 'tech', 'current-state.md')),
-    hasRoadmap: exists(join(dir, ARCH_DIR, 'delivery', 'roadmap.md')),
+    hasCapabilities: layerStatus('Product') !== 'Missing',
+    hasArchitecture: layerStatus('Tech') !== 'Missing',
+    hasRoadmap: layerStatus('Delivery') !== 'Missing',
     hasAgents: hasAgents(dir),
   }
 
@@ -206,10 +211,8 @@ export function buildProjectExplanation(dir: string): ProjectExplanation {
   if (!knowledge.hasScan) missingKnowledge.push('Scan baseline (.kaddo/scan.json)')
   if (!knowledge.hasContextPack) missingKnowledge.push('Context pack (.kaddo/context-pack.md)')
   if (!knowledge.hasInventory) missingKnowledge.push('Inventory (knowledge/inventory.md)')
-  if (!knowledge.hasCapabilities)
-    missingKnowledge.push('Capabilities (knowledge/product/capabilities.md)')
-  if (!knowledge.hasArchitecture)
-    missingKnowledge.push('Architecture baseline (knowledge/tech/current-state.md)')
+  if (!knowledge.hasCapabilities) missingKnowledge.push('Product knowledge (knowledge/product/)')
+  if (!knowledge.hasArchitecture) missingKnowledge.push('Tech knowledge (knowledge/tech/)')
   if (!knowledge.hasRoadmap) missingKnowledge.push('Roadmap (knowledge/delivery/roadmap.md)')
   if (!knowledge.hasAgents) missingKnowledge.push('Agents (knowledge/agents/)')
   if (items.length === 0) missingKnowledge.push('Work items (knowledge/delivery/work-items/)')
@@ -247,7 +250,7 @@ export function buildProjectExplanation(dir: string): ProjectExplanation {
     workItems,
     ownership,
     domains,
-    layers: knowledgeLayers(dir),
+    layers,
     mappedModules,
     missingKnowledge,
     suggestedNextSteps,
@@ -288,14 +291,14 @@ export function renderExplanationHuman(exp: ProjectExplanation): string {
     lines.push('')
   }
 
+  const ls = (name: string) => exp.layers.find((l) => l.layer === name)?.status ?? 'Missing'
   lines.push('## Knowledge Status')
   lines.push(`- Inventory: ${exp.knowledge.hasInventory ? 'available' : 'missing'}`)
   lines.push(`- Context pack: ${exp.knowledge.hasContextPack ? 'available' : 'missing'}`)
-  lines.push(`- Capabilities: ${exp.knowledge.hasCapabilities ? 'available' : 'missing'}`)
-  lines.push(
-    `- Architecture baseline: ${exp.knowledge.hasArchitecture ? 'available' : 'missing'}`
-  )
-  lines.push(`- Roadmap: ${exp.knowledge.hasRoadmap ? 'available' : 'missing'}`)
+  lines.push(`- Business: ${ls('Business')}`)
+  lines.push(`- Product: ${ls('Product')}`)
+  lines.push(`- Tech: ${ls('Tech')}`)
+  lines.push(`- Delivery: ${ls('Delivery')}`)
   lines.push(`- Agents: ${exp.knowledge.hasAgents ? 'available' : 'missing'}`)
   lines.push(`- Work items: ${exp.workItems.total}`)
   lines.push(

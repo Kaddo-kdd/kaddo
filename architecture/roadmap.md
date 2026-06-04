@@ -77,6 +77,7 @@ scan → context → understand → agents → roadmap → work item → ownersh
 | VS-031 | New Project Flow Hardening | agents install in per-layer folders; `new` recommends capability + architecture (+adr) agents; explain counts Work Items only under `delivery/work-items/` with a valid type (no ADRs/untyped); intent (`codebase.md`) vs reality (`current-state.md`) documented; command responsibilities + ownership flow docs; `understand` next steps |
 | VS-035 | Work Item Delivery Workflow | official delivery lifecycle (Roadmap → Work Item → Branch → Implementation → Scan → Ownership → Guard → Knowledge → Review → Commit); `understand` shows it for active Work Items with suggested branch/commit; Guard-before-commit + knowledge-update guidance; docs + examples; Kaddo never runs git |
 | VS-036 | Work-item branch in the implementing agent | branch-first is a configuration in the `work-item-agent` prompt (create the branch per the Git strategy before coding, so work never lands on `main`; commit only with human confirmation). The Kaddo CLI stays deterministic and never touches git (no `kaddo start` command) |
+| VS-037 | Knowledge Discovery & Semantic Recognition | recognize knowledge by front-matter `type` (not path/name): discovery engine + per-layer maturity (Missing/Consolidated/Structured/Partial/Traceable); explain/understand/context recognize consolidated artifacts; understand recommends materializing roadmap candidates |
 
 **Tests:** 299 passing · CLI build + docs build green.
 

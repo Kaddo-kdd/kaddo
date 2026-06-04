@@ -30,11 +30,13 @@ export function renderContextPack(pack: ContextPack): string {
     ].join('\n') + '\n'
   )
 
-  // 1b. Knowledge Layers (Business → Product → Tech → Delivery)
+  // 1b. Knowledge Layers + maturity (Business → Product → Tech → Delivery)
   parts.push('## Knowledge Layers\n')
   parts.push(
     'Project knowledge is organized in four layers: **Business → Product → Tech → Delivery**.\n'
   )
+  const maturity = pack.layers.map((l) => `${l.layer}: ${l.status}`).join(' · ')
+  parts.push(`Knowledge maturity — ${maturity}\n`)
   parts.push(renderLayersMarkdown(pack.layers) + '\n')
 
   // 2. Technical Inventory

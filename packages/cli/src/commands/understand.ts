@@ -6,6 +6,7 @@ import { renderContextPack } from '../templates/context-pack-template.js'
 import { buildUnderstandPlan } from '../core/understand.js'
 import { renderUnderstand, renderUnderstandTerminal } from '../templates/understand-template.js'
 import { knowledgeLayers, currentPhase } from '../core/layers.js'
+import { roadmapHasUnmaterializedCandidates } from '../core/knowledge-discovery.js'
 import { AGENT_GROUPS, type AgentGroup } from '../agents/groups.js'
 import { activeWorkItems, renderDeliveryLifecycle } from '../core/delivery.js'
 
@@ -74,6 +75,14 @@ export function runUnderstand(): void {
     ],
     utilities: ['Use legacy-agent to surface risks and unknowns'],
   }
+  // Embedded Work Items: roadmap has candidates but none are materialized yet.
+  if (roadmapHasUnmaterializedCandidates(dir)) {
+    console.log('')
+    console.log('The roadmap has Work Item candidates that are not materialized yet.')
+    console.log('  → Run `kaddo create --from roadmap`, or use the work-item-agent to')
+    console.log('    materialize them into knowledge/delivery/work-items/.')
+  }
+
   console.log('')
   console.log(`Current phase: ${phase}`)
   console.log('Recommended next steps:')

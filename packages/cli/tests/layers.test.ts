@@ -2,14 +2,14 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import fs from 'fs'
 import os from 'os'
 import path from 'path'
-import { knowledgeLayers, renderLayersMarkdown } from '../src/core/layers.js'
+import { knowledgeLayers, currentPhase, renderLayersMarkdown } from '../src/core/layers.js'
 
 let dir: string
 
-function write(rel: string) {
+function write(rel: string, type: string, body = '') {
   const full = path.join(dir, rel)
   fs.mkdirSync(path.dirname(full), { recursive: true })
-  fs.writeFileSync(full, '# x\n')
+  fs.writeFileSync(full, `---\ntype: ${type}\n---\n\n${body || '# x'}\n`)
 }
 
 beforeEach(() => {
@@ -19,39 +19,54 @@ afterEach(() => {
   fs.rmSync(dir, { recursive: true, force: true })
 })
 
-describe('knowledgeLayers', () => {
-  it('reports the four layers in order with all items absent on a fresh repo', () => {
+function statusOf(layers: ReturnType<typeof knowledgeLayers>, name: string) {
+  return layers.find((l) => l.layer === name)!.status
+}
+
+describe('knowledgeLayers (discovery)', () => {
+  it('reports the four layers Missing on a fresh repo', () => {
     const layers = knowledgeLayers(dir)
     expect(layers.map((l) => l.layer)).toEqual(['Business', 'Product', 'Tech', 'Delivery'])
-    expect(layers.every((l) => l.items.every((i) => !i.present))).toBe(true)
+    expect(layers.every((l) => l.status === 'Missing')).toBe(true)
   })
 
-  it('detects present artifacts per layer', () => {
-    write('knowledge/business/problem.md')
-    write('knowledge/product/capabilities.md')
-    write('knowledge/tech/codebase.md')
+  it('recognizes consolidated artifacts by frontmatter type, regardless of filename', () => {
+    // a consolidated business file with a non-standard name, recognized by type
+    write('knowledge/business/business-baseline.md', 'business')
+    write('knowledge/product/product.md', 'product')
+    write('knowledge/tech/codebase.md', 'codebase')
     const layers = knowledgeLayers(dir)
-    const business = layers.find((l) => l.layer === 'Business')!
-    expect(business.items.find((i) => i.name === 'problem')!.present).toBe(true)
-    expect(business.items.find((i) => i.name === 'users')!.present).toBe(false)
-    expect(
-      layers.find((l) => l.layer === 'Product')!.items.find((i) => i.name === 'capabilities')!
-        .present
-    ).toBe(true)
-    expect(
-      layers.find((l) => l.layer === 'Tech')!.items.find((i) => i.name === 'codebase')!.present
-    ).toBe(true)
-    expect(
-      layers.find((l) => l.layer === 'Delivery')!.items.find((i) => i.name === 'roadmap')!.present
-    ).toBe(false)
+    expect(statusOf(layers, 'Business')).toBe('Consolidated')
+    expect(statusOf(layers, 'Product')).toBe('Consolidated')
+    expect(statusOf(layers, 'Tech')).toBe('Consolidated')
   })
 
-  it('renders markdown with ✓/✗ per item, grouped by layer', () => {
-    write('knowledge/tech/codebase.md')
+  it('marks a layer Structured when specialized artifacts exist (by type)', () => {
+    write('knowledge/product/anything.md', 'capabilities')
+    write('knowledge/tech/x.md', 'current-state')
+    const layers = knowledgeLayers(dir)
+    expect(statusOf(layers, 'Product')).toBe('Structured')
+    expect(statusOf(layers, 'Tech')).toBe('Structured')
+  })
+
+  it('Delivery is Partial with a roadmap, Traceable with work items', () => {
+    write('knowledge/delivery/roadmap.md', 'roadmap', '# Roadmap\nWI-001 candidate')
+    expect(statusOf(knowledgeLayers(dir), 'Delivery')).toBe('Partial')
+    write('knowledge/delivery/work-items/WI-001.md', 'feature')
+    expect(statusOf(knowledgeLayers(dir), 'Delivery')).toBe('Traceable')
+  })
+
+  it('currentPhase points at the first incomplete layer', () => {
+    write('knowledge/business/business.md', 'business')
+    // Product missing → current phase is Product
+    expect(currentPhase(knowledgeLayers(dir))).toBe('Product')
+  })
+
+  it('renders maturity + detected artifacts', () => {
+    write('knowledge/business/business.md', 'business')
     const md = renderLayersMarkdown(knowledgeLayers(dir))
-    expect(md).toContain('### Business')
-    expect(md).toContain('### Delivery')
-    expect(md).toContain('✓ codebase')
-    expect(md).toContain('✗ roadmap')
+    expect(md).toContain('### Business — Consolidated')
+    expect(md).toContain('✓ business.md')
+    expect(md).toContain('### Delivery — Missing')
   })
 })

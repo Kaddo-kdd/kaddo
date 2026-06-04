@@ -196,14 +196,16 @@ describe('renderExplanationHuman', () => {
     expect(out).toContain('## Suggested Next Steps')
   })
 
-  it('groups knowledge by layer and reflects present artifacts', () => {
+  it('groups knowledge by layer maturity (frontmatter discovery)', () => {
     initConfig()
-    write('knowledge/product/capabilities.md', '# Capabilities\n')
+    // recognized by type, not filename
+    write('knowledge/product/anything.md', '---\ntype: capabilities\n---\n# Capabilities\n')
     const exp = buildProjectExplanation(tmpDir)
     expect(exp.layers.map((l) => l.layer)).toEqual(['Business', 'Product', 'Tech', 'Delivery'])
+    expect(exp.layers.find((l) => l.layer === 'Product')!.status).toBe('Structured')
     const out = renderExplanationHuman(exp)
-    expect(out).toContain('✓ capabilities')
-    expect(out).toContain('✗ roadmap')
+    expect(out).toContain('### Product — Structured')
+    expect(out).toContain('### Delivery — Missing')
   })
 })
 
