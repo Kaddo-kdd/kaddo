@@ -435,6 +435,7 @@ create --from roadmap → owners → guard → explain`.
 | v3.1 | Minimum Sufficient Knowledge: bootstrap one consolidated file per layer; progressive `add agents` by group (state default, `--all`, `--group`) |
 | v3.2 | New-project flow hardening: agents in per-layer folders; `new` recommends capability+architecture agents; explain Work Item parser fix; intent vs reality (codebase vs current-state) |
 | v3.3 | Work Item delivery lifecycle: `understand` shows branch → scan → ownership → guard → knowledge → commit for active Work Items (suggestions only; Kaddo never runs git) |
+| v3.4 | Delivery protocol in the `work-item-agent`: branch first per the Git strategy, commit only with human confirmation (CLI never touches git) |
 
 **Optional modules (installed with `kaddo add`):**
 
