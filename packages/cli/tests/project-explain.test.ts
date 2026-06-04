@@ -75,6 +75,31 @@ afterEach(() => {
   fs.rmSync(tmpDir, { recursive: true, force: true })
 })
 
+describe('buildProjectExplanation — Work Item parser (VS-031)', () => {
+  it('does not count ADRs (tech/decisions) as Work Items', () => {
+    initConfig()
+    writeWorkItem('WI-001', 'in-progress', ['src/**'])
+    write(
+      'knowledge/tech/decisions/ADR-0001-initial.md',
+      '---\ntype: adr\nid: ADR-0001\nstatus: accepted\n---\n\n# ADR-0001\n'
+    )
+    const exp = buildProjectExplanation(tmpDir)
+    expect(exp.workItems.total).toBe(1)
+    expect(exp.workItems.items.map((i) => i.id)).toEqual(['WI-001'])
+  })
+
+  it('ignores untyped / non-work-item files', () => {
+    initConfig()
+    writeWorkItem('WI-001', 'in-progress')
+    // an untyped markdown file inside work-items is not a Work Item
+    write('knowledge/delivery/work-items/notes.md', '# just notes, no front matter\n')
+    // a layer doc is not a Work Item
+    write('knowledge/business/business.md', '---\ntype: business\n---\n# Business\n')
+    const exp = buildProjectExplanation(tmpDir)
+    expect(exp.workItems.total).toBe(1)
+  })
+})
+
 describe('buildProjectExplanation', () => {
   it('reads project metadata from config', () => {
     initConfig()

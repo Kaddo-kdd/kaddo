@@ -164,9 +164,13 @@ export function buildProjectExplanation(dir: string): ProjectExplanation {
 
   const archDir = join(dir, ARCH_DIR)
   const allArtifacts = exists(archDir) ? readArtifacts(archDir) : []
-  const workItemArtifacts = allArtifacts.filter(
-    (a) => a.type !== 'current-state' && a.type !== 'roadmap'
-  )
+  // A Work Item is an artifact that lives under knowledge/delivery/work-items/ AND declares
+  // a type. This excludes ADRs (knowledge/tech/decisions/), current-state, roadmap, layer
+  // docs and untyped/empty files — they are never counted or listed as Work Items.
+  const workItemArtifacts = allArtifacts.filter((a) => {
+    const p = a.filePath.replace(/\\/g, '/')
+    return p.includes('/delivery/work-items/') && Boolean(a.type)
+  })
 
   const items = workItemArtifacts.map((a) => ({
     id: a.id || a.title,

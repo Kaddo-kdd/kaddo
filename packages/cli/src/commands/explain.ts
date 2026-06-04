@@ -101,8 +101,13 @@ function explainForHuman(
     console.log('')
   }
 
+  // Work Items live under knowledge/delivery/work-items/ and declare a type — ADRs and
+  // other artifacts are listed separately as "Related artifacts", never as Work Items.
   const workItems = artifacts.filter(
-    (a) => a.type !== 'current-state' && a.type !== 'roadmap' && a.status === 'in-progress'
+    (a) =>
+      a.filePath.replace(/\\/g, '/').includes('/delivery/work-items/') &&
+      Boolean(a.type) &&
+      a.status === 'in-progress'
   )
 
   if (workItems.length > 0) {
