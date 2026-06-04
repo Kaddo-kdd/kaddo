@@ -71,9 +71,9 @@ describe('context-pack — buildContextPack', () => {
     writeScan()
     write('knowledge/inventory.md', '# Project Inventory\n\nstuff')
     write('knowledge/knowledge.md', '# Knowledge\n\nThe product does X for users.')
-    write('knowledge/roadmap.md', '# Roadmap\n\nNext we ship Y.')
+    write('knowledge/delivery/roadmap.md', '# Roadmap\n\nNext we ship Y.')
     write(
-      'knowledge/work-items/WI-001-add-auth.md',
+      'knowledge/delivery/work-items/WI-001-add-auth.md',
       ['---', 'type: feature', 'id: WI-001', 'title: "Add auth"', 'knowledge_level: K2', 'status: in-progress', 'domains: [auth]', 'code:', '  - src/auth/**', 'summary: "Adds auth"', '---', '', '# Add auth'].join('\n')
     )
 
@@ -204,7 +204,7 @@ describe('context pack — mapped modules (module-aware)', () => {
     writeConfig()
     writeModules()
     // one module has its design artifact present
-    write('knowledge/modules/storefront-web/module-design.md', '---\ntype: module-design\n---\n')
+    write('knowledge/tech/modules/storefront-web/module-design.md', '---\ntype: module-design\n---\n')
     const pack = build()
     expect(pack.mappedModules.map((m) => m.id)).toEqual(['storefront-web', 'orders-api'])
     const md = renderContextPack(pack)

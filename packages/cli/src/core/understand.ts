@@ -29,22 +29,22 @@ function flowForState(state: ProjectState): { agent: string; output: string }[] 
   switch (state) {
     case 'new':
       return [
-        { agent: 'roadmap-agent.md', output: 'knowledge/roadmap.md' },
-        { agent: 'architecture-agent.md', output: 'knowledge/current-state.md' },
+        { agent: 'roadmap-agent.md', output: 'knowledge/delivery/roadmap.md' },
+        { agent: 'architecture-agent.md', output: 'knowledge/tech/current-state.md' },
       ]
     case 'legacy':
       return [
         { agent: 'legacy-agent.md', output: 'knowledge/legacy/risks.md' },
-        { agent: 'architecture-agent.md', output: 'knowledge/current-state.md' },
-        { agent: 'capability-agent.md', output: 'knowledge/capabilities.md' },
-        { agent: 'roadmap-agent.md', output: 'knowledge/roadmap.md' },
+        { agent: 'architecture-agent.md', output: 'knowledge/tech/current-state.md' },
+        { agent: 'capability-agent.md', output: 'knowledge/product/capabilities.md' },
+        { agent: 'roadmap-agent.md', output: 'knowledge/delivery/roadmap.md' },
       ]
     case 'pre-ai':
     default:
       return [
-        { agent: 'capability-agent.md', output: 'knowledge/capabilities.md' },
-        { agent: 'architecture-agent.md', output: 'knowledge/current-state.md' },
-        { agent: 'roadmap-agent.md', output: 'knowledge/roadmap.md' },
+        { agent: 'capability-agent.md', output: 'knowledge/product/capabilities.md' },
+        { agent: 'architecture-agent.md', output: 'knowledge/tech/current-state.md' },
+        { agent: 'roadmap-agent.md', output: 'knowledge/delivery/roadmap.md' },
       ]
   }
 }

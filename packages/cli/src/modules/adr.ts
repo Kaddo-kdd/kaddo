@@ -4,10 +4,10 @@ export const adrModule: KaddoModule = {
   name: 'adr',
   description: 'Architectural Decision Records — document decisions when risk justifies it',
   configKey: 'module_adr',
-  dirs: ['knowledge/decisions'],
+  dirs: ['knowledge/tech/decisions'],
   files: [
     {
-      path: 'knowledge/decisions/.gitkeep',
+      path: 'knowledge/tech/decisions/.gitkeep',
       content: '',
     },
   ],

@@ -40,7 +40,7 @@ program
 
 program
   .command('bootstrap')
-  .description('Build the initial knowledge base for a new project (Business → Architecture → Codebase → Development)')
+  .description('Build the initial knowledge base for a new project (Business → Product → Tech → Delivery)')
   .action(async () => {
     await runBootstrap()
   })

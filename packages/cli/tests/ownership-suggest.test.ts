@@ -18,7 +18,7 @@ import { readArtifacts } from '../src/services/artifact-reader.js'
 let tmpDir: string
 
 function writeWI(name: string, frontMatter: string, body = '\n# Work Item\n\nKeep this body.\n') {
-  const full = path.join(tmpDir, 'knowledge', 'work-items', name)
+  const full = path.join(tmpDir, 'knowledge', 'delivery', 'work-items', name)
   fs.writeFileSync(full, `---\n${frontMatter}\n---\n${body}`)
 }
 
@@ -31,7 +31,7 @@ function writeScan(detected: Record<string, unknown>) {
 
 beforeEach(() => {
   tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'kaddo-ownership-'))
-  fs.mkdirSync(path.join(tmpDir, 'knowledge', 'work-items'), { recursive: true })
+  fs.mkdirSync(path.join(tmpDir, 'knowledge', 'delivery', 'work-items'), { recursive: true })
   fs.mkdirSync(path.join(tmpDir, '.kaddo'), { recursive: true })
 })
 afterEach(() => {
@@ -65,13 +65,13 @@ describe('findWorkItemArtifacts / missing ownership', () => {
   })
 
   it('returns empty when no work-items dir exists', () => {
-    fs.rmSync(path.join(tmpDir, 'knowledge', 'work-items'), { recursive: true, force: true })
+    fs.rmSync(path.join(tmpDir, 'knowledge', 'delivery', 'work-items'), { recursive: true, force: true })
     expect(findWorkItemArtifacts(tmpDir)).toEqual([])
   })
 
   it('skips files with invalid front matter safely', () => {
     fs.writeFileSync(
-      path.join(tmpDir, 'knowledge', 'work-items', 'broken.md'),
+      path.join(tmpDir, 'knowledge', 'delivery', 'work-items', 'broken.md'),
       '---\ntype: [unclosed\n---\nbody'
     )
     writeWI('WI-001.md', 'type: feature\nid: WI-001\ntitle: A')
@@ -113,7 +113,7 @@ describe('loadScanSignals', () => {
 
 describe('suggestGlobs', () => {
   const base: OwnershipArtifact = {
-    filePath: '', relPath: 'knowledge/work-items/WI-001.md',
+    filePath: '', relPath: 'knowledge/delivery/work-items/WI-001.md',
     id: 'WI-001', title: 'A', type: 'feature', domains: [], capabilities: [],
     codeGlobs: [], hasOwnership: false,
   }
@@ -202,7 +202,7 @@ describe('end-to-end: Guard detects drift after ownership is added', () => {
     expect(before.silenced).toBe(true)
 
     // Declare ownership via the assistant's writer.
-    const wiPath = path.join(archDir, 'work-items', 'WI-001.md')
+    const wiPath = path.join(archDir, 'delivery', 'work-items', 'WI-001.md')
     fs.writeFileSync(wiPath, applyOwnership(fs.readFileSync(wiPath, 'utf8'), ['src/payments/**']))
 
     // After: Guard detects drift on a matching changed file.

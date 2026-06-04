@@ -28,7 +28,7 @@ function output(): string {
 
 function writeModuleArtifact() {
   write(
-    'knowledge/modules/storefront-web/module-design.md',
+    'knowledge/tech/modules/storefront-web/module-design.md',
     '---\ntype: module-design\nmodule: storefront-web\nrepoPath: frontend-repo\ncode:\n  - frontend-repo/**\n---\n\n# Storefront Web — Design\n'
   )
 }
@@ -92,7 +92,7 @@ describe('kaddo guard --workspace (VS workspace-guard-multirepo)', () => {
     writeModulesYml()
     // current repo touched the artifact itself; sibling repo touched code
     gitMock.getModifiedFiles.mockResolvedValue([
-      'knowledge/modules/storefront-web/module-design.md',
+      'knowledge/tech/modules/storefront-web/module-design.md',
     ])
     gitMock.getModifiedFilesIn.mockResolvedValue(['src/checkout/checkout.ts'])
 

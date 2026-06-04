@@ -141,9 +141,9 @@ export function buildProjectExplanation(dir: string): ProjectExplanation {
     hasInventory: exists(join(dir, ARCH_DIR, 'inventory.md')),
     hasContextPack: exists(join(dir, '.kaddo', 'context-pack.md')),
     hasUnderstand: exists(join(dir, '.kaddo', 'understand.md')),
-    hasCapabilities: exists(join(dir, ARCH_DIR, 'capabilities.md')),
-    hasArchitecture: exists(join(dir, ARCH_DIR, 'current-state.md')),
-    hasRoadmap: exists(join(dir, ARCH_DIR, 'roadmap.md')),
+    hasCapabilities: exists(join(dir, ARCH_DIR, 'product', 'capabilities.md')),
+    hasArchitecture: exists(join(dir, ARCH_DIR, 'tech', 'current-state.md')),
+    hasRoadmap: exists(join(dir, ARCH_DIR, 'delivery', 'roadmap.md')),
     hasAgents: hasAgents(dir),
   }
 
@@ -188,12 +188,12 @@ export function buildProjectExplanation(dir: string): ProjectExplanation {
   if (!knowledge.hasContextPack) missingKnowledge.push('Context pack (.kaddo/context-pack.md)')
   if (!knowledge.hasInventory) missingKnowledge.push('Inventory (knowledge/inventory.md)')
   if (!knowledge.hasCapabilities)
-    missingKnowledge.push('Capabilities (knowledge/capabilities.md)')
+    missingKnowledge.push('Capabilities (knowledge/product/capabilities.md)')
   if (!knowledge.hasArchitecture)
-    missingKnowledge.push('Architecture baseline (knowledge/current-state.md)')
-  if (!knowledge.hasRoadmap) missingKnowledge.push('Roadmap (knowledge/roadmap.md)')
+    missingKnowledge.push('Architecture baseline (knowledge/tech/current-state.md)')
+  if (!knowledge.hasRoadmap) missingKnowledge.push('Roadmap (knowledge/delivery/roadmap.md)')
   if (!knowledge.hasAgents) missingKnowledge.push('Agents (knowledge/agents/)')
-  if (items.length === 0) missingKnowledge.push('Work items (knowledge/work-items/)')
+  if (items.length === 0) missingKnowledge.push('Work items (knowledge/delivery/work-items/)')
 
   const suggestedNextSteps: string[] = []
   if (!knowledge.hasScan) {
@@ -205,13 +205,13 @@ export function buildProjectExplanation(dir: string): ProjectExplanation {
     suggestedNextSteps.push('Run `kaddo add agents` to install knowledge agents.')
   }
   if (!knowledge.hasCapabilities) {
-    suggestedNextSteps.push('Use capability-agent to generate knowledge/capabilities.md.')
+    suggestedNextSteps.push('Use capability-agent to generate knowledge/product/capabilities.md.')
   }
   if (!knowledge.hasArchitecture) {
-    suggestedNextSteps.push('Use architecture-agent to generate knowledge/current-state.md.')
+    suggestedNextSteps.push('Use architecture-agent to generate knowledge/tech/current-state.md.')
   }
   if (!knowledge.hasRoadmap) {
-    suggestedNextSteps.push('Use roadmap-agent to generate knowledge/roadmap.md.')
+    suggestedNextSteps.push('Use roadmap-agent to generate knowledge/delivery/roadmap.md.')
   }
   if (items.length === 0) {
     suggestedNextSteps.push('Create your first Work Item with `kaddo create`.')

@@ -61,7 +61,7 @@ describe('mapModule — descriptor', () => {
 describe('mapModule — structure generation', () => {
   it('creates module-design, stack, security, standards and diagrams/adrs dirs', () => {
     mapModule(dir, { name: 'Frontend', repoPath: '../frontend', type: 'frontend' })
-    const base = path.join(dir, 'knowledge', 'modules', 'frontend')
+    const base = path.join(dir, 'knowledge', 'tech', 'modules', 'frontend')
     expect(fs.existsSync(path.join(base, 'module-design.md'))).toBe(true)
     expect(fs.existsSync(path.join(base, 'stack.md'))).toBe(true)
     expect(fs.existsSync(path.join(base, 'security.md'))).toBe(true)
@@ -73,7 +73,7 @@ describe('mapModule — structure generation', () => {
   it('module-design references type, repo path and technology', () => {
     mapModule(dir, { name: 'Backend', repoPath: '../backend', type: 'backend', mainTechnology: 'NestJS' })
     const design = fs.readFileSync(
-      path.join(dir, 'knowledge', 'modules', 'backend', 'module-design.md'),
+      path.join(dir, 'knowledge', 'tech', 'modules', 'backend', 'module-design.md'),
       'utf8'
     )
     expect(design).toContain('Backend — Design')
@@ -82,15 +82,15 @@ describe('mapModule — structure generation', () => {
   })
 
   it('does not overwrite an existing module artifact', () => {
-    const base = path.join(dir, 'knowledge', 'modules', 'frontend')
+    const base = path.join(dir, 'knowledge', 'tech', 'modules', 'frontend')
     fs.mkdirSync(base, { recursive: true })
     fs.writeFileSync(path.join(base, 'module-design.md'), 'CUSTOM EDIT')
 
     const res = mapModule(dir, { name: 'Frontend', repoPath: '../frontend', type: 'frontend' })
     expect(fs.readFileSync(path.join(base, 'module-design.md'), 'utf8')).toBe('CUSTOM EDIT')
-    expect(res.skipped).toContain('knowledge/modules/frontend/module-design.md')
+    expect(res.skipped).toContain('knowledge/tech/modules/frontend/module-design.md')
     // other files still created
-    expect(res.written).toContain('knowledge/modules/frontend/stack.md')
+    expect(res.written).toContain('knowledge/tech/modules/frontend/stack.md')
   })
 
   it('works with manual input even without a scan', () => {
@@ -103,7 +103,7 @@ describe('mapModule — structure generation', () => {
 
 describe('mapModule — registry-based artifacts (VS align-module-generation)', () => {
   function read(id: string, file: string): string {
-    return fs.readFileSync(path.join(dir, 'knowledge', 'modules', id, file), 'utf8')
+    return fs.readFileSync(path.join(dir, 'knowledge', 'tech', 'modules', id, file), 'utf8')
   }
 
   it('every module artifact starts with front matter', () => {
@@ -161,10 +161,10 @@ describe('mapModule — registry-based artifacts (VS align-module-generation)', 
       capabilities: [],
       code: ['../backend/**'],
       docs: {
-        moduleDesign: 'knowledge/modules/backend/module-design.md',
-        stack: 'knowledge/modules/backend/stack.md',
-        security: 'knowledge/modules/backend/security.md',
-        standards: 'knowledge/modules/backend/standards.md',
+        moduleDesign: 'knowledge/tech/modules/backend/module-design.md',
+        stack: 'knowledge/tech/modules/backend/stack.md',
+        security: 'knowledge/tech/modules/backend/security.md',
+        standards: 'knowledge/tech/modules/backend/standards.md',
       },
     })
     expect(out).toContain('# Backend — Design')

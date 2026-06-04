@@ -163,7 +163,7 @@ export const standardsModule: KaddoModule = {
   description: 'Global standards starter — lightweight coding, docs and testing conventions',
   configKey: 'module_standards',
   dirs: ['knowledge'],
-  files: [{ path: 'knowledge/standards.md', content: standardsTemplate }],
+  files: [{ path: 'knowledge/tech/standards.md', content: standardsTemplate }],
   workItemTypes: [],
 }
 
@@ -172,7 +172,7 @@ export const securityModule: KaddoModule = {
   description: 'Global security starter — document security considerations (no scanning)',
   configKey: 'module_security',
   dirs: ['knowledge'],
-  files: [{ path: 'knowledge/security.md', content: securityTemplate }],
+  files: [{ path: 'knowledge/tech/security.md', content: securityTemplate }],
   workItemTypes: [],
 }
 
@@ -181,7 +181,7 @@ export const stackModule: KaddoModule = {
   description: 'Global stack starter — document technologies and stack decisions',
   configKey: 'module_stack',
   dirs: ['knowledge'],
-  files: [{ path: 'knowledge/stack.md', content: stackTemplate }],
+  files: [{ path: 'knowledge/tech/stack.md', content: stackTemplate }],
   workItemTypes: [],
 }
 
@@ -191,7 +191,7 @@ export const gitStrategyModule: KaddoModule = {
   configKey: 'module_git_strategy',
   dirs: ['knowledge'],
   files: [
-    { path: 'knowledge/git-strategy.md', content: gitStrategyTemplate },
+    { path: 'knowledge/tech/git-strategy.md', content: gitStrategyTemplate },
     { path: '.kaddo/git.yml', content: gitYml },
   ],
   workItemTypes: [],

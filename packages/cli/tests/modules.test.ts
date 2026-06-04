@@ -136,9 +136,9 @@ describe('module structure', () => {
     }
   })
 
-  it('adr module dirs include knowledge/decisions', () => {
+  it('adr module dirs include knowledge/tech/decisions', () => {
     const mod = getModule('adr')!
-    expect(mod.dirs).toContain('knowledge/decisions')
+    expect(mod.dirs).toContain('knowledge/tech/decisions')
   })
 
   it('incident module dirs include knowledge/incidents', () => {
@@ -151,9 +151,9 @@ describe('module structure', () => {
     expect(mod.dirs).toContain('knowledge/contracts')
   })
 
-  it('capabilities module dirs include knowledge/capabilities', () => {
+  it('capabilities module dirs include knowledge/product/capabilities', () => {
     const mod = getModule('capabilities')!
-    expect(mod.dirs).toContain('knowledge/capabilities')
+    expect(mod.dirs).toContain('knowledge/product/capabilities')
   })
 
   it('guard-advanced module creates rules.yml with content', () => {
@@ -208,7 +208,7 @@ describe('module installation logic', () => {
     for (const d of mod.dirs) {
       mkdirSync(join(dir, d), { recursive: true })
     }
-    expect(existsSync(join(dir, 'knowledge', 'decisions'))).toBe(true)
+    expect(existsSync(join(dir, 'knowledge', 'tech', 'decisions'))).toBe(true)
   })
 
   it('config key naming convention starts with module_', () => {

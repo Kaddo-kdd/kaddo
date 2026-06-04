@@ -28,51 +28,42 @@ afterEach(() => {
 })
 
 describe('bootstrap — knowledge base generation', () => {
-  it('creates the knowledge/business/ structure', () => {
+  it('creates the minimal knowledge/business/ structure', () => {
     bootstrap(dir)
     for (const f of [
-      'product-brief.md',
       'problem.md',
       'users.md',
       'value-proposition.md',
       'business-rules.md',
       'constraints.md',
-      'glossary.md',
     ]) {
       expect(fs.existsSync(path.join(dir, 'knowledge', 'business', f)), f).toBe(true)
     }
   })
 
-  it('generates the architecture, codebase and development artifacts', () => {
+  it('generates the product and tech base artifacts', () => {
     bootstrap(dir)
     const expected = [
-      'knowledge/capabilities.md',
-      'knowledge/quality-attributes.md',
-      'knowledge/stack.md',
-      'knowledge/current-state.md',
-      'knowledge/decision-candidates.md',
-      'knowledge/adrs/ADR-0001-initial-architecture.md',
-      'knowledge/codebase-foundation.md',
-      'knowledge/standards.md',
-      'knowledge/git-strategy.md',
-      'knowledge/roadmap.md',
-      'knowledge/bootstrap-summary.md',
+      'knowledge/product/product-brief.md',
+      'knowledge/product/capabilities.md',
+      'knowledge/tech/codebase.md',
     ]
     for (const f of expected) expect(fs.existsSync(path.join(dir, f)), f).toBe(true)
   })
 
-  it('prepares the work-items directory', () => {
+  it('does NOT generate delivery artifacts (roadmap/work-items) or decisions', () => {
     bootstrap(dir)
-    expect(fs.existsSync(path.join(dir, 'knowledge', 'work-items'))).toBe(true)
+    expect(fs.existsSync(path.join(dir, 'knowledge', 'delivery', 'roadmap.md'))).toBe(false)
+    expect(fs.existsSync(path.join(dir, 'knowledge', 'delivery', 'work-items'))).toBe(false)
+    expect(fs.existsSync(path.join(dir, 'knowledge', 'tech', 'decisions'))).toBe(false)
   })
 
   it('artifacts come from the template registry', () => {
     bootstrap(dir)
-    expect(read('knowledge/business/product-brief.md')).toBe(
+    expect(read('knowledge/product/product-brief.md')).toBe(
       getTemplate('business-product-brief')!.content + ''
     )
-    expect(read('knowledge/codebase-foundation.md')).toContain('# Codebase Foundation')
-    expect(read('knowledge/roadmap.md')).toContain('# ')
+    expect(read('knowledge/tech/codebase.md')).toContain('# Codebase Foundation')
   })
 
   it('does not overwrite existing artifacts (skipped)', () => {
@@ -81,16 +72,16 @@ describe('bootstrap — knowledge base generation', () => {
     const res = bootstrap(dir)
     expect(read('knowledge/business/problem.md')).toBe('CUSTOM')
     expect(res.skipped).toContain('knowledge/business/problem.md')
-    expect(res.written).toContain('knowledge/business/product-brief.md')
+    expect(res.written).toContain('knowledge/product/product-brief.md')
   })
 
-  it('reports the four base layers', () => {
+  it('reports the three minimal base layers', () => {
     const res = bootstrap(dir)
-    expect(res.layers).toEqual(['Business', 'Architecture', 'Codebase', 'Development'])
+    expect(res.layers).toEqual(['Business', 'Product', 'Tech'])
   })
 
-  it('codebase-foundation describes no production code', () => {
+  it('codebase describes no production code', () => {
     bootstrap(dir)
-    expect(read('knowledge/codebase-foundation.md')).toContain('No production code')
+    expect(read('knowledge/tech/codebase.md')).toContain('No production code')
   })
 })

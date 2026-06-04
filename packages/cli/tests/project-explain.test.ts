@@ -51,7 +51,7 @@ function writeScan() {
 function writeWorkItem(id: string, status: string, code: string[] = []) {
   const codeBlock = code.length > 0 ? `code:\n${code.map((c) => `  - ${c}`).join('\n')}\n` : ''
   write(
-    `knowledge/work-items/${id}.md`,
+    `knowledge/delivery/work-items/${id}.md`,
     `---
 id: ${id}
 type: feature
@@ -106,11 +106,11 @@ describe('buildProjectExplanation', () => {
 
   it('reports knowledge status for roadmap presence', () => {
     initConfig()
-    write('knowledge/roadmap.md', '# Roadmap\n')
+    write('knowledge/delivery/roadmap.md', '# Roadmap\n')
     const exp = buildProjectExplanation(tmpDir)
     expect(exp.knowledge.hasRoadmap).toBe(true)
     expect(exp.suggestedNextSteps).not.toContain(
-      'Use roadmap-agent to generate knowledge/roadmap.md.'
+      'Use roadmap-agent to generate knowledge/delivery/roadmap.md.'
     )
   })
 
@@ -222,8 +222,8 @@ describe('project explain — mapped modules (module-aware)', () => {
   it('includes mapped modules and artifact coverage in human output', () => {
     initConfig()
     writeModules()
-    write('knowledge/modules/storefront-web/module-design.md', '---\ntype: module-design\n---\n')
-    write('knowledge/modules/storefront-web/stack.md', '---\ntype: module-stack\n---\n')
+    write('knowledge/tech/modules/storefront-web/module-design.md', '---\ntype: module-design\n---\n')
+    write('knowledge/tech/modules/storefront-web/stack.md', '---\ntype: module-stack\n---\n')
     const md = renderExplanationHuman(buildProjectExplanation(tmpDir))
     expect(md).toContain('## Mapped Modules')
     expect(md).toContain('storefront-web — frontend — ../frontend — owner: web-team')

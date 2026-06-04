@@ -22,7 +22,7 @@ afterEach(() => {
 
 describe('artifact-reader', () => {
   it('reads a single artifact with front matter', () => {
-    write('knowledge/work-items/WI-001-test.md', `---
+    write('knowledge/delivery/work-items/WI-001-test.md', `---
 type: feature
 id: WI-001
 title: "Test feature"
@@ -49,14 +49,14 @@ summary: "Test summary"
   })
 
   it('reads multiple artifacts from subdirectories', () => {
-    write('knowledge/work-items/WI-001.md', `---\ntype: feature\nid: WI-001\ncode:\n  - src/a/**\n---\n`)
-    write('knowledge/work-items/WI-002.md', `---\ntype: bugfix\nid: WI-002\ncode:\n  - src/b/**\n---\n`)
+    write('knowledge/delivery/work-items/WI-001.md', `---\ntype: feature\nid: WI-001\ncode:\n  - src/a/**\n---\n`)
+    write('knowledge/delivery/work-items/WI-002.md', `---\ntype: bugfix\nid: WI-002\ncode:\n  - src/b/**\n---\n`)
     const artifacts = readArtifacts(path.join(tmpDir, 'knowledge'))
     expect(artifacts).toHaveLength(2)
   })
 
   it('skips artifacts without front matter gracefully', () => {
-    write('knowledge/work-items/plain.md', '# No front matter here\n')
+    write('knowledge/delivery/work-items/plain.md', '# No front matter here\n')
     const artifacts = readArtifacts(path.join(tmpDir, 'knowledge'))
     // gray-matter returns empty data object, artifact is parsed with empty fields
     expect(artifacts).toHaveLength(1)
@@ -64,8 +64,8 @@ summary: "Test summary"
   })
 
   it('filters artifacts with ownership', () => {
-    write('knowledge/work-items/WI-001.md', `---\nid: WI-001\ncode:\n  - src/**\n---\n`)
-    write('knowledge/work-items/WI-002.md', `---\nid: WI-002\ncode: []\n---\n`)
+    write('knowledge/delivery/work-items/WI-001.md', `---\nid: WI-001\ncode:\n  - src/**\n---\n`)
+    write('knowledge/delivery/work-items/WI-002.md', `---\nid: WI-002\ncode: []\n---\n`)
     write('knowledge/knowledge.md', `---\ntype: current-state\n---\n# Knowledge\n`)
     const artifacts = readArtifacts(path.join(tmpDir, 'knowledge'))
     const withOwnership = artifactsWithOwnership(artifacts)

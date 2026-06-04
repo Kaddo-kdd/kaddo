@@ -1,46 +1,38 @@
-// kaddo bootstrap (VS project-knowledge-bootstrap).
+// kaddo bootstrap (VS project-knowledge-bootstrap; realigned in knowledge-repository-realignment).
 //
-// Turns an initialized new project into a structured knowledge base across the base
-// layers: Business → Architecture → Codebase → Development. Deterministic — it writes
-// knowledge artifacts from the template registry. It never calls an LLM, never generates
-// source code, and never decides architecture. Existing files are never overwritten.
+// Turns an initialized new project into the minimal knowledge base across the project's
+// macro layers: Business → Product → Tech → Delivery. Deterministic — it writes knowledge
+// artifacts from the template registry. It never calls an LLM, never generates source code,
+// and never decides architecture. Existing files are never overwritten.
+//
+// Bootstrap generates only the minimal base (Business + Product + tech/codebase.md).
+// Roadmap, work items and decisions emerge later through agents and project evolution.
 
-import { cwd, exists, join, writeFile, ensureDir } from '../utils/fs.js'
+import { cwd, exists, join, writeFile } from '../utils/fs.js'
 import { intro, outro, log, confirm } from '../utils/ui.js'
 import { loadConfig, ConfigError } from '../core/config.js'
 import { getTemplate } from '../templates/registry.js'
 
 const CONFIG_PATH = '.kaddo/config.yml'
 
+type BootstrapLayer = 'Business' | 'Product' | 'Tech'
 type LayeredTarget = { layer: BootstrapLayer; path: string; templateId: string }
-type BootstrapLayer = 'Business' | 'Architecture' | 'Codebase' | 'Development'
 
 const TARGETS: LayeredTarget[] = [
-  // Business
-  { layer: 'Business', path: 'knowledge/business/product-brief.md', templateId: 'business-product-brief' },
+  // Business — why it exists
   { layer: 'Business', path: 'knowledge/business/problem.md', templateId: 'business-problem' },
   { layer: 'Business', path: 'knowledge/business/users.md', templateId: 'business-users' },
   { layer: 'Business', path: 'knowledge/business/value-proposition.md', templateId: 'business-value-proposition' },
-  { layer: 'Business', path: 'knowledge/business/business-rules.md', templateId: 'business-rules' },
   { layer: 'Business', path: 'knowledge/business/constraints.md', templateId: 'business-constraints' },
-  { layer: 'Business', path: 'knowledge/business/glossary.md', templateId: 'business-glossary' },
-  // Architecture
-  { layer: 'Architecture', path: 'knowledge/capabilities.md', templateId: 'capabilities' },
-  { layer: 'Architecture', path: 'knowledge/quality-attributes.md', templateId: 'quality-attributes' },
-  { layer: 'Architecture', path: 'knowledge/stack.md', templateId: 'stack' },
-  { layer: 'Architecture', path: 'knowledge/current-state.md', templateId: 'current-state' },
-  { layer: 'Architecture', path: 'knowledge/decision-candidates.md', templateId: 'decision-candidates' },
-  { layer: 'Architecture', path: 'knowledge/adrs/ADR-0001-initial-architecture.md', templateId: 'adr' },
-  // Codebase
-  { layer: 'Codebase', path: 'knowledge/codebase-foundation.md', templateId: 'codebase-foundation' },
-  { layer: 'Codebase', path: 'knowledge/standards.md', templateId: 'standards' },
-  { layer: 'Codebase', path: 'knowledge/git-strategy.md', templateId: 'git-strategy' },
-  // Development
-  { layer: 'Development', path: 'knowledge/roadmap.md', templateId: 'roadmap' },
-  { layer: 'Development', path: 'knowledge/bootstrap-summary.md', templateId: 'bootstrap-summary' },
+  { layer: 'Business', path: 'knowledge/business/business-rules.md', templateId: 'business-rules' },
+  // Product — what we build
+  { layer: 'Product', path: 'knowledge/product/product-brief.md', templateId: 'business-product-brief' },
+  { layer: 'Product', path: 'knowledge/product/capabilities.md', templateId: 'capabilities' },
+  // Tech — how we build it
+  { layer: 'Tech', path: 'knowledge/tech/codebase.md', templateId: 'codebase' },
 ]
 
-export const BOOTSTRAP_LAYERS: BootstrapLayer[] = ['Business', 'Architecture', 'Codebase', 'Development']
+export const BOOTSTRAP_LAYERS: BootstrapLayer[] = ['Business', 'Product', 'Tech']
 
 export type BootstrapResult = {
   written: string[]
@@ -49,8 +41,9 @@ export type BootstrapResult = {
 }
 
 /**
- * Generate the initial knowledge base from the template registry. Pure and deterministic;
- * never overwrites existing files (reported as skipped). Also ensures work-items/ exists.
+ * Generate the minimal initial knowledge base from the template registry. Pure and
+ * deterministic; never overwrites existing files (reported as skipped). It does not
+ * generate roadmap, work items or decisions — those emerge later through agents.
  */
 export function bootstrap(dir: string): BootstrapResult {
   const written: string[] = []
@@ -66,17 +59,6 @@ export function bootstrap(dir: string): BootstrapResult {
     const content = tpl ? tpl.content : ''
     writeFile(full, content.endsWith('\n') ? content : `${content}\n`)
     written.push(target.path)
-  }
-
-  // Development layer: ensure the work-items directory exists.
-  const workItems = join(dir, 'knowledge/work-items')
-  if (!exists(workItems)) {
-    ensureDir(workItems)
-    const keep = join(workItems, '.gitkeep')
-    if (!exists(keep)) {
-      writeFile(keep, '')
-      written.push('knowledge/work-items/.gitkeep')
-    }
   }
 
   return { written, skipped, layers: BOOTSTRAP_LAYERS }
@@ -102,7 +84,7 @@ export async function runBootstrap(dir: string = cwd()): Promise<void> {
   }
 
   log.info(`Project state: ${state}`)
-  log.info('Base layers: Business → Architecture → Codebase → Development')
+  log.info('Base layers: Business → Product → Tech → Delivery')
 
   if (state !== 'new') {
     log.warn('This project is not marked as new. Bootstrap is designed for new projects.')
@@ -132,7 +114,8 @@ export async function runBootstrap(dir: string = cwd()): Promise<void> {
   console.log('')
 
   outro(
-    'Knowledge base ready. Run `kaddo context` and `kaddo add agents`, then refine these ' +
-      'artifacts with the business-agent, bootstrap-agent and codebase-foundation-agent in your LLM.'
+    'Minimal knowledge base ready (Business → Product → Tech). Run `kaddo context` and ' +
+      '`kaddo add agents`, then refine with the business-agent, bootstrap-agent and ' +
+      'codebase-agent. Roadmap and work items come next under knowledge/delivery/.'
   )
 }

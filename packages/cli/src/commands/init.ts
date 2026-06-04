@@ -168,14 +168,14 @@ export async function runInit(): Promise<void> {
   writeFile(kaddoConfigPath, buildConfig(meta))
 
   // Create knowledge/
-  ensureDir(join(dir, ARCH_DIR, 'work-items'))
+  ensureDir(join(dir, ARCH_DIR, 'delivery', 'work-items'))
   writeFile(join(dir, ARCH_DIR, 'knowledge.md'), buildKnowledge(projectName.trim()))
-  writeFile(join(dir, ARCH_DIR, 'roadmap.md'), buildRoadmap(projectName.trim()))
+  writeFile(join(dir, ARCH_DIR, 'delivery', 'roadmap.md'), buildRoadmap(projectName.trim()))
 
   log.success('Created .kaddo/config.yml')
   log.success('Created knowledge/knowledge.md')
-  log.success('Created knowledge/roadmap.md')
-  log.success('Created knowledge/work-items/')
+  log.success('Created knowledge/delivery/roadmap.md')
+  log.success('Created knowledge/delivery/work-items/')
   log.info('Next: run `kaddo scan` to detect your stack.')
 
   outro('Kaddo initialized.')

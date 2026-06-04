@@ -91,10 +91,10 @@ describe('template registry', () => {
   })
 
   it('templatesByCategory partitions the registry', () => {
-    const cats: TemplateCategory[] = ['core', 'business', 'knowledge', 'module', 'operations', 'legacy']
+    const cats: TemplateCategory[] = ['business', 'product', 'tech', 'delivery', 'module', 'operations', 'legacy']
     const total = cats.reduce((n, c) => n + templatesByCategory(c).length, 0)
     expect(total).toBe(listTemplates().length)
-    expect(templatesByCategory('core').map((t) => t.id)).toContain('work-item')
+    expect(templatesByCategory('delivery').map((t) => t.id)).toContain('work-item')
   })
 
   it('AC9: agent-linked templates reference their output path in the agent prompt', () => {

@@ -214,7 +214,7 @@ describe('kaddo create --from roadmap — command guards', () => {
 
   beforeEach(() => {
     tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'kaddo-from-roadmap-'))
-    fs.mkdirSync(path.join(tmpDir, 'knowledge', 'work-items'), { recursive: true })
+    fs.mkdirSync(path.join(tmpDir, 'knowledge', 'delivery', 'work-items'), { recursive: true })
     vi.spyOn(process, 'cwd').mockReturnValue(tmpDir)
   })
   afterEach(() => {
@@ -222,7 +222,7 @@ describe('kaddo create --from roadmap — command guards', () => {
     vi.restoreAllMocks()
   })
 
-  it('errors when knowledge/roadmap.md is missing', async () => {
+  it('errors when knowledge/delivery/roadmap.md is missing', async () => {
     const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
     vi.spyOn(process, 'exit').mockImplementation((() => {
       throw new Error('exit')
@@ -234,7 +234,7 @@ describe('kaddo create --from roadmap — command guards', () => {
 
   it('errors when the roadmap has no candidates', async () => {
     fs.writeFileSync(
-      path.join(tmpDir, 'knowledge', 'roadmap.md'),
+      path.join(tmpDir, 'knowledge', 'delivery', 'roadmap.md'),
       '# Roadmap\n\n## Summary\n\nNo candidates here.'
     )
     const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {})

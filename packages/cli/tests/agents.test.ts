@@ -83,8 +83,8 @@ describe('roadmap-agent — structured output (VS-009)', () => {
     return a.content
   }
 
-  it('directs the output to knowledge/roadmap.md', () => {
-    expect(roadmap()).toContain('knowledge/roadmap.md')
+  it('directs the output to knowledge/delivery/roadmap.md', () => {
+    expect(roadmap()).toContain('knowledge/delivery/roadmap.md')
   })
 
   it('includes structured initiative fields', () => {

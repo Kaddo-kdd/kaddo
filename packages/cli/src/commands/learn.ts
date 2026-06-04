@@ -4,7 +4,7 @@ import { exists, join, cwd, readFile, writeFile, readDir } from '../utils/fs.js'
 import { intro, outro, log, text, select } from '../utils/ui.js'
 
 const ARCH_DIR = 'knowledge'
-const WORK_ITEMS_DIR = 'knowledge/work-items'
+const WORK_ITEMS_DIR = 'knowledge/delivery/work-items'
 
 function findWorkItemFile(dir: string, id: string): string | null {
   const wiDir = join(dir, WORK_ITEMS_DIR)

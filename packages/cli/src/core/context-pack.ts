@@ -187,7 +187,7 @@ export function buildContextPack(
     missing.push('No project knowledge summary found yet.')
   }
 
-  const roadmapSummary = readMarkdownSummary(dir, 'roadmap.md') ?? ''
+  const roadmapSummary = readMarkdownSummary(dir, 'delivery/roadmap.md') ?? ''
   if (!roadmapSummary) {
     missing.push('No roadmap baseline found.')
   }

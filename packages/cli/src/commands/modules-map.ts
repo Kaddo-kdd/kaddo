@@ -75,7 +75,7 @@ function writeModulesDescriptor(dir: string, descriptor: ModulesDescriptor): voi
 }
 
 function moduleDir(id: string): string {
-  return `knowledge/modules/${id}`
+  return `knowledge/tech/modules/${id}`
 }
 
 function buildModule(input: MappedModuleInput): MappedModule {

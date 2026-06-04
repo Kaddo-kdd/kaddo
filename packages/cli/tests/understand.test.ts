@@ -58,7 +58,7 @@ describe('understand — buildUnderstandPlan', () => {
     writeConfig('new')
     const p = plan()
     expect(p.steps.map((s) => s.agent)).toEqual(['roadmap-agent.md', 'architecture-agent.md'])
-    expect(p.steps[0].output).toBe('knowledge/roadmap.md')
+    expect(p.steps[0].output).toBe('knowledge/delivery/roadmap.md')
   })
 
   it('recommends capability-first for pre-ai projects', () => {
@@ -69,7 +69,7 @@ describe('understand — buildUnderstandPlan', () => {
       'architecture-agent.md',
       'roadmap-agent.md',
     ])
-    expect(p.steps[0].output).toBe('knowledge/capabilities.md')
+    expect(p.steps[0].output).toBe('knowledge/product/capabilities.md')
   })
 
   it('recommends a four-step legacy-first flow for legacy projects', () => {
@@ -116,14 +116,14 @@ describe('understand — rendering', () => {
     expect(md).toContain('## Expected Outputs')
     expect(md).toContain('## Copy/Paste Instructions')
     expect(md).toContain('Kaddo does not call an LLM')
-    expect(md).toContain('knowledge/capabilities.md')
+    expect(md).toContain('knowledge/product/capabilities.md')
   })
 
   it('terminal output names the first agent and target output', () => {
     writeConfig('pre-ai')
     const out = renderUnderstandTerminal(plan())
     expect(out).toContain('First step: use capability-agent.')
-    expect(out).toContain('Expected output: knowledge/capabilities.md')
+    expect(out).toContain('Expected output: knowledge/product/capabilities.md')
   })
 })
 
