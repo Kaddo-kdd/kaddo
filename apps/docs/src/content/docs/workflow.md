@@ -78,6 +78,35 @@ Kaddo keeps **intent** and **reality** distinct — they answer different questi
 
 `current-state.md` does not replace `codebase.md`: one is the plan, the other the truth.
 
+## Work Item delivery lifecycle
+
+Once you create a Work Item, Kaddo recommends a repeatable delivery lifecycle that keeps
+code and knowledge evolving together. **Kaddo never creates branches, commits or merges** —
+every step is a suggestion you perform.
+
+```txt
+Roadmap → Create Work Item → Branch → Implementation → Scan → Ownership → Guard →
+Knowledge update → Review → Commit
+```
+
+1. **Create** — `kaddo create --from roadmap` → `knowledge/delivery/work-items/`.
+2. **Branch** — Kaddo suggests `feature/WI-001-<slug>` (also `bugfix/`, `hotfix/`, `spike/`); you run git.
+3. **Implement** — you or your agent make the change.
+4. **Scan** — after new modules/migrations/contracts: `kaddo scan`.
+5. **Ownership** — `kaddo owners suggest` (agent proposes `code:` globs, human confirms).
+6. **Guard** — **before committing**, run `kaddo guard` to detect knowledge drift.
+7. **Knowledge update** — record what changed:
+   | Change | Update |
+   |---|---|
+   | New architecture decision | ADR in `knowledge/tech/decisions/` |
+   | New capability | `knowledge/product/capabilities.md` |
+   | Significant structural change | `knowledge/tech/current-state.md` (reality) |
+8. **Review** — human validation.
+9. **Commit** — Kaddo suggests `feat(tasks): add task reminders`; you run git.
+
+`kaddo understand` prints this lifecycle (with the suggested branch and commit) whenever a
+Work Item is active.
+
 ## Declaring ownership
 
 Ownership is declared on artifacts and confirmed by a human:

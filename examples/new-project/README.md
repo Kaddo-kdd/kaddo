@@ -17,8 +17,12 @@ kaddo add agents                 # → knowledge/agents/<layer>/*.md (recommende
 kaddo understand                 # recommends agents for the current phase
 # in your LLM chat: run capability-agent, architecture-agent (→ current-state.md), roadmap-agent
 kaddo create --from roadmap      # → knowledge/delivery/work-items/WI-001-*.md
+# delivery: git checkout -b feature/WI-001-… (you), implement, then:
+kaddo scan                       # after new modules/migrations/contracts
 kaddo owners suggest             # propose code: globs — you confirm them
+kaddo guard                      # before committing — detect knowledge drift
 kaddo explain                    # → .kaddo/explain.md (grouped by layer)
+# update knowledge (ADR / capabilities / current-state), review, then commit (you)
 ```
 
 See [`expected-flow.md`](./expected-flow.md) for the step-by-step output, and

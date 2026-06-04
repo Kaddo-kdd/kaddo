@@ -26,6 +26,18 @@ spike/<work-item-id>-<slug>        chore(scope): mensaje
 Las notas de release se generan a partir de los Work Items de Kaddo +
 Conventional Commits.
 
+## Work Items y entrega
+
+Las convenciones de rama y commit se atan al Work Item que estás entregando:
+
+- Rama: `feature/WI-001-<slug>` (o `bugfix/` · `hotfix/` · `spike/`).
+- Commit: `feat(scope): mensaje` (`fix:` para bugfix/hotfix, `chore:` para spike).
+- **Antes de commitear, corre `kaddo guard`** para detectar posible knowledge drift.
+
+`kaddo understand` sugiere la rama y el commit para un Work Item activo — pero Kaddo
+**nunca** crea ramas, commits ni merges. Ver el
+[ciclo de entrega de un Work Item](/es/workflow/#ciclo-de-entrega-de-un-work-item).
+
 ## Personalización
 
 El valor por defecto es una **recomendación**, no una regla. Edita `.kaddo/git.yml`

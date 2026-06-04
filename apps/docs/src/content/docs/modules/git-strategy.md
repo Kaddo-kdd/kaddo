@@ -25,6 +25,18 @@ spike/<work-item-id>-<slug>        chore(scope): message
 
 Release notes are sourced from Kaddo Work Items + Conventional Commits.
 
+## Work Items & delivery
+
+Branch and commit conventions tie to the Work Item you are delivering:
+
+- Branch: `feature/WI-001-<slug>` (or `bugfix/` · `hotfix/` · `spike/`).
+- Commit: `feat(scope): message` (`fix:` for bugfix/hotfix, `chore:` for spike).
+- **Before committing, run `kaddo guard`** to detect possible knowledge drift.
+
+`kaddo understand` suggests the branch and commit for an active Work Item — but Kaddo
+**never** creates branches, commits or merges. See the
+[Work Item delivery lifecycle](/workflow/#work-item-delivery-lifecycle).
+
 ## Customization
 
 The default is a **recommendation**, not a rule. Edit `.kaddo/git.yml` to switch

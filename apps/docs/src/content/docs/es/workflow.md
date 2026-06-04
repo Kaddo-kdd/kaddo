@@ -78,6 +78,35 @@ Kaddo mantiene **intención** y **realidad** separadas — responden preguntas d
 
 `current-state.md` no reemplaza a `codebase.md`: uno es el plan, el otro la verdad.
 
+## Ciclo de entrega de un Work Item
+
+Cuando creas un Work Item, Kaddo recomienda un ciclo de entrega repetible que mantiene
+código y conocimiento evolucionando juntos. **Kaddo nunca crea ramas, commits ni merges** —
+cada paso es una sugerencia que ejecutas tú.
+
+```txt
+Roadmap → Crear Work Item → Rama → Implementación → Scan → Ownership → Guard →
+Actualizar conocimiento → Review → Commit
+```
+
+1. **Crear** — `kaddo create --from roadmap` → `knowledge/delivery/work-items/`.
+2. **Rama** — Kaddo sugiere `feature/WI-001-<slug>` (también `bugfix/`, `hotfix/`, `spike/`); tú corres git.
+3. **Implementar** — tú o tu agente hacen el cambio.
+4. **Scan** — tras nuevos módulos/migraciones/contratos: `kaddo scan`.
+5. **Ownership** — `kaddo owners suggest` (el agente propone globs `code:`, el humano confirma).
+6. **Guard** — **antes de commitear**, corre `kaddo guard` para detectar knowledge drift.
+7. **Actualizar conocimiento** — registra lo que cambió:
+   | Cambio | Actualiza |
+   |---|---|
+   | Nueva decisión de arquitectura | ADR en `knowledge/tech/decisions/` |
+   | Nueva capacidad | `knowledge/product/capabilities.md` |
+   | Cambio estructural importante | `knowledge/tech/current-state.md` (realidad) |
+8. **Review** — validación humana.
+9. **Commit** — Kaddo sugiere `feat(tasks): add task reminders`; tú corres git.
+
+`kaddo understand` imprime este ciclo (con la rama y el commit sugeridos) cuando hay un
+Work Item activo.
+
 ## Declarar ownership
 
 El ownership se declara en los artefactos y lo confirma un humano:

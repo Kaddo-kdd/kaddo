@@ -224,6 +224,24 @@ flowchart LR
     E --> F[kaddo guard relates code changes]
 ```
 
+## Work Item delivery lifecycle
+
+From a Work Item to a commit, with knowledge kept in sync. Every git step is human-run —
+Kaddo only suggests.
+
+```mermaid
+flowchart TD
+    A[Roadmap] --> B[Create Work Item]
+    B --> C[Branch e.g. feature/WI-001-slug]
+    C --> D[Implementation]
+    D --> E[kaddo scan]
+    E --> F[kaddo owners suggest → human confirms]
+    F --> G[kaddo guard before commit]
+    G --> H[Update knowledge: ADR · capabilities · current-state]
+    H --> I[Review human]
+    I --> J[Commit e.g. feat scope: message]
+```
+
 ## Guard Lite
 
 Guard reads `git diff`, matches changed files against declared `code:` globs, and emits a
