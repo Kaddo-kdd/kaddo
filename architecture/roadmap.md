@@ -36,6 +36,7 @@ no ownership inference · no Confidence Score · the human always confirms.
 | [v3.0.0](https://github.com/Kaddo-kdd/kaddo/releases/tag/v3.0.0) | Knowledge Repository Realignment: `architecture/` → `knowledge/`, layers Business → Product → Tech → Delivery, context/explain by layer (VS-029, breaking) |
 | [v3.1.0](https://github.com/Kaddo-kdd/kaddo/releases/tag/v3.1.0) | Minimum Sufficient Knowledge: bootstrap one consolidated file per layer; progressive `add agents` by group (VS-030) |
 | [v3.2.0](https://github.com/Kaddo-kdd/kaddo/releases/tag/v3.2.0) | New Project Flow Hardening: per-layer agent folders; capability+architecture in `new`; explain Work Item parser fix; intent vs reality (VS-031) |
+| [v3.3.0](https://github.com/Kaddo-kdd/kaddo/releases/tag/v3.3.0) | Work Item Delivery Workflow: `understand` delivery lifecycle (branch → scan → ownership → guard → knowledge → commit) for active Work Items (VS-035) |
 
 ---
 

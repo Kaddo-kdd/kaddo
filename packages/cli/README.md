@@ -434,6 +434,7 @@ create --from roadmap → owners → guard → explain`.
 | v3.0 | Knowledge-centric realignment: `architecture/` → `knowledge/` with layers Business → Product → Tech → Delivery; context/explain by layer (breaking) |
 | v3.1 | Minimum Sufficient Knowledge: bootstrap one consolidated file per layer; progressive `add agents` by group (state default, `--all`, `--group`) |
 | v3.2 | New-project flow hardening: agents in per-layer folders; `new` recommends capability+architecture agents; explain Work Item parser fix; intent vs reality (codebase vs current-state) |
+| v3.3 | Work Item delivery lifecycle: `understand` shows branch → scan → ownership → guard → knowledge → commit for active Work Items (suggestions only; Kaddo never runs git) |
 
 **Optional modules (installed with `kaddo add`):**
 
