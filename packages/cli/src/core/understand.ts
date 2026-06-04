@@ -1,5 +1,14 @@
 import { exists, join } from '../utils/fs.js'
 import type { KaddoConfig, ProjectState } from './config.js'
+import { agentInstallPath } from '../agents/groups.js'
+
+/** An agent is installed if present in its layer folder, or (legacy) the flat folder. */
+export function agentIsInstalled(dir: string, fileName: string): boolean {
+  return (
+    exists(join(dir, agentInstallPath(fileName))) ||
+    exists(join(dir, 'knowledge', 'agents', fileName))
+  )
+}
 
 export type AgentStep = {
   /** Agent file name under knowledge/agents/, e.g. "capability-agent.md" */
@@ -58,7 +67,7 @@ export function buildUnderstandPlan(dir: string, config: KaddoConfig): Understan
   const flow = flowForState(state)
 
   const steps: AgentStep[] = flow.map((s) => {
-    const installed = exists(join(dir, 'knowledge', 'agents', s.agent))
+    const installed = agentIsInstalled(dir, s.agent)
     return { agent: s.agent, output: s.output, installed }
   })
 

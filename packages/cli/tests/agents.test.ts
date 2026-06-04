@@ -5,6 +5,7 @@ import path from 'path'
 import { runAdd } from '../src/commands/add.js'
 import { agentsModule } from '../src/modules/agents.js'
 import { AGENT_PROMPTS } from '../src/agents/prompts.js'
+import { agentInstallPath } from '../src/agents/groups.js'
 
 let tmpDir: string
 
@@ -29,7 +30,8 @@ function initProject() {
 }
 
 function agentsDirFile(name: string): string {
-  return path.join(tmpDir, 'knowledge', 'agents', name)
+  // Agents install into per-layer folders (knowledge/agents/<group>/<name>).
+  return path.join(tmpDir, agentInstallPath(name))
 }
 
 beforeEach(() => {
@@ -67,12 +69,15 @@ describe('agents module — prompt pack source', () => {
     }
   })
 
-  it('agents module installs into knowledge/agents', () => {
+  it('agents module installs into per-layer folders under knowledge/agents', () => {
     expect(agentsModule.dirs).toContain('knowledge/agents')
     const paths = agentsModule.files.map((f) => f.path)
     for (const a of AGENT_PROMPTS) {
-      expect(paths).toContain(`knowledge/agents/${a.fileName}`)
+      expect(paths).toContain(agentInstallPath(a.fileName))
     }
+    // sanity: each agent lives in a group subfolder, not flat
+    expect(paths).toContain('knowledge/agents/product/capability-agent.md')
+    expect(paths).toContain('knowledge/agents/tech/codebase-agent.md')
   })
 })
 
@@ -167,8 +172,8 @@ describe('kaddo add agents', () => {
 
   it('does not overwrite an existing agent file (partial install)', () => {
     initProject()
-    // Pre-create one agent with custom content.
-    fs.mkdirSync(path.join(tmpDir, 'knowledge', 'agents'), { recursive: true })
+    // Pre-create one agent with custom content (in its layer folder).
+    fs.mkdirSync(path.dirname(agentsDirFile('capability-agent.md')), { recursive: true })
     fs.writeFileSync(agentsDirFile('capability-agent.md'), 'CUSTOM EDIT')
 
     runAdd('agents', { all: true }, tmpDir)

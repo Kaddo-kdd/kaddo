@@ -113,7 +113,20 @@ function loadScan(dir: string): ScanDetected | null {
 function hasAgents(dir: string): boolean {
   const agentsDir = join(dir, ARCH_DIR, 'agents')
   if (!exists(agentsDir)) return false
-  return readDir(agentsDir).some((e) => e.endsWith('.md') && isFile(join(agentsDir, e)))
+  // Agents install into per-layer subfolders (business/product/tech/…); also tolerate the
+  // legacy flat layout. Any *-agent .md anywhere under knowledge/agents/ counts.
+  function hasAgentMd(d: string): boolean {
+    for (const e of readDir(d)) {
+      const full = join(d, e)
+      if (isFile(full)) {
+        if (e.endsWith('-agent.md')) return true
+      } else if (hasAgentMd(full)) {
+        return true
+      }
+    }
+    return false
+  }
+  return hasAgentMd(agentsDir)
 }
 
 export function buildProjectExplanation(dir: string): ProjectExplanation {

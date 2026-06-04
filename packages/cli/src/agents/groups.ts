@@ -27,14 +27,30 @@ export const AGENT_GROUPS: Record<AgentGroup, string[]> = {
 
 export const AGENT_GROUP_NAMES = Object.keys(AGENT_GROUPS) as AgentGroup[]
 
+/** The layer group a given agent file belongs to (or 'utilities' if unmapped). */
+export function agentGroupOf(fileName: string): AgentGroup {
+  for (const g of AGENT_GROUP_NAMES) {
+    if (AGENT_GROUPS[g].includes(fileName)) return g
+  }
+  return 'utilities'
+}
+
+/** Install path (relative to project root) for an agent, organized per layer folder. */
+export function agentInstallPath(fileName: string): string {
+  return `knowledge/agents/${agentGroupOf(fileName)}/${fileName}`
+}
+
 /** The agents recommended to install for each project state (minimum sufficient set). */
 const RECOMMENDED_BY_STATE: Record<ProjectState, string[]> = {
   new: [
     'business-agent.md',
     'bootstrap-agent.md',
+    'capability-agent.md',
+    'architecture-agent.md',
     'codebase-agent.md',
     'roadmap-agent.md',
     'work-item-agent.md',
+    'adr-agent.md',
   ],
   'pre-ai': [
     'capability-agent.md',

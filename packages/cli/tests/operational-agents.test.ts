@@ -4,6 +4,7 @@ import os from 'os'
 import path from 'path'
 import { runAdd } from '../src/commands/add.js'
 import { AGENT_PROMPTS } from '../src/agents/prompts.js'
+import { agentInstallPath } from '../src/agents/groups.js'
 import { getModule } from '../src/modules/registry.js'
 
 let tmpDir: string
@@ -89,7 +90,7 @@ describe('operational agents (VS-017)', () => {
     initProject()
     runAdd('agents', { all: true }, tmpDir)
     for (const name of OPERATIONAL_AGENTS) {
-      expect(fs.existsSync(path.join(tmpDir, 'knowledge', 'agents', name)), name).toBe(true)
+      expect(fs.existsSync(path.join(tmpDir, agentInstallPath(name))), name).toBe(true)
     }
   })
 })

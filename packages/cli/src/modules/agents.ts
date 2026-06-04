@@ -1,5 +1,6 @@
 import type { KaddoModule, ModuleFile } from './types.js'
 import { AGENT_PROMPTS } from '../agents/prompts.js'
+import { agentInstallPath } from '../agents/groups.js'
 
 const agentReadme: ModuleFile = {
   path: 'knowledge/agents/README.md',
@@ -52,7 +53,7 @@ const agentReadme: ModuleFile = {
 }
 
 const agentFiles: ModuleFile[] = AGENT_PROMPTS.map((a) => ({
-  path: `knowledge/agents/${a.fileName}`,
+  path: agentInstallPath(a.fileName),
   content: a.content,
 }))
 

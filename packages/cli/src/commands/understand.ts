@@ -52,15 +52,36 @@ export function runUnderstand(): void {
   // 5. Print the concise handoff and write the reusable guide.
   console.log(renderUnderstandTerminal(plan))
 
-  // 5b. Contextual recommendation: the current knowledge phase + its layer's agents.
+  // 5b. Contextual recommendation: current phase + concrete next steps for it.
   const phase = currentPhase(knowledgeLayers(dir))
   const group = phase.toLowerCase() as AgentGroup
   const groupAgents = (AGENT_GROUPS[group] ?? []).map((a) => a.replace(/\.md$/, ''))
+  const NEXT_STEPS: Record<AgentGroup, string[]> = {
+    business: ['Use business-agent → refine knowledge/business/business.md'],
+    product: [
+      'Use bootstrap-agent → refine knowledge/product/product.md',
+      'Use capability-agent → knowledge/product/capabilities.md',
+    ],
+    tech: [
+      'Use architecture-agent → knowledge/tech/current-state.md (reality)',
+      'Use codebase-agent → knowledge/tech/codebase.md (intent)',
+      'Record decisions as ADRs in knowledge/tech/decisions/',
+    ],
+    delivery: [
+      'Use roadmap-agent → knowledge/delivery/roadmap.md',
+      'Run `kaddo create --from roadmap`, then `kaddo owners suggest`',
+    ],
+    utilities: ['Use legacy-agent to surface risks and unknowns'],
+  }
+  console.log('')
+  console.log(`Current phase: ${phase}`)
+  console.log('Recommended next steps:')
+  console.log('  1. Run `kaddo scan`   (technical signals → knowledge/inventory.md)')
+  console.log('  2. Run `kaddo context`  (package knowledge for your LLM)')
+  let n = 3
+  for (const step of NEXT_STEPS[group] ?? []) console.log(`  ${n++}. ${step}`)
   if (groupAgents.length > 0) {
-    console.log('')
-    console.log(`Current phase: ${phase}`)
-    console.log('Recommended agents for this phase:')
-    for (const a of groupAgents) console.log(`  - ${a}`)
+    console.log(`Agents for this phase: ${groupAgents.join(', ')}`)
   }
 
   writeFile(join(dir, '.kaddo', 'understand.md'), renderUnderstand(plan))
