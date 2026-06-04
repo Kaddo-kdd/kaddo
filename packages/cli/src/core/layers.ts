@@ -58,6 +58,18 @@ export function knowledgeLayers(dir: string): LayerStatus[] {
   }))
 }
 
+/**
+ * The current phase: the first layer (Business → Product → Tech → Delivery) that still has
+ * a missing key artifact. Used to recommend contextual agents. Returns 'Delivery' when all
+ * earlier layers are complete.
+ */
+export function currentPhase(layers: LayerStatus[]): LayerName {
+  for (const { layer, items } of layers) {
+    if (items.some((i) => !i.present)) return layer
+  }
+  return 'Delivery'
+}
+
 /** Render the per-layer status as markdown (Business → Product → Tech → Delivery). */
 export function renderLayersMarkdown(layers: LayerStatus[]): string {
   const lines: string[] = []

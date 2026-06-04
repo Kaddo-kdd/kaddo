@@ -138,14 +138,31 @@ describe('roadmap-agent — structured output (VS-009)', () => {
 })
 
 describe('kaddo add agents', () => {
-  it('creates knowledge/agents/ and installs all base agents', () => {
+  it('installs every agent with --all', () => {
     initProject()
-    runAdd('agents', tmpDir)
+    runAdd('agents', { all: true }, tmpDir)
 
     expect(fs.existsSync(path.join(tmpDir, 'knowledge', 'agents'))).toBe(true)
     for (const a of AGENT_PROMPTS) {
       expect(fs.existsSync(agentsDirFile(a.fileName))).toBe(true)
     }
+  })
+
+  it('installs only the recommended set by default (progressive)', () => {
+    initProject() // state defaults; pre-ai recommended set
+    runAdd('agents', {}, tmpDir)
+    // recommended for pre-ai includes capability + architecture, not git-strategy
+    expect(fs.existsSync(agentsDirFile('capability-agent.md'))).toBe(true)
+    expect(fs.existsSync(agentsDirFile('architecture-agent.md'))).toBe(true)
+    expect(fs.existsSync(agentsDirFile('git-strategy-agent.md'))).toBe(false)
+  })
+
+  it('installs a single group with --group', () => {
+    initProject()
+    runAdd('agents', { group: 'tech' }, tmpDir)
+    expect(fs.existsSync(agentsDirFile('codebase-agent.md'))).toBe(true)
+    expect(fs.existsSync(agentsDirFile('stack-agent.md'))).toBe(true)
+    expect(fs.existsSync(agentsDirFile('business-agent.md'))).toBe(false)
   })
 
   it('does not overwrite an existing agent file (partial install)', () => {
@@ -154,7 +171,7 @@ describe('kaddo add agents', () => {
     fs.mkdirSync(path.join(tmpDir, 'knowledge', 'agents'), { recursive: true })
     fs.writeFileSync(agentsDirFile('capability-agent.md'), 'CUSTOM EDIT')
 
-    runAdd('agents', tmpDir)
+    runAdd('agents', { all: true }, tmpDir)
 
     // Existing file preserved, missing ones installed.
     expect(fs.readFileSync(agentsDirFile('capability-agent.md'), 'utf8')).toBe('CUSTOM EDIT')
@@ -167,7 +184,7 @@ describe('kaddo add agents', () => {
     }) as never)
     const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
 
-    expect(() => runAdd('agents', tmpDir)).toThrow('exit')
+    expect(() => runAdd('agents', {}, tmpDir)).toThrow('exit')
     expect(errSpy).toHaveBeenCalledWith(expect.stringContaining('not initialized'))
     expect(exitSpy).toHaveBeenCalledWith(1)
   })

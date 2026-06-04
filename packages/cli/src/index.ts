@@ -183,7 +183,11 @@ modulesCmd
 program
   .command('add [module]')
   .description('Install an optional Kaddo module (adr, incident, rfc, migration, legacy, agents, standards, security, stack, git-strategy)')
-  .action((moduleName?: string) => { runAdd(moduleName ?? '') })
+  .option('--all', 'For `add agents`: install every agent (not just the recommended set)')
+  .option('--group <name>', 'For `add agents`: install one layer group (business, product, tech, delivery, utilities)')
+  .action((moduleName: string | undefined, opts: { all?: boolean; group?: string }) => {
+    runAdd(moduleName ?? '', { all: opts.all, group: opts.group })
+  })
 
 program.parseAsync(process.argv).catch((err) => {
   console.error(err)

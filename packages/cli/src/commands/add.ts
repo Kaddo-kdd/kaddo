@@ -2,8 +2,41 @@ import { getModule, listModules } from '../modules/registry.js'
 import { exists, writeFile, ensureDir, join, cwd, readFile } from '../utils/fs.js'
 import { log, intro, outro } from '../utils/ui.js'
 import { parse as parseYaml, stringify as stringifyYaml } from 'yaml'
+import { selectAgentFiles } from '../agents/groups.js'
+import type { ModuleFile } from '../modules/types.js'
 
 const CONFIG_PATH = '.kaddo/config.yml'
+
+export type AddOptions = { all?: boolean; group?: string }
+
+function readProjectState(dir: string): string | undefined {
+  const configPath = join(dir, CONFIG_PATH)
+  if (!exists(configPath)) return undefined
+  try {
+    const config = parseYaml(readFile(configPath)) as { project?: { state?: string } }
+    return config.project?.state
+  } catch {
+    return undefined
+  }
+}
+
+/**
+ * For `kaddo add agents`, select which agent files to write (progressive install):
+ * the README plus the recommended set for the project state, or `--all` / `--group`.
+ * Returns the filtered files and a human label, or null to fall back to all files.
+ */
+function selectAgentModuleFiles(
+  files: ModuleFile[],
+  opts: AddOptions,
+  state: string | undefined
+): { files: ModuleFile[]; label: string } {
+  const { files: names, label } = selectAgentFiles({ all: opts.all, group: opts.group, state })
+  const wanted = new Set(names)
+  const selected = files.filter(
+    (f) => f.path.endsWith('README.md') || names.some((n) => f.path.endsWith(n)) || wanted.has(f.path)
+  )
+  return { files: selected, label }
+}
 
 function markModuleInstalled(dir: string, configKey: string, moduleName: string): void {
   const configPath = join(dir, CONFIG_PATH)
@@ -32,7 +65,7 @@ function isModuleInstalled(dir: string, configKey: string): boolean {
   }
 }
 
-export function runAdd(moduleName: string, dir: string = cwd()): void {
+export function runAdd(moduleName: string, opts: AddOptions = {}, dir: string = cwd()): void {
   if (!moduleName) {
     console.log('')
     console.log('Available modules:')
@@ -66,10 +99,24 @@ export function runAdd(moduleName: string, dir: string = cwd()): void {
     ensureDir(join(dir, d))
   }
 
+  // Agents install progressively: by default only the recommended set for the project
+  // state, or `--all` / `--group <name>`. Other modules install all their files.
+  let filesToInstall = mod.files
+  if (mod.name === 'agents') {
+    try {
+      const sel = selectAgentModuleFiles(mod.files, opts, readProjectState(dir))
+      filesToInstall = sel.files
+      log.info(`Installing agents (${sel.label}).`)
+    } catch (err) {
+      console.error(err instanceof Error ? err.message : String(err))
+      process.exit(1)
+    }
+  }
+
   // Write only files that do not exist — never overwrite user-edited files silently.
   const written: string[] = []
   const skipped: string[] = []
-  for (const file of mod.files) {
+  for (const file of filesToInstall) {
     const fullPath = join(dir, file.path)
     if (exists(fullPath)) {
       skipped.push(file.path)
@@ -98,6 +145,7 @@ export function runAdd(moduleName: string, dir: string = cwd()): void {
     console.log('    2. Open your preferred LLM chat')
     console.log('    3. Paste `.kaddo/context-pack.md`')
     console.log('    4. Use the recommended agent for your project state')
+    log.info('More agents: `kaddo add agents --all` or `--group <business|product|tech|delivery|utilities>`.')
     outro('Agents installed. Kaddo prepares context — your LLM does the interpretation.')
     return
   }

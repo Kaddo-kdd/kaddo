@@ -5,6 +5,8 @@ import { buildContextPack, serializeContextPackJson } from '../core/context-pack
 import { renderContextPack } from '../templates/context-pack-template.js'
 import { buildUnderstandPlan } from '../core/understand.js'
 import { renderUnderstand, renderUnderstandTerminal } from '../templates/understand-template.js'
+import { knowledgeLayers, currentPhase } from '../core/layers.js'
+import { AGENT_GROUPS, type AgentGroup } from '../agents/groups.js'
 
 export function runUnderstand(): void {
   const dir = cwd()
@@ -49,6 +51,17 @@ export function runUnderstand(): void {
 
   // 5. Print the concise handoff and write the reusable guide.
   console.log(renderUnderstandTerminal(plan))
+
+  // 5b. Contextual recommendation: the current knowledge phase + its layer's agents.
+  const phase = currentPhase(knowledgeLayers(dir))
+  const group = phase.toLowerCase() as AgentGroup
+  const groupAgents = (AGENT_GROUPS[group] ?? []).map((a) => a.replace(/\.md$/, ''))
+  if (groupAgents.length > 0) {
+    console.log('')
+    console.log(`Current phase: ${phase}`)
+    console.log('Recommended agents for this phase:')
+    for (const a of groupAgents) console.log(`  - ${a}`)
+  }
 
   writeFile(join(dir, '.kaddo', 'understand.md'), renderUnderstand(plan))
   log.success('Wrote .kaddo/understand.md')
