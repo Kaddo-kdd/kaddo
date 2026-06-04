@@ -26,26 +26,29 @@ emerge later, through agents and real work.
 ```mermaid
 flowchart TD
     A[kaddo init] --> B[kaddo bootstrap]
-    B --> C[Business]
-    C --> C1[problem · users · value-proposition · constraints · business-rules]
-    B --> D[Product]
-    D --> D1[product-brief · capabilities]
-    B --> E[Tech]
-    E --> E1[codebase]
-    E1 --> G[kaddo context → agents → roadmap → create --from roadmap]
+    B --> C[business.md]
+    B --> D[product.md]
+    B --> E[codebase.md]
+    E --> G[kaddo context → agents → roadmap → create --from roadmap]
     G -.later.-> H[Delivery: roadmap · work-items/]
 ```
 
-## What it generates
+## What it generates — minimum sufficient knowledge
 
-| Layer | Artifacts |
-|---|---|
-| **Business** | `knowledge/business/{problem, users, value-proposition, constraints, business-rules}.md` |
-| **Product** | `knowledge/product/{product-brief, capabilities}.md` |
-| **Tech** | `knowledge/tech/codebase.md` |
+Exactly **one consolidated file per layer**, with the sections inside:
 
-It does **not** generate `knowledge/delivery/roadmap.md`, `knowledge/delivery/work-items/`
-or `knowledge/tech/decisions/` — those come later through agents and project evolution.
+| Layer | File | Sections |
+|---|---|---|
+| **Business** | `knowledge/business/business.md` | Problem · Users · Value Proposition · Business Rules · Constraints |
+| **Product** | `knowledge/product/product.md` | Product Brief · Capabilities · Scope · Out of Scope · Success Criteria |
+| **Tech** | `knowledge/tech/codebase.md` | Repository Structure · Candidate Stack · Quality Attributes · Standards · Git Strategy · Initial Modules |
+
+That is **all** bootstrap creates. It does **not** generate specialized files
+(`problem.md`, `users.md`, `capabilities.md`, …), `knowledge/delivery/` or
+`knowledge/tech/decisions/`. As the project matures, `business.md` can split into
+`problem.md`, `users.md`, … and `product.md` into `product-brief.md`, `capabilities.md` —
+those specialized templates stay in the registry as **advanced** templates. Knowledge
+grows progressively; you are never forced to start with everything.
 
 ## Behavior
 

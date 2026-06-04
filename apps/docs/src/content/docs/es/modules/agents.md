@@ -39,6 +39,36 @@ knowledge/agents/
 Los archivos existentes nunca se sobrescriben en silencio — al re-ejecutar solo se instalan
 los que falten. `kaddo init` **no** instala agentes; agrégalos cuando los necesites.
 
+## Instalación progresiva y grupos de agentes
+
+Los agentes se instalan **progresivamente**, por capa — no obtienes todos de golpe. Por
+defecto `kaddo add agents` instala solo el conjunto recomendado para el estado del proyecto:
+
+| Estado | Instala |
+|---|---|
+| `new` | business-agent · bootstrap-agent · codebase-agent · roadmap-agent · work-item-agent |
+| `pre-ai` | capability-agent · architecture-agent · roadmap-agent · work-item-agent |
+| `legacy` | legacy-agent · architecture-agent · capability-agent · roadmap-agent · work-item-agent |
+
+Los agentes se organizan en **grupos** por capa:
+
+| Grupo | Agentes |
+|---|---|
+| `business` | business-agent |
+| `product` | bootstrap-agent · capability-agent |
+| `tech` | architecture-agent · codebase-agent · stack-agent · security-agent · standards-agent · module-design-agent · adr-agent |
+| `delivery` | roadmap-agent · work-item-agent · git-strategy-agent |
+| `utilities` | legacy-agent |
+
+```bash
+kaddo add agents                 # conjunto recomendado para el estado del proyecto
+kaddo add agents --all           # todos los agentes
+kaddo add agents --group tech    # un grupo de capa
+```
+
+`kaddo understand` muestra tu **fase actual** (Business → Product → Tech → Delivery) y
+recomienda los agentes de esa fase.
+
 ## Agentes de entendimiento
 
 | Agente | Propósito | Guarda en |

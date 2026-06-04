@@ -26,26 +26,29 @@ agentes y trabajo real.
 ```mermaid
 flowchart TD
     A[kaddo init] --> B[kaddo bootstrap]
-    B --> C[Business]
-    C --> C1[problem · users · value-proposition · constraints · business-rules]
-    B --> D[Product]
-    D --> D1[product-brief · capabilities]
-    B --> E[Tech]
-    E --> E1[codebase]
-    E1 --> G[kaddo context → agentes → roadmap → create --from roadmap]
+    B --> C[business.md]
+    B --> D[product.md]
+    B --> E[codebase.md]
+    E --> G[kaddo context → agentes → roadmap → create --from roadmap]
     G -.después.-> H[Delivery: roadmap · work-items/]
 ```
 
-## Qué genera
+## Qué genera — conocimiento mínimo suficiente
 
-| Capa | Artefactos |
-|---|---|
-| **Business** | `knowledge/business/{problem, users, value-proposition, constraints, business-rules}.md` |
-| **Product** | `knowledge/product/{product-brief, capabilities}.md` |
-| **Tech** | `knowledge/tech/codebase.md` |
+Exactamente **un archivo consolidado por capa**, con las secciones dentro:
 
-**No** genera `knowledge/delivery/roadmap.md`, `knowledge/delivery/work-items/` ni
-`knowledge/tech/decisions/` — esos llegan después, vía agentes y evolución del proyecto.
+| Capa | Archivo | Secciones |
+|---|---|---|
+| **Business** | `knowledge/business/business.md` | Problem · Users · Value Proposition · Business Rules · Constraints |
+| **Product** | `knowledge/product/product.md` | Product Brief · Capabilities · Scope · Out of Scope · Success Criteria |
+| **Tech** | `knowledge/tech/codebase.md` | Repository Structure · Candidate Stack · Quality Attributes · Standards · Git Strategy · Initial Modules |
+
+Eso es **todo** lo que crea bootstrap. **No** genera archivos especializados
+(`problem.md`, `users.md`, `capabilities.md`, …), ni `knowledge/delivery/` ni
+`knowledge/tech/decisions/`. A medida que el proyecto madura, `business.md` puede dividirse
+en `problem.md`, `users.md`, … y `product.md` en `product-brief.md`, `capabilities.md` —
+esos templates especializados quedan en el registry como templates **avanzados**. El
+conocimiento crece progresivamente; nunca estás obligado a empezar con todo.
 
 ## Comportamiento
 

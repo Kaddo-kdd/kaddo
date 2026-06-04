@@ -69,6 +69,7 @@ scan → context → understand → agents → roadmap → work item → ownersh
 | VS-027 | Workspace Guard (multirepo) | opt-in `kaddo guard --workspace`: runs local `git diff` in mapped module repos, matches normalized cross-repo paths vs `code:` globs; non-blocking; skips missing/non-git repos; `--ci` workspace metadata; no remote APIs, no source reads; default guard unchanged |
 | VS-028 | Project Knowledge Bootstrap | `kaddo bootstrap` for new projects: Business → Architecture → Codebase → Development knowledge base from the template registry; business/quality-attributes/codebase-foundation/bootstrap-summary templates; business/bootstrap/codebase-foundation agents; no LLM, no code gen, no-overwrite |
 | VS-029 | Knowledge Repository Realignment | `architecture/` → `knowledge/`; macro layers Business → Product → Tech → Delivery; layer reorg (product/tech/delivery); templates recategorized; context/explain grouped by layer; bootstrap reduced to minimal base; docs + examples + manifesto realigned. Breaking (clean cut) |
+| VS-030 | Bootstrap Minimal Artifacts & Agent Groups | bootstrap generates one consolidated file per layer (business.md/product.md/codebase.md), specialized templates kept as advanced; agents grouped by layer with progressive `add agents` (state default · `--all` · `--group`); `understand` shows current phase. Minimum Sufficient Knowledge |
 
 **Tests:** 299 passing · CLI build + docs build green.
 

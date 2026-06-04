@@ -231,6 +231,8 @@ The rule is `touch the domain, improve the graph`: when you touch a domain, you 
 
 For new projects, Kaddo offers a guided bootstrap so a project can be born with context: it captures the minimum sufficient knowledge across the base layers — `Business → Product → Tech → Delivery` — before code is written, without generating code or deciding the architecture automatically.
 
+**Knowledge grows progressively.** Not all knowledge must exist at the start. Bootstrap creates only one consolidated file per layer (`business.md`, `product.md`, `codebase.md`); specialized documents (`problem.md`, `users.md`, `capabilities.md`, …) and the rest of the agents appear later, as the project earns them. Kaddo should feel light at the beginning and grow with real work — never more files than knowledge, never more agents than needs.
+
 ## Quality Gates
 
 A Quality Gate in Kaddo does not validate the amount of documentation; it validates knowledge sufficiency. For K0 there may be no gate; for K1 problem and expected result are enough; for K2 acceptance criteria are needed; for K3 sufficient design and reviewed related artifacts are needed; and for K4 ADR, risks, alternatives, and a mitigation or rollback plan are needed.
