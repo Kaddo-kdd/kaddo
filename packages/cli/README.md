@@ -432,6 +432,7 @@ create --from roadmap → owners → guard → explain`.
 | v2.7 | Multirepo hardening: module artifacts from the template registry, module-aware `context`/`explain`, opt-in `guard --workspace` |
 | v2.8 | `kaddo bootstrap` for new projects (Business → Product → Tech → Delivery); business templates + bootstrap agents |
 | v3.0 | Knowledge-centric realignment: `architecture/` → `knowledge/` with layers Business → Product → Tech → Delivery; context/explain by layer (breaking) |
+| v3.1 | Minimum Sufficient Knowledge: bootstrap one consolidated file per layer; progressive `add agents` by group (state default, `--all`, `--group`) |
 
 **Optional modules (installed with `kaddo add`):**
 
