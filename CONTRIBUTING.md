@@ -78,3 +78,21 @@ docs: short description
 ```
 
 One concern per commit. Reference a work item ID if applicable (`WI-001`).
+
+## Releasing
+
+CI (`.github/workflows/ci.yml`) builds and tests on every push to `main` and PR.
+
+Publishing is automated by `.github/workflows/release.yml` — pushing a `vX.Y.Z` tag whose
+version matches `packages/cli/package.json` builds, tests, publishes `@kaddo/cli` to npm
+(with provenance) and creates a GitHub Release.
+
+```bash
+# bump packages/cli/package.json + the .version() in src/index.ts to X.Y.Z, then:
+git commit -am "chore(release): vX.Y.Z"
+git tag -a vX.Y.Z -m "vX.Y.Z — …"
+git push && git push origin vX.Y.Z   # the Release workflow does the rest
+```
+
+Requires a repository secret **`NPM_TOKEN`** (an npm automation token with publish access to
+the `@kaddo` org): Settings → Secrets and variables → Actions → New repository secret.
