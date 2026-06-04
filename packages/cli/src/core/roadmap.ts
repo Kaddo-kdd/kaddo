@@ -1,4 +1,4 @@
-// Deterministic parser for the roadmap-agent output (architecture/roadmap.md).
+// Deterministic parser for the roadmap-agent output (knowledge/roadmap.md).
 //
 // VS-009 standardized the roadmap format. This parser extracts candidate work items so the
 // CLI can turn them into real Work Items (`kaddo create --from roadmap`). It is a simple,
@@ -180,7 +180,7 @@ function parseBlock(block: InitiativeBlock): RoadmapCandidateWorkItem[] {
 }
 
 /**
- * Parse candidate work items from a roadmap-agent generated `architecture/roadmap.md`.
+ * Parse candidate work items from a roadmap-agent generated `knowledge/roadmap.md`.
  * Returns an empty array if no candidates can be found.
  */
 export function parseRoadmapCandidates(markdown: string): RoadmapCandidateWorkItem[] {

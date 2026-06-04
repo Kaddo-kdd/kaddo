@@ -4,10 +4,10 @@ export const incidentModule: KaddoModule = {
   name: 'incident',
   description: 'Incident records — document incidents, learnings, and preventive actions',
   configKey: 'module_incident',
-  dirs: ['architecture/incidents'],
+  dirs: ['knowledge/incidents'],
   files: [
     {
-      path: 'architecture/incidents/.gitkeep',
+      path: 'knowledge/incidents/.gitkeep',
       content: '',
     },
   ],

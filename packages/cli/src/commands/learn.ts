@@ -3,8 +3,8 @@ import { readArtifacts } from '../services/artifact-reader.js'
 import { exists, join, cwd, readFile, writeFile, readDir } from '../utils/fs.js'
 import { intro, outro, log, text, select } from '../utils/ui.js'
 
-const ARCH_DIR = 'architecture'
-const WORK_ITEMS_DIR = 'architecture/work-items'
+const ARCH_DIR = 'knowledge'
+const WORK_ITEMS_DIR = 'knowledge/work-items'
 
 function findWorkItemFile(dir: string, id: string): string | null {
   const wiDir = join(dir, WORK_ITEMS_DIR)
@@ -46,7 +46,7 @@ export async function runLearn(artifactId?: string): Promise<void> {
   const dir = cwd()
 
   if (!exists(join(dir, ARCH_DIR))) {
-    console.error('No architecture/ directory found. Run `kaddo init` first.')
+    console.error('No knowledge/ directory found. Run `kaddo init` first.')
     process.exit(1)
   }
 
@@ -98,7 +98,7 @@ export async function runLearn(artifactId?: string): Promise<void> {
 
   log.success(`${targetId} marked as done`)
   log.success(`Learning recorded in ${filePath.replace(dir + '/', '')}`)
-  log.info('Consider updating architecture/knowledge.md if this changes the current state.')
+  log.info('Consider updating knowledge/knowledge.md if this changes the current state.')
 
   outro('Work item closed.')
 }

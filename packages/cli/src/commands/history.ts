@@ -1,7 +1,7 @@
 import { readArtifacts, type Artifact } from '../services/artifact-reader.js'
 import { exists, join, cwd } from '../utils/fs.js'
 
-const ARCH_DIR = 'architecture'
+const ARCH_DIR = 'knowledge'
 
 type HistoryOpts = {
   domain?: string
@@ -23,7 +23,7 @@ export function runHistory(opts: HistoryOpts = {}): void {
   const dir = cwd()
 
   if (!exists(join(dir, ARCH_DIR))) {
-    console.error('No architecture/ directory found. Run `kaddo init` first.')
+    console.error('No knowledge/ directory found. Run `kaddo init` first.')
     process.exit(1)
   }
 

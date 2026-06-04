@@ -1,11 +1,11 @@
 // Kaddo Agent Prompt Packs.
 //
 // These are versionable Markdown prompts — NOT executable code. The CLI installs
-// them into `architecture/agents/` via `kaddo add agents`. Users paste them into
+// them into `knowledge/agents/` via `kaddo add agents`. Users paste them into
 // their preferred LLM chat alongside `.kaddo/context-pack.md`. Kaddo never calls an LLM.
 
 export type AgentPrompt = {
-  /** File name written under architecture/agents/ */
+  /** File name written under knowledge/agents/ */
   fileName: string
   /** Full Markdown prompt pack content */
   content: string
@@ -41,7 +41,7 @@ Optionally provide: README, existing docs, product notes, screenshots, API docum
 
 ## Expected Output
 
-A Markdown artifact intended to be saved as \`architecture/capabilities.md\`.
+A Markdown artifact intended to be saved as \`knowledge/capabilities.md\`.
 
 ## Instructions
 
@@ -108,7 +108,7 @@ Generated from Kaddo Context Pack.
 
 ## Where to Save the Result
 
-Save the output as \`architecture/capabilities.md\`.
+Save the output as \`knowledge/capabilities.md\`.
 
 ## Quality Checklist
 
@@ -144,9 +144,9 @@ Optionally provide: existing diagrams, infra config, README, dependency manifest
 
 Markdown artifacts intended to be saved as:
 
-- \`architecture/current-state.md\`
-- \`architecture/architecture-notes.md\`
-- \`architecture/decision-candidates.md\`
+- \`knowledge/current-state.md\`
+- \`knowledge/architecture-notes.md\`
+- \`knowledge/decision-candidates.md\`
 
 ## Instructions
 
@@ -192,9 +192,9 @@ Generated from Kaddo Context Pack.
 
 ## Where to Save the Result
 
-Save the architecture overview as \`architecture/current-state.md\`, supporting notes as
-\`architecture/architecture-notes.md\`, and decision candidates as
-\`architecture/decision-candidates.md\`.
+Save the architecture overview as \`knowledge/current-state.md\`, supporting notes as
+\`knowledge/architecture-notes.md\`, and decision candidates as
+\`knowledge/decision-candidates.md\`.
 
 ## Quality Checklist
 
@@ -227,17 +227,17 @@ Provide \`.kaddo/context-pack.md\` as the primary input.
 Optionally provide (use whatever is available; mark anything missing as an assumption or
 open question):
 
-- \`architecture/capabilities.md\`
-- \`architecture/current-state.md\`
-- \`architecture/legacy/risks.md\`
-- \`architecture/legacy/unknowns.md\`
-- \`architecture/decision-candidates.md\`
-- \`architecture/knowledge.md\`
+- \`knowledge/capabilities.md\`
+- \`knowledge/current-state.md\`
+- \`knowledge/legacy/risks.md\`
+- \`knowledge/legacy/unknowns.md\`
+- \`knowledge/decision-candidates.md\`
+- \`knowledge/knowledge.md\`
 - business priorities
 
 ## Expected Output
 
-A single Markdown artifact intended to be saved as \`architecture/roadmap.md\`.
+A single Markdown artifact intended to be saved as \`knowledge/roadmap.md\`.
 
 This roadmap is the bridge between understanding and execution. It must be structured enough
 that a future \`kaddo create --from roadmap\` command can read its candidate work items.
@@ -344,7 +344,7 @@ human review — not final commitments.
 
 ## Where to Save the Result
 
-Save the output as \`architecture/roadmap.md\`.
+Save the output as \`knowledge/roadmap.md\`.
 
 ## Quality Checklist
 
@@ -383,9 +383,9 @@ Optionally provide: incident history, known pain points, dependency manifests.
 
 Markdown artifacts intended to be saved as:
 
-- \`architecture/legacy/risks.md\`
-- \`architecture/legacy/unknowns.md\`
-- \`architecture/legacy/modernization-candidates.md\`
+- \`knowledge/legacy/risks.md\`
+- \`knowledge/legacy/unknowns.md\`
+- \`knowledge/legacy/modernization-candidates.md\`
 
 ## Instructions
 
@@ -435,9 +435,9 @@ Generated from Kaddo Context Pack.
 
 ## Where to Save the Result
 
-Save risks as \`architecture/legacy/risks.md\`, unknowns as
-\`architecture/legacy/unknowns.md\`, and modernization candidates as
-\`architecture/legacy/modernization-candidates.md\`.
+Save risks as \`knowledge/legacy/risks.md\`, unknowns as
+\`knowledge/legacy/unknowns.md\`, and modernization candidates as
+\`knowledge/legacy/modernization-candidates.md\`.
 
 ## Quality Checklist
 
@@ -466,11 +466,11 @@ to capture decisions that are implicit in the system.
 
 Provide \`.kaddo/context-pack.md\` as the primary input.
 
-Optionally provide: \`architecture/current-state.md\`, \`architecture/architecture-notes.md\`.
+Optionally provide: \`knowledge/current-state.md\`, \`knowledge/architecture-notes.md\`.
 
 ## Expected Output
 
-A Markdown artifact intended to be saved as \`architecture/decision-candidates.md\`.
+A Markdown artifact intended to be saved as \`knowledge/decision-candidates.md\`.
 
 ## Instructions
 
@@ -516,7 +516,7 @@ Generated from Kaddo Context Pack.
 
 ## Where to Save the Result
 
-Save the output as \`architecture/decision-candidates.md\`.
+Save the output as \`knowledge/decision-candidates.md\`.
 
 ## Quality Checklist
 
@@ -542,7 +542,7 @@ Work Item actionable for a human.
 
 ## When to Use
 
-Use this agent after a roadmap exists (\`architecture/roadmap.md\`) or when an existing Work
+Use this agent after a roadmap exists (\`knowledge/roadmap.md\`) or when an existing Work
 Item is vague, too large, or missing acceptance criteria.
 
 ## Input Required
@@ -552,7 +552,7 @@ existing Work Item file to refine.
 
 ## Expected Output
 
-A refined Work Item intended to be saved as \`architecture/work-items/*.md\`.
+A refined Work Item intended to be saved as \`knowledge/work-items/*.md\`.
 
 ## Instructions
 
@@ -593,7 +593,7 @@ A refined Work Item intended to be saved as \`architecture/work-items/*.md\`.
 
 ## Where to Save the Result
 
-Save the output as a file under \`architecture/work-items/\`.
+Save the output as a file under \`knowledge/work-items/\`.
 
 ## Quality Checklist
 
@@ -625,7 +625,7 @@ structure (from \`.kaddo/config.yml\`) are especially relevant.
 
 ## Expected Output
 
-A Markdown artifact intended to be saved as \`architecture/git-strategy.md\`.
+A Markdown artifact intended to be saved as \`knowledge/git-strategy.md\`.
 
 ## Instructions
 
@@ -665,7 +665,7 @@ GitHub Flow + Conventional Commits + SemVer
 
 ## Where to Save the Result
 
-Save the output as \`architecture/git-strategy.md\`. Optionally record machine config in
+Save the output as \`knowledge/git-strategy.md\`. Optionally record machine config in
 \`.kaddo/git.yml\`.
 
 ## Quality Checklist
@@ -698,8 +698,8 @@ module's \`module-design.md\` if it exists.
 
 ## Expected Output
 
-A Markdown artifact intended to be saved as \`architecture/security.md\` or
-\`architecture/modules/<module-name>/security.md\`.
+A Markdown artifact intended to be saved as \`knowledge/security.md\` or
+\`knowledge/modules/<module-name>/security.md\`.
 
 ## Instructions
 
@@ -737,8 +737,8 @@ A Markdown artifact intended to be saved as \`architecture/security.md\` or
 
 ## Where to Save the Result
 
-Save as \`architecture/security.md\` (global) or
-\`architecture/modules/<module-name>/security.md\` (per module).
+Save as \`knowledge/security.md\` (global) or
+\`knowledge/modules/<module-name>/security.md\` (per module).
 
 ## Quality Checklist
 
@@ -767,8 +767,8 @@ Provide \`.kaddo/context-pack.md\` as the primary input.
 
 ## Expected Output
 
-A Markdown artifact intended to be saved as \`architecture/standards.md\` or
-\`architecture/modules/<module-name>/standards.md\`.
+A Markdown artifact intended to be saved as \`knowledge/standards.md\` or
+\`knowledge/modules/<module-name>/standards.md\`.
 
 ## Instructions
 
@@ -800,8 +800,8 @@ A Markdown artifact intended to be saved as \`architecture/standards.md\` or
 
 ## Where to Save the Result
 
-Save as \`architecture/standards.md\` (global) or
-\`architecture/modules/<module-name>/standards.md\` (per module).
+Save as \`knowledge/standards.md\` (global) or
+\`knowledge/modules/<module-name>/standards.md\` (per module).
 
 ## Quality Checklist
 
@@ -832,8 +832,8 @@ especially relevant.
 
 ## Expected Output
 
-A Markdown artifact intended to be saved as \`architecture/stack.md\` or
-\`architecture/modules/<module-name>/stack.md\`.
+A Markdown artifact intended to be saved as \`knowledge/stack.md\` or
+\`knowledge/modules/<module-name>/stack.md\`.
 
 ## Instructions
 
@@ -869,8 +869,8 @@ A Markdown artifact intended to be saved as \`architecture/stack.md\` or
 
 ## Where to Save the Result
 
-Save as \`architecture/stack.md\` (global) or
-\`architecture/modules/<module-name>/stack.md\` (per module).
+Save as \`knowledge/stack.md\` (global) or
+\`knowledge/modules/<module-name>/stack.md\` (per module).
 
 ## Quality Checklist
 
@@ -892,7 +892,7 @@ mark assumptions.
 ## When to Use
 
 Use this agent after \`kaddo modules map\`, to fill in the generated
-\`architecture/modules/<module-name>/module-design.md\`.
+\`knowledge/modules/<module-name>/module-design.md\`.
 
 ## Input Required
 
@@ -902,7 +902,7 @@ Provide \`.kaddo/context-pack.md\` as the primary input, plus the module entry i
 ## Expected Output
 
 A Markdown artifact intended to be saved as
-\`architecture/modules/<module-name>/module-design.md\`.
+\`knowledge/modules/<module-name>/module-design.md\`.
 
 ## Instructions
 
@@ -945,7 +945,7 @@ A Markdown artifact intended to be saved as
 
 ## Where to Save the Result
 
-Save as \`architecture/modules/<module-name>/module-design.md\`.
+Save as \`knowledge/modules/<module-name>/module-design.md\`.
 
 ## Quality Checklist
 
@@ -966,7 +966,7 @@ for missing information and mark unknowns.
 ## When to Use
 
 Use this agent after \`kaddo bootstrap\`, when refining the artifacts under
-\`architecture/business/\`.
+\`knowledge/business/\`.
 
 ## Input Required
 
@@ -975,7 +975,7 @@ idea: problem, intended users, value, constraints.
 
 ## Expected Output
 
-Refined Markdown for \`architecture/business/*.md\`: product brief, problem statement,
+Refined Markdown for \`knowledge/business/*.md\`: product brief, problem statement,
 users/personas, value proposition, business rules, constraints and glossary.
 
 ## Instructions
@@ -997,12 +997,12 @@ users/personas, value proposition, business rules, constraints and glossary.
 
 ## Output Format
 
-One Markdown section per \`architecture/business/*.md\` artifact, keeping the template
+One Markdown section per \`knowledge/business/*.md\` artifact, keeping the template
 headings.
 
 ## Where to Save the Result
 
-Save into \`architecture/business/\` (product-brief.md, problem.md, users.md,
+Save into \`knowledge/business/\` (product-brief.md, problem.md, users.md,
 value-proposition.md, business-rules.md, constraints.md, glossary.md).
 
 ## Quality Checklist
@@ -1027,12 +1027,12 @@ Use this agent after \`kaddo bootstrap\` and after the business artifacts are dr
 
 ## Input Required
 
-Provide \`.kaddo/context-pack.md\` and the \`architecture/business/*.md\` artifacts.
+Provide \`.kaddo/context-pack.md\` and the \`knowledge/business/*.md\` artifacts.
 
 ## Expected Output
 
-Refined Markdown for \`architecture/bootstrap-summary.md\`, \`architecture/capabilities.md\`,
-\`architecture/quality-attributes.md\` and \`architecture/roadmap.md\`, plus candidate Work
+Refined Markdown for \`knowledge/bootstrap-summary.md\`, \`knowledge/capabilities.md\`,
+\`knowledge/quality-attributes.md\` and \`knowledge/roadmap.md\`, plus candidate Work
 Items.
 
 ## Instructions
@@ -1057,8 +1057,8 @@ templates.
 
 ## Where to Save the Result
 
-Save to \`architecture/bootstrap-summary.md\`, \`architecture/capabilities.md\`,
-\`architecture/quality-attributes.md\` and \`architecture/roadmap.md\`.
+Save to \`knowledge/bootstrap-summary.md\`, \`knowledge/capabilities.md\`,
+\`knowledge/quality-attributes.md\` and \`knowledge/roadmap.md\`.
 
 ## Quality Checklist
 
@@ -1079,17 +1079,17 @@ architecture and the candidate stack. You do **not** write production code.
 ## When to Use
 
 Use this agent after the business and initial architecture artifacts exist, when refining
-\`architecture/codebase-foundation.md\`.
+\`knowledge/codebase-foundation.md\`.
 
 ## Input Required
 
-Provide \`.kaddo/context-pack.md\`, \`architecture/business/*.md\`,
-\`architecture/capabilities.md\`, \`architecture/quality-attributes.md\` and
-\`architecture/stack.md\`.
+Provide \`.kaddo/context-pack.md\`, \`knowledge/business/*.md\`,
+\`knowledge/capabilities.md\`, \`knowledge/quality-attributes.md\` and
+\`knowledge/stack.md\`.
 
 ## Expected Output
 
-Refined Markdown for \`architecture/codebase-foundation.md\`.
+Refined Markdown for \`knowledge/codebase-foundation.md\`.
 
 ## Instructions
 
@@ -1113,7 +1113,7 @@ Markdown matching the codebase-foundation template headings.
 
 ## Where to Save the Result
 
-Save as \`architecture/codebase-foundation.md\`.
+Save as \`knowledge/codebase-foundation.md\`.
 
 ## Quality Checklist
 

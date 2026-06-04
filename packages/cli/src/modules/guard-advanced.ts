@@ -4,10 +4,10 @@ export const guardAdvancedModule: KaddoModule = {
   name: 'guard-advanced',
   description: 'Advanced guard rules — CI blocking, critical artifact protection, domain-level thresholds',
   configKey: 'module_guard_advanced',
-  dirs: ['architecture/guard-rules'],
+  dirs: ['knowledge/guard-rules'],
   files: [
     {
-      path: 'architecture/guard-rules/rules.yml',
+      path: 'knowledge/guard-rules/rules.yml',
       content: [
         '# Kaddo Guard Advanced — rules configuration',
         '# Uncomment and configure the rules you want to enforce.',

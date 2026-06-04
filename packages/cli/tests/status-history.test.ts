@@ -103,8 +103,8 @@ status: in-progress
 
 _What did we learn from this change? Update after completion._
 `
-    write('architecture/work-items/WI-001-test.md', content)
-    const filePath = path.join(tmpDir, 'architecture/work-items/WI-001-test.md')
+    write('knowledge/work-items/WI-001-test.md', content)
+    const filePath = path.join(tmpDir, 'knowledge/work-items/WI-001-test.md')
     const raw = fs.readFileSync(filePath, 'utf-8')
 
     // Simulate what learn does

@@ -28,7 +28,7 @@ function output(): string {
 
 function writeModuleArtifact() {
   write(
-    'architecture/modules/storefront-web/module-design.md',
+    'knowledge/modules/storefront-web/module-design.md',
     '---\ntype: module-design\nmodule: storefront-web\nrepoPath: frontend-repo\ncode:\n  - frontend-repo/**\n---\n\n# Storefront Web — Design\n'
   )
 }
@@ -49,7 +49,7 @@ function writeModulesYml() {
 
 beforeEach(() => {
   tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'kaddo-guard-ws-'))
-  fs.mkdirSync(path.join(tmpDir, 'architecture'), { recursive: true })
+  fs.mkdirSync(path.join(tmpDir, 'knowledge'), { recursive: true })
   vi.spyOn(process, 'cwd').mockReturnValue(tmpDir)
   logSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
   gitMock.isGitRepo.mockResolvedValue(true)
@@ -92,7 +92,7 @@ describe('kaddo guard --workspace (VS workspace-guard-multirepo)', () => {
     writeModulesYml()
     // current repo touched the artifact itself; sibling repo touched code
     gitMock.getModifiedFiles.mockResolvedValue([
-      'architecture/modules/storefront-web/module-design.md',
+      'knowledge/modules/storefront-web/module-design.md',
     ])
     gitMock.getModifiedFilesIn.mockResolvedValue(['src/checkout/checkout.ts'])
 
@@ -119,7 +119,7 @@ describe('kaddo guard --workspace (VS workspace-guard-multirepo)', () => {
       '.kaddo/modules.yml',
       ['version: 1', 'modules:', '  - id: gone', '    repoPath: ../gone', '    type: worker'].join('\n')
     )
-    gitMock.getModifiedFiles.mockResolvedValue(['architecture/x.md'])
+    gitMock.getModifiedFiles.mockResolvedValue(['knowledge/x.md'])
 
     await runGuard({ ci: true, workspace: true })
     const json = JSON.parse(output())

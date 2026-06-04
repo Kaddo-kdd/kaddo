@@ -10,7 +10,7 @@ import {
   renderExplanationAgent,
 } from '../core/project-explain.js'
 
-const ARCH_DIR = 'architecture'
+const ARCH_DIR = 'knowledge'
 const CONFIG_PATH = '.kaddo/config.yml'
 
 type ExplainMode = 'human' | 'agent'
@@ -238,7 +238,7 @@ export function runExplain(opts: ExplainOpts): void {
 
   const archDir = join(dir, ARCH_DIR)
   if (!exists(archDir)) {
-    console.error('No architecture/ directory found. Run `kaddo init` first.')
+    console.error('No knowledge/ directory found. Run `kaddo init` first.')
     process.exit(1)
   }
 

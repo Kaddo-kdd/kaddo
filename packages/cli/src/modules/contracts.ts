@@ -4,10 +4,10 @@ export const contractsModule: KaddoModule = {
   name: 'contracts',
   description: 'API, event, and integration contracts — document shared interfaces before changing them',
   configKey: 'module_contracts',
-  dirs: ['architecture/contracts'],
+  dirs: ['knowledge/contracts'],
   files: [
     {
-      path: 'architecture/contracts/.gitkeep',
+      path: 'knowledge/contracts/.gitkeep',
       content: '',
     },
   ],

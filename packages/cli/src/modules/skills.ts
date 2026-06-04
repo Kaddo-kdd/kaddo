@@ -4,14 +4,14 @@ export const skillsModule: KaddoModule = {
   name: 'skills',
   description: 'Reusable skills — capabilities shared across agents, teams, or projects',
   configKey: 'module_skills',
-  dirs: ['architecture/skills'],
+  dirs: ['knowledge/skills'],
   files: [
     {
-      path: 'architecture/skills/.gitkeep',
+      path: 'knowledge/skills/.gitkeep',
       content: '',
     },
     {
-      path: 'architecture/skills/README.md',
+      path: 'knowledge/skills/README.md',
       content: [
         '# Skills',
         '',

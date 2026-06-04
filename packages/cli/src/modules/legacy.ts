@@ -4,10 +4,10 @@ export const legacyModule: KaddoModule = {
   name: 'legacy',
   description: 'Legacy records — document systems with technical debt before modifying them',
   configKey: 'module_legacy',
-  dirs: ['architecture/legacy'],
+  dirs: ['knowledge/legacy'],
   files: [
     {
-      path: 'architecture/legacy/.gitkeep',
+      path: 'knowledge/legacy/.gitkeep',
       content: '',
     },
   ],

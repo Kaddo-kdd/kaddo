@@ -4,10 +4,10 @@ export const migrationModule: KaddoModule = {
   name: 'migration',
   description: 'Migration records — data, infra, or technology changes with more rigor',
   configKey: 'module_migration',
-  dirs: ['architecture/migrations'],
+  dirs: ['knowledge/migrations'],
   files: [
     {
-      path: 'architecture/migrations/.gitkeep',
+      path: 'knowledge/migrations/.gitkeep',
       content: '',
     },
   ],

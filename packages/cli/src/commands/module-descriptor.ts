@@ -2,7 +2,7 @@ import { cwd, exists, join, writeFile, readFile } from '../utils/fs.js'
 import { intro, outro, log, text, select } from '../utils/ui.js'
 import { parse as parseYaml, stringify as stringifyYaml } from 'yaml'
 
-const DESCRIPTOR_PATH = 'architecture/module.yml'
+const DESCRIPTOR_PATH = 'knowledge/module.yml'
 
 type ModuleDescriptor = {
   name: string
@@ -45,7 +45,7 @@ export async function runModuleDescriptor(opts: { show?: boolean; init?: boolean
 
   // Init / create
   intro('kaddo module --init')
-  log.info('Creates architecture/module.yml — declares this repository\'s identity for multirepo contexts.')
+  log.info('Creates knowledge/module.yml — declares this repository\'s identity for multirepo contexts.')
 
   const name = await text({
     message: 'Module name (this repository)',
@@ -106,7 +106,7 @@ export async function runModuleDescriptor(opts: { show?: boolean; init?: boolean
 
   writeDescriptor(dir, descriptor)
   log.success(`Created ${DESCRIPTOR_PATH}`)
-  outro(`Module descriptor ready. Share architecture/module.yml with dependent repositories.`)
+  outro(`Module descriptor ready. Share knowledge/module.yml with dependent repositories.`)
 }
 
 function printDescriptor(d: ModuleDescriptor): void {

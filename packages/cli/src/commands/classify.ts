@@ -3,7 +3,7 @@ import { readArtifacts } from '../services/artifact-reader.js'
 import { classify } from '../core/classifier.js'
 import { exists, join, cwd } from '../utils/fs.js'
 
-const ARCH_DIR = 'architecture'
+const ARCH_DIR = 'knowledge'
 
 function findActiveWorkItem(dir: string) {
   const archDir = join(dir, ARCH_DIR)

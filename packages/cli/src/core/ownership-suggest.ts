@@ -7,7 +7,7 @@
 import matter from 'gray-matter'
 import { exists, readFile, readDir, join, isFile } from '../utils/fs.js'
 
-const WORK_ITEMS_DIR = 'architecture/work-items'
+const WORK_ITEMS_DIR = 'knowledge/work-items'
 const SCAN_PATH = '.kaddo/scan.json'
 
 export type OwnershipArtifact = {

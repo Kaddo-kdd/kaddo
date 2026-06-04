@@ -4,10 +4,10 @@ export const capabilitiesModule: KaddoModule = {
   name: 'capabilities',
   description: 'Product capabilities — map what the product can do and link it to domains and decisions',
   configKey: 'module_capabilities',
-  dirs: ['architecture/capabilities'],
+  dirs: ['knowledge/capabilities'],
   files: [
     {
-      path: 'architecture/capabilities/.gitkeep',
+      path: 'knowledge/capabilities/.gitkeep',
       content: '',
     },
   ],

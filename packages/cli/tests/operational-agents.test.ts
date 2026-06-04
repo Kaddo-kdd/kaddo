@@ -89,7 +89,7 @@ describe('operational agents (VS-017)', () => {
     initProject()
     runAdd('agents', tmpDir)
     for (const name of OPERATIONAL_AGENTS) {
-      expect(fs.existsSync(path.join(tmpDir, 'architecture', 'agents', name)), name).toBe(true)
+      expect(fs.existsSync(path.join(tmpDir, 'knowledge', 'agents', name)), name).toBe(true)
     }
   })
 })
@@ -105,16 +105,16 @@ describe('global doc modules (VS-017)', () => {
   it('kaddo add git-strategy creates the artifact and .kaddo/git.yml', () => {
     initProject()
     runAdd('git-strategy', tmpDir)
-    expect(fs.existsSync(path.join(tmpDir, 'architecture', 'git-strategy.md'))).toBe(true)
+    expect(fs.existsSync(path.join(tmpDir, 'knowledge', 'git-strategy.md'))).toBe(true)
     expect(fs.existsSync(path.join(tmpDir, '.kaddo', 'git.yml'))).toBe(true)
-    const md = fs.readFileSync(path.join(tmpDir, 'architecture', 'git-strategy.md'), 'utf8')
+    const md = fs.readFileSync(path.join(tmpDir, 'knowledge', 'git-strategy.md'), 'utf8')
     expect(md).toContain('GitHub Flow')
   })
 
   it('kaddo add security creates a security doc that disclaims scanning', () => {
     initProject()
     runAdd('security', tmpDir)
-    const md = fs.readFileSync(path.join(tmpDir, 'architecture', 'security.md'), 'utf8')
+    const md = fs.readFileSync(path.join(tmpDir, 'knowledge', 'security.md'), 'utf8')
     expect(md.toLowerCase()).toContain('not')
     expect(md.toLowerCase()).toContain('scanning')
   })
@@ -123,7 +123,7 @@ describe('global doc modules (VS-017)', () => {
     initProject()
     runAdd('standards', tmpDir)
     runAdd('stack', tmpDir)
-    expect(fs.existsSync(path.join(tmpDir, 'architecture', 'standards.md'))).toBe(true)
-    expect(fs.existsSync(path.join(tmpDir, 'architecture', 'stack.md'))).toBe(true)
+    expect(fs.existsSync(path.join(tmpDir, 'knowledge', 'standards.md'))).toBe(true)
+    expect(fs.existsSync(path.join(tmpDir, 'knowledge', 'stack.md'))).toBe(true)
   })
 })

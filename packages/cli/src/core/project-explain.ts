@@ -13,7 +13,7 @@ import {
   type MappedModuleWithCoverage,
 } from '../services/mapped-modules.js'
 
-const ARCH_DIR = 'architecture'
+const ARCH_DIR = 'knowledge'
 
 export type ProjectExplanation = {
   project: {
@@ -186,14 +186,14 @@ export function buildProjectExplanation(dir: string): ProjectExplanation {
   const missingKnowledge: string[] = []
   if (!knowledge.hasScan) missingKnowledge.push('Scan baseline (.kaddo/scan.json)')
   if (!knowledge.hasContextPack) missingKnowledge.push('Context pack (.kaddo/context-pack.md)')
-  if (!knowledge.hasInventory) missingKnowledge.push('Inventory (architecture/inventory.md)')
+  if (!knowledge.hasInventory) missingKnowledge.push('Inventory (knowledge/inventory.md)')
   if (!knowledge.hasCapabilities)
-    missingKnowledge.push('Capabilities (architecture/capabilities.md)')
+    missingKnowledge.push('Capabilities (knowledge/capabilities.md)')
   if (!knowledge.hasArchitecture)
-    missingKnowledge.push('Architecture baseline (architecture/current-state.md)')
-  if (!knowledge.hasRoadmap) missingKnowledge.push('Roadmap (architecture/roadmap.md)')
-  if (!knowledge.hasAgents) missingKnowledge.push('Agents (architecture/agents/)')
-  if (items.length === 0) missingKnowledge.push('Work items (architecture/work-items/)')
+    missingKnowledge.push('Architecture baseline (knowledge/current-state.md)')
+  if (!knowledge.hasRoadmap) missingKnowledge.push('Roadmap (knowledge/roadmap.md)')
+  if (!knowledge.hasAgents) missingKnowledge.push('Agents (knowledge/agents/)')
+  if (items.length === 0) missingKnowledge.push('Work items (knowledge/work-items/)')
 
   const suggestedNextSteps: string[] = []
   if (!knowledge.hasScan) {
@@ -205,13 +205,13 @@ export function buildProjectExplanation(dir: string): ProjectExplanation {
     suggestedNextSteps.push('Run `kaddo add agents` to install knowledge agents.')
   }
   if (!knowledge.hasCapabilities) {
-    suggestedNextSteps.push('Use capability-agent to generate architecture/capabilities.md.')
+    suggestedNextSteps.push('Use capability-agent to generate knowledge/capabilities.md.')
   }
   if (!knowledge.hasArchitecture) {
-    suggestedNextSteps.push('Use architecture-agent to generate architecture/current-state.md.')
+    suggestedNextSteps.push('Use architecture-agent to generate knowledge/current-state.md.')
   }
   if (!knowledge.hasRoadmap) {
-    suggestedNextSteps.push('Use roadmap-agent to generate architecture/roadmap.md.')
+    suggestedNextSteps.push('Use roadmap-agent to generate knowledge/roadmap.md.')
   }
   if (items.length === 0) {
     suggestedNextSteps.push('Create your first Work Item with `kaddo create`.')

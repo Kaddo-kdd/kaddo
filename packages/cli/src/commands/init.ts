@@ -3,7 +3,7 @@ import { exists, writeFile, ensureDir, readFile, cwd, join } from '../utils/fs.j
 import { intro, outro, log, text, confirm, select } from '../utils/ui.js'
 
 const KADDO_DIR = '.kaddo'
-const ARCH_DIR = 'architecture'
+const ARCH_DIR = 'knowledge'
 
 function inferProjectName(dir: string): string {
   const pkgPath = join(dir, 'package.json')
@@ -167,15 +167,15 @@ export async function runInit(): Promise<void> {
   const kaddoConfigPath = join(dir, KADDO_DIR, 'config.yml')
   writeFile(kaddoConfigPath, buildConfig(meta))
 
-  // Create architecture/
+  // Create knowledge/
   ensureDir(join(dir, ARCH_DIR, 'work-items'))
   writeFile(join(dir, ARCH_DIR, 'knowledge.md'), buildKnowledge(projectName.trim()))
   writeFile(join(dir, ARCH_DIR, 'roadmap.md'), buildRoadmap(projectName.trim()))
 
   log.success('Created .kaddo/config.yml')
-  log.success('Created architecture/knowledge.md')
-  log.success('Created architecture/roadmap.md')
-  log.success('Created architecture/work-items/')
+  log.success('Created knowledge/knowledge.md')
+  log.success('Created knowledge/roadmap.md')
+  log.success('Created knowledge/work-items/')
   log.info('Next: run `kaddo scan` to detect your stack.')
 
   outro('Kaddo initialized.')

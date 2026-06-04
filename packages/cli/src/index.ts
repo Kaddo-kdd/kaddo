@@ -161,7 +161,7 @@ program
 
 program
   .command('module')
-  .description('Show or initialize the multirepo module descriptor (architecture/module.yml)')
+  .description('Show or initialize the multirepo module descriptor (knowledge/module.yml)')
   .option('--init', 'Create the module descriptor interactively')
   .option('--show', 'Print the current module descriptor')
   .action(async (opts: { init?: boolean; show?: boolean }) => { await runModuleDescriptor(opts) })

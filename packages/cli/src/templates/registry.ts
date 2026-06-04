@@ -11,7 +11,7 @@
 export type TemplateCategory =
   | 'core'
   | 'business'
-  | 'architecture'
+  | 'knowledge'
   | 'module'
   | 'operations'
   | 'legacy'
@@ -22,7 +22,7 @@ export type KaddoTemplate = {
   /** Human-readable name. */
   name: string
   category: TemplateCategory
-  /** Where the artifact lives, e.g. `architecture/work-items/`. */
+  /** Where the artifact lives, e.g. `knowledge/work-items/`. */
   outputPath: string
   /** Purpose — one sentence. */
   description: string
@@ -1040,7 +1040,7 @@ TBD
 
 ## Git strategy
 
-See \`architecture/git-strategy.md\`.
+See \`knowledge/git-strategy.md\`.
 
 ## Minimum criteria to start development
 
@@ -1071,7 +1071,7 @@ status: draft
 
 ## Layers
 
-- **Business** — \`architecture/business/\`
+- **Business** — \`knowledge/business/\`
 - **Architecture** — capabilities, quality-attributes, stack, current-state, decisions
 - **Codebase** — codebase-foundation, standards, git-strategy
 - **Development** — roadmap, work-items
@@ -1106,7 +1106,7 @@ export const KADDO_TEMPLATES: KaddoTemplate[] = [
     id: 'work-item',
     name: 'Work Item',
     category: 'core',
-    outputPath: 'architecture/work-items/',
+    outputPath: 'knowledge/work-items/',
     description: 'Smallest traceable unit of product evolution.',
     whenToUse: 'When you start any change (feature, bugfix, hotfix, spike).',
     relatedCommand: 'kaddo create',
@@ -1117,7 +1117,7 @@ export const KADDO_TEMPLATES: KaddoTemplate[] = [
     id: 'roadmap',
     name: 'Roadmap',
     category: 'core',
-    outputPath: 'architecture/roadmap.md',
+    outputPath: 'knowledge/roadmap.md',
     description: 'Initiatives and candidate work items for human review.',
     whenToUse: 'When planning what to build next and why.',
     relatedCommand: 'kaddo create --from roadmap',
@@ -1128,7 +1128,7 @@ export const KADDO_TEMPLATES: KaddoTemplate[] = [
     id: 'capabilities',
     name: 'Capabilities',
     category: 'core',
-    outputPath: 'architecture/capabilities.md',
+    outputPath: 'knowledge/capabilities.md',
     description: 'What the system can do from the product point of view.',
     whenToUse: 'When mapping product capabilities to the system.',
     relatedAgent: 'capability-agent',
@@ -1138,7 +1138,7 @@ export const KADDO_TEMPLATES: KaddoTemplate[] = [
     id: 'knowledge',
     name: 'Knowledge (Current State)',
     category: 'core',
-    outputPath: 'architecture/knowledge.md',
+    outputPath: 'knowledge/knowledge.md',
     description: 'What is true about the product right now.',
     whenToUse: 'Created by `kaddo init`; keep it current as the product evolves.',
     relatedCommand: 'kaddo init',
@@ -1149,7 +1149,7 @@ export const KADDO_TEMPLATES: KaddoTemplate[] = [
     id: 'business-product-brief',
     name: 'Product Brief',
     category: 'business',
-    outputPath: 'architecture/business/product-brief.md',
+    outputPath: 'knowledge/business/product-brief.md',
     description: 'The product in one page: problem, users, value, MVP boundary.',
     whenToUse: 'At the start of a new project (kaddo bootstrap).',
     relatedCommand: 'kaddo bootstrap',
@@ -1160,7 +1160,7 @@ export const KADDO_TEMPLATES: KaddoTemplate[] = [
     id: 'business-problem',
     name: 'Problem Statement',
     category: 'business',
-    outputPath: 'architecture/business/problem.md',
+    outputPath: 'knowledge/business/problem.md',
     description: 'The problem the product solves, without assuming the solution.',
     whenToUse: 'When defining a new project (kaddo bootstrap).',
     relatedCommand: 'kaddo bootstrap',
@@ -1171,7 +1171,7 @@ export const KADDO_TEMPLATES: KaddoTemplate[] = [
     id: 'business-users',
     name: 'Users & Personas',
     category: 'business',
-    outputPath: 'architecture/business/users.md',
+    outputPath: 'knowledge/business/users.md',
     description: 'Primary and secondary users with goals.',
     whenToUse: 'When defining a new project (kaddo bootstrap).',
     relatedCommand: 'kaddo bootstrap',
@@ -1182,7 +1182,7 @@ export const KADDO_TEMPLATES: KaddoTemplate[] = [
     id: 'business-value-proposition',
     name: 'Value Proposition',
     category: 'business',
-    outputPath: 'architecture/business/value-proposition.md',
+    outputPath: 'knowledge/business/value-proposition.md',
     description: 'For whom, what we offer and why it is better.',
     whenToUse: 'When defining a new project (kaddo bootstrap).',
     relatedCommand: 'kaddo bootstrap',
@@ -1193,7 +1193,7 @@ export const KADDO_TEMPLATES: KaddoTemplate[] = [
     id: 'business-rules',
     name: 'Business Rules',
     category: 'business',
-    outputPath: 'architecture/business/business-rules.md',
+    outputPath: 'knowledge/business/business-rules.md',
     description: 'Product rules as testable statements.',
     whenToUse: 'When defining a new project (kaddo bootstrap).',
     relatedCommand: 'kaddo bootstrap',
@@ -1204,7 +1204,7 @@ export const KADDO_TEMPLATES: KaddoTemplate[] = [
     id: 'business-constraints',
     name: 'Business Constraints',
     category: 'business',
-    outputPath: 'architecture/business/constraints.md',
+    outputPath: 'knowledge/business/constraints.md',
     description: 'Business, regulatory and resource constraints.',
     whenToUse: 'When defining a new project (kaddo bootstrap).',
     relatedCommand: 'kaddo bootstrap',
@@ -1215,7 +1215,7 @@ export const KADDO_TEMPLATES: KaddoTemplate[] = [
     id: 'business-glossary',
     name: 'Glossary',
     category: 'business',
-    outputPath: 'architecture/business/glossary.md',
+    outputPath: 'knowledge/business/glossary.md',
     description: 'Shared vocabulary for the project.',
     whenToUse: 'When defining a new project (kaddo bootstrap).',
     relatedCommand: 'kaddo bootstrap',
@@ -1226,8 +1226,8 @@ export const KADDO_TEMPLATES: KaddoTemplate[] = [
   {
     id: 'current-state',
     name: 'Current State',
-    category: 'architecture',
-    outputPath: 'architecture/current-state.md',
+    category: 'knowledge',
+    outputPath: 'knowledge/current-state.md',
     description: 'Reconstructed architecture baseline.',
     whenToUse: 'When establishing the architecture baseline of an existing system.',
     relatedAgent: 'architecture-agent',
@@ -1236,8 +1236,8 @@ export const KADDO_TEMPLATES: KaddoTemplate[] = [
   {
     id: 'architecture-notes',
     name: 'Architecture Notes',
-    category: 'architecture',
-    outputPath: 'architecture/architecture-notes.md',
+    category: 'knowledge',
+    outputPath: 'knowledge/architecture-notes.md',
     description: 'Working notes on architecture topics not yet decided.',
     whenToUse: 'When exploring an architecture topic before it becomes an ADR.',
     content: ARCHITECTURE_NOTES,
@@ -1245,8 +1245,8 @@ export const KADDO_TEMPLATES: KaddoTemplate[] = [
   {
     id: 'decision-candidates',
     name: 'Decision Candidates',
-    category: 'architecture',
-    outputPath: 'architecture/decision-candidates.md',
+    category: 'knowledge',
+    outputPath: 'knowledge/decision-candidates.md',
     description: 'Candidate architecture decisions for human review.',
     whenToUse: 'When surfacing decisions that may become ADRs.',
     relatedAgent: 'adr-agent',
@@ -1255,8 +1255,8 @@ export const KADDO_TEMPLATES: KaddoTemplate[] = [
   {
     id: 'quality-attributes',
     name: 'Quality Attributes',
-    category: 'architecture',
-    outputPath: 'architecture/quality-attributes.md',
+    category: 'knowledge',
+    outputPath: 'knowledge/quality-attributes.md',
     description: 'Prioritized quality attributes and accepted trade-offs.',
     whenToUse: 'During bootstrap, to record what matters most technically.',
     relatedCommand: 'kaddo bootstrap',
@@ -1266,8 +1266,8 @@ export const KADDO_TEMPLATES: KaddoTemplate[] = [
   {
     id: 'codebase-foundation',
     name: 'Codebase Foundation',
-    category: 'architecture',
-    outputPath: 'architecture/codebase-foundation.md',
+    category: 'knowledge',
+    outputPath: 'knowledge/codebase-foundation.md',
     description: 'Intended codebase structure and conventions (no source code).',
     whenToUse: 'During bootstrap, before writing code.',
     relatedCommand: 'kaddo bootstrap',
@@ -1277,8 +1277,8 @@ export const KADDO_TEMPLATES: KaddoTemplate[] = [
   {
     id: 'bootstrap-summary',
     name: 'Bootstrap Summary',
-    category: 'architecture',
-    outputPath: 'architecture/bootstrap-summary.md',
+    category: 'knowledge',
+    outputPath: 'knowledge/bootstrap-summary.md',
     description: 'Index of the initial knowledge base and next steps.',
     whenToUse: 'Generated by kaddo bootstrap.',
     relatedCommand: 'kaddo bootstrap',
@@ -1288,8 +1288,8 @@ export const KADDO_TEMPLATES: KaddoTemplate[] = [
   {
     id: 'adr',
     name: 'ADR',
-    category: 'architecture',
-    outputPath: 'architecture/decisions/',
+    category: 'knowledge',
+    outputPath: 'knowledge/decisions/',
     description: 'A single architecture decision record.',
     whenToUse: 'When recording a significant, accepted architecture decision.',
     relatedCommand: 'kaddo create adr',
@@ -1300,7 +1300,7 @@ export const KADDO_TEMPLATES: KaddoTemplate[] = [
     id: 'module-design',
     name: 'Module Design',
     category: 'module',
-    outputPath: 'architecture/modules/<id>/module-design.md',
+    outputPath: 'knowledge/modules/<id>/module-design.md',
     description: "A module's purpose, boundaries and dependencies.",
     whenToUse: 'After mapping a secondary repo as a module.',
     relatedCommand: 'kaddo modules map',
@@ -1311,7 +1311,7 @@ export const KADDO_TEMPLATES: KaddoTemplate[] = [
     id: 'module-stack',
     name: 'Module Stack',
     category: 'module',
-    outputPath: 'architecture/modules/<id>/stack.md',
+    outputPath: 'knowledge/modules/<id>/stack.md',
     description: "A module's technology stack.",
     whenToUse: 'To document the stack of a specific module.',
     relatedAgent: 'stack-agent',
@@ -1321,7 +1321,7 @@ export const KADDO_TEMPLATES: KaddoTemplate[] = [
     id: 'module-security',
     name: 'Module Security',
     category: 'module',
-    outputPath: 'architecture/modules/<id>/security.md',
+    outputPath: 'knowledge/modules/<id>/security.md',
     description: "A module's security considerations.",
     whenToUse: 'To document security concerns specific to a module.',
     relatedAgent: 'security-agent',
@@ -1331,7 +1331,7 @@ export const KADDO_TEMPLATES: KaddoTemplate[] = [
     id: 'module-standards',
     name: 'Module Standards',
     category: 'module',
-    outputPath: 'architecture/modules/<id>/standards.md',
+    outputPath: 'knowledge/modules/<id>/standards.md',
     description: "A module's coding and testing standards.",
     whenToUse: 'When a module needs standards beyond the system defaults.',
     relatedAgent: 'standards-agent',
@@ -1341,7 +1341,7 @@ export const KADDO_TEMPLATES: KaddoTemplate[] = [
     id: 'module-adr',
     name: 'Module ADR',
     category: 'module',
-    outputPath: 'architecture/modules/<id>/adrs/',
+    outputPath: 'knowledge/modules/<id>/adrs/',
     description: 'A module-scoped architecture decision record.',
     whenToUse: 'When a decision affects only one module.',
     content: MODULE_ADR,
@@ -1351,7 +1351,7 @@ export const KADDO_TEMPLATES: KaddoTemplate[] = [
     id: 'security',
     name: 'Security',
     category: 'operations',
-    outputPath: 'architecture/security.md',
+    outputPath: 'knowledge/security.md',
     description: 'Global security considerations (no scanning).',
     whenToUse: 'To document system-wide security concerns.',
     relatedCommand: 'kaddo add security',
@@ -1362,7 +1362,7 @@ export const KADDO_TEMPLATES: KaddoTemplate[] = [
     id: 'standards',
     name: 'Standards',
     category: 'operations',
-    outputPath: 'architecture/standards.md',
+    outputPath: 'knowledge/standards.md',
     description: 'Global lightweight coding/docs/testing standards.',
     whenToUse: 'To document system-wide standards.',
     relatedCommand: 'kaddo add standards',
@@ -1373,7 +1373,7 @@ export const KADDO_TEMPLATES: KaddoTemplate[] = [
     id: 'stack',
     name: 'Stack',
     category: 'operations',
-    outputPath: 'architecture/stack.md',
+    outputPath: 'knowledge/stack.md',
     description: 'Global technology stack documentation.',
     whenToUse: 'To document the system-wide stack.',
     relatedCommand: 'kaddo add stack',
@@ -1384,7 +1384,7 @@ export const KADDO_TEMPLATES: KaddoTemplate[] = [
     id: 'git-strategy',
     name: 'Git Strategy',
     category: 'operations',
-    outputPath: 'architecture/git-strategy.md',
+    outputPath: 'knowledge/git-strategy.md',
     description: 'Recommended, customizable Git workflow.',
     whenToUse: 'To agree on branching, commits and tagging.',
     relatedCommand: 'kaddo add git-strategy',
@@ -1395,7 +1395,7 @@ export const KADDO_TEMPLATES: KaddoTemplate[] = [
     id: 'incident',
     name: 'Incident',
     category: 'operations',
-    outputPath: 'architecture/incidents/',
+    outputPath: 'knowledge/incidents/',
     description: 'A post-incident record.',
     whenToUse: 'After a production incident.',
     relatedCommand: 'kaddo create incident',
@@ -1405,7 +1405,7 @@ export const KADDO_TEMPLATES: KaddoTemplate[] = [
     id: 'runbook',
     name: 'Runbook',
     category: 'operations',
-    outputPath: 'architecture/runbooks/',
+    outputPath: 'knowledge/runbooks/',
     description: 'How to perform a recurring operational task safely.',
     whenToUse: 'For repeatable operational procedures.',
     content: RUNBOOK,
@@ -1415,7 +1415,7 @@ export const KADDO_TEMPLATES: KaddoTemplate[] = [
     id: 'legacy-risks',
     name: 'Legacy Risks',
     category: 'legacy',
-    outputPath: 'architecture/legacy/risks.md',
+    outputPath: 'knowledge/legacy/risks.md',
     description: 'High-risk areas before changing legacy code.',
     whenToUse: 'Before modifying legacy code.',
     relatedAgent: 'legacy-agent',
@@ -1425,7 +1425,7 @@ export const KADDO_TEMPLATES: KaddoTemplate[] = [
     id: 'legacy-unknowns',
     name: 'Legacy Unknowns',
     category: 'legacy',
-    outputPath: 'architecture/legacy/unknowns.md',
+    outputPath: 'knowledge/legacy/unknowns.md',
     description: 'What is not yet understood about the legacy system.',
     whenToUse: 'When surfacing gaps in legacy knowledge.',
     relatedAgent: 'legacy-agent',
@@ -1435,7 +1435,7 @@ export const KADDO_TEMPLATES: KaddoTemplate[] = [
     id: 'modernization-candidates',
     name: 'Modernization Candidates',
     category: 'legacy',
-    outputPath: 'architecture/legacy/modernization-candidates.md',
+    outputPath: 'knowledge/legacy/modernization-candidates.md',
     description: 'Candidate modernization efforts for human review.',
     whenToUse: 'When planning legacy modernization.',
     content: MODERNIZATION_CANDIDATES,

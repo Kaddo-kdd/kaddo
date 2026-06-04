@@ -22,7 +22,7 @@ function listFiles(rel: string): string[] {
 
 beforeEach(() => {
   tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'kaddo-create-'))
-  mkdir('architecture/work-items')
+  mkdir('knowledge/work-items')
 })
 
 afterEach(() => {
@@ -180,7 +180,7 @@ describe('create — work item file generation', () => {
 
 describe('create — work item ID sequencing', () => {
   it('starts at WI-001 when no files exist', () => {
-    const files = listFiles('architecture/work-items')
+    const files = listFiles('knowledge/work-items')
     expect(files).toHaveLength(0)
     // Next ID would be WI-001
     const next = files.length === 0 ? 'WI-001' : 'WI-002'
@@ -188,9 +188,9 @@ describe('create — work item ID sequencing', () => {
   })
 
   it('increments ID when files exist', () => {
-    write('architecture/work-items/WI-001-existing.md', '---\ntype: hotfix\n---')
-    write('architecture/work-items/WI-002-another.md', '---\ntype: bugfix\n---')
-    const files = listFiles('architecture/work-items').filter((f) => f.endsWith('.md'))
+    write('knowledge/work-items/WI-001-existing.md', '---\ntype: hotfix\n---')
+    write('knowledge/work-items/WI-002-another.md', '---\ntype: bugfix\n---')
+    const files = listFiles('knowledge/work-items').filter((f) => f.endsWith('.md'))
     const nums = files.map((f) => {
       const m = f.match(/WI-(\d+)/)
       return m ? parseInt(m[1], 10) : 0

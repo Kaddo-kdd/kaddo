@@ -6,8 +6,8 @@ import { intro, outro, log, text, select } from '../utils/ui.js'
 import { loadConfig, createGuidanceForState, ConfigError } from '../core/config.js'
 import { parseRoadmapCandidates, type RoadmapCandidateWorkItem } from '../core/roadmap.js'
 
-const WORK_ITEMS_DIR = 'architecture/work-items'
-const ROADMAP_PATH = 'architecture/roadmap.md'
+const WORK_ITEMS_DIR = 'knowledge/work-items'
+const ROADMAP_PATH = 'knowledge/roadmap.md'
 
 export type CreateOptions = { from?: string }
 
@@ -182,7 +182,7 @@ function buildModuleBody(modType: ModuleWorkItemType, title: string, answers: Re
 export async function runCreate(type: string, opts: CreateOptions = {}): Promise<void> {
   const dir = cwd()
 
-  // Roadmap source: create a Work Item from a candidate in architecture/roadmap.md.
+  // Roadmap source: create a Work Item from a candidate in knowledge/roadmap.md.
   if (opts.from === 'roadmap') {
     return runCreateFromRoadmap(dir, type)
   }

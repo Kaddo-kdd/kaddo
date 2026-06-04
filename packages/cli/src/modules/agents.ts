@@ -2,7 +2,7 @@ import type { KaddoModule, ModuleFile } from './types.js'
 import { AGENT_PROMPTS } from '../agents/prompts.js'
 
 const agentReadme: ModuleFile = {
-  path: 'architecture/agents/README.md',
+  path: 'knowledge/agents/README.md',
   content: [
     '# Agents',
     '',
@@ -52,7 +52,7 @@ const agentReadme: ModuleFile = {
 }
 
 const agentFiles: ModuleFile[] = AGENT_PROMPTS.map((a) => ({
-  path: `architecture/agents/${a.fileName}`,
+  path: `knowledge/agents/${a.fileName}`,
   content: a.content,
 }))
 
@@ -60,7 +60,7 @@ export const agentsModule: KaddoModule = {
   name: 'agents',
   description: 'Agent prompt packs — Markdown prompts to turn context packs into knowledge in your LLM',
   configKey: 'module_agents',
-  dirs: ['architecture/agents'],
+  dirs: ['knowledge/agents'],
   files: [agentReadme, ...agentFiles],
   workItemTypes: [
     {

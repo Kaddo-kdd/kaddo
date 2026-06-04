@@ -4,12 +4,12 @@ import { tmpdir } from 'os'
 import { join } from 'path'
 import { parse as parseYaml } from 'yaml'
 
-const DESCRIPTOR_PATH = 'architecture/module.yml'
+const DESCRIPTOR_PATH = 'knowledge/module.yml'
 
 function makeProject(): string {
   const dir = mkdtempSync(join(tmpdir(), 'kaddo-module-desc-'))
   mkdirSync(join(dir, '.kaddo'), { recursive: true })
-  mkdirSync(join(dir, 'architecture'), { recursive: true })
+  mkdirSync(join(dir, 'knowledge'), { recursive: true })
   writeFileSync(join(dir, '.kaddo', 'config.yml'), 'project: test\nversion: "1"\n')
   return dir
 }

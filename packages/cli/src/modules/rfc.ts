@@ -4,10 +4,10 @@ export const rfcModule: KaddoModule = {
   name: 'rfc',
   description: 'Request for Comments — explore relevant changes before building them',
   configKey: 'module_rfc',
-  dirs: ['architecture/rfcs'],
+  dirs: ['knowledge/rfcs'],
   files: [
     {
-      path: 'architecture/rfcs/.gitkeep',
+      path: 'knowledge/rfcs/.gitkeep',
       content: '',
     },
   ],

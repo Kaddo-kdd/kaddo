@@ -10,7 +10,7 @@ import { confirm, text, log } from '../utils/ui.js'
 import { resolvePlugins, runPlugins, type PluginSignal } from '../plugins/registry.js'
 import { loadOwners, resolveAffectedOwners, collectMatchedDomains } from '../services/owners.js'
 
-const ARCH_DIR = 'architecture'
+const ARCH_DIR = 'knowledge'
 const CONFIG_PATH = '.kaddo/config.yml'
 
 type KaddoConfig = {
@@ -196,7 +196,7 @@ export async function runGuard(opts: { staged?: boolean; interactive?: boolean; 
 
   const archDir = join(dir, ARCH_DIR)
   if (!exists(archDir)) {
-    console.log('kaddo guard: no architecture/ directory found. Run `kaddo init` first.')
+    console.log('kaddo guard: no knowledge/ directory found. Run `kaddo init` first.')
     return
   }
 

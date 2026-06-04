@@ -58,7 +58,7 @@ export type ContextPack = {
   }
 }
 
-const ARCH_DIR = 'architecture'
+const ARCH_DIR = 'knowledge'
 
 type ScanJson = {
   detected?: {

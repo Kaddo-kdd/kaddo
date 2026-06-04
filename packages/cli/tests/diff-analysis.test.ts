@@ -4,7 +4,7 @@ import type { Artifact } from '../src/services/artifact-reader.js'
 
 function makeArtifact(overrides: Partial<Artifact> = {}): Artifact {
   return {
-    filePath: 'architecture/work-items/WI-001-test.md',
+    filePath: 'knowledge/work-items/WI-001-test.md',
     id: 'WI-001',
     type: 'feature',
     title: 'Test feature',
@@ -56,7 +56,7 @@ describe('analyzeGuard — glob matching', () => {
 
   it('matches across multiple artifacts', () => {
     const a1 = makeArtifact({ id: 'WI-001', codeGlobs: ['src/payments/**'] })
-    const a2 = makeArtifact({ id: 'WI-002', filePath: 'architecture/work-items/WI-002.md', codeGlobs: ['src/orders/**'] })
+    const a2 = makeArtifact({ id: 'WI-002', filePath: 'knowledge/work-items/WI-002.md', codeGlobs: ['src/orders/**'] })
     const files = ['src/payments/payment.ts', 'src/orders/order.ts']
     const result = analyzeGuard(files, [a1, a2], true)
     expect(result.matches).toHaveLength(2)
@@ -78,10 +78,10 @@ describe('analyzeGuard — artifact modification detection', () => {
 
   it('marks artifact as modified when its path appears in touched files', () => {
     const artifact = makeArtifact({
-      filePath: 'architecture/work-items/WI-001-test.md',
+      filePath: 'knowledge/work-items/WI-001-test.md',
       codeGlobs: ['src/payments/**'],
     })
-    const files = ['src/payments/payment.ts', 'architecture/work-items/WI-001-test.md']
+    const files = ['src/payments/payment.ts', 'knowledge/work-items/WI-001-test.md']
     const result = analyzeGuard(files, [artifact], true)
     expect(result.matches[0].artifactWasModified).toBe(true)
   })

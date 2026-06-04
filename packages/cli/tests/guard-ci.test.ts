@@ -27,7 +27,7 @@ function buildCIOutput(
 describe('guard --ci JSON output', () => {
   it('produces valid JSON with expected shape', () => {
     const artifact = {
-      filePath: 'architecture/work-items/WI-001.md',
+      filePath: 'knowledge/work-items/WI-001.md',
       id: 'WI-001', type: 'feature', title: 'Test', summary: '', knowledgeLevel: 'K2',
       codeGlobs: ['src/payments/**'], domains: ['payments'], status: 'in-progress',
     }
@@ -49,11 +49,11 @@ describe('guard --ci JSON output', () => {
 
   it('fyi_count is 0 when artifact was also modified', () => {
     const artifact = {
-      filePath: 'architecture/work-items/WI-001.md',
+      filePath: 'knowledge/work-items/WI-001.md',
       id: 'WI-001', type: 'feature', title: 'Test', summary: '', knowledgeLevel: 'K2',
       codeGlobs: ['src/payments/**'], domains: [], status: 'in-progress',
     }
-    const files = ['src/payments/payment.ts', 'architecture/work-items/WI-001.md']
+    const files = ['src/payments/payment.ts', 'knowledge/work-items/WI-001.md']
     const result = analyzeGuard(files, [artifact], false)
     const activeMatches = result.matches.filter((m) => !m.artifactWasModified)
     const output = buildCIOutput(result.touchedFiles, activeMatches, 0)

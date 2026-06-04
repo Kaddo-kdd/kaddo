@@ -98,23 +98,23 @@ async function writeBaselineArtifacts(dir: string, result: ScanResult): Promise<
   writeFile(scanJsonPath, serializeBaseline(baseline))
   log.success('Wrote .kaddo/scan.json')
 
-  // architecture/inventory.md — human-readable; guard overwrite of user-authored content.
-  const inventoryPath = join(dir, 'architecture', 'inventory.md')
+  // knowledge/inventory.md — human-readable; guard overwrite of user-authored content.
+  const inventoryPath = join(dir, 'knowledge', 'inventory.md')
   const inventoryExists = exists(inventoryPath)
   let writeInventory = true
 
   if (inventoryExists) {
     writeInventory = await confirm({
-      message: 'architecture/inventory.md already exists. Overwrite it?',
+      message: 'knowledge/inventory.md already exists. Overwrite it?',
       initialValue: true,
     })
   }
 
   if (writeInventory) {
     writeFile(inventoryPath, renderInventory(baseline))
-    log.success(`${inventoryExists ? 'Updated' : 'Wrote'} architecture/inventory.md`)
+    log.success(`${inventoryExists ? 'Updated' : 'Wrote'} knowledge/inventory.md`)
   } else {
-    log.info('Kept existing architecture/inventory.md.')
+    log.info('Kept existing knowledge/inventory.md.')
   }
 }
 

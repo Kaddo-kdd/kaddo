@@ -2,7 +2,7 @@ import { exists, join } from '../utils/fs.js'
 import type { KaddoConfig, ProjectState } from './config.js'
 
 export type AgentStep = {
-  /** Agent file name under architecture/agents/, e.g. "capability-agent.md" */
+  /** Agent file name under knowledge/agents/, e.g. "capability-agent.md" */
   agent: string
   /** Expected output artifact path, relative to project root */
   output: string
@@ -29,22 +29,22 @@ function flowForState(state: ProjectState): { agent: string; output: string }[] 
   switch (state) {
     case 'new':
       return [
-        { agent: 'roadmap-agent.md', output: 'architecture/roadmap.md' },
-        { agent: 'architecture-agent.md', output: 'architecture/current-state.md' },
+        { agent: 'roadmap-agent.md', output: 'knowledge/roadmap.md' },
+        { agent: 'architecture-agent.md', output: 'knowledge/current-state.md' },
       ]
     case 'legacy':
       return [
-        { agent: 'legacy-agent.md', output: 'architecture/legacy/risks.md' },
-        { agent: 'architecture-agent.md', output: 'architecture/current-state.md' },
-        { agent: 'capability-agent.md', output: 'architecture/capabilities.md' },
-        { agent: 'roadmap-agent.md', output: 'architecture/roadmap.md' },
+        { agent: 'legacy-agent.md', output: 'knowledge/legacy/risks.md' },
+        { agent: 'architecture-agent.md', output: 'knowledge/current-state.md' },
+        { agent: 'capability-agent.md', output: 'knowledge/capabilities.md' },
+        { agent: 'roadmap-agent.md', output: 'knowledge/roadmap.md' },
       ]
     case 'pre-ai':
     default:
       return [
-        { agent: 'capability-agent.md', output: 'architecture/capabilities.md' },
-        { agent: 'architecture-agent.md', output: 'architecture/current-state.md' },
-        { agent: 'roadmap-agent.md', output: 'architecture/roadmap.md' },
+        { agent: 'capability-agent.md', output: 'knowledge/capabilities.md' },
+        { agent: 'architecture-agent.md', output: 'knowledge/current-state.md' },
+        { agent: 'roadmap-agent.md', output: 'knowledge/roadmap.md' },
       ]
   }
 }
@@ -58,12 +58,12 @@ export function buildUnderstandPlan(dir: string, config: KaddoConfig): Understan
   const flow = flowForState(state)
 
   const steps: AgentStep[] = flow.map((s) => {
-    const installed = exists(join(dir, 'architecture', 'agents', s.agent))
+    const installed = exists(join(dir, 'knowledge', 'agents', s.agent))
     return { agent: s.agent, output: s.output, installed }
   })
 
   const missingAgents = steps.filter((s) => !s.installed).map((s) => s.agent)
-  const agentsInstalled = exists(join(dir, 'architecture', 'agents')) && missingAgents.length === 0
+  const agentsInstalled = exists(join(dir, 'knowledge', 'agents')) && missingAgents.length === 0
 
   return {
     project: {

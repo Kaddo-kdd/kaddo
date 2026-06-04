@@ -3,7 +3,7 @@ import { loadIgnores } from '../services/ignore-store.js'
 import { exists, join, cwd, readFile } from '../utils/fs.js'
 import { parse as parseYaml } from 'yaml'
 
-const ARCH_DIR = 'architecture'
+const ARCH_DIR = 'knowledge'
 const CONFIG_PATH = '.kaddo/config.yml'
 
 type KaddoConfig = {
@@ -21,7 +21,7 @@ export function runStatus(): void {
   const dir = cwd()
 
   if (!exists(join(dir, ARCH_DIR))) {
-    console.error('No architecture/ directory found. Run `kaddo init` first.')
+    console.error('No knowledge/ directory found. Run `kaddo init` first.')
     process.exit(1)
   }
 

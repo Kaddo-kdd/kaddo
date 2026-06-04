@@ -27,9 +27,9 @@ describe('init file structure', () => {
 
     const projectName = 'test-project'
     const kaddoConfigPath = join(tmpDir, '.kaddo', 'config.yml')
-    const knowledgePath = join(tmpDir, 'architecture', 'knowledge.md')
-    const roadmapPath = join(tmpDir, 'architecture', 'roadmap.md')
-    const workItemsDir = join(tmpDir, 'architecture', 'work-items')
+    const knowledgePath = join(tmpDir, 'knowledge', 'knowledge.md')
+    const roadmapPath = join(tmpDir, 'knowledge', 'roadmap.md')
+    const workItemsDir = join(tmpDir, 'knowledge', 'work-items')
 
     writeFile(kaddoConfigPath, `version: 1\nproject:\n  name: "${projectName}"\n`)
     ensureDir(workItemsDir)

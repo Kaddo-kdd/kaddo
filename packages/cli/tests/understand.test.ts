@@ -28,7 +28,7 @@ function writeConfig(state = 'pre-ai') {
 }
 
 function installAgents(...names: string[]) {
-  const agentsDir = path.join(tmpDir, 'architecture', 'agents')
+  const agentsDir = path.join(tmpDir, 'knowledge', 'agents')
   fs.mkdirSync(agentsDir, { recursive: true })
   for (const n of names) fs.writeFileSync(path.join(agentsDir, n), '# agent')
 }
@@ -58,7 +58,7 @@ describe('understand — buildUnderstandPlan', () => {
     writeConfig('new')
     const p = plan()
     expect(p.steps.map((s) => s.agent)).toEqual(['roadmap-agent.md', 'architecture-agent.md'])
-    expect(p.steps[0].output).toBe('architecture/roadmap.md')
+    expect(p.steps[0].output).toBe('knowledge/roadmap.md')
   })
 
   it('recommends capability-first for pre-ai projects', () => {
@@ -69,7 +69,7 @@ describe('understand — buildUnderstandPlan', () => {
       'architecture-agent.md',
       'roadmap-agent.md',
     ])
-    expect(p.steps[0].output).toBe('architecture/capabilities.md')
+    expect(p.steps[0].output).toBe('knowledge/capabilities.md')
   })
 
   it('recommends a four-step legacy-first flow for legacy projects', () => {
@@ -81,7 +81,7 @@ describe('understand — buildUnderstandPlan', () => {
       'capability-agent.md',
       'roadmap-agent.md',
     ])
-    expect(p.steps[0].output).toBe('architecture/legacy/risks.md')
+    expect(p.steps[0].output).toBe('knowledge/legacy/risks.md')
   })
 
   it('flags missing agents and marks agentsInstalled false', () => {
@@ -116,14 +116,14 @@ describe('understand — rendering', () => {
     expect(md).toContain('## Expected Outputs')
     expect(md).toContain('## Copy/Paste Instructions')
     expect(md).toContain('Kaddo does not call an LLM')
-    expect(md).toContain('architecture/capabilities.md')
+    expect(md).toContain('knowledge/capabilities.md')
   })
 
   it('terminal output names the first agent and target output', () => {
     writeConfig('pre-ai')
     const out = renderUnderstandTerminal(plan())
     expect(out).toContain('First step: use capability-agent.')
-    expect(out).toContain('Expected output: architecture/capabilities.md')
+    expect(out).toContain('Expected output: knowledge/capabilities.md')
   })
 })
 

@@ -30,7 +30,7 @@ function output(): string {
 describe('kaddo guard — end-to-end with real artifacts (VS-012)', () => {
   beforeEach(() => {
     tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'kaddo-guard-e2e-'))
-    fs.mkdirSync(path.join(tmpDir, 'architecture', 'work-items'), { recursive: true })
+    fs.mkdirSync(path.join(tmpDir, 'knowledge', 'work-items'), { recursive: true })
     vi.spyOn(process, 'cwd').mockReturnValue(tmpDir)
     logSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
     gitMock.isGitRepo.mockResolvedValue(true)
@@ -44,7 +44,7 @@ describe('kaddo guard — end-to-end with real artifacts (VS-012)', () => {
 
   it('detects drift against a real artifact that declares ownership', async () => {
     writeArtifact(
-      'architecture/work-items/WI-001-payments.md',
+      'knowledge/work-items/WI-001-payments.md',
       'type: feature\nid: WI-001\ntitle: Payments\nknowledge_level: K2\nstatus: in-progress\ndomains:\n  - payments\ncode:\n  - src/payments/**'
     )
     gitMock.getModifiedFiles.mockResolvedValue(['src/payments/charge.ts'])
@@ -60,12 +60,12 @@ describe('kaddo guard — end-to-end with real artifacts (VS-012)', () => {
 
   it('does NOT warn when the artifact was also updated in the diff', async () => {
     writeArtifact(
-      'architecture/work-items/WI-001-payments.md',
+      'knowledge/work-items/WI-001-payments.md',
       'type: feature\nid: WI-001\ntitle: Payments\nknowledge_level: K2\nstatus: in-progress\ncode:\n  - src/payments/**'
     )
     gitMock.getModifiedFiles.mockResolvedValue([
       'src/payments/charge.ts',
-      'architecture/work-items/WI-001-payments.md',
+      'knowledge/work-items/WI-001-payments.md',
     ])
 
     await runGuard({ interactive: false })
@@ -76,7 +76,7 @@ describe('kaddo guard — end-to-end with real artifacts (VS-012)', () => {
 
   it('is silent when no artifact declares ownership', async () => {
     writeArtifact(
-      'architecture/work-items/WI-002-noown.md',
+      'knowledge/work-items/WI-002-noown.md',
       'type: feature\nid: WI-002\ntitle: No ownership\nknowledge_level: K1\nstatus: in-progress'
     )
     gitMock.getModifiedFiles.mockResolvedValue(['src/payments/charge.ts'])
@@ -87,7 +87,7 @@ describe('kaddo guard — end-to-end with real artifacts (VS-012)', () => {
 
   it('shows no matches when changed files do not match any glob', async () => {
     writeArtifact(
-      'architecture/work-items/WI-001-payments.md',
+      'knowledge/work-items/WI-001-payments.md',
       'type: feature\nid: WI-001\ntitle: Payments\nknowledge_level: K2\nstatus: in-progress\ncode:\n  - src/payments/**'
     )
     gitMock.getModifiedFiles.mockResolvedValue(['src/auth/login.ts'])
@@ -100,11 +100,11 @@ describe('kaddo guard — end-to-end with real artifacts (VS-012)', () => {
 
   it('reports multiple artifacts that match the same change', async () => {
     writeArtifact(
-      'architecture/work-items/WI-001.md',
+      'knowledge/work-items/WI-001.md',
       'type: feature\nid: WI-001\ntitle: A\nknowledge_level: K2\nstatus: in-progress\ncode:\n  - src/payments/**'
     )
     writeArtifact(
-      'architecture/work-items/WI-002.md',
+      'knowledge/work-items/WI-002.md',
       'type: spike\nid: WI-002\ntitle: B\nknowledge_level: K3\nstatus: in-progress\ncode:\n  - src/**/charge.ts'
     )
     gitMock.getModifiedFiles.mockResolvedValue(['src/payments/charge.ts'])
@@ -117,7 +117,7 @@ describe('kaddo guard — end-to-end with real artifacts (VS-012)', () => {
 
   it('reflects multiple globs in one artifact', async () => {
     writeArtifact(
-      'architecture/work-items/WI-001.md',
+      'knowledge/work-items/WI-001.md',
       'type: feature\nid: WI-001\ntitle: A\nknowledge_level: K2\nstatus: in-progress\ncode:\n  - src/payments/**\n  - src/shared/payment/**'
     )
     gitMock.getModifiedFiles.mockResolvedValue(['src/payments/charge.ts'])
@@ -128,7 +128,7 @@ describe('kaddo guard — end-to-end with real artifacts (VS-012)', () => {
 
   it('normalizes Windows-style paths so they match POSIX globs', async () => {
     writeArtifact(
-      'architecture/work-items/WI-001.md',
+      'knowledge/work-items/WI-001.md',
       'type: feature\nid: WI-001\ntitle: A\nknowledge_level: K2\nstatus: in-progress\ncode:\n  - src/payments/**'
     )
     gitMock.getModifiedFiles.mockResolvedValue(['src\\payments\\charge.ts'])
@@ -140,7 +140,7 @@ describe('kaddo guard — end-to-end with real artifacts (VS-012)', () => {
   it('stays non-blocking (does not call process.exit) on drift', async () => {
     const exitSpy = vi.spyOn(process, 'exit').mockImplementation((() => {}) as never)
     writeArtifact(
-      'architecture/work-items/WI-001.md',
+      'knowledge/work-items/WI-001.md',
       'type: feature\nid: WI-001\ntitle: A\nknowledge_level: K2\nstatus: in-progress\ncode:\n  - src/payments/**'
     )
     gitMock.getModifiedFiles.mockResolvedValue(['src/payments/charge.ts'])

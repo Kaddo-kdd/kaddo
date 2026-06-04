@@ -1,7 +1,7 @@
 // Reader for multirepo modules registered in `.kaddo/modules.yml` (VS module-aware
 // context/explain). The descriptor is the single source of truth — modules are never
 // inferred from folders alone. Per-module artifact coverage is computed from the
-// `architecture/modules/<id>/` structure. No secondary repo source code is ever read.
+// `knowledge/modules/<id>/` structure. No secondary repo source code is ever read.
 
 import { exists, readFile, join } from '../utils/fs.js'
 import { parse as parseYaml } from 'yaml'
@@ -38,7 +38,7 @@ function toStringArray(value: unknown): string[] {
 }
 
 function moduleArtifactCoverage(dir: string, id: string): ModuleArtifactCoverage {
-  const base = join(dir, 'architecture', 'modules', id)
+  const base = join(dir, 'knowledge', 'modules', id)
   return {
     moduleDesign: exists(join(base, 'module-design.md')),
     stack: exists(join(base, 'stack.md')),

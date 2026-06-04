@@ -29,7 +29,7 @@ function initProject() {
 }
 
 function agentsDirFile(name: string): string {
-  return path.join(tmpDir, 'architecture', 'agents', name)
+  return path.join(tmpDir, 'knowledge', 'agents', name)
 }
 
 beforeEach(() => {
@@ -67,11 +67,11 @@ describe('agents module — prompt pack source', () => {
     }
   })
 
-  it('agents module installs into architecture/agents', () => {
-    expect(agentsModule.dirs).toContain('architecture/agents')
+  it('agents module installs into knowledge/agents', () => {
+    expect(agentsModule.dirs).toContain('knowledge/agents')
     const paths = agentsModule.files.map((f) => f.path)
     for (const a of AGENT_PROMPTS) {
-      expect(paths).toContain(`architecture/agents/${a.fileName}`)
+      expect(paths).toContain(`knowledge/agents/${a.fileName}`)
     }
   })
 })
@@ -83,8 +83,8 @@ describe('roadmap-agent — structured output (VS-009)', () => {
     return a.content
   }
 
-  it('directs the output to architecture/roadmap.md', () => {
-    expect(roadmap()).toContain('architecture/roadmap.md')
+  it('directs the output to knowledge/roadmap.md', () => {
+    expect(roadmap()).toContain('knowledge/roadmap.md')
   })
 
   it('includes structured initiative fields', () => {
@@ -138,11 +138,11 @@ describe('roadmap-agent — structured output (VS-009)', () => {
 })
 
 describe('kaddo add agents', () => {
-  it('creates architecture/agents/ and installs all base agents', () => {
+  it('creates knowledge/agents/ and installs all base agents', () => {
     initProject()
     runAdd('agents', tmpDir)
 
-    expect(fs.existsSync(path.join(tmpDir, 'architecture', 'agents'))).toBe(true)
+    expect(fs.existsSync(path.join(tmpDir, 'knowledge', 'agents'))).toBe(true)
     for (const a of AGENT_PROMPTS) {
       expect(fs.existsSync(agentsDirFile(a.fileName))).toBe(true)
     }
@@ -151,7 +151,7 @@ describe('kaddo add agents', () => {
   it('does not overwrite an existing agent file (partial install)', () => {
     initProject()
     // Pre-create one agent with custom content.
-    fs.mkdirSync(path.join(tmpDir, 'architecture', 'agents'), { recursive: true })
+    fs.mkdirSync(path.join(tmpDir, 'knowledge', 'agents'), { recursive: true })
     fs.writeFileSync(agentsDirFile('capability-agent.md'), 'CUSTOM EDIT')
 
     runAdd('agents', tmpDir)

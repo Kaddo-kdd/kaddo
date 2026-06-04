@@ -17,27 +17,27 @@ type BootstrapLayer = 'Business' | 'Architecture' | 'Codebase' | 'Development'
 
 const TARGETS: LayeredTarget[] = [
   // Business
-  { layer: 'Business', path: 'architecture/business/product-brief.md', templateId: 'business-product-brief' },
-  { layer: 'Business', path: 'architecture/business/problem.md', templateId: 'business-problem' },
-  { layer: 'Business', path: 'architecture/business/users.md', templateId: 'business-users' },
-  { layer: 'Business', path: 'architecture/business/value-proposition.md', templateId: 'business-value-proposition' },
-  { layer: 'Business', path: 'architecture/business/business-rules.md', templateId: 'business-rules' },
-  { layer: 'Business', path: 'architecture/business/constraints.md', templateId: 'business-constraints' },
-  { layer: 'Business', path: 'architecture/business/glossary.md', templateId: 'business-glossary' },
+  { layer: 'Business', path: 'knowledge/business/product-brief.md', templateId: 'business-product-brief' },
+  { layer: 'Business', path: 'knowledge/business/problem.md', templateId: 'business-problem' },
+  { layer: 'Business', path: 'knowledge/business/users.md', templateId: 'business-users' },
+  { layer: 'Business', path: 'knowledge/business/value-proposition.md', templateId: 'business-value-proposition' },
+  { layer: 'Business', path: 'knowledge/business/business-rules.md', templateId: 'business-rules' },
+  { layer: 'Business', path: 'knowledge/business/constraints.md', templateId: 'business-constraints' },
+  { layer: 'Business', path: 'knowledge/business/glossary.md', templateId: 'business-glossary' },
   // Architecture
-  { layer: 'Architecture', path: 'architecture/capabilities.md', templateId: 'capabilities' },
-  { layer: 'Architecture', path: 'architecture/quality-attributes.md', templateId: 'quality-attributes' },
-  { layer: 'Architecture', path: 'architecture/stack.md', templateId: 'stack' },
-  { layer: 'Architecture', path: 'architecture/current-state.md', templateId: 'current-state' },
-  { layer: 'Architecture', path: 'architecture/decision-candidates.md', templateId: 'decision-candidates' },
-  { layer: 'Architecture', path: 'architecture/adrs/ADR-0001-initial-architecture.md', templateId: 'adr' },
+  { layer: 'Architecture', path: 'knowledge/capabilities.md', templateId: 'capabilities' },
+  { layer: 'Architecture', path: 'knowledge/quality-attributes.md', templateId: 'quality-attributes' },
+  { layer: 'Architecture', path: 'knowledge/stack.md', templateId: 'stack' },
+  { layer: 'Architecture', path: 'knowledge/current-state.md', templateId: 'current-state' },
+  { layer: 'Architecture', path: 'knowledge/decision-candidates.md', templateId: 'decision-candidates' },
+  { layer: 'Architecture', path: 'knowledge/adrs/ADR-0001-initial-architecture.md', templateId: 'adr' },
   // Codebase
-  { layer: 'Codebase', path: 'architecture/codebase-foundation.md', templateId: 'codebase-foundation' },
-  { layer: 'Codebase', path: 'architecture/standards.md', templateId: 'standards' },
-  { layer: 'Codebase', path: 'architecture/git-strategy.md', templateId: 'git-strategy' },
+  { layer: 'Codebase', path: 'knowledge/codebase-foundation.md', templateId: 'codebase-foundation' },
+  { layer: 'Codebase', path: 'knowledge/standards.md', templateId: 'standards' },
+  { layer: 'Codebase', path: 'knowledge/git-strategy.md', templateId: 'git-strategy' },
   // Development
-  { layer: 'Development', path: 'architecture/roadmap.md', templateId: 'roadmap' },
-  { layer: 'Development', path: 'architecture/bootstrap-summary.md', templateId: 'bootstrap-summary' },
+  { layer: 'Development', path: 'knowledge/roadmap.md', templateId: 'roadmap' },
+  { layer: 'Development', path: 'knowledge/bootstrap-summary.md', templateId: 'bootstrap-summary' },
 ]
 
 export const BOOTSTRAP_LAYERS: BootstrapLayer[] = ['Business', 'Architecture', 'Codebase', 'Development']
@@ -69,13 +69,13 @@ export function bootstrap(dir: string): BootstrapResult {
   }
 
   // Development layer: ensure the work-items directory exists.
-  const workItems = join(dir, 'architecture/work-items')
+  const workItems = join(dir, 'knowledge/work-items')
   if (!exists(workItems)) {
     ensureDir(workItems)
     const keep = join(workItems, '.gitkeep')
     if (!exists(keep)) {
       writeFile(keep, '')
-      written.push('architecture/work-items/.gitkeep')
+      written.push('knowledge/work-items/.gitkeep')
     }
   }
 
