@@ -28,51 +28,56 @@ afterEach(() => {
 })
 
 describe('bootstrap — knowledge base generation', () => {
-  it('creates the minimal knowledge/business/ structure', () => {
+  it('generates exactly the three consolidated layer files', () => {
+    const res = bootstrap(dir)
+    expect(fs.existsSync(path.join(dir, 'knowledge', 'business', 'business.md'))).toBe(true)
+    expect(fs.existsSync(path.join(dir, 'knowledge', 'product', 'product.md'))).toBe(true)
+    expect(fs.existsSync(path.join(dir, 'knowledge', 'tech', 'codebase.md'))).toBe(true)
+    expect(res.written.sort()).toEqual([
+      'knowledge/business/business.md',
+      'knowledge/product/product.md',
+      'knowledge/tech/codebase.md',
+    ])
+  })
+
+  it('does NOT generate specialized files or delivery/decisions', () => {
     bootstrap(dir)
-    for (const f of [
-      'problem.md',
-      'users.md',
-      'value-proposition.md',
-      'business-rules.md',
-      'constraints.md',
+    for (const p of [
+      'knowledge/business/problem.md',
+      'knowledge/business/users.md',
+      'knowledge/product/product-brief.md',
+      'knowledge/product/capabilities.md',
+      'knowledge/delivery/roadmap.md',
+      'knowledge/delivery/work-items',
+      'knowledge/tech/decisions',
     ]) {
-      expect(fs.existsSync(path.join(dir, 'knowledge', 'business', f)), f).toBe(true)
+      expect(fs.existsSync(path.join(dir, p)), p).toBe(false)
     }
   })
 
-  it('generates the product and tech base artifacts', () => {
+  it('consolidated business.md carries the layer sections', () => {
     bootstrap(dir)
-    const expected = [
-      'knowledge/product/product-brief.md',
-      'knowledge/product/capabilities.md',
-      'knowledge/tech/codebase.md',
-    ]
-    for (const f of expected) expect(fs.existsSync(path.join(dir, f)), f).toBe(true)
-  })
-
-  it('does NOT generate delivery artifacts (roadmap/work-items) or decisions', () => {
-    bootstrap(dir)
-    expect(fs.existsSync(path.join(dir, 'knowledge', 'delivery', 'roadmap.md'))).toBe(false)
-    expect(fs.existsSync(path.join(dir, 'knowledge', 'delivery', 'work-items'))).toBe(false)
-    expect(fs.existsSync(path.join(dir, 'knowledge', 'tech', 'decisions'))).toBe(false)
+    const md = read('knowledge/business/business.md')
+    expect(md).toContain('# Business')
+    expect(md).toContain('## Problem')
+    expect(md).toContain('## Users')
+    expect(md).toContain('## Constraints')
   })
 
   it('artifacts come from the template registry', () => {
     bootstrap(dir)
-    expect(read('knowledge/product/product-brief.md')).toBe(
-      getTemplate('business-product-brief')!.content + ''
-    )
-    expect(read('knowledge/tech/codebase.md')).toContain('# Codebase Foundation')
+    expect(read('knowledge/business/business.md')).toBe(getTemplate('business')!.content + '')
+    expect(read('knowledge/product/product.md')).toBe(getTemplate('product')!.content + '')
+    expect(read('knowledge/tech/codebase.md')).toContain('# Codebase')
   })
 
   it('does not overwrite existing artifacts (skipped)', () => {
     fs.mkdirSync(path.join(dir, 'knowledge', 'business'), { recursive: true })
-    fs.writeFileSync(path.join(dir, 'knowledge', 'business', 'problem.md'), 'CUSTOM')
+    fs.writeFileSync(path.join(dir, 'knowledge', 'business', 'business.md'), 'CUSTOM')
     const res = bootstrap(dir)
-    expect(read('knowledge/business/problem.md')).toBe('CUSTOM')
-    expect(res.skipped).toContain('knowledge/business/problem.md')
-    expect(res.written).toContain('knowledge/product/product-brief.md')
+    expect(read('knowledge/business/business.md')).toBe('CUSTOM')
+    expect(res.skipped).toContain('knowledge/business/business.md')
+    expect(res.written).toContain('knowledge/product/product.md')
   })
 
   it('reports the three minimal base layers', () => {

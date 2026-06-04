@@ -19,16 +19,11 @@ type BootstrapLayer = 'Business' | 'Product' | 'Tech'
 type LayeredTarget = { layer: BootstrapLayer; path: string; templateId: string }
 
 const TARGETS: LayeredTarget[] = [
-  // Business — why it exists
-  { layer: 'Business', path: 'knowledge/business/problem.md', templateId: 'business-problem' },
-  { layer: 'Business', path: 'knowledge/business/users.md', templateId: 'business-users' },
-  { layer: 'Business', path: 'knowledge/business/value-proposition.md', templateId: 'business-value-proposition' },
-  { layer: 'Business', path: 'knowledge/business/constraints.md', templateId: 'business-constraints' },
-  { layer: 'Business', path: 'knowledge/business/business-rules.md', templateId: 'business-rules' },
-  // Product — what we build
-  { layer: 'Product', path: 'knowledge/product/product-brief.md', templateId: 'business-product-brief' },
-  { layer: 'Product', path: 'knowledge/product/capabilities.md', templateId: 'capabilities' },
-  // Tech — how we build it
+  // Minimum sufficient knowledge: one consolidated file per layer. Specialized
+  // artifacts (problem.md, users.md, capabilities.md, …) appear later, as the project
+  // matures, via agents and refinement — not at bootstrap.
+  { layer: 'Business', path: 'knowledge/business/business.md', templateId: 'business' },
+  { layer: 'Product', path: 'knowledge/product/product.md', templateId: 'product' },
   { layer: 'Tech', path: 'knowledge/tech/codebase.md', templateId: 'codebase' },
 ]
 
