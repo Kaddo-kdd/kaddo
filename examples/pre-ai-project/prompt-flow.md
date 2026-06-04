@@ -55,7 +55,7 @@ flowchart TD
 Use the Kaddo context pack with the capability-agent instructions.
 Input:
 - .kaddo/context-pack.md
-- knowledge/agents/capability-agent.md
+- knowledge/agents/product/capability-agent.md
 Task: Generate knowledge/product/capabilities.md.
 Constraints: don't invent business facts; mark assumptions; cite code evidence; list open questions.
 ```
@@ -67,7 +67,7 @@ Use the context pack and capabilities with the architecture-agent instructions.
 Input:
 - .kaddo/context-pack.md
 - knowledge/product/capabilities.md
-- knowledge/agents/architecture-agent.md
+- knowledge/agents/tech/architecture-agent.md
 Task: Generate knowledge/tech/current-state.md.
 Constraints: separate facts from assumptions; identify modules, dependencies, data stores, risks.
 ```
@@ -80,7 +80,7 @@ Input:
 - .kaddo/context-pack.md
 - knowledge/product/capabilities.md
 - knowledge/tech/current-state.md
-- knowledge/agents/roadmap-agent.md
+- knowledge/agents/delivery/roadmap-agent.md
 Task: Generate knowledge/delivery/roadmap.md with candidate work items.
 Constraints: candidates not decisions; include Knowledge Levels and open questions.
 ```

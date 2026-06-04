@@ -5,7 +5,7 @@
 | 1 | `kaddo init` | "Kaddo initialized." | `.kaddo/config.yml`, `knowledge/*` | Scan the stack |
 | 2 | `kaddo scan` | Detected stack + suggested domains | `.kaddo/scan.json`, `knowledge/inventory.md` | Generate context |
 | 3 | `kaddo context` | "Context pack written." | `.kaddo/context-pack.md` | Install agents |
-| 4 | `kaddo add agents` | "Module agents installed." | `knowledge/agents/*.md` | Plan |
+| 4 | `kaddo add agents` | "Module agents installed." | `knowledge/agents/<layer>/*.md` | Plan |
 | 5 | `kaddo understand` | Recommends `capability → architecture → roadmap` | `.kaddo/understand.md` | Run agents |
 | 6 | *(LLM)* `capability-agent` | Capabilities list | `knowledge/product/capabilities.md` (sample) | Architecture |
 | 7 | *(LLM)* `architecture-agent` | Baseline | `knowledge/tech/current-state.md` (sample) | Roadmap |

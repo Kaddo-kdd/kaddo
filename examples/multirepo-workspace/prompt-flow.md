@@ -51,7 +51,7 @@ flowchart TD
 Use the Kaddo context pack with the module-design-agent instructions.
 Input:
 - .kaddo/context-pack.md
-- knowledge/agents/module-design-agent.md
+- knowledge/agents/tech/module-design-agent.md
 - the module's repository (e.g. ../frontend)
 Task: Fill in knowledge/tech/modules/storefront-web/module-design.md.
 Constraints: state purpose, boundaries (in/out), inputs/outputs, dependencies on other modules.

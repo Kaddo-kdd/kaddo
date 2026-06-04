@@ -10,14 +10,15 @@ before there is much code to scan.
 ## The flow
 
 ```bash
-kaddo init                       # → .kaddo/config.yml, knowledge/{knowledge,roadmap}.md
+kaddo init                       # → .kaddo/config.yml, knowledge/{knowledge,delivery/roadmap}.md
+kaddo bootstrap                  # → knowledge/business/business.md, product/product.md, tech/codebase.md
 kaddo context                    # → .kaddo/context-pack.md
-kaddo add agents                 # → knowledge/agents/*.md
-kaddo understand                 # recommends agents for a `new` project
-# in your LLM chat: run roadmap-agent, then architecture-agent
+kaddo add agents                 # → knowledge/agents/<layer>/*.md (recommended set for `new`)
+kaddo understand                 # recommends agents for the current phase
+# in your LLM chat: run capability-agent, architecture-agent (→ current-state.md), roadmap-agent
 kaddo create --from roadmap      # → knowledge/delivery/work-items/WI-001-*.md
-kaddo owners suggest             # declare code: globs on the work item
-kaddo explain                    # → .kaddo/explain.md
+kaddo owners suggest             # propose code: globs — you confirm them
+kaddo explain                    # → .kaddo/explain.md (grouped by layer)
 ```
 
 See [`expected-flow.md`](./expected-flow.md) for the step-by-step output, and

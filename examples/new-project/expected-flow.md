@@ -2,14 +2,18 @@
 
 | Step | Command | Expected output | Generated artifact | Next step |
 |---|---|---|---|---|
-| 1 | `kaddo init` | "Kaddo initialized." | `.kaddo/config.yml`, `knowledge/knowledge.md`, `knowledge/delivery/roadmap.md`, `knowledge/delivery/work-items/` | Generate a context pack |
-| 2 | `kaddo context` | "Context pack written." | `.kaddo/context-pack.md` | Install agents |
-| 3 | `kaddo add agents` | "Module agents installed." | `knowledge/agents/*.md` | Get a state-aware plan |
-| 4 | `kaddo understand` | Recommends `roadmap-agent → architecture-agent` for `new` | `.kaddo/understand.md` | Run agents in your LLM |
-| 5 | *(LLM)* run `roadmap-agent` | Roadmap with `RM-*` + `WI-CANDIDATE-*` | `knowledge/delivery/roadmap.md` (see sample) | Create a work item |
-| 6 | `kaddo create --from roadmap` | "Created … from roadmap." | `knowledge/delivery/work-items/WI-001-*.md` | Declare ownership |
-| 7 | `kaddo owners suggest` | Suggests `code:` globs | updated work item | Run explain |
-| 8 | `kaddo explain` | Project summary + next steps | `.kaddo/explain.md` | Start building |
+| 1 | `kaddo init` | "Kaddo initialized." | `.kaddo/config.yml`, `knowledge/knowledge.md`, `knowledge/delivery/roadmap.md`, `knowledge/delivery/work-items/` | Bootstrap the knowledge base |
+| 2 | `kaddo bootstrap` | "Minimal knowledge base ready." | `knowledge/business/business.md`, `knowledge/product/product.md`, `knowledge/tech/codebase.md` | Generate a context pack |
+| 3 | `kaddo context` | "Context pack written." | `.kaddo/context-pack.md` | Install agents |
+| 4 | `kaddo add agents` | Installs the recommended set for `new` | `knowledge/agents/<layer>/*.md` (business/product/tech/delivery) | Get a state-aware plan |
+| 5 | `kaddo understand` | Recommends agents incl. `capability-agent → architecture-agent` for `new` | `.kaddo/understand.md` | Run agents in your LLM |
+| 6 | *(LLM)* run `architecture-agent` | The **reality** baseline | `knowledge/tech/current-state.md` (distinct from `codebase.md` intent) | Shape the roadmap |
+| 7 | *(LLM)* run `roadmap-agent` | Roadmap with `RM-*` + `WI-CANDIDATE-*` | `knowledge/delivery/roadmap.md` (see sample) | Create a work item |
+| 8 | `kaddo create --from roadmap` | "Created … from roadmap." | `knowledge/delivery/work-items/WI-001-*.md` | Declare ownership |
+| 9 | `kaddo owners suggest` | Suggests `code:` globs (human confirms) | updated work item | Run explain |
+| 10 | `kaddo explain` | Project summary by layer + next steps | `.kaddo/explain.md` | Start building |
 
-> Steps 1–4, 6–8 are deterministic CLI output. Step 5 happens in your LLM chat using the
-> installed agent prompt; the result here is illustrative.
+> The CLI steps are deterministic output. Steps 6–7 happen in your LLM chat using the
+> installed agent prompts; the results here are illustrative. `codebase.md` is the
+> **intent** (how we plan to build it); `current-state.md` is the **reality** (how it is
+> actually built) — they are kept distinct.

@@ -53,7 +53,7 @@ flowchart TD
 Use the Kaddo context pack with the legacy-agent instructions.
 Input:
 - .kaddo/context-pack.md
-- knowledge/agents/legacy-agent.md
+- knowledge/agents/utilities/legacy-agent.md
 Task: Generate knowledge/legacy/{risks,unknowns,modernization-candidates}.md.
 Constraints: for each risk give blast radius + mitigation; phrase unknowns as questions
 with how-to-find-out; do not propose changes yet.
@@ -67,7 +67,7 @@ Input:
 - .kaddo/context-pack.md
 - knowledge/legacy/risks.md
 - knowledge/legacy/unknowns.md
-- knowledge/agents/architecture-agent.md
+- knowledge/agents/tech/architecture-agent.md
 Task: Generate knowledge/tech/current-state.md.
 Constraints: separate facts from assumptions; carry over the known risks and unknowns.
 ```
@@ -80,7 +80,7 @@ Input:
 - .kaddo/context-pack.md
 - knowledge/legacy/risks.md
 - knowledge/tech/current-state.md
-- knowledge/agents/roadmap-agent.md
+- knowledge/agents/delivery/roadmap-agent.md
 Task: Generate knowledge/delivery/roadmap.md prioritizing low-risk, observable first steps.
 Constraints: respect the legacy risks; prefer additive, reversible changes.
 ```
