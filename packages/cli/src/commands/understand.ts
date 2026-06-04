@@ -7,6 +7,7 @@ import { buildUnderstandPlan } from '../core/understand.js'
 import { renderUnderstand, renderUnderstandTerminal } from '../templates/understand-template.js'
 import { knowledgeLayers, currentPhase } from '../core/layers.js'
 import { AGENT_GROUPS, type AgentGroup } from '../agents/groups.js'
+import { activeWorkItems, renderDeliveryLifecycle } from '../core/delivery.js'
 
 export function runUnderstand(): void {
   const dir = cwd()
@@ -82,6 +83,17 @@ export function runUnderstand(): void {
   for (const step of NEXT_STEPS[group] ?? []) console.log(`  ${n++}. ${step}`)
   if (groupAgents.length > 0) {
     console.log(`Agents for this phase: ${groupAgents.join(', ')}`)
+  }
+
+  // 5c. If a Work Item is active, show the official delivery lifecycle.
+  const active = activeWorkItems(dir)
+  if (active.length > 0) {
+    console.log('')
+    for (const line of renderDeliveryLifecycle(active[0])) console.log(line)
+    if (active.length > 1) {
+      console.log('')
+      console.log(`Other active work items: ${active.slice(1).map((w) => w.id).join(', ')}`)
+    }
   }
 
   writeFile(join(dir, '.kaddo', 'understand.md'), renderUnderstand(plan))
