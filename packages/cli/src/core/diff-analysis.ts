@@ -1,5 +1,4 @@
 import { minimatch } from 'minimatch'
-import path from 'path'
 import type { Artifact } from '../services/artifact-reader.js'
 
 export type EvidenceScore = {
@@ -23,7 +22,9 @@ export type GuardResult = {
 }
 
 function normalizePath(p: string): string {
-  return p.split(path.sep).join('/')
+  // Always normalize Windows-style backslashes to POSIX separators, regardless of the
+  // platform Guard runs on (CI is Linux, where path.sep would not convert them).
+  return p.replace(/\\/g, '/')
 }
 
 function fileMatchesGlob(file: string, glob: string): boolean {
