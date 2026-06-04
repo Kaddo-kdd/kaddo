@@ -226,13 +226,14 @@ flowchart LR
 
 ## Work Item delivery lifecycle
 
-From a Work Item to a commit, with knowledge kept in sync. Kaddo creates the work-item
-branch (`kaddo start`); it never commits, pushes or merges — those are yours.
+From a Work Item to a commit, with knowledge kept in sync. The Kaddo CLI never touches git:
+the implementing agent (work-item-agent) creates the branch and commits only with your
+confirmation.
 
 ```mermaid
 flowchart TD
     A[Roadmap] --> B[Create Work Item]
-    B --> C[kaddo start → branch feature/WI-001-slug]
+    B --> C[Branch — agent, per git strategy]
     C --> D[Implementation]
     D --> E[kaddo scan]
     E --> F[kaddo owners suggest → human confirms]

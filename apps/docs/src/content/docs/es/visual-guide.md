@@ -227,13 +227,14 @@ flowchart LR
 
 ## Ciclo de entrega de un Work Item
 
-De un Work Item a un commit, manteniendo el conocimiento sincronizado. Kaddo crea la rama
-del work item (`kaddo start`); nunca commitea, hace push ni merge — eso es tuyo.
+De un Work Item a un commit, manteniendo el conocimiento sincronizado. El CLI de Kaddo
+nunca toca git: el agente que implementa (work-item-agent) crea la rama y commitea solo con
+tu confirmación.
 
 ```mermaid
 flowchart TD
     A[Roadmap] --> B[Crear Work Item]
-    B --> C[kaddo start → rama feature/WI-001-slug]
+    B --> C[Rama — agente, según git strategy]
     C --> D[Implementación]
     D --> E[kaddo scan]
     E --> F[kaddo owners suggest → el humano confirma]

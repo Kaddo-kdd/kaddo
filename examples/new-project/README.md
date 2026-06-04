@@ -17,8 +17,7 @@ kaddo add agents                 # → knowledge/agents/<layer>/*.md (recommende
 kaddo understand                 # recommends agents for the current phase
 # in your LLM chat: run capability-agent, architecture-agent (→ current-state.md), roadmap-agent
 kaddo create --from roadmap      # → knowledge/delivery/work-items/WI-001-*.md
-kaddo start WI-001               # creates/switches to feature/WI-001-… (never commits)
-# implement the work item, then:
+# the work-item-agent's protocol: create branch feature/WI-001-… first, then implement
 kaddo scan                       # after new modules/migrations/contracts
 kaddo owners suggest             # propose code: globs — you confirm them
 kaddo guard                      # before committing — detect knowledge drift

@@ -125,5 +125,7 @@ release:
     - work-items
 ```
 
-> Kaddo does **not** enforce the strategy in CI, and creates the work-item branch on `kaddo start` but never commits, and never creates tags
-> for you. Refine the strategy with the `git-strategy-agent` in your LLM.
+> The Kaddo CLI does **not** enforce the strategy in CI and **never touches git**. Branch
+> creation is part of the implementing agent's protocol (`work-item-agent`): it creates the
+> branch before work and commits only with your confirmation. Refine the strategy with the
+> `git-strategy-agent` in your LLM.

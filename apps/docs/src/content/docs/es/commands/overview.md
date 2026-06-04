@@ -13,7 +13,6 @@ Comandos en orden del flujo de trabajo:
 | `kaddo context` | Genera un context pack para entregar a un agente LLM |
 | `kaddo add agents` | Instala los agent prompt packs para tu chat LLM |
 | `kaddo understand` | Guía el handoff CLI → LLM con un plan de agentes según el estado |
-| `kaddo start [id]` | Inicia un Work Item: crea/cambia a su rama (Git strategy); nunca commitea |
 | `kaddo create <type>` / `--from roadmap` | Crea un Work Item (feature, bugfix, hotfix, spike) |
 | `kaddo owners suggest` | Asistente para declarar propiedad `code:` en artefactos |
 | `kaddo guard` | Revisa si el código modificado tiene artefactos relacionados sin actualizar |

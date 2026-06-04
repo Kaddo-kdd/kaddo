@@ -126,5 +126,7 @@ release:
     - work-items
 ```
 
-> Kaddo **no** impone la estrategia en CI, y crea la rama del work item con `kaddo start` pero nunca commitea, y nunca crea tags por ti. Refina
-> la estrategia con el `git-strategy-agent` en tu LLM.
+> El CLI de Kaddo **no** impone la estrategia en CI y **nunca toca git**. La creación de la
+> rama es parte del protocolo del agente que implementa (`work-item-agent`): crea la rama
+> antes del trabajo y commitea solo con tu confirmación. Refina la estrategia con el
+> `git-strategy-agent` en tu LLM.

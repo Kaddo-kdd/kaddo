@@ -1,29 +1,33 @@
-# Proposal: kaddo start — create the work-item branch
+# Proposal: Work-item branch creation in the implementing agent
 
 ## Problem
 
-VS-035 only *suggested* the branch name; developers could keep working on the default
-branch and accidentally push to `main`. The intended behavior: when development on a Work
-Item begins, Kaddo should **create the branch automatically** (per the project's Git
-strategy), so work never lands on `main` by accident. Commits must remain fully manual.
+After VS-035, the delivery lifecycle only *suggested* a branch; developers could keep
+working on the default branch and push to `main` by accident. The intended behavior: when
+development on a Work Item begins, **a branch is created first** (per the project's Git
+strategy) so work never lands on `main`. Commits must remain manual.
 
-## Proposed Change
+## Decision
 
-Add `kaddo start [work-item-id]`: it resolves the target Work Item (the given id, or the
-single active one), computes the branch name from `.kaddo/git.yml` (`branchNaming.pattern`,
-default `{type}/{workItemId}-{slug}`) and **creates/switches to that branch** — the only
-Git action Kaddo performs. It is non-destructive: no commits, no pushes, no merges, no
-history change. The delivery lifecycle and `understand` now start with `kaddo start`.
+This is **not** a new CLI command. The Kaddo CLI stays deterministic and **never touches
+git**. Instead, branch creation is a **configuration in the agent that builds the Work
+Item** — the `work-item-agent` prompt now specifies the delivery protocol the implementing
+agent (e.g. in Claude Code / Cursor) must follow:
 
-This revises the earlier guarantee: Kaddo **creates the work-item branch**, but **never
-commits, pushes or merges** (not even with confirmation).
+1. **Branch first** — create a branch from the Git strategy (`.kaddo/git.yml`
+   `branchNaming.pattern`, default `feature/<id>-<slug>`; also bugfix/hotfix/spike) before
+   changing code.
+2. Implement → `kaddo scan` → `kaddo owners suggest` → `kaddo guard` → update knowledge.
+3. **Commit only with explicit human confirmation.** Never commit, push or merge on its own.
+
+`kaddo understand`'s delivery lifecycle reflects this (branch first, commit only with
+confirmation), and the docs make clear the CLI never runs git.
 
 ## Out of Scope
 
-Commits, pushes, merges, tags; remote operations; anything that changes history.
+A `kaddo start` command (rejected), auto-commit, push, merge, tags, remote operations.
 
 ## Success Criteria
 
-`kaddo start` creates/switches to the work-item branch from the Git strategy; it never
-commits/pushes/merges; docs and examples reflect the new step and guarantee; tests + build
-pass.
+The `work-item-agent` prompt configures branch-first + commit-only-with-confirmation; the
+CLI never touches git; docs/examples reflect the agent-driven protocol; tests + build pass.

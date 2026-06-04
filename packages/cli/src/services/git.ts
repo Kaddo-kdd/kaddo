@@ -62,43 +62,6 @@ export async function isGitRepo(dir: string): Promise<boolean> {
   }
 }
 
-/** Current branch name, or null if it cannot be determined. */
-export async function currentBranch(dir: string): Promise<string | null> {
-  try {
-    const result = await execa('git', ['rev-parse', '--abbrev-ref', 'HEAD'], { cwd: dir })
-    const name = result.stdout.trim()
-    return name || null
-  } catch {
-    return null
-  }
-}
-
-export async function branchExists(dir: string, name: string): Promise<boolean> {
-  try {
-    await execa('git', ['rev-parse', '--verify', '--quiet', `refs/heads/${name}`], { cwd: dir })
-    return true
-  } catch {
-    return false
-  }
-}
-
-export type BranchResult = { action: 'created' | 'switched' | 'already'; branch: string }
-
-/**
- * Create the branch and switch to it; if it already exists, just switch; if already on it,
- * report 'already'. This is a non-destructive Git action (no commits, no history change).
- */
-export async function createOrSwitchBranch(dir: string, name: string): Promise<BranchResult> {
-  const current = await currentBranch(dir)
-  if (current === name) return { action: 'already', branch: name }
-  if (await branchExists(dir, name)) {
-    await execa('git', ['switch', name], { cwd: dir })
-    return { action: 'switched', branch: name }
-  }
-  await execa('git', ['switch', '-c', name], { cwd: dir })
-  return { action: 'created', branch: name }
-}
-
 export async function getModifiedFilesInCommit(ref = 'HEAD'): Promise<string[]> {
   try {
     const result = await execa('git', ['diff-tree', '--no-commit-id', '-r', '--name-only', ref])

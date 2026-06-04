@@ -1,8 +1,6 @@
-# Tasks: kaddo start
-- [x] git service: currentBranch / branchExists / createOrSwitchBranch.
-- [x] delivery: branchPattern / branchNameFor / resolveStartTarget.
-- [x] command: kaddo start [work-item-id].
-- [x] lifecycle/understand start with kaddo start.
-- [x] docs (workflow, visual guide, git-strategy, overview) + new-project example (EN/ES).
-- [x] tests (branch name, resolve, start integration).
-- [x] pnpm test + pnpm -r build.
+# Tasks: Work-item branch creation (agent config)
+- [x] work-item-agent prompt: Delivery workflow (branch first, commit with confirmation).
+- [x] delivery lifecycle text: branch by the agent; commit only with confirmation.
+- [x] Remove the `kaddo start` command (kept CLI git-free).
+- [x] Docs (workflow, visual guide, git-strategy, overview) + new-project example (EN/ES).
+- [x] tests + build green.

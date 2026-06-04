@@ -68,29 +68,6 @@ export function activeWorkItems(dir: string): ActiveWorkItem[] {
     .map(toActive)
 }
 
-/**
- * Resolve which Work Item to start a branch for: the given id, or the single active one.
- * Returns the work item, or an error reason.
- */
-export function resolveStartTarget(
-  dir: string,
-  id?: string
-): { wi: ActiveWorkItem } | { error: string } {
-  const all = allWorkItems(dir)
-  if (id) {
-    const wi = all.find((w) => w.id === id)
-    return wi ? { wi } : { error: `Work Item "${id}" not found under knowledge/delivery/work-items/.` }
-  }
-  const active = activeWorkItems(dir)
-  if (active.length === 1) return { wi: active[0] }
-  if (active.length === 0)
-    return { error: 'No active Work Item. Pass an id: `kaddo start <work-item-id>`.' }
-  return {
-    error: `Multiple active Work Items (${active
-      .map((w) => w.id)
-      .join(', ')}). Pass one: \`kaddo start <work-item-id>\`.`,
-  }
-}
 
 /** Branch prefix recommended for a work-item type (GitHub Flow). */
 export function branchPrefix(type: string): string {
@@ -132,14 +109,14 @@ export function renderDeliveryLifecycle(wi: ActiveWorkItem): string[] {
   return [
     `Active work item: ${wi.id} — ${wi.title}`,
     '',
-    'Delivery lifecycle (Kaddo creates the branch; it never commits, pushes or merges):',
-    `  1. Run \`kaddo start ${wi.id}\`   → branch ${suggestedBranch(wi)}`,
+    'Delivery lifecycle (the building agent follows this; Kaddo CLI never touches git):',
+    `  1. Create a branch          ${suggestedBranch(wi)} (per your Git strategy)`,
     '  2. Implement the work item',
     '  3. Run `kaddo scan`         (after new modules/migrations/contracts)',
     '  4. Run `kaddo owners suggest`  → confirm code: globs',
     '  5. Run `kaddo guard`        before committing (detect knowledge drift)',
     '  6. Update knowledge         ADR / capabilities.md / current-state.md as needed',
     '  7. Review (human)',
-    `  8. Commit (you)             e.g. ${suggestedCommit(wi)}`,
+    `  8. Commit only with human confirmation   e.g. ${suggestedCommit(wi)}`,
   ]
 }
