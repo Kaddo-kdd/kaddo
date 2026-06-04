@@ -9,6 +9,8 @@ import {
   renderDeliveryLifecycle,
   branchPrefix,
   commitPrefix,
+  branchNameFor,
+  resolveStartTarget,
 } from '../src/core/delivery.js'
 
 let dir: string
@@ -57,14 +59,37 @@ describe('delivery lifecycle', () => {
   it('renders the lifecycle with guard, ownership and scan steps', () => {
     writeWI('WI-001.md', 'feature', 'in-progress', 'Add task reminders')
     const lines = renderDeliveryLifecycle(activeWorkItems(dir)[0]).join('\n')
-    expect(lines).toContain('Create a branch')
+    expect(lines).toContain('kaddo start')
     expect(lines).toContain('kaddo scan')
     expect(lines).toContain('kaddo owners suggest')
     expect(lines).toContain('kaddo guard')
-    expect(lines).toContain('never runs git for you')
+    expect(lines).toContain('never commits, pushes or merges')
   })
 
   it('returns no active items on an empty project', () => {
     expect(activeWorkItems(dir)).toEqual([])
+  })
+
+  it('builds the branch name from the project git strategy pattern', () => {
+    writeWI('WI-001.md', 'feature', 'in-progress', 'Add task reminders')
+    const wi = activeWorkItems(dir)[0]
+    // default pattern when no .kaddo/git.yml
+    expect(branchNameFor(dir, wi)).toBe('feature/WI-001-add-task-reminders')
+    // custom pattern from .kaddo/git.yml
+    fs.mkdirSync(path.join(dir, '.kaddo'), { recursive: true })
+    fs.writeFileSync(
+      path.join(dir, '.kaddo', 'git.yml'),
+      'branchNaming:\n  pattern: "{type}/{slug}"\n'
+    )
+    expect(branchNameFor(dir, wi)).toBe('feature/add-task-reminders')
+  })
+
+  it('resolveStartTarget picks the active item, an id, or errors clearly', () => {
+    writeWI('WI-001.md', 'feature', 'in-progress', 'A')
+    expect('wi' in resolveStartTarget(dir)).toBe(true)
+    const byId = resolveStartTarget(dir, 'WI-001')
+    expect('wi' in byId && byId.wi.id).toBe('WI-001')
+    const missing = resolveStartTarget(dir, 'WI-999')
+    expect('error' in missing).toBe(true)
   })
 })

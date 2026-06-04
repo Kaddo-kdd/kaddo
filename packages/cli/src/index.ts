@@ -16,6 +16,7 @@ import { runOwners, runOwnersSuggest } from './commands/owners.js'
 import { runModuleDescriptor } from './commands/module-descriptor.js'
 import { runModulesMap, runModulesList } from './commands/modules-map.js'
 import { runBootstrap } from './commands/bootstrap.js'
+import { runStart } from './commands/start.js'
 
 const program = new Command()
 
@@ -43,6 +44,13 @@ program
   .description('Build the initial knowledge base for a new project (Business → Product → Tech → Delivery)')
   .action(async () => {
     await runBootstrap()
+  })
+
+program
+  .command('start [work-item-id]')
+  .description('Begin development on a Work Item: create/switch to its branch per the Git strategy (never commits)')
+  .action(async (id?: string) => {
+    await runStart(id)
   })
 
 program

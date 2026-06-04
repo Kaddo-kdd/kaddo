@@ -80,17 +80,20 @@ Kaddo keeps **intent** and **reality** distinct — they answer different questi
 
 ## Work Item delivery lifecycle
 
-Once you create a Work Item, Kaddo recommends a repeatable delivery lifecycle that keeps
-code and knowledge evolving together. **Kaddo never creates branches, commits or merges** —
-every step is a suggestion you perform.
+Once you create a Work Item, Kaddo follows a repeatable delivery lifecycle that keeps code
+and knowledge evolving together. The one Git action Kaddo performs is **creating the
+work-item branch** (so you never build on `main` by accident); it **never commits, pushes
+or merges** — those are always yours.
 
 ```txt
-Roadmap → Create Work Item → Branch → Implementation → Scan → Ownership → Guard →
+Roadmap → Create Work Item → Start (branch) → Implementation → Scan → Ownership → Guard →
 Knowledge update → Review → Commit
 ```
 
 1. **Create** — `kaddo create --from roadmap` → `knowledge/delivery/work-items/`.
-2. **Branch** — Kaddo suggests `feature/WI-001-<slug>` (also `bugfix/`, `hotfix/`, `spike/`); you run git.
+2. **Start** — `kaddo start [WI-001]` creates/switches to the branch from your Git strategy
+   (default `feature/WI-001-<slug>`; also `bugfix/`, `hotfix/`, `spike/`). This protects the
+   default branch. It never commits.
 3. **Implement** — you or your agent make the change.
 4. **Scan** — after new modules/migrations/contracts: `kaddo scan`.
 5. **Ownership** — `kaddo owners suggest` (agent proposes `code:` globs, human confirms).
@@ -102,10 +105,10 @@ Knowledge update → Review → Commit
    | New capability | `knowledge/product/capabilities.md` |
    | Significant structural change | `knowledge/tech/current-state.md` (reality) |
 8. **Review** — human validation.
-9. **Commit** — Kaddo suggests `feat(tasks): add task reminders`; you run git.
+9. **Commit** — Kaddo suggests `feat(tasks): add task reminders`; **you** run git.
 
-`kaddo understand` prints this lifecycle (with the suggested branch and commit) whenever a
-Work Item is active.
+`kaddo understand` prints this lifecycle whenever a Work Item is active. Kaddo creates the
+branch on `kaddo start`, but **never** commits, pushes or merges — those always need you.
 
 ## Declaring ownership
 

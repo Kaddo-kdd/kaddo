@@ -126,5 +126,5 @@ release:
     - work-items
 ```
 
-> Kaddo **no** impone la estrategia en CI, y nunca crea ramas ni tags por ti. Refina
+> Kaddo **no** impone la estrategia en CI, y crea la rama del work item con `kaddo start` pero nunca commitea, y nunca crea tags por ti. Refina
 > la estrategia con el `git-strategy-agent` en tu LLM.
