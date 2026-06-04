@@ -149,6 +149,8 @@ describe('context-pack — renderContextPack', () => {
     const md = renderContextPack(build())
     expect(md).toContain('# Kaddo Context Pack')
     expect(md).toContain('## Project Metadata')
+    expect(md).toContain('## Knowledge Layers')
+    expect(md).toContain('### Business')
     expect(md).toContain('## Technical Inventory')
     expect(md).toContain('## Current Knowledge')
     expect(md).toContain('## Roadmap')

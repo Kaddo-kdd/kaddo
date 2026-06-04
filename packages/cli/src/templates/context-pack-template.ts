@@ -1,5 +1,6 @@
 import type { ContextPack } from '../core/context-pack.js'
 import { presentArtifacts } from '../services/mapped-modules.js'
+import { renderLayersMarkdown } from '../core/layers.js'
 
 function stateLabel(state: string): string {
   return state === 'pre-ai' ? 'pre-AI' : state
@@ -28,6 +29,13 @@ export function renderContextPack(pack: ContextPack): string {
       `- Structure: ${project.structure}`,
     ].join('\n') + '\n'
   )
+
+  // 1b. Knowledge Layers (Business → Product → Tech → Delivery)
+  parts.push('## Knowledge Layers\n')
+  parts.push(
+    'Project knowledge is organized in four layers: **Business → Product → Tech → Delivery**.\n'
+  )
+  parts.push(renderLayersMarkdown(pack.layers) + '\n')
 
   // 2. Technical Inventory
   parts.push('## Technical Inventory\n')

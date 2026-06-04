@@ -12,6 +12,7 @@ import {
   presentArtifacts,
   type MappedModuleWithCoverage,
 } from '../services/mapped-modules.js'
+import { knowledgeLayers, renderLayersMarkdown, type LayerStatus } from './layers.js'
 
 const ARCH_DIR = 'knowledge'
 
@@ -61,6 +62,7 @@ export type ProjectExplanation = {
     workItemsMissingOwnership: number
   }
   domains: string[]
+  layers: LayerStatus[]
   mappedModules: MappedModuleWithCoverage[]
   missingKnowledge: string[]
   suggestedNextSteps: string[]
@@ -228,6 +230,7 @@ export function buildProjectExplanation(dir: string): ProjectExplanation {
     workItems,
     ownership,
     domains,
+    layers: knowledgeLayers(dir),
     mappedModules,
     missingKnowledge,
     suggestedNextSteps,
@@ -248,6 +251,10 @@ export function renderExplanationHuman(exp: ProjectExplanation): string {
   lines.push(`- State: ${stateLabel(exp.project.state)}`)
   lines.push(`- Team: ${exp.project.teamSize}`)
   lines.push(`- Structure: ${exp.project.structure}`)
+  lines.push('')
+
+  lines.push('## Knowledge Layers')
+  lines.push(renderLayersMarkdown(exp.layers))
   lines.push('')
 
   if (exp.stack) {

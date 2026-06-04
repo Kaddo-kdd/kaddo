@@ -162,10 +162,23 @@ describe('renderExplanationHuman', () => {
     const out = renderExplanationHuman(buildProjectExplanation(tmpDir))
     expect(out).toContain('# Project Explanation')
     expect(out).toContain('## Project')
+    expect(out).toContain('## Knowledge Layers')
+    expect(out).toContain('### Business')
+    expect(out).toContain('### Delivery')
     expect(out).toContain('## Detected Stack')
     expect(out).toContain('## Knowledge Status')
     expect(out).toContain('Ownership coverage: 1/1')
     expect(out).toContain('## Suggested Next Steps')
+  })
+
+  it('groups knowledge by layer and reflects present artifacts', () => {
+    initConfig()
+    write('knowledge/product/capabilities.md', '# Capabilities\n')
+    const exp = buildProjectExplanation(tmpDir)
+    expect(exp.layers.map((l) => l.layer)).toEqual(['Business', 'Product', 'Tech', 'Delivery'])
+    const out = renderExplanationHuman(exp)
+    expect(out).toContain('✓ capabilities')
+    expect(out).toContain('✗ roadmap')
   })
 })
 
