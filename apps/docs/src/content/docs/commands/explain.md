@@ -49,7 +49,7 @@ output is fully deterministic.
 - Ownership coverage: 1/2 work items
 
 ## Suggested Next Steps
-1. Use capability-agent to create architecture/capabilities.md.
+1. Use capability-agent to create knowledge/product/capabilities.md.
 2. Run `kaddo owners suggest` for Work Items without code ownership.
 ```
 
@@ -88,4 +88,4 @@ The `--for agent` output exposes a structured `mapped_modules` array (with per-m
 `artifacts` coverage), distinct from `installed_modules`.
 
 > `explain` reads mapped modules from `.kaddo/modules.yml` and the
-> `architecture/modules/<id>/` artifacts only. It never scans the secondary repos.
+> `knowledge/tech/modules/<id>/` artifacts only. It never scans the secondary repos.

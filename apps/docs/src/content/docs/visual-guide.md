@@ -10,6 +10,25 @@ Guard, multirepo and governance fit in. Click any diagram to open it full-screen
 > These diagrams describe behavior that exists today. They do **not** imply any future
 > automation — see [What the diagrams do not mean](#what-the-diagrams-do-not-mean).
 
+## Knowledge layers (macro flow)
+
+Kaddo frames the whole project as four macro layers under `knowledge/`. Each answers one
+question and stays connected to the one above it.
+
+```mermaid
+flowchart TD
+    B[Business — why it exists] --> P[Product — what we build]
+    P --> T[Tech — how we build it]
+    T --> D[Delivery — how we evolve it]
+    B --> B1[problem · users · constraints · business-rules]
+    P --> P1[product-brief · capabilities]
+    T --> T1[codebase · current-state · decisions · modules]
+    D --> D1[roadmap · work-items]
+```
+
+`kaddo bootstrap` seeds the minimal base (Business + Product + `tech/codebase.md`);
+Delivery and decisions emerge later through agents and real work.
+
 ## Kaddo Knowledge Loop
 
 The full loop, from a raw repo to an explained knowledge state. CLI steps are
@@ -70,7 +89,7 @@ flowchart LR
     end
     subgraph Repo["Knowledge Repository"]
         O[.kaddo/]
-        P[architecture/]
+        P[knowledge/]
         Q[work-items]
         R[ownership globs]
     end
@@ -108,7 +127,7 @@ sequenceDiagram
     H->>CLI: kaddo context
     CLI->>Repo: context-pack.md
     H->>CLI: kaddo add agents
-    CLI->>Repo: architecture/agents/*.md
+    CLI->>Repo: knowledge/agents/*.md
     H->>CLI: kaddo understand
     CLI->>Repo: understand.md
     H->>LLM: context-pack + selected agent
@@ -176,7 +195,7 @@ knowledge structure. Existing files are never overwritten.
 ```mermaid
 flowchart TD
     A[Architecture Repo] --> B[.kaddo/modules.yml]
-    A --> C[architecture/modules/]
+    A --> C[knowledge/tech/modules/]
     B --> D[frontend repo]
     B --> E[backend repo]
     B --> F[worker repo]

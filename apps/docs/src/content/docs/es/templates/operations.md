@@ -7,12 +7,12 @@ Artifacts operativos globales del sistema. Instala los documentados con `kaddo a
 
 | Plantilla | Propósito | Ruta | Comando | Agente |
 |---|---|---|---|---|
-| Security | Consideraciones de seguridad globales (sin escaneo) | `architecture/security.md` | `kaddo add security` | `security-agent` |
-| Standards | Estándares ligeros de código/docs/testing | `architecture/standards.md` | `kaddo add standards` | `standards-agent` |
-| Stack | Stack del sistema | `architecture/stack.md` | `kaddo add stack` | `stack-agent` |
-| Git Strategy | Ramas, commits, tags | `architecture/git-strategy.md` | `kaddo add git-strategy` | `git-strategy-agent` |
-| Incident | Registro post-incidente | `architecture/incidents/` | `kaddo add incident` | — |
-| Runbook | Tarea operativa recurrente | `architecture/runbooks/` | — | — |
+| Security | Consideraciones de seguridad globales (sin escaneo) | `knowledge/tech/security.md` | `kaddo add security` | `security-agent` |
+| Standards | Estándares ligeros de código/docs/testing | `knowledge/tech/standards.md` | `kaddo add standards` | `standards-agent` |
+| Stack | Stack del sistema | `knowledge/tech/stack.md` | `kaddo add stack` | `stack-agent` |
+| Git Strategy | Ramas, commits, tags | `knowledge/tech/git-strategy.md` | `kaddo add git-strategy` | `git-strategy-agent` |
+| Incident | Registro post-incidente | `knowledge/incidents/` | `kaddo add incident` | — |
+| Runbook | Tarea operativa recurrente | `knowledge/runbooks/` | — | — |
 
 ## Security
 

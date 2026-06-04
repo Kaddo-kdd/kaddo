@@ -25,7 +25,7 @@ kaddo init
 Creates:
 
 ```
-architecture/
+knowledge/
   knowledge.md      ← current state of the product
   roadmap.md        ← intentions and priorities
   work-items/       ← one file per work item
@@ -37,7 +37,7 @@ architecture/
 
 ```bash
 kaddo init          # state: new | pre-ai | legacy, team size, structure
-kaddo bootstrap     # new projects: initial knowledge base (Business → Architecture → Codebase → Development)
+kaddo bootstrap     # new projects: initial knowledge base (Business → Product → Tech → Delivery)
 kaddo scan          # deterministic technical inventory → .kaddo/scan.json
 kaddo context       # LLM context pack → .kaddo/context-pack.md
 kaddo add agents    # install agent prompt packs

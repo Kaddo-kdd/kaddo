@@ -39,13 +39,13 @@ el humano mantiene el control de cada cambio.
 ## Artefactos esperados
 
 ```txt
-architecture/legacy/risks.md
-architecture/legacy/unknowns.md
-architecture/legacy/modernization-candidates.md
-architecture/current-state.md
-architecture/capabilities.md
-architecture/roadmap.md
-architecture/work-items/*.md
+knowledge/legacy/risks.md
+knowledge/legacy/unknowns.md
+knowledge/legacy/modernization-candidates.md
+knowledge/tech/current-state.md
+knowledge/product/capabilities.md
+knowledge/delivery/roadmap.md
+knowledge/delivery/work-items/*.md
 ```
 
 ## Siguientes pasos

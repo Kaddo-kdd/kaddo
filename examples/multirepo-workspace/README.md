@@ -20,7 +20,7 @@ this with a dedicated **architecture repo** that holds the central knowledge and
 ```
 architecture-repo/          ← central knowledge (this is where you run kaddo)
   .kaddo/modules.yml         ← registry of all modules
-  architecture/modules/<id>/ ← per-module design / stack / security / standards
+  knowledge/tech/modules/<id>/ ← per-module design / stack / security / standards
 frontend/                    ← code only
 backend/                     ← code only
 worker/                      ← code only
@@ -35,14 +35,14 @@ kaddo modules map      # interactive: name, repo path, type, tech, owner
 kaddo modules list     # see what's registered
 ```
 
-That writes the descriptor **and** scaffolds `architecture/modules/<id>/` with
+That writes the descriptor **and** scaffolds `knowledge/tech/modules/<id>/` with
 starter `module-design.md`, `stack.md`, `security.md`, `standards.md`. You then
 refine those docs with the `module-design-agent` in your LLM.
 
 ## What is real vs illustrative
 
 - **Real** (produced by the CLI): `.kaddo/modules.yml` and the
-  `architecture/modules/<id>/*.md` starter scaffolds.
+  `knowledge/tech/modules/<id>/*.md` starter scaffolds.
 - **Illustrative** (hand-written for the demo): the filled-in module designs, the
   sample source files in each code repo, and `expected-flow.md`.
 

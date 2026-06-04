@@ -24,7 +24,7 @@ flowchart TD
     E --> F[roadmap-agent]
   end
   C -->|context pack| D
-  F -->|architecture/roadmap.md| G
+  F -->|knowledge/delivery/roadmap.md| G
 ```
 
 ## CLI vs LLM
@@ -39,10 +39,10 @@ flowchart TD
 |---|---|---|---|---|---|
 | Scan | `kaddo scan` | — | repo files | scan baseline | `.kaddo/scan.json` |
 | Context | `kaddo context` | — | config + scan | context pack | `.kaddo/context-pack.md` |
-| Capabilities | — | `capability-agent` | context pack | capabilities | `architecture/capabilities.md` |
-| Architecture | — | `architecture-agent` | context + capabilities | current state | `architecture/current-state.md` |
-| Roadmap | — | `roadmap-agent` | context + caps + arch | roadmap | `architecture/roadmap.md` |
-| Work Item | `kaddo create --from roadmap` | — | roadmap | Work Item | `architecture/work-items/WI-001-*.md` |
+| Capabilities | — | `capability-agent` | context pack | capabilities | `knowledge/product/capabilities.md` |
+| Architecture | — | `architecture-agent` | context + capabilities | current state | `knowledge/tech/current-state.md` |
+| Roadmap | — | `roadmap-agent` | context + caps + arch | roadmap | `knowledge/delivery/roadmap.md` |
+| Work Item | `kaddo create --from roadmap` | — | roadmap | Work Item | `knowledge/delivery/work-items/WI-001-*.md` |
 | Ownership | `kaddo owners suggest` | — | Work Item + scan | `code:` globs | updated Work Item |
 | Guard | `kaddo guard` | — | git diff + ownership | drift FYI | terminal |
 | Explain | `kaddo explain` | — | Kaddo artifacts | explanation | `.kaddo/explain.md` |
@@ -55,8 +55,8 @@ flowchart TD
 Use the Kaddo context pack with the capability-agent instructions.
 Input:
 - .kaddo/context-pack.md
-- architecture/agents/capability-agent.md
-Task: Generate architecture/capabilities.md.
+- knowledge/agents/capability-agent.md
+Task: Generate knowledge/product/capabilities.md.
 Constraints: don't invent business facts; mark assumptions; cite code evidence; list open questions.
 ```
 
@@ -66,9 +66,9 @@ Constraints: don't invent business facts; mark assumptions; cite code evidence; 
 Use the context pack and capabilities with the architecture-agent instructions.
 Input:
 - .kaddo/context-pack.md
-- architecture/capabilities.md
-- architecture/agents/architecture-agent.md
-Task: Generate architecture/current-state.md.
+- knowledge/product/capabilities.md
+- knowledge/agents/architecture-agent.md
+Task: Generate knowledge/tech/current-state.md.
 Constraints: separate facts from assumptions; identify modules, dependencies, data stores, risks.
 ```
 
@@ -78,10 +78,10 @@ Constraints: separate facts from assumptions; identify modules, dependencies, da
 Use the context pack, capabilities and current-state with the roadmap-agent instructions.
 Input:
 - .kaddo/context-pack.md
-- architecture/capabilities.md
-- architecture/current-state.md
-- architecture/agents/roadmap-agent.md
-Task: Generate architecture/roadmap.md with candidate work items.
+- knowledge/product/capabilities.md
+- knowledge/tech/current-state.md
+- knowledge/agents/roadmap-agent.md
+Task: Generate knowledge/delivery/roadmap.md with candidate work items.
 Constraints: candidates not decisions; include Knowledge Levels and open questions.
 ```
 
@@ -95,13 +95,13 @@ the knowledge and the code are now out of sync.
 ## Artifact chain
 
 ```txt
-.kaddo/scan.json → .kaddo/context-pack.md → architecture/capabilities.md →
-architecture/current-state.md → architecture/roadmap.md → architecture/work-items/WI-001-*.md →
+.kaddo/scan.json → .kaddo/context-pack.md → knowledge/product/capabilities.md →
+knowledge/tech/current-state.md → knowledge/delivery/roadmap.md → knowledge/delivery/work-items/WI-001-*.md →
 front-matter code: globs → kaddo guard → .kaddo/explain.md
 ```
 
 See the [`sample-agent-outputs/`](./sample-agent-outputs/) folder for illustrative
-capability/architecture/roadmap results.
+capability/knowledge/delivery/roadmap results.
 
 ## Validation checklist
 

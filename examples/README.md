@@ -19,13 +19,13 @@ Each folder contains:
 - `expected-flow.md` — a `command → output → artifact → next step` table.
 - `prompt-flow.md` — the **prompt flow**: a Mermaid diagram, the CLI↔LLM split, an
   input/output table, copy/paste prompt handoffs and the artifact chain.
-- committed sample files (`.kaddo/`, `architecture/`, `sample/`) so you can see the
+- committed sample files (`.kaddo/`, `knowledge/`, `sample/`) so you can see the
   artifacts without running anything.
 
 ## Important — what is real and what is illustrative
 
-- **CLI artifacts** (`.kaddo/config.yml`, `architecture/work-items/*.md`,
-  `architecture/roadmap.md` skeleton, `.kaddo/modules.yml`, module folders) are exactly
+- **CLI artifacts** (`.kaddo/config.yml`, `knowledge/delivery/work-items/*.md`,
+  `knowledge/delivery/roadmap.md` skeleton, `.kaddo/modules.yml`, module folders) are exactly
   what `kaddo` writes.
 - **Agent outputs** (capabilities, current-state, filled-in roadmaps) live under
   `sample-agent-outputs/` and are **illustrative** — produced by running the Kaddo agent

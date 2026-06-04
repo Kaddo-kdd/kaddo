@@ -7,9 +7,9 @@ For working safely with legacy systems. Refine with the `legacy-agent`.
 
 | Template | Purpose | Output path | Agent |
 |---|---|---|---|
-| Legacy Risks | High-risk areas before changing code | `architecture/legacy/risks.md` | `legacy-agent` |
-| Legacy Unknowns | What is not yet understood | `architecture/legacy/unknowns.md` | `legacy-agent` |
-| Modernization Candidates | Candidate modernization efforts | `architecture/legacy/modernization-candidates.md` | — |
+| Legacy Risks | High-risk areas before changing code | `knowledge/legacy/risks.md` | `legacy-agent` |
+| Legacy Unknowns | What is not yet understood | `knowledge/legacy/unknowns.md` | `legacy-agent` |
+| Modernization Candidates | Candidate modernization efforts | `knowledge/legacy/modernization-candidates.md` | — |
 
 ## Legacy Risks
 

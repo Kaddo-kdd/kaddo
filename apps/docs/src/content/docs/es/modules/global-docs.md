@@ -8,9 +8,9 @@ módulo concreto. No se crean en `kaddo init`; instálalos a demanda para que el
 conocimiento sea progresivo.
 
 ```bash
-kaddo add standards   # → architecture/standards.md
-kaddo add security    # → architecture/security.md
-kaddo add stack       # → architecture/stack.md
+kaddo add standards   # → knowledge/tech/standards.md
+kaddo add security    # → knowledge/tech/security.md
+kaddo add stack       # → knowledge/tech/stack.md
 ```
 
 Cada uno trae una plantilla inicial ligera que refinas con el agente operativo
@@ -18,9 +18,9 @@ correspondiente en tu LLM, usando `.kaddo/context-pack.md` como input.
 
 | Módulo | Artefacto | Refinar con |
 |---|---|---|
-| `standards` | `architecture/standards.md` | `standards-agent` |
-| `security` | `architecture/security.md` | `security-agent` |
-| `stack` | `architecture/stack.md` | `stack-agent` |
+| `standards` | `knowledge/tech/standards.md` | `standards-agent` |
+| `security` | `knowledge/tech/security.md` | `security-agent` |
+| `stack` | `knowledge/tech/stack.md` | `stack-agent` |
 
 En cada sección de abajo, el bloque **inicial** es exactamente lo que instala el CLI; el
 bloque **rellenado** es un resultado ilustrativo tras refinarlo con el agente en tu LLM.
@@ -30,7 +30,7 @@ bloque **rellenado** es un resultado ilustrativo tras refinarlo con el agente en
 Convenciones ligeras de código, documentación y testing más un checklist de PR —
 unas pocas reglas de alto valor superan a una política larga.
 
-Inicial (`architecture/standards.md` tal como se instala):
+Inicial (`knowledge/tech/standards.md` tal como se instala):
 
 ```md
 # Standards
@@ -93,7 +93,7 @@ riesgos de dependencias y despliegue, preguntas abiertas).
 > Kaddo **no** realiza escaneo de seguridad ni de vulnerabilidades. El artefacto
 > documenta inquietudes para humanos y agentes — no audita el código.
 
-Inicial (`architecture/security.md` tal como se instala):
+Inicial (`knowledge/tech/security.md` tal como se instala):
 
 ```md
 # Security Considerations
@@ -163,7 +163,7 @@ Ejemplo rellenado (ilustrativo):
 
 Lenguajes, frameworks, datos, infraestructura, tooling e incógnitas por confirmar.
 
-Inicial (`architecture/stack.md` tal como se instala):
+Inicial (`knowledge/tech/stack.md` tal como se instala):
 
 ```md
 # Stack

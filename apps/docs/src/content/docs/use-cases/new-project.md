@@ -10,7 +10,7 @@ decisions from day one — a lightweight knowledge layer that grows with the cod
 
 ```bash
 kaddo init          # state: new, team size, structure
-kaddo bootstrap     # initial knowledge base: Business → Architecture → Codebase → Development
+kaddo bootstrap     # initial knowledge base: Business → Product → Tech → Delivery
 kaddo context       # LLM context pack → .kaddo/context-pack.md
 kaddo add agents    # install agent prompt packs
 kaddo understand    # guided CLI → LLM handoff plan
@@ -40,9 +40,9 @@ Kaddo never calls an LLM — it prepares the context; your LLM does the thinking
 .kaddo/config.yml
 .kaddo/context-pack.md
 .kaddo/understand.md
-architecture/roadmap.md
-architecture/current-state.md
-architecture/work-items/*.md
+knowledge/delivery/roadmap.md
+knowledge/tech/current-state.md
+knowledge/delivery/work-items/*.md
 .kaddo/explain.md
 ```
 

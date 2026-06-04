@@ -23,7 +23,7 @@ flowchart TD
     E --> F[roadmap-agent]
   end
   C -->|context pack| D
-  F -->|architecture/roadmap.md| G
+  F -->|knowledge/delivery/roadmap.md| G
 ```
 
 ## CLI vs LLM
@@ -38,10 +38,10 @@ flowchart TD
 |---|---|---|---|---|---|
 | Scan | `kaddo scan` | — | repo files | scan baseline | `.kaddo/scan.json` |
 | Context | `kaddo context` | — | config + scan | context pack | `.kaddo/context-pack.md` |
-| Risks/unknowns | — | `legacy-agent` | context pack | risks + unknowns | `architecture/legacy/*.md` |
-| Architecture | — | `architecture-agent` | context + legacy | current state | `architecture/current-state.md` |
-| Roadmap | — | `roadmap-agent` | context + legacy + arch | safe roadmap | `architecture/roadmap.md` |
-| Work Item | `kaddo create --from roadmap` | — | roadmap | small Work Item | `architecture/work-items/WI-001-*.md` |
+| Risks/unknowns | — | `legacy-agent` | context pack | risks + unknowns | `knowledge/legacy/*.md` |
+| Architecture | — | `architecture-agent` | context + legacy | current state | `knowledge/tech/current-state.md` |
+| Roadmap | — | `roadmap-agent` | context + legacy + arch | safe roadmap | `knowledge/delivery/roadmap.md` |
+| Work Item | `kaddo create --from roadmap` | — | roadmap | small Work Item | `knowledge/delivery/work-items/WI-001-*.md` |
 | Ownership | `kaddo owners suggest` | — | Work Item + scan | `code:` globs | updated Work Item |
 | Guard | `kaddo guard` | — | git diff + ownership | drift FYI | terminal |
 
@@ -53,8 +53,8 @@ flowchart TD
 Use the Kaddo context pack with the legacy-agent instructions.
 Input:
 - .kaddo/context-pack.md
-- architecture/agents/legacy-agent.md
-Task: Generate architecture/legacy/{risks,unknowns,modernization-candidates}.md.
+- knowledge/agents/legacy-agent.md
+Task: Generate knowledge/legacy/{risks,unknowns,modernization-candidates}.md.
 Constraints: for each risk give blast radius + mitigation; phrase unknowns as questions
 with how-to-find-out; do not propose changes yet.
 ```
@@ -65,10 +65,10 @@ with how-to-find-out; do not propose changes yet.
 Use the context pack and legacy artifacts with the architecture-agent instructions.
 Input:
 - .kaddo/context-pack.md
-- architecture/legacy/risks.md
-- architecture/legacy/unknowns.md
-- architecture/agents/architecture-agent.md
-Task: Generate architecture/current-state.md.
+- knowledge/legacy/risks.md
+- knowledge/legacy/unknowns.md
+- knowledge/agents/architecture-agent.md
+Task: Generate knowledge/tech/current-state.md.
 Constraints: separate facts from assumptions; carry over the known risks and unknowns.
 ```
 
@@ -78,10 +78,10 @@ Constraints: separate facts from assumptions; carry over the known risks and unk
 Use the context pack, legacy artifacts and current-state with the roadmap-agent.
 Input:
 - .kaddo/context-pack.md
-- architecture/legacy/risks.md
-- architecture/current-state.md
-- architecture/agents/roadmap-agent.md
-Task: Generate architecture/roadmap.md prioritizing low-risk, observable first steps.
+- knowledge/legacy/risks.md
+- knowledge/tech/current-state.md
+- knowledge/agents/roadmap-agent.md
+Task: Generate knowledge/delivery/roadmap.md prioritizing low-risk, observable first steps.
 Constraints: respect the legacy risks; prefer additive, reversible changes.
 ```
 
@@ -94,12 +94,12 @@ should be reversible, additive, and answer an open question (here, UNK-001).
 ## Artifact chain
 
 ```txt
-.kaddo/scan.json → .kaddo/context-pack.md → architecture/legacy/*.md →
-architecture/current-state.md → architecture/roadmap.md → architecture/work-items/WI-001-*.md →
+.kaddo/scan.json → .kaddo/context-pack.md → knowledge/legacy/*.md →
+knowledge/tech/current-state.md → knowledge/delivery/roadmap.md → knowledge/delivery/work-items/WI-001-*.md →
 front-matter code: globs → kaddo guard
 ```
 
-See [`architecture/legacy/`](./architecture/legacy/) (legacy-agent) and
+See [`knowledge/legacy/`](./knowledge/legacy/) (legacy-agent) and
 [`sample-agent-outputs/current-state.md`](./sample-agent-outputs/current-state.md)
 (architecture-agent) for illustrative outputs.
 

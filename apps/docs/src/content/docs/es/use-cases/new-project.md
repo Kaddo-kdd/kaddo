@@ -10,7 +10,7 @@ dispersas desde el día uno — una capa de conocimiento ligera que crece con el
 
 ```bash
 kaddo init          # estado: new, tamaño de equipo, estructura
-kaddo bootstrap     # base de conocimiento inicial: Business → Architecture → Codebase → Development
+kaddo bootstrap     # base de conocimiento inicial: Business → Product → Tech → Delivery
 kaddo context       # context pack para el LLM → .kaddo/context-pack.md
 kaddo add agents    # instala los agent prompt packs
 kaddo understand    # plan guiado de handoff CLI → LLM
@@ -40,9 +40,9 @@ Kaddo nunca llama a un LLM — prepara el contexto; tu LLM hace el pensamiento.
 .kaddo/config.yml
 .kaddo/context-pack.md
 .kaddo/understand.md
-architecture/roadmap.md
-architecture/current-state.md
-architecture/work-items/*.md
+knowledge/delivery/roadmap.md
+knowledge/tech/current-state.md
+knowledge/delivery/work-items/*.md
 .kaddo/explain.md
 ```
 

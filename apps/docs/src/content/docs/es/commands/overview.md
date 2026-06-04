@@ -8,7 +8,7 @@ Comandos en orden del flujo de trabajo:
 | Comando | Qué hace |
 |---|---|
 | `kaddo init` | Inicializa Kaddo en el proyecto actual |
-| `kaddo bootstrap` | Construye la base de conocimiento inicial de un proyecto nuevo (Business → Architecture → Codebase → Development) |
+| `kaddo bootstrap` | Construye la base de conocimiento inicial de un proyecto nuevo (Business → Product → Tech → Delivery) |
 | `kaddo scan` | Detecta el stack del proyecto y sugiere dominios |
 | `kaddo context` | Genera un context pack para entregar a un agente LLM |
 | `kaddo add agents` | Instala los agent prompt packs para tu chat LLM |

@@ -21,7 +21,7 @@ flowchart TD
     D[roadmap-agent] --> E[architecture-agent]
   end
   C -->|.kaddo/context-pack.md| D
-  E -->|architecture/roadmap.md| F
+  E -->|knowledge/delivery/roadmap.md| F
 ```
 
 ## CLI vs LLM
@@ -36,10 +36,10 @@ flowchart TD
 |---|---|---|---|---|---|
 | Init | `kaddo init` | — | answers | project skeleton | `.kaddo/config.yml` |
 | Context | `kaddo context` | — | config | context pack | `.kaddo/context-pack.md` |
-| Agents | `kaddo add agents` | — | — | agent prompts | `architecture/agents/*.md` |
-| Roadmap | — | `roadmap-agent` | context pack | roadmap candidates | `architecture/roadmap.md` |
-| Architecture | — | `architecture-agent` | context + roadmap | baseline | `architecture/current-state.md` |
-| Work Item | `kaddo create --from roadmap` | — | roadmap | Work Item | `architecture/work-items/WI-001-*.md` |
+| Agents | `kaddo add agents` | — | — | agent prompts | `knowledge/agents/*.md` |
+| Roadmap | — | `roadmap-agent` | context pack | roadmap candidates | `knowledge/delivery/roadmap.md` |
+| Architecture | — | `architecture-agent` | context + roadmap | baseline | `knowledge/tech/current-state.md` |
+| Work Item | `kaddo create --from roadmap` | — | roadmap | Work Item | `knowledge/delivery/work-items/WI-001-*.md` |
 | Ownership | `kaddo owners suggest` | — | Work Item | `code:` globs | updated Work Item |
 | Guard | `kaddo guard` | — | git diff + ownership | drift FYI | terminal |
 
@@ -51,8 +51,8 @@ flowchart TD
 Use the Kaddo context pack with the roadmap-agent instructions.
 Input:
 - .kaddo/context-pack.md
-- architecture/agents/roadmap-agent.md
-Task: Generate architecture/roadmap.md with candidate initiatives and work items.
+- knowledge/agents/roadmap-agent.md
+Task: Generate knowledge/delivery/roadmap.md with candidate initiatives and work items.
 Constraints: candidates are suggestions, not decisions; include Knowledge Levels and open questions.
 ```
 
@@ -62,17 +62,17 @@ Constraints: candidates are suggestions, not decisions; include Knowledge Levels
 Use the Kaddo context pack and roadmap with the architecture-agent instructions.
 Input:
 - .kaddo/context-pack.md
-- architecture/roadmap.md
-- architecture/agents/architecture-agent.md
-Task: Generate architecture/current-state.md.
+- knowledge/delivery/roadmap.md
+- knowledge/agents/architecture-agent.md
+Task: Generate knowledge/tech/current-state.md.
 Constraints: separate facts from assumptions; list components, data and risks.
 ```
 
 ## Artifact chain
 
 ```txt
-.kaddo/config.yml → .kaddo/context-pack.md → architecture/roadmap.md →
-architecture/current-state.md → architecture/work-items/WI-001-*.md →
+.kaddo/config.yml → .kaddo/context-pack.md → knowledge/delivery/roadmap.md →
+knowledge/tech/current-state.md → knowledge/delivery/work-items/WI-001-*.md →
 front-matter code: globs → kaddo guard
 ```
 
@@ -81,7 +81,7 @@ illustrative roadmap-agent result.
 
 ## Validation checklist
 
-- [ ] `architecture/roadmap.md` lists candidate initiatives (`RM-*`) and work items.
+- [ ] `knowledge/delivery/roadmap.md` lists candidate initiatives (`RM-*`) and work items.
 - [ ] The first Work Item traces back to a roadmap candidate (`source_id`).
 - [ ] The Work Item declares `code:` globs so `kaddo guard` can match it.
 

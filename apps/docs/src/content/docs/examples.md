@@ -5,7 +5,7 @@ description: Real, reproducible demo repositories showing Kaddo applied to new, 
 
 These are not "let me explain the concept" pages — they are **demo repositories you
 can open and inspect**. Each lives under [`examples/`](https://github.com/Kaddo-kdd/kaddo/tree/main/examples)
-in the Kaddo repo, with committed `.kaddo/` and `architecture/` artifacts so you can
+in the Kaddo repo, with committed `.kaddo/` and `knowledge/` artifacts so you can
 see exactly what Kaddo produces before running anything.
 
 ## The four scenarios
@@ -25,12 +25,12 @@ see exactly what Kaddo produces before running anything.
   input/output table (CLI command / LLM agent / input / output / save as), copy/paste
   prompt handoffs and the artifact chain — so you can reproduce the loop without
   guessing which prompt to use.
-- committed sample files (`.kaddo/`, `architecture/`, `sample/`) so the artifacts
+- committed sample files (`.kaddo/`, `knowledge/`, `sample/`) so the artifacts
   are visible without running anything.
 
 ## What is real vs illustrative
 
-- **CLI artifacts** (`.kaddo/config.yml`, `architecture/work-items/*.md`, the
+- **CLI artifacts** (`.kaddo/config.yml`, `knowledge/delivery/work-items/*.md`, the
   roadmap skeleton, `.kaddo/modules.yml`, module folders) are exactly what `kaddo`
   writes.
 - **Agent outputs** (capabilities, current-state, filled-in module designs) are

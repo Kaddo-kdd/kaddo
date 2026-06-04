@@ -8,9 +8,9 @@ single module. They are not created during `kaddo init`; install them on demand 
 knowledge stays progressive.
 
 ```bash
-kaddo add standards   # → architecture/standards.md
-kaddo add security    # → architecture/security.md
-kaddo add stack       # → architecture/stack.md
+kaddo add standards   # → knowledge/tech/standards.md
+kaddo add security    # → knowledge/tech/security.md
+kaddo add stack       # → knowledge/tech/stack.md
 ```
 
 Each ships a thin starter template you refine with the matching operational agent
@@ -18,9 +18,9 @@ in your LLM, using `.kaddo/context-pack.md` as input.
 
 | Module | Artifact | Refine with |
 |---|---|---|
-| `standards` | `architecture/standards.md` | `standards-agent` |
-| `security` | `architecture/security.md` | `security-agent` |
-| `stack` | `architecture/stack.md` | `stack-agent` |
+| `standards` | `knowledge/tech/standards.md` | `standards-agent` |
+| `security` | `knowledge/tech/security.md` | `security-agent` |
+| `stack` | `knowledge/tech/stack.md` | `stack-agent` |
 
 In each section below, the **starter** block is exactly what the CLI installs; the
 **filled** block is an illustrative result after refining it with the agent in your LLM.
@@ -30,7 +30,7 @@ In each section below, the **starter** block is exactly what the CLI installs; t
 Lightweight coding, documentation and testing conventions plus a PR checklist —
 a handful of high-value rules beats a long policy.
 
-Starter (`architecture/standards.md` as installed):
+Starter (`knowledge/tech/standards.md` as installed):
 
 ```md
 # Standards
@@ -93,7 +93,7 @@ dependency and deployment risks, open questions).
 > Kaddo does **not** perform security scanning or vulnerability scanning. The
 > artifact documents concerns for humans and agents — it does not audit code.
 
-Starter (`architecture/security.md` as installed):
+Starter (`knowledge/tech/security.md` as installed):
 
 ```md
 # Security Considerations
@@ -163,7 +163,7 @@ Filled example (illustrative):
 
 Languages, frameworks, data, infrastructure, tooling and unknowns to confirm.
 
-Starter (`architecture/stack.md` as installed):
+Starter (`knowledge/tech/stack.md` as installed):
 
 ```md
 # Stack

@@ -104,9 +104,10 @@ export default defineConfig({
           translations: { es: 'Plantillas' },
           items: [
             { label: 'Overview', translations: { es: 'Resumen' }, slug: 'templates/overview' },
-            { label: 'Core', translations: { es: 'Core' }, slug: 'templates/core' },
             { label: 'Business', translations: { es: 'Negocio' }, slug: 'templates/business' },
-            { label: 'Architecture', translations: { es: 'Arquitectura' }, slug: 'templates/architecture' },
+            { label: 'Product', translations: { es: 'Producto' }, slug: 'templates/product' },
+            { label: 'Tech', translations: { es: 'Tech' }, slug: 'templates/tech' },
+            { label: 'Delivery', translations: { es: 'Delivery' }, slug: 'templates/delivery' },
             { label: 'Module', translations: { es: 'Módulo' }, slug: 'templates/module' },
             { label: 'Operations', translations: { es: 'Operaciones' }, slug: 'templates/operations' },
             { label: 'Legacy', translations: { es: 'Legacy' }, slug: 'templates/legacy' },

@@ -9,12 +9,12 @@ y el artefacto que produce.
 | # | Paso | Comando | Produce |
 |---|---|---|---|
 | 1 | Inicializar | `kaddo init` | `.kaddo/config.yml` |
-| 2 | Escanear | `kaddo scan` | `.kaddo/scan.json`, `architecture/inventory.md` |
+| 2 | Escanear | `kaddo scan` | `.kaddo/scan.json`, `knowledge/inventory.md` |
 | 3 | Context pack | `kaddo context` | `.kaddo/context-pack.md` |
-| 4 | Instalar agentes | `kaddo add agents` | `architecture/agents/*.md` |
+| 4 | Instalar agentes | `kaddo add agents` | `knowledge/agents/*.md` |
 | 5 | Understand | `kaddo understand` | `.kaddo/understand.md` |
-| 6 | Entender en el LLM | *(tu chat)* | `architecture/capabilities.md`, `architecture/current-state.md`, `architecture/roadmap.md` |
-| 7 | Crear desde roadmap | `kaddo create --from roadmap` | `architecture/work-items/*.md` |
+| 6 | Entender en el LLM | *(tu chat)* | `knowledge/product/capabilities.md`, `knowledge/tech/current-state.md`, `knowledge/delivery/roadmap.md` |
+| 7 | Crear desde roadmap | `kaddo create --from roadmap` | `knowledge/delivery/work-items/*.md` |
 | 8 | Declarar ownership | `kaddo owners suggest` | front matter `code:` actualizado |
 | 9 | Guard | `kaddo guard` | FYI de deriva sobre el `git diff` |
 | 10 | Explain | `kaddo explain` | `.kaddo/explain.md`, `.kaddo/explain.json` |
@@ -28,7 +28,7 @@ flowchart TD
     B --> B1[Stakeholders explican contexto]
     B --> B2[CLI aporta señales existentes]
     B2 --> B3[kaddo scan]
-    B3 --> B4[Inventario técnico<br/>.kaddo/scan.json<br/>architecture/inventory.md]
+    B3 --> B4[Inventario técnico<br/>.kaddo/scan.json<br/>knowledge/inventory.md]
 
     B1 --> C[Context Pack]
     B4 --> C
@@ -40,10 +40,10 @@ flowchart TD
     D --> D3[Legacy Agent si aplica]
     D --> D4[ADR Agent si aplica]
 
-    D1 --> E1[architecture/capabilities.md]
-    D2 --> E2[architecture/current-state.md]
-    D3 --> E3[architecture/legacy/risks.md<br/>unknowns.md<br/>modernization-candidates.md]
-    D4 --> E4[architecture/decision-candidates.md]
+    D1 --> E1[knowledge/product/capabilities.md]
+    D2 --> E2[knowledge/tech/current-state.md]
+    D3 --> E3[knowledge/legacy/risks.md<br/>unknowns.md<br/>modernization-candidates.md]
+    D4 --> E4[knowledge/tech/decision-candidates.md]
 
     E1 --> F[Priorización]
     E2 --> F
@@ -51,7 +51,7 @@ flowchart TD
     E4 --> F
 
     F --> F1[Roadmap Agent]
-    F1 --> F2[architecture/roadmap.md]
+    F1 --> F2[knowledge/delivery/roadmap.md]
     F2 --> F3[Roadmap initiatives<br/>RM-001, RM-002...]
     F3 --> F4[Candidate Work Items<br/>WI-CANDIDATE-001...]
 
@@ -75,7 +75,7 @@ flowchart TD
     H7 --> I
 
     I --> I1[kaddo create --from roadmap]
-    I1 --> I2[architecture/work-items/WI-*.md]
+    I1 --> I2[knowledge/delivery/work-items/WI-*.md]
 
     I2 --> J[Captura de conocimiento mínimo suficiente]
     J --> J1[Problema]

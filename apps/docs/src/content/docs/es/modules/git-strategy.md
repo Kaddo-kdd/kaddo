@@ -9,7 +9,7 @@ kaddo add git-strategy
 
 Instala dos archivos:
 
-- `architecture/git-strategy.md` — la estrategia legible para humanos.
+- `knowledge/tech/git-strategy.md` — la estrategia legible para humanos.
 - `.kaddo/git.yml` — el descriptor procesable por máquina.
 
 ## Estrategia por defecto

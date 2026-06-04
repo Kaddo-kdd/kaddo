@@ -44,10 +44,10 @@ El flujo recomendado se adapta al estado del proyecto definido en `kaddo init`:
 
 Cada paso se mapea a una salida esperada, por ejemplo:
 
-- `capability-agent` → `architecture/capabilities.md`
-- `architecture-agent` → `architecture/current-state.md`
-- `roadmap-agent` → `architecture/roadmap.md`
-- `legacy-agent` → `architecture/legacy/risks.md`
+- `capability-agent` → `knowledge/product/capabilities.md`
+- `architecture-agent` → `knowledge/tech/current-state.md`
+- `roadmap-agent` → `knowledge/delivery/roadmap.md`
+- `legacy-agent` → `knowledge/legacy/risks.md`
 
 ## Funciona aunque falte contexto
 

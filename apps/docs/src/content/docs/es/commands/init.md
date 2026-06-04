@@ -7,10 +7,10 @@ description: Inicializa Kaddo en el proyecto actual.
 kaddo init
 ```
 
-Crea el árbol de conocimiento `architecture/` y `.kaddo/config.yml`.
+Crea el árbol de conocimiento `knowledge/` y `.kaddo/config.yml`.
 
 ```
-architecture/
+knowledge/
   knowledge.md      ← estado actual del producto
   roadmap.md        ← intenciones y prioridades
   work-items/       ← un archivo por work item

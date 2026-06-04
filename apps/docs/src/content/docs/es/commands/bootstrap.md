@@ -8,45 +8,44 @@ kaddo bootstrap
 ```
 
 Para **proyectos nuevos**, `kaddo bootstrap` convierte una idea inicial en conocimiento
-estructurado **antes** de escribir código. Genera artefactos de conocimiento desde el
-template registry a lo largo de las cuatro capas base de Kaddo:
+estructurado **antes** de escribir código. Genera la base **mínima** de las cuatro capas
+macro del proyecto desde el template registry:
 
 ```txt
-Business → Architecture → Codebase → Development
+Business → Product → Tech → Delivery
 ```
 
 `bootstrap` es determinístico: nunca llama a un LLM, nunca genera código fuente y nunca
 decide la arquitectura. Crea **artefactos iniciales** (con `TBD`, supuestos y preguntas
-abiertas) que luego refinas con los agentes de bootstrap en tu propio LLM.
+abiertas) que luego refinas con los agentes de bootstrap en tu propio LLM. Genera solo la
+base mínima — **Delivery** (roadmap, work items) y las **decisiones** emergen después, vía
+agentes y trabajo real.
 
-## Las cuatro capas
+## Las capas macro
 
 ```mermaid
 flowchart TD
     A[kaddo init] --> B[kaddo bootstrap]
     B --> C[Business]
-    C --> C1[product-brief · problem · users · value-proposition]
-    C --> C2[business-rules · constraints · glossary]
-    B --> D[Architecture]
-    D --> D1[capabilities · quality-attributes · stack]
-    D --> D2[current-state · decision-candidates · ADR-0001]
-    B --> E[Codebase]
-    E --> E1[codebase-foundation · standards · git-strategy]
-    B --> F[Development]
-    F --> F1[roadmap · work-items/]
-    F1 --> G[kaddo context → agentes → create --from roadmap]
+    C --> C1[problem · users · value-proposition · constraints · business-rules]
+    B --> D[Product]
+    D --> D1[product-brief · capabilities]
+    B --> E[Tech]
+    E --> E1[codebase]
+    E1 --> G[kaddo context → agentes → roadmap → create --from roadmap]
+    G -.después.-> H[Delivery: roadmap · work-items/]
 ```
 
 ## Qué genera
 
 | Capa | Artefactos |
 |---|---|
-| **Business** | `architecture/business/{product-brief, problem, users, value-proposition, business-rules, constraints, glossary}.md` |
-| **Architecture** | `architecture/{capabilities, quality-attributes, stack, current-state, decision-candidates}.md` + `architecture/adrs/ADR-0001-initial-architecture.md` |
-| **Codebase** | `architecture/{codebase-foundation, standards, git-strategy}.md` |
-| **Development** | `architecture/roadmap.md` + `architecture/work-items/` |
+| **Business** | `knowledge/business/{problem, users, value-proposition, constraints, business-rules}.md` |
+| **Product** | `knowledge/product/{product-brief, capabilities}.md` |
+| **Tech** | `knowledge/tech/codebase.md` |
 
-Más `architecture/bootstrap-summary.md` — un índice de lo creado y el siguiente paso.
+**No** genera `knowledge/delivery/roadmap.md`, `knowledge/delivery/work-items/` ni
+`knowledge/tech/decisions/` — esos llegan después, vía agentes y evolución del proyecto.
 
 ## Comportamiento
 
@@ -59,13 +58,13 @@ Más `architecture/bootstrap-summary.md` — un índice de lo creado y el siguie
 
 ```bash
 kaddo context        # prepara el context pack para el LLM
-kaddo add agents     # instala business-agent, bootstrap-agent, codebase-foundation-agent
+kaddo add agents     # instala business-agent, bootstrap-agent, codebase-agent
 kaddo understand     # handoff guiado
 # refina los artefactos en tu LLM, luego:
 kaddo create --from roadmap
 ```
 
 Los tres agentes de bootstrap — `business-agent`, `bootstrap-agent` y
-`codebase-foundation-agent` — convierten estos artefactos iniciales en definición real.
+`codebase-agent` — convierten estos artefactos iniciales en definición real.
 Kaddo prepara la estructura; tu LLM y tu equipo aportan el contenido. Kaddo nunca inventa
 hechos de negocio ni escribe código.

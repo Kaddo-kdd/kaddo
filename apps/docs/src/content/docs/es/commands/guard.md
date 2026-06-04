@@ -73,7 +73,7 @@ Checking mapped modules from .kaddo/modules.yml.
   Modules checked: 3 · skipped: 1
   ↷ skipped worker (../worker) — not a git repository
 
-  ⚠ Possible knowledge drift: architecture/modules/storefront-web/module-design.md
+  ⚠ Possible knowledge drift: knowledge/tech/modules/storefront-web/module-design.md
     Changed code matching this artifact:
       - ../frontend/src/checkout/checkout.ts
     Declared ownership:

@@ -62,12 +62,13 @@ kaddo init
 
 Creates:
 ```
-architecture/
-  knowledge.md      ← current state of the product
-  roadmap.md        ← intentions and priorities
-  work-items/       ← one file per work item
+knowledge/
+  knowledge.md             ← current state of the product
+  delivery/
+    roadmap.md             ← intentions and priorities
+    work-items/            ← one file per work item
 .kaddo/
-  config.yml        ← project config
+  config.yml               ← project config
 ```
 
 ---
@@ -85,7 +86,7 @@ Detects language, framework, package manager, code dirs, migration dirs, contrac
 It also persists a reusable baseline of the project:
 
 - **`.kaddo/scan.json`** — structured, machine-readable (for the CLI and future context-pack commands).
-- **`architecture/inventory.md`** — human-readable inventory you can paste into an LLM chat.
+- **`knowledge/inventory.md`** — human-readable inventory you can paste into an LLM chat.
 
 Scan detects signals and asks confirmation questions — it never claims to understand your business capabilities or architecture.
 
@@ -150,7 +151,7 @@ kaddo context
 ```
 
 Reads existing Kaddo artifacts — `.kaddo/config.yml`, `.kaddo/scan.json`,
-`architecture/inventory.md`, `architecture/knowledge.md`, `architecture/roadmap.md` and
+`knowledge/inventory.md`, `knowledge/knowledge.md`, `knowledge/delivery/roadmap.md` and
 work-item front matter — and writes two files:
 
 - **`.kaddo/context-pack.md`** — compact, LLM-friendly markdown to paste into a chat.
@@ -181,11 +182,11 @@ chat** (Claude, ChatGPT, Cursor, Copilot, Windsurf…). Kaddo does not execute t
 kaddo add agents
 ```
 
-Creates `architecture/agents/` with:
+Creates `knowledge/agents/` with:
 
-- `capability-agent.md` — extract/propose system capabilities → `architecture/capabilities.md`
-- `architecture-agent.md` — reconstruct the architecture baseline → `architecture/current-state.md`
-- `roadmap-agent.md` — propose roadmap candidates → `architecture/roadmap.md`
+- `capability-agent.md` — extract/propose system capabilities → `knowledge/product/capabilities.md`
+- `architecture-agent.md` — reconstruct the architecture baseline → `knowledge/tech/current-state.md`
+- `roadmap-agent.md` — propose roadmap candidates → `knowledge/delivery/roadmap.md`
 - `legacy-agent.md` — surface risks/unknowns before changing legacy code
 - `adr-agent.md` — propose candidate architecture decisions
 
@@ -198,7 +199,7 @@ where to save the result, and a quality checklist. The primary input is always
 ```bash
 kaddo scan          # technical signals
 kaddo context       # → .kaddo/context-pack.md
-kaddo add agents    # → architecture/agents/*.md
+kaddo add agents    # → knowledge/agents/*.md
 # then: paste context-pack.md + an agent prompt into your LLM chat
 ```
 
@@ -216,10 +217,10 @@ add them only when you need them.
 #### Roadmap agent output
 
 The `roadmap-agent` is the bridge between understanding and execution. In your LLM chat it
-produces a **structured** `architecture/roadmap.md`:
+produces a **structured** `knowledge/delivery/roadmap.md`:
 
 ```txt
-context pack → roadmap agent → architecture/roadmap.md → kaddo create --from roadmap
+context pack → roadmap agent → knowledge/delivery/roadmap.md → kaddo create --from roadmap
 ```
 
 Each initiative (`RM-001`, …) includes a goal, related capabilities, impact, risk, a
@@ -273,11 +274,11 @@ kaddo create spike     # K3: 4 questions
 **From a roadmap candidate:**
 
 ```bash
-kaddo create --from roadmap          # pick a candidate from architecture/roadmap.md
+kaddo create --from roadmap          # pick a candidate from knowledge/delivery/roadmap.md
 kaddo create feature --from roadmap  # same, with a default type
 ```
 
-Reads `architecture/roadmap.md`, lets you select a candidate work item (`WI-CANDIDATE-001`,
+Reads `knowledge/delivery/roadmap.md`, lets you select a candidate work item (`WI-CANDIDATE-001`,
 …), and prefills the Work Item from the roadmap (title, type, suggested Knowledge Level,
 expected value, notes, related capabilities/impact/risk/dependencies and the parent
 initiative). It asks only for the required fields the candidate does not provide and keeps
@@ -426,10 +427,10 @@ create --from roadmap → owners → guard → explain`.
 | v2.4–2.5 | Modules: `contracts`, `capabilities`, `guard-advanced`, `agents`, `skills` |
 | v2.6 | Knowledge loop: `context`, `understand`, `add agents`, roadmap output, `create --from roadmap`, Guard Lite end-to-end, `owners suggest`, project `explain` |
 | v2.6 | Multirepo modules (`modules map/list`), global `standards`/`security`/`stack`/`git-strategy` artifacts, six operational agents |
-| v2.6 | Central template registry (23 templates, five categories) |
+| v2.6 | Central template registry (23 templates, layer categories (business/product/tech/delivery)) |
 | v2.6 | Demo example repositories, prompt flows and a diagram-first Visual Guide (docs) |
 | v2.7 | Multirepo hardening: module artifacts from the template registry, module-aware `context`/`explain`, opt-in `guard --workspace` |
-| v2.8 | `kaddo bootstrap` for new projects (Business → Architecture → Codebase → Development); business templates + bootstrap agents |
+| v2.8 | `kaddo bootstrap` for new projects (Business → Product → Tech → Delivery); business templates + bootstrap agents |
 
 **Optional modules (installed with `kaddo add`):**
 

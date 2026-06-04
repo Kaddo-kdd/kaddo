@@ -107,7 +107,7 @@ construye conocimiento de forma progresiva antes de que evoluciones el código.
 
 ```bash
 kaddo init          # estado: new | pre-ai | legacy, tamaño de equipo, estructura
-kaddo bootstrap     # proyectos nuevos: base de conocimiento inicial (Business → Architecture → Codebase → Development)
+kaddo bootstrap     # proyectos nuevos: base de conocimiento inicial (Business → Product → Tech → Delivery)
 kaddo scan          # inventario técnico determinístico
 kaddo context       # context pack para el handoff al LLM
 kaddo add agents    # instala los agent prompt packs
@@ -124,7 +124,7 @@ El CLI prepara el contexto; tu LLM lo interpreta. Kaddo nunca llama a un LLM por
 ## Míralo en acción
 
 Cuatro repositorios de demostración reproducibles vienen con artefactos `.kaddo/` y
-`architecture/` ya versionados — abre uno e inspecciona exactamente lo que produce
+`knowledge/` ya versionados — abre uno e inspecciona exactamente lo que produce
 Kaddo. Cada uno incluye un `prompt-flow.md` con un diagrama Mermaid, el reparto
 CLI↔LLM y handoffs de prompts para copiar/pegar según su escenario.
 
@@ -162,7 +162,7 @@ kaddo add standards|security|stack|git-strategy   # artefactos globales del sist
 <CardGrid>
   <Card title="Conocimiento por módulo" icon="document">
     `modules map` genera artefactos basados en plantillas (`module-design`, `stack`,
-    `security`, `standards`) bajo `architecture/modules/<id>/`, con front matter y globs
+    `security`, `standards`) bajo `knowledge/tech/modules/<id>/`, con front matter y globs
     `code:` de ownership.
   </Card>
   <Card title="Context y explain module-aware" icon="list-format">

@@ -38,11 +38,11 @@ your business capabilities. That interpretation happens in the LLM.
 
 ```txt
 .kaddo/scan.json
-architecture/inventory.md
-architecture/capabilities.md
-architecture/current-state.md
-architecture/roadmap.md
-architecture/work-items/*.md
+knowledge/inventory.md
+knowledge/product/capabilities.md
+knowledge/tech/current-state.md
+knowledge/delivery/roadmap.md
+knowledge/delivery/work-items/*.md
 .kaddo/explain.md
 ```
 

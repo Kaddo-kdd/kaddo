@@ -7,10 +7,10 @@ description: Initialize Kaddo in the current project.
 kaddo init
 ```
 
-Creates the `architecture/` knowledge tree and `.kaddo/config.yml`.
+Creates the `knowledge/` knowledge tree and `.kaddo/config.yml`.
 
 ```
-architecture/
+knowledge/
   knowledge.md      ← current state of the product
   roadmap.md        ← intentions and priorities
   work-items/       ← one file per work item

@@ -16,7 +16,7 @@ Los módulos opcionales agregan más tipos (`adr`, `rfc`, `incident`, `migration
 
 ## Crear desde un candidato del roadmap
 
-Cuando el roadmap-agent ya produjo `architecture/roadmap.md`, puedes convertir un candidate
+Cuando el roadmap-agent ya produjo `knowledge/delivery/roadmap.md`, puedes convertir un candidate
 work item en un Work Item real sin volver a escribir su contexto:
 
 ```bash
@@ -25,7 +25,7 @@ kaddo create --from roadmap
 kaddo create feature --from roadmap
 ```
 
-Kaddo lee `architecture/roadmap.md`, te deja seleccionar un candidato (`WI-CANDIDATE-001`, …)
+Kaddo lee `knowledge/delivery/roadmap.md`, te deja seleccionar un candidato (`WI-CANDIDATE-001`, …)
 y prellena el Work Item desde el roadmap: título, tipo, Knowledge Level sugerido, valor
 esperado, notas, capabilities/impacto/riesgo/dependencias relacionadas y la iniciativa padre.
 Solo pregunta los campos requeridos que el candidato no provee.
@@ -48,7 +48,7 @@ Esto cierra el loop de Kaddo: `scan → context → agents → roadmap → work 
 genera en tu chat LLM (nunca en el CLI), y sus candidatos no son Work Items hasta que los
 creas aquí.
 
-> Si falta `architecture/roadmap.md`, o no contiene candidatos en el formato del Kaddo
+> Si falta `knowledge/delivery/roadmap.md`, o no contiene candidatos en el formato del Kaddo
 > Roadmap Agent, Kaddo muestra un mensaje útil en lugar de crear un Work Item vacío.
 
 ## Activar Guard Lite

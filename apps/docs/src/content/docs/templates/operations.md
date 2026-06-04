@@ -8,12 +8,12 @@ Global, system-wide operational artifacts. Install the documented ones with
 
 | Template | Purpose | Output path | Command | Agent |
 |---|---|---|---|---|
-| Security | Global security considerations (no scanning) | `architecture/security.md` | `kaddo add security` | `security-agent` |
-| Standards | Lightweight coding/docs/testing standards | `architecture/standards.md` | `kaddo add standards` | `standards-agent` |
-| Stack | System-wide stack | `architecture/stack.md` | `kaddo add stack` | `stack-agent` |
-| Git Strategy | Branching, commits, tagging | `architecture/git-strategy.md` | `kaddo add git-strategy` | `git-strategy-agent` |
-| Incident | Post-incident record | `architecture/incidents/` | `kaddo add incident` | — |
-| Runbook | Recurring operational task | `architecture/runbooks/` | — | — |
+| Security | Global security considerations (no scanning) | `knowledge/tech/security.md` | `kaddo add security` | `security-agent` |
+| Standards | Lightweight coding/docs/testing standards | `knowledge/tech/standards.md` | `kaddo add standards` | `standards-agent` |
+| Stack | System-wide stack | `knowledge/tech/stack.md` | `kaddo add stack` | `stack-agent` |
+| Git Strategy | Branching, commits, tagging | `knowledge/tech/git-strategy.md` | `kaddo add git-strategy` | `git-strategy-agent` |
+| Incident | Post-incident record | `knowledge/incidents/` | `kaddo add incident` | — |
+| Runbook | Recurring operational task | `knowledge/runbooks/` | — | — |
 
 ## Security
 

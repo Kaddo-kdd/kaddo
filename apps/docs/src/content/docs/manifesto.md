@@ -32,9 +32,16 @@ The goal is not to write more documentation. The goal is to preserve the minimum
 
 Beneath that per-change cycle, Kaddo frames the project as a whole through four macro layers:
 
-**Business → Architecture → Codebase → Development**
+**Business → Product → Tech → Delivery**
 
-This is the macro concept that governs the project end to end: intent comes before structure, structure comes before code, and code comes before evolution. Knowledge flows down these layers, and each layer stays connected to the one above it — so architecture answers to business, the codebase answers to architecture, and development answers to all three.
+This is the macro concept that governs the project end to end. Each layer answers one question and stays connected to the one above it:
+
+- **Business** — _why does it exist?_ problem, users, constraints, business rules, value.
+- **Product** — _what do we build?_ product brief, capabilities, scope, goals.
+- **Tech** — _how do we build it?_ codebase, decisions, modules, stack, standards.
+- **Delivery** — _how do we evolve it?_ roadmap, work items, ownership, learning.
+
+Knowledge flows down these layers — so product answers to business, tech answers to product, and delivery answers to all three. Physically, the knowledge repository mirrors them: `knowledge/business/`, `knowledge/product/`, `knowledge/tech/`, `knowledge/delivery/`.
 
 Every project state enters and traverses these layers differently:
 
@@ -124,7 +131,7 @@ Not everything must be a vertical slice, not everything must be an ADR, and not 
 
 ## Knowledge Repository
 
-Kaddo proposes that each project have a knowledge repository. It can live inside the code repository itself or in a dedicated architecture repository, and it can include files like `knowledge.md`, `roadmap.md`, `architecture/`, `work-items/`, `contracts/`, `capabilities/`, `incidents/`, and `.kaddo/config.yml`.
+Kaddo proposes that each project have a knowledge repository. It can live inside the code repository itself or in a dedicated architecture repository, and it can include files like `knowledge.md`, `roadmap.md`, `knowledge/`, `work-items/`, `contracts/`, `capabilities/`, `incidents/`, and `.kaddo/config.yml`.
 
 The idea is not to create a pretty folder. The idea is to build a living source that explains what the product is, how it is organized, what decisions shaped it, what capabilities it has, what contracts it exposes, what risks exist, and what knowledge must be updated when the system changes.
 
@@ -222,7 +229,7 @@ In a new project, Guard Lite can stay silent until the first artifact with decla
 
 The rule is `touch the domain, improve the graph`: when you touch a domain, you improve the knowledge of that domain. Not before, not all at once, not as punishment. The graph grows with real work.
 
-For new projects, Kaddo offers a guided bootstrap so a project can be born with context: it captures the minimum sufficient knowledge across the base layers — `Business → Architecture → Codebase → Development` — before code is written, without generating code or deciding the architecture automatically.
+For new projects, Kaddo offers a guided bootstrap so a project can be born with context: it captures the minimum sufficient knowledge across the base layers — `Business → Product → Tech → Delivery` — before code is written, without generating code or deciding the architecture automatically.
 
 ## Quality Gates
 
@@ -258,7 +265,7 @@ It can detect stack, framework, dependencies, project structure, migration folde
 Expected commands:
 
 - `kaddo init` — Initializes the base structure.
-- `kaddo bootstrap` — For new projects: builds the initial knowledge base across Business → Architecture → Codebase → Development.
+- `kaddo bootstrap` — For new projects: builds the initial knowledge base across Business → Product → Tech → Delivery.
 - `kaddo scan` — Detects structure, stack, and possible domains.
 - `kaddo create` — Creates Work Items or artifacts.
 - `kaddo guard` — Checks changes against declared ownership.

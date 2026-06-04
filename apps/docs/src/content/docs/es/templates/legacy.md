@@ -7,9 +7,9 @@ Para trabajar con seguridad sobre sistemas legacy. Refina con el `legacy-agent`.
 
 | Plantilla | Propósito | Ruta | Agente |
 |---|---|---|---|
-| Legacy Risks | Áreas de alto riesgo antes de tocar código | `architecture/legacy/risks.md` | `legacy-agent` |
-| Legacy Unknowns | Lo que aún no se entiende | `architecture/legacy/unknowns.md` | `legacy-agent` |
-| Modernization Candidates | Candidatos de modernización | `architecture/legacy/modernization-candidates.md` | — |
+| Legacy Risks | Áreas de alto riesgo antes de tocar código | `knowledge/legacy/risks.md` | `legacy-agent` |
+| Legacy Unknowns | Lo que aún no se entiende | `knowledge/legacy/unknowns.md` | `legacy-agent` |
+| Modernization Candidates | Candidatos de modernización | `knowledge/legacy/modernization-candidates.md` | — |
 
 ## Legacy Risks
 

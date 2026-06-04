@@ -21,7 +21,7 @@ flowchart TD
     E --> F[security-agent]
     F --> G[standards-agent]
   end
-  B -->|scaffolds architecture/modules/<id>/| D
+  B -->|scaffolds knowledge/tech/modules/<id>/| D
 ```
 
 ## CLI vs LLM
@@ -36,12 +36,12 @@ flowchart TD
 | Step | CLI command | LLM agent | Input | Output | Save as |
 |---|---|---|---|---|---|
 | Init | `kaddo init` | — | answers (structure: multirepo) | architecture repo | `.kaddo/config.yml` |
-| Map module | `kaddo modules map` | — | name, repo path, type, tech | module entry + scaffolds | `.kaddo/modules.yml` + `architecture/modules/<id>/*` |
+| Map module | `kaddo modules map` | — | name, repo path, type, tech | module entry + scaffolds | `.kaddo/modules.yml` + `knowledge/tech/modules/<id>/*` |
 | List | `kaddo modules list` | — | descriptor | module table | terminal |
-| Module design | — | `module-design-agent` | context pack + module repo | design | `architecture/modules/<id>/module-design.md` |
-| Module stack | — | `stack-agent` | module repo | stack | `architecture/modules/<id>/stack.md` |
-| Module security | — | `security-agent` | module repo | security notes | `architecture/modules/<id>/security.md` |
-| Module standards | — | `standards-agent` | module repo | standards | `architecture/modules/<id>/standards.md` |
+| Module design | — | `module-design-agent` | context pack + module repo | design | `knowledge/tech/modules/<id>/module-design.md` |
+| Module stack | — | `stack-agent` | module repo | stack | `knowledge/tech/modules/<id>/stack.md` |
+| Module security | — | `security-agent` | module repo | security notes | `knowledge/tech/modules/<id>/security.md` |
+| Module standards | — | `standards-agent` | module repo | standards | `knowledge/tech/modules/<id>/standards.md` |
 
 ## Prompt handoffs
 
@@ -51,9 +51,9 @@ flowchart TD
 Use the Kaddo context pack with the module-design-agent instructions.
 Input:
 - .kaddo/context-pack.md
-- architecture/agents/module-design-agent.md
+- knowledge/agents/module-design-agent.md
 - the module's repository (e.g. ../frontend)
-Task: Fill in architecture/modules/storefront-web/module-design.md.
+Task: Fill in knowledge/tech/modules/storefront-web/module-design.md.
 Constraints: state purpose, boundaries (in/out), inputs/outputs, dependencies on other modules.
 ```
 
@@ -63,8 +63,8 @@ Constraints: state purpose, boundaries (in/out), inputs/outputs, dependencies on
 Use the module repo with the stack-agent / security-agent / standards-agent instructions.
 Input:
 - the module's repository
-- architecture/agents/{stack,security,standards}-agent.md
-Task: Fill in architecture/modules/<id>/{stack,security,standards}.md.
+- knowledge/agents/{stack,security,standards}-agent.md
+Task: Fill in knowledge/tech/modules/<id>/{stack,security,standards}.md.
 Constraints: document what is observed; mark unknowns; no security scanning.
 ```
 
@@ -72,13 +72,13 @@ Constraints: document what is observed; mark unknowns; no security scanning.
 
 ```txt
 .kaddo/config.yml (multirepo) → kaddo modules map → .kaddo/modules.yml
-  → architecture/modules/<id>/module-design.md
-  → architecture/modules/<id>/{stack,security,standards}.md
+  → knowledge/tech/modules/<id>/module-design.md
+  → knowledge/tech/modules/<id>/{stack,security,standards}.md
 ```
 
 See [`architecture-repo/.kaddo/modules.yml`](./architecture-repo/.kaddo/modules.yml)
 and the filled-in
-[`architecture-repo/architecture/modules/`](./architecture-repo/architecture/modules/)
+[`architecture-repo/knowledge/tech/modules/`](./architecture-repo/knowledge/tech/modules/)
 designs for illustrative results.
 
 ## Validation checklist

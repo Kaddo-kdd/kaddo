@@ -11,12 +11,12 @@ existing project for AI-assisted evolution** — and includes a **Guard drift de
 
 ```bash
 kaddo init
-kaddo scan                       # → .kaddo/scan.json, architecture/inventory.md
+kaddo scan                       # → .kaddo/scan.json, knowledge/inventory.md
 kaddo context                    # → .kaddo/context-pack.md
 kaddo add agents
 kaddo understand
 # in your LLM chat: capability-agent → architecture-agent → roadmap-agent
-kaddo create --from roadmap      # → architecture/work-items/WI-001-*.md
+kaddo create --from roadmap      # → knowledge/delivery/work-items/WI-001-*.md
 kaddo owners suggest             # declare code: globs
 kaddo guard                      # detect knowledge drift
 kaddo explain
@@ -53,11 +53,11 @@ Guard is **silent** until an artifact declares `code:` ownership — no noise on
 
 | File | Who wrote it |
 |---|---|
-| `.kaddo/scan.json`, `architecture/inventory.md` | CLI (`scan`) |
+| `.kaddo/scan.json`, `knowledge/inventory.md` | CLI (`scan`) |
 | `sample-agent-outputs/capabilities.md` | **Illustrative** LLM output |
 | `sample-agent-outputs/current-state.md` | **Illustrative** LLM output |
 | `sample-agent-outputs/roadmap.md` | **Illustrative** LLM output |
-| `architecture/work-items/WI-001-loyalty-tiers.md` | CLI (`create --from roadmap`) |
+| `knowledge/delivery/work-items/WI-001-loyalty-tiers.md` | CLI (`create --from roadmap`) |
 
 See [`expected-flow.md`](./expected-flow.md), and
 [`prompt-flow.md`](./prompt-flow.md) for the prompts, diagram and Guard drift demo.

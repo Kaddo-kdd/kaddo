@@ -13,10 +13,10 @@ modules:
     code:
       - ../frontend/**
     docs:
-      moduleDesign: architecture/modules/storefront-web/module-design.md
-      stack: architecture/modules/storefront-web/stack.md
-      security: architecture/modules/storefront-web/security.md
-      standards: architecture/modules/storefront-web/standards.md
+      moduleDesign: knowledge/tech/modules/storefront-web/module-design.md
+      stack: knowledge/tech/modules/storefront-web/stack.md
+      security: knowledge/tech/modules/storefront-web/security.md
+      standards: knowledge/tech/modules/storefront-web/standards.md
   - id: orders-api
     name: Orders API
     repoPath: ../backend
@@ -30,10 +30,10 @@ modules:
     code:
       - ../backend/**
     docs:
-      moduleDesign: architecture/modules/orders-api/module-design.md
-      stack: architecture/modules/orders-api/stack.md
-      security: architecture/modules/orders-api/security.md
-      standards: architecture/modules/orders-api/standards.md
+      moduleDesign: knowledge/tech/modules/orders-api/module-design.md
+      stack: knowledge/tech/modules/orders-api/stack.md
+      security: knowledge/tech/modules/orders-api/security.md
+      standards: knowledge/tech/modules/orders-api/standards.md
   - id: fulfillment-worker
     name: Fulfillment Worker
     repoPath: ../worker
@@ -47,10 +47,10 @@ modules:
     code:
       - ../worker/**
     docs:
-      moduleDesign: architecture/modules/fulfillment-worker/module-design.md
-      stack: architecture/modules/fulfillment-worker/stack.md
-      security: architecture/modules/fulfillment-worker/security.md
-      standards: architecture/modules/fulfillment-worker/standards.md
+      moduleDesign: knowledge/tech/modules/fulfillment-worker/module-design.md
+      stack: knowledge/tech/modules/fulfillment-worker/stack.md
+      security: knowledge/tech/modules/fulfillment-worker/security.md
+      standards: knowledge/tech/modules/fulfillment-worker/standards.md
   - id: platform-infra
     name: Platform Infra
     repoPath: ../infra
@@ -64,7 +64,7 @@ modules:
     code:
       - ../infra/**
     docs:
-      moduleDesign: architecture/modules/platform-infra/module-design.md
-      stack: architecture/modules/platform-infra/stack.md
-      security: architecture/modules/platform-infra/security.md
-      standards: architecture/modules/platform-infra/standards.md
+      moduleDesign: knowledge/tech/modules/platform-infra/module-design.md
+      stack: knowledge/tech/modules/platform-infra/stack.md
+      security: knowledge/tech/modules/platform-infra/security.md
+      standards: knowledge/tech/modules/platform-infra/standards.md

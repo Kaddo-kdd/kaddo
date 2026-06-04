@@ -32,9 +32,10 @@ structure from scratch. They live in a central registry
 
 ## Categories
 
-- [Core templates](/templates/core/) — work item, roadmap, capabilities, knowledge.
-- [Business templates](/templates/business/) — product brief, problem, users, value proposition, rules, constraints, glossary.
-- [Architecture templates](/templates/architecture/) — current state, notes, decision candidates, quality attributes, codebase foundation, ADR.
+- [Business templates](/templates/business/) — problem, users, value proposition, rules, constraints, glossary.
+- [Product templates](/templates/product/) — product brief, capabilities.
+- [Tech templates](/templates/tech/) — codebase, current state, notes, decision candidates, quality attributes, ADR.
+- [Delivery templates](/templates/delivery/) — work item, roadmap.
 - [Module templates](/templates/module/) — per-repo design, stack, security, standards, ADR.
 - [Operations templates](/templates/operations/) — security, standards, stack, git strategy, incident, runbook.
 - [Legacy templates](/templates/legacy/) — risks, unknowns, modernization candidates.

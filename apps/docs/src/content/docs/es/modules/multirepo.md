@@ -9,12 +9,12 @@ sistema.
 
 ## Dos niveles de descriptor
 
-- **`kaddo module --init`** escribe `architecture/module.yml` — un repo que se
+- **`kaddo module --init`** escribe `knowledge/module.yml` — un repo que se
   describe a *sí mismo* como módulo (nombre, dominios, contratos que expone/consume).
   Úsalo dentro de un repo secundario.
 - **`kaddo modules map`** escribe `.kaddo/modules.yml` en el **repo de arquitectura** —
   la vista de sistema, donde cada repo secundario se registra y recibe una estructura
-  de conocimiento bajo `architecture/modules/<id>/`.
+  de conocimiento bajo `knowledge/tech/modules/<id>/`.
 
 ```bash
 kaddo modules map    # registrar un repo secundario como módulo (interactivo)
@@ -34,7 +34,7 @@ relacionadas. Luego:
    (los archivos existentes **nunca** se sobrescriben — se reportan como conservados):
 
 ```
-architecture/modules/<id>/
+knowledge/tech/modules/<id>/
   module-design.md
   stack.md
   security.md
@@ -86,7 +86,7 @@ Resultado:
 
 ```
 .kaddo/modules.yml
-architecture/modules/
+knowledge/tech/modules/
   frontend/{module-design,stack,security,standards}.md  diagrams/  adrs/
   backend/ {module-design,stack,security,standards}.md  diagrams/  adrs/
   infra/   {module-design,stack,security,standards}.md  diagrams/  adrs/
@@ -101,10 +101,10 @@ de módulo se mantienen consistentes con el resto de Kaddo.
 ## Artefactos globales vs por módulo
 
 - **Globales** (todo el sistema): `kaddo add standards|security|stack|git-strategy`
-  escribe `architecture/<tema>.md` una vez para el sistema. Ver
+  escribe `knowledge/tech/<tema>.md` una vez para el sistema. Ver
   [Estándares, seguridad y stack](/es/modules/global-docs/) y
   [Estrategia de Git](/es/modules/git-strategy/).
-- **Por módulo** (por repo): `architecture/modules/<id>/*.md`, generados por
+- **Por módulo** (por repo): `knowledge/tech/modules/<id>/*.md`, generados por
   `kaddo modules map`.
 
 > Kaddo nunca escanea los repos secundarios, nunca llama a una API de Git/GitHub y

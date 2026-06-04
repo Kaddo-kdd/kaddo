@@ -16,10 +16,10 @@ Kaddo en conocimiento estructurado del proyecto.
 
 ## Instalación
 
-`kaddo add agents` crea `architecture/agents/`:
+`kaddo add agents` crea `knowledge/agents/`:
 
 ```
-architecture/agents/
+knowledge/agents/
   README.md
   # Agentes de entendimiento
   capability-agent.md
@@ -43,22 +43,22 @@ los que falten. `kaddo init` **no** instala agentes; agrégalos cuando los neces
 
 | Agente | Propósito | Guarda en |
 |---|---|---|
-| `capability-agent` | Extraer/proponer capacidades del sistema | `architecture/capabilities.md` |
-| `architecture-agent` | Reconstruir el baseline de arquitectura | `architecture/current-state.md` |
-| `roadmap-agent` | Proponer candidatos de roadmap | `architecture/roadmap.md` |
-| `legacy-agent` | Detectar riesgos/incógnitas antes de tocar código legacy | `architecture/legacy/*.md` |
-| `adr-agent` | Proponer decisiones de arquitectura candidatas | `architecture/decision-candidates.md` |
+| `capability-agent` | Extraer/proponer capacidades del sistema | `knowledge/product/capabilities.md` |
+| `architecture-agent` | Reconstruir el baseline de arquitectura | `knowledge/tech/current-state.md` |
+| `roadmap-agent` | Proponer candidatos de roadmap | `knowledge/delivery/roadmap.md` |
+| `legacy-agent` | Detectar riesgos/incógnitas antes de tocar código legacy | `knowledge/legacy/*.md` |
+| `adr-agent` | Proponer decisiones de arquitectura candidatas | `knowledge/tech/decision-candidates.md` |
 
 ## Agentes de bootstrap
 
 Para proyectos nuevos, refinan la base de conocimiento creada por
-[`kaddo bootstrap`](/es/commands/bootstrap/) en las capas Business → Architecture → Codebase → Development.
+[`kaddo bootstrap`](/es/commands/bootstrap/) en las capas Business → Product → Tech → Delivery.
 
 | Agente | Propósito | Guarda en |
 |---|---|---|
-| `business-agent` | Convertir una idea en definición de negocio | `architecture/business/*.md` |
-| `bootstrap-agent` | De negocio a capacidades, atributos de calidad y roadmap | `architecture/bootstrap-summary.md`, `capabilities.md`, `roadmap.md` |
-| `codebase-foundation-agent` | Proponer una base de codebase (sin código) | `architecture/codebase-foundation.md` |
+| `business-agent` | Convertir una idea en definición de negocio | `knowledge/business/*.md` |
+| `bootstrap-agent` | De negocio a capacidades, atributos de calidad y roadmap | `knowledge/bootstrap-summary.md`, `capabilities.md`, `roadmap.md` |
+| `codebase-agent` | Proponer una base de codebase (sin código) | `knowledge/tech/codebase.md` |
 
 ## Agentes operativos
 
@@ -67,11 +67,11 @@ Apoyan la ejecución diaria y los artefactos multirepo / globales (VS-017).
 | Agente | Propósito | Guarda en |
 |---|---|---|
 | `work-item-agent` | Redactar y refinar un work item desde el contexto | work item activo |
-| `git-strategy-agent` | Refinar la estrategia de Git | `architecture/git-strategy.md` |
-| `security-agent` | Documentar consideraciones de seguridad (sin escaneo) | `architecture/security.md` |
-| `standards-agent` | Definir estándares ligeros | `architecture/standards.md` |
-| `stack-agent` | Documentar el stack | `architecture/stack.md` |
-| `module-design-agent` | Completar el diseño de un módulo | `architecture/modules/<id>/module-design.md` |
+| `git-strategy-agent` | Refinar la estrategia de Git | `knowledge/tech/git-strategy.md` |
+| `security-agent` | Documentar consideraciones de seguridad (sin escaneo) | `knowledge/tech/security.md` |
+| `standards-agent` | Definir estándares ligeros | `knowledge/tech/standards.md` |
+| `stack-agent` | Documentar el stack | `knowledge/tech/stack.md` |
+| `module-design-agent` | Completar el diseño de un módulo | `knowledge/tech/modules/<id>/module-design.md` |
 
 Cada prompt declara: Role · When to Use · Input Required · Expected Output · Instructions ·
 Constraints · Output Format · Where to Save the Result · Quality Checklist. El input
@@ -80,7 +80,7 @@ principal siempre es `.kaddo/context-pack.md`.
 ## Escribir un agente custom
 
 Un agente es un prompt Markdown versionable — no código. Para crear el tuyo, agrega un
-archivo `<nombre>-agent.md` en `architecture/agents/` siguiendo la estructura canónica de
+archivo `<nombre>-agent.md` en `knowledge/agents/` siguiendo la estructura canónica de
 abajo. Estas nueve secciones son **obligatorias** (los agentes propios de Kaddo se validan
 contra ellas), así que consérvalas por consistencia:
 
@@ -131,7 +131,7 @@ Cuatro reglas mantienen un agente custom alineado con Kaddo:
 ```bash
 kaddo scan          # señales técnicas deterministas
 kaddo context       # → .kaddo/context-pack.md
-kaddo add agents    # → architecture/agents/*.md
+kaddo add agents    # → knowledge/agents/*.md
 ```
 
 Luego, en tu chat LLM:
@@ -149,11 +149,11 @@ Luego, en tu chat LLM:
 ## El output del roadmap agent
 
 El `roadmap-agent` es el puente entre el entendimiento y la ejecución. Usado en tu chat LLM,
-produce un `architecture/roadmap.md` **estructurado**, pensado para ser legible hoy y
+produce un `knowledge/delivery/roadmap.md` **estructurado**, pensado para ser legible hoy y
 procesable por máquina más adelante:
 
 ```txt
-context pack → roadmap agent → architecture/roadmap.md → (futuro) kaddo create --from roadmap
+context pack → roadmap agent → knowledge/delivery/roadmap.md → (futuro) kaddo create --from roadmap
 ```
 
 Cada iniciativa (`RM-001`, `RM-002`, …) incluye objetivo, capacidades relacionadas, área del

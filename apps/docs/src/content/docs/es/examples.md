@@ -6,7 +6,7 @@ description: Repositorios de demostración reales y reproducibles que muestran K
 Estas no son páginas de "déjame explicarte el concepto": son **repositorios de
 demostración que puedes abrir e inspeccionar**. Cada uno vive en
 [`examples/`](https://github.com/Kaddo-kdd/kaddo/tree/main/examples) dentro del repo de
-Kaddo, con artefactos `.kaddo/` y `architecture/` ya versionados para que veas
+Kaddo, con artefactos `.kaddo/` y `knowledge/` ya versionados para que veas
 exactamente lo que Kaddo produce antes de ejecutar nada.
 
 ## Los cuatro escenarios
@@ -26,12 +26,12 @@ exactamente lo que Kaddo produce antes de ejecutar nada.
   una tabla input/output (comando CLI / agente LLM / input / output / dónde guardar),
   handoffs de prompts para copiar/pegar y la cadena de artefactos — para reproducir el
   loop sin adivinar qué prompt usar.
-- archivos de muestra versionados (`.kaddo/`, `architecture/`, `sample/`) para que
+- archivos de muestra versionados (`.kaddo/`, `knowledge/`, `sample/`) para que
   los artefactos se vean sin ejecutar nada.
 
 ## Qué es real y qué es ilustrativo
 
-- **Artefactos del CLI** (`.kaddo/config.yml`, `architecture/work-items/*.md`, el
+- **Artefactos del CLI** (`.kaddo/config.yml`, `knowledge/delivery/work-items/*.md`, el
   esqueleto del roadmap, `.kaddo/modules.yml`, carpetas de módulos) son exactamente
   lo que escribe `kaddo`.
 - **Salidas de agentes** (capabilities, current-state, diseños de módulo

@@ -9,18 +9,18 @@ son totalmente determinísticos y no necesitan LLM.
 
 | Paso | Input del CLI | Prompt/agente del LLM | Output esperado | Guardar como |
 |---|---|---|---|---|
-| Scan | `kaddo scan` | ninguno | inventario técnico | `.kaddo/scan.json`, `architecture/inventory.md` |
+| Scan | `kaddo scan` | ninguno | inventario técnico | `.kaddo/scan.json`, `knowledge/inventory.md` |
 | Context | `kaddo context` | ninguno | pack listo para LLM | `.kaddo/context-pack.md` |
-| Entender capacidades | context pack | `capability-agent` | capacidades | `architecture/capabilities.md` |
-| Entender arquitectura | context + capacidades | `architecture-agent` | baseline de arquitectura | `architecture/current-state.md` |
-| Roadmap | context + capacidades + arquitectura | `roadmap-agent` | roadmap | `architecture/roadmap.md` |
-| Work Item | roadmap | ninguno | work item | `architecture/work-items/*.md` |
+| Entender capacidades | context pack | `capability-agent` | capacidades | `knowledge/product/capabilities.md` |
+| Entender arquitectura | context + capacidades | `architecture-agent` | baseline de arquitectura | `knowledge/tech/current-state.md` |
+| Roadmap | context + capacidades + arquitectura | `roadmap-agent` | roadmap | `knowledge/delivery/roadmap.md` |
+| Work Item | roadmap | ninguno | work item | `knowledge/delivery/work-items/*.md` |
 | Ownership | work item + scan | ninguno | ownership en front matter | Work Item actualizado |
 | Guard | `git diff` + ownership | ninguno | aviso de drift | salida de terminal |
 | Explain | artefactos de Kaddo | ninguno | resumen del proyecto | `.kaddo/explain.md` |
-| Diseño de módulo | `kaddo modules map` | `module-design-agent` | diseño del módulo | `architecture/modules/<id>/module-design.md` |
-| Estándares / seguridad / stack | `kaddo add <tema>` | `standards-` / `security-` / `stack-agent` | artefacto global | `architecture/<tema>.md` |
-| Estrategia de Git | `kaddo add git-strategy` | `git-strategy-agent` | estrategia de git | `architecture/git-strategy.md` |
+| Diseño de módulo | `kaddo modules map` | `module-design-agent` | diseño del módulo | `knowledge/tech/modules/<id>/module-design.md` |
+| Estándares / seguridad / stack | `kaddo add <tema>` | `standards-` / `security-` / `stack-agent` | artefacto global | `knowledge/tech/<tema>.md` |
+| Estrategia de Git | `kaddo add git-strategy` | `git-strategy-agent` | estrategia de git | `knowledge/tech/git-strategy.md` |
 
 > Kaddo nunca llama a un LLM por ti. Tú ejecutas los agentes en tu propio chat (Claude,
 > ChatGPT, Cursor, Copilot, Windsurf…) y luego guardas el output en la ruta de artefacto de
@@ -28,7 +28,7 @@ son totalmente determinísticos y no necesitan LLM.
 
 ## Cómo ejecutar un paso con agente
 
-1. Abre `.kaddo/context-pack.md` y el prompt de agente correspondiente en `architecture/agents/`.
+1. Abre `.kaddo/context-pack.md` y el prompt de agente correspondiente en `knowledge/agents/`.
 2. Pega el prompt del agente en tu chat LLM.
 3. Adjunta o pega el context pack (y cualquier artefacto previo del que dependa el agente).
 4. Revisa el output como humano.
@@ -45,7 +45,7 @@ verdad; adapta el texto a tu proyecto.
 Eres el agente de capacidades de Kaddo. Usando el context pack adjunto, lista las
 capacidades de producto que ofrece esta base de código. Para cada capacidad: nombre,
 propósito en una línea, los dominios que toca y las rutas de código principales. No
-inventes features. Salida en Markdown para architecture/capabilities.md.
+inventes features. Salida en Markdown para knowledge/product/capabilities.md.
 ```
 
 ### architecture-agent
@@ -53,7 +53,7 @@ inventes features. Salida en Markdown para architecture/capabilities.md.
 ```txt
 Eres el agente de arquitectura de Kaddo. Usando el context pack y capabilities.md, describe
 la arquitectura actual: módulos principales, límites, flujo de datos y riesgos notables.
-Marca los supuestos explícitamente. Salida en Markdown para architecture/current-state.md.
+Marca los supuestos explícitamente. Salida en Markdown para knowledge/tech/current-state.md.
 ```
 
 ### roadmap-agent
@@ -62,7 +62,7 @@ Marca los supuestos explícitamente. Salida en Markdown para architecture/curren
 Eres el agente de roadmap de Kaddo. Usando el context pack, capabilities y current-state,
 propón un roadmap priorizado de Work Items candidatos. Para cada candidato: título,
 problema, resultado esperado, dominios afectados y un nivel de conocimiento sugerido
-(K0–K4). Salida en Markdown para architecture/roadmap.md.
+(K0–K4). Salida en Markdown para knowledge/delivery/roadmap.md.
 ```
 
 ### legacy-agent

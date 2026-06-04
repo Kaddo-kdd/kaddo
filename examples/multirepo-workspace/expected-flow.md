@@ -31,7 +31,7 @@ worker), and Platform Infra (`../infra`, infrastructure).
 Each `map` does two deterministic things:
 
 1. Appends the module to `.kaddo/modules.yml`.
-2. Scaffolds `architecture/modules/<id>/` with starter
+2. Scaffolds `knowledge/tech/modules/<id>/` with starter
    `module-design.md`, `stack.md`, `security.md`, `standards.md`
    plus empty `diagrams/` and `adrs/` folders.
 
@@ -51,7 +51,7 @@ kaddo modules list
 
 Open the `module-design-agent` prompt in your LLM with `.kaddo/context-pack.md`
 and the module's repo. The agent reads the code and fills in
-`architecture/modules/storefront-web/module-design.md` and friends. In this
+`knowledge/tech/modules/storefront-web/module-design.md` and friends. In this
 example those files are already filled in so you can see the target shape.
 
 ## 5. Cross-cutting decisions

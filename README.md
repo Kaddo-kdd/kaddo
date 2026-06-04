@@ -109,8 +109,8 @@ replace human review, or replace Jira / Linear / GitHub Issues.
 | Command | What it does |
 |---|---|
 | `kaddo init` | Initialize Kaddo in the current project |
-| `kaddo bootstrap` | Build the initial knowledge base for a new project (Business → Architecture → Codebase → Development) |
-| `kaddo scan` | Detect stack and suggest domains; writes `.kaddo/scan.json` + `architecture/inventory.md` |
+| `kaddo bootstrap` | Build the initial knowledge base for a new project (Business → Product → Tech → Delivery) |
+| `kaddo scan` | Detect stack and suggest domains; writes `.kaddo/scan.json` + `knowledge/inventory.md` |
 | `kaddo context` | Generate an LLM context pack for agent handoff |
 | `kaddo add agents` | Install agent prompt packs |
 | `kaddo understand` | Guide the CLI → LLM handoff with a state-aware agent plan |
@@ -132,17 +132,17 @@ kaddo modules list   # list mapped modules
 ```
 
 This records the module in `.kaddo/modules.yml` and generates a per-module knowledge
-structure under `architecture/modules/<id>/` (`module-design.md`, `stack.md`,
+structure under `knowledge/tech/modules/<id>/` (`module-design.md`, `stack.md`,
 `security.md`, `standards.md`, `diagrams/`, `adrs/`). Existing files are never
 overwritten.
 
 Install **global** artifacts for the whole system on demand:
 
 ```bash
-kaddo add standards    # architecture/standards.md
-kaddo add security     # architecture/security.md  (documents concerns — no scanning)
-kaddo add stack        # architecture/stack.md
-kaddo add git-strategy # architecture/git-strategy.md + .kaddo/git.yml
+kaddo add standards    # knowledge/tech/standards.md
+kaddo add security     # knowledge/tech/security.md  (documents concerns — no scanning)
+kaddo add stack        # knowledge/tech/stack.md
+kaddo add git-strategy # knowledge/tech/git-strategy.md + .kaddo/git.yml
 ```
 
 Git strategy default is **GitHub Flow + Conventional Commits + SemVer**, customizable
@@ -170,7 +170,7 @@ when-to-use, output path, related command/agent and a quality checklist. See the
 
 The [`examples/`](examples/) folder has reproducible demo repositories — open one and see
 how Kaddo turns a project into operative knowledge, with committed `.kaddo/` and
-`architecture/` artifacts so you can inspect the output without running anything:
+`knowledge/` artifacts so you can inspect the output without running anything:
 
 | Example | Scenario | State | Highlights |
 |---|---|---|---|
@@ -237,7 +237,7 @@ Guard is **silent** when no artifacts declare ownership — no noise on day one.
 | v2.4–2.5 | Modules: `contracts`, `capabilities`, `guard-advanced`, `agents`, `skills` |
 | v2.6 | Knowledge loop: `context`, `understand`, `add agents`, roadmap output, `create --from roadmap`, Guard Lite end-to-end, `owners suggest`, project `explain` |
 | v2.6 | Multirepo modules (`modules map/list`), global standards/security/stack/git-strategy artifacts, six operational agents |
-| v2.6 | Central template registry (23 templates, five categories) |
+| v2.6 | Central template registry (23 templates, layer categories (business/product/tech/delivery)) |
 | v2.6 | Demo example repositories (`examples/`): new, pre-AI, legacy, multirepo |
 
 **Optional modules (installed with `kaddo add`):**

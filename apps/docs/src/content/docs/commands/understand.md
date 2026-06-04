@@ -44,10 +44,10 @@ The recommended flow adapts to the project state recorded by `kaddo init`:
 
 Each step maps to an expected output, for example:
 
-- `capability-agent` → `architecture/capabilities.md`
-- `architecture-agent` → `architecture/current-state.md`
-- `roadmap-agent` → `architecture/roadmap.md`
-- `legacy-agent` → `architecture/legacy/risks.md`
+- `capability-agent` → `knowledge/product/capabilities.md`
+- `architecture-agent` → `knowledge/tech/current-state.md`
+- `roadmap-agent` → `knowledge/delivery/roadmap.md`
+- `legacy-agent` → `knowledge/legacy/risks.md`
 
 ## Works even when context is incomplete
 
@@ -72,15 +72,15 @@ Team: indie
 Structure: monorepo
 
 Recommended flow:
-  1. capability-agent → architecture/capabilities.md
-  2. architecture-agent → architecture/current-state.md
-  3. roadmap-agent → architecture/roadmap.md
+  1. capability-agent → knowledge/product/capabilities.md
+  2. architecture-agent → knowledge/tech/current-state.md
+  3. roadmap-agent → knowledge/delivery/roadmap.md
 
 First step: use capability-agent.
 
   Context:         .kaddo/context-pack.md
-  Agent prompt:    architecture/agents/capability-agent.md
-  Expected output: architecture/capabilities.md
+  Agent prompt:    knowledge/agents/capability-agent.md
+  Expected output: knowledge/product/capabilities.md
 
 Kaddo does not call an LLM. You stay in control of the interpretation.
 ```

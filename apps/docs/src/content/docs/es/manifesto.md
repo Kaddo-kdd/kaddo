@@ -32,9 +32,16 @@ El objetivo no es escribir más documentación. El objetivo es preservar el cono
 
 Por debajo de ese ciclo por cambio, Kaddo enmarca el proyecto como un todo a través de cuatro capas macro:
 
-**Business → Architecture → Codebase → Development**
+**Business → Product → Tech → Delivery**
 
-Este es el macro-concepto que gobierna el proyecto de punta a punta: la intención antecede a la estructura, la estructura antecede al código y el código antecede a la evolución. El conocimiento fluye hacia abajo por estas capas, y cada capa se mantiene conectada con la de arriba — así la arquitectura responde al negocio, el codebase responde a la arquitectura y el desarrollo responde a las tres.
+Este es el macro-concepto que gobierna el proyecto de punta a punta. Cada capa responde una pregunta y se mantiene conectada con la de arriba:
+
+- **Business** — _¿por qué existe?_ problema, usuarios, restricciones, reglas de negocio, valor.
+- **Product** — _¿qué construimos?_ product brief, capacidades, alcance, objetivos.
+- **Tech** — _¿cómo lo construimos?_ codebase, decisiones, módulos, stack, estándares.
+- **Delivery** — _¿cómo lo evolucionamos?_ roadmap, work items, ownership, aprendizaje.
+
+El conocimiento fluye hacia abajo por estas capas — así product responde a business, tech responde a product y delivery responde a las tres. Físicamente, el repositorio de conocimiento las refleja: `knowledge/business/`, `knowledge/product/`, `knowledge/tech/`, `knowledge/delivery/`.
 
 Cada estado de proyecto entra y recorre estas capas de forma distinta:
 
@@ -124,7 +131,7 @@ No todo debe ser un vertical slice, no todo debe ser un ADR y no todo debe pasar
 
 ## Knowledge Repository
 
-Kaddo propone que cada proyecto tenga un repositorio de conocimiento. Puede vivir dentro del mismo repositorio del código o en un repositorio dedicado de arquitectura, y puede incluir archivos como `knowledge.md`, `roadmap.md`, `architecture/`, `work-items/`, `contracts/`, `capabilities/`, `incidents/` y `.kaddo/config.yml`.
+Kaddo propone que cada proyecto tenga un repositorio de conocimiento. Puede vivir dentro del mismo repositorio del código o en un repositorio dedicado de arquitectura, y puede incluir archivos como `knowledge.md`, `roadmap.md`, `knowledge/`, `work-items/`, `contracts/`, `capabilities/`, `incidents/` y `.kaddo/config.yml`.
 
 La idea no es crear una carpeta bonita. La idea es construir una fuente viva que explique qué es el producto, cómo está organizado, qué decisiones lo formaron, qué capacidades tiene, qué contratos expone, qué riesgos existen y qué conocimiento debe actualizarse cuando el sistema cambia.
 
@@ -222,7 +229,7 @@ En un proyecto nuevo, Guard Lite puede estar silencioso hasta que exista el prim
 
 La regla es `touch the domain, improve the graph`: cuando tocas un dominio, mejoras el conocimiento de ese dominio. No antes, no todo de golpe, no como castigo. El grafo crece con el trabajo real.
 
-Para proyectos nuevos, Kaddo ofrece un bootstrap guiado para que un proyecto pueda nacer con contexto: captura el conocimiento mínimo suficiente a lo largo de las capas base — `Business → Architecture → Codebase → Development` — antes de escribir código, sin generar código ni decidir la arquitectura automáticamente.
+Para proyectos nuevos, Kaddo ofrece un bootstrap guiado para que un proyecto pueda nacer con contexto: captura el conocimiento mínimo suficiente a lo largo de las capas base — `Business → Product → Tech → Delivery` — antes de escribir código, sin generar código ni decidir la arquitectura automáticamente.
 
 ## Quality Gates
 
@@ -258,7 +265,7 @@ Puede detectar stack, framework, dependencias, estructura del proyecto, carpetas
 Comandos esperados:
 
 - `kaddo init` — Inicializa la estructura base.
-- `kaddo bootstrap` — Para proyectos nuevos: construye la base de conocimiento inicial en las capas Business → Architecture → Codebase → Development.
+- `kaddo bootstrap` — Para proyectos nuevos: construye la base de conocimiento inicial en las capas Business → Product → Tech → Delivery.
 - `kaddo scan` — Detecta estructura, stack y posibles dominios.
 - `kaddo create` — Crea Work Items o artifacts.
 - `kaddo guard` — Revisa cambios contra ownership declarado.

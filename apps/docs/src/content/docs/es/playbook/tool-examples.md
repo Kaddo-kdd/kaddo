@@ -57,7 +57,7 @@ Context pack de Kaddo → framework de agentes → artefactos de Kaddo
 Usa los context packs y prompts de agente de Kaddo directamente dentro de tu chat LLM.
 
 ```txt
-.kaddo/context-pack.md + architecture/agents/*.md → output del LLM → architecture/*.md
+.kaddo/context-pack.md + knowledge/agents/*.md → output del LLM → knowledge/*.md
 ```
 
 El CLI prepara el input; tu LLM produce entendimiento; tú lo guardas de vuelta como

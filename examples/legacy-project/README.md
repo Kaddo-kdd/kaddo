@@ -16,9 +16,9 @@ kaddo context
 kaddo add agents
 kaddo understand
 # in your LLM chat, legacy first:
-#   legacy-agent      → architecture/legacy/{risks,unknowns,modernization-candidates}.md
-#   architecture-agent → architecture/current-state.md
-#   roadmap-agent     → architecture/roadmap.md
+#   legacy-agent      → knowledge/legacy/{risks,unknowns,modernization-candidates}.md
+#   architecture-agent → knowledge/tech/current-state.md
+#   roadmap-agent     → knowledge/delivery/roadmap.md
 kaddo create --from roadmap      # a safe first work item
 kaddo owners suggest
 kaddo guard
@@ -35,11 +35,11 @@ and propose a roadmap.
 
 | File | Who wrote it |
 |---|---|
-| `architecture/legacy/risks.md` | **Illustrative** `legacy-agent` output |
-| `architecture/legacy/unknowns.md` | **Illustrative** `legacy-agent` output |
-| `architecture/legacy/modernization-candidates.md` | **Illustrative** output |
+| `knowledge/legacy/risks.md` | **Illustrative** `legacy-agent` output |
+| `knowledge/legacy/unknowns.md` | **Illustrative** `legacy-agent` output |
+| `knowledge/legacy/modernization-candidates.md` | **Illustrative** output |
 | `sample-agent-outputs/current-state.md` | **Illustrative** `architecture-agent` output |
-| `architecture/work-items/WI-001-add-order-status-logging.md` | CLI (`create`) — a low-risk first step |
+| `knowledge/delivery/work-items/WI-001-add-order-status-logging.md` | CLI (`create`) — a low-risk first step |
 
 See [`expected-flow.md`](./expected-flow.md), and
 [`prompt-flow.md`](./prompt-flow.md) for the prompts, diagram and safe-change guidance.

@@ -6,7 +6,7 @@ This is a minimal project showing Kaddo's structure and how `kaddo guard` works.
 
 ```
 .kaddo/config.yml                          ← project config
-architecture/
+knowledge/
   knowledge.md                             ← current product state
   roadmap.md                               ← intentions
   work-items/

@@ -1,19 +1,21 @@
 ---
-title: Plantillas de arquitectura
-description: Current state, notas de arquitectura, decision candidates y ADRs.
+title: Plantillas de tech
+description: Cómo lo construimos — codebase, current state, decisiones, stack y atributos de calidad.
 ---
 
-Plantillas para capturar y decidir arquitectura.
+La capa **Tech** responde *¿cómo lo construimos?* — vive bajo `knowledge/tech/`.
 
 | Plantilla | Propósito | Ruta | Agente |
 |---|---|---|---|
-| Current State | Baseline de arquitectura reconstruido | `architecture/current-state.md` | `architecture-agent` |
-| Notas de arquitectura | Notas de trabajo, aún sin decidir | `architecture/architecture-notes.md` | — |
-| Decision Candidates | Decisiones candidatas para revisión | `architecture/decision-candidates.md` | `adr-agent` |
-| Quality Attributes | Atributos de calidad priorizados + trade-offs | `architecture/quality-attributes.md` | `bootstrap-agent` |
-| Codebase Foundation | Estructura prevista del codebase (sin código) | `architecture/codebase-foundation.md` | `codebase-foundation-agent` |
-| Bootstrap Summary | Índice de la base de conocimiento inicial | `architecture/bootstrap-summary.md` | `bootstrap-agent` |
-| ADR | Una decisión aceptada | `architecture/decisions/` | — |
+| Codebase | Estructura y convenciones previstas del codebase (sin código) | `knowledge/tech/codebase.md` | `codebase-agent` |
+| Current State | Baseline de arquitectura reconstruido | `knowledge/tech/current-state.md` | `architecture-agent` |
+| Notas de arquitectura | Notas de trabajo, aún sin decidir | `knowledge/tech/architecture-notes.md` | — |
+| Decision Candidates | Decisiones candidatas para revisión | `knowledge/tech/decision-candidates.md` | `adr-agent` |
+| Quality Attributes | Atributos de calidad priorizados + trade-offs | `knowledge/tech/quality-attributes.md` | `bootstrap-agent` |
+| ADR | Una decisión aceptada | `knowledge/tech/decisions/` | — |
+
+> Stack, estándares, seguridad y estrategia de Git también son artefactos de Tech — ver
+> [Plantillas de operaciones](/es/templates/operations/), instalables con `kaddo add`.
 
 ## Current State
 

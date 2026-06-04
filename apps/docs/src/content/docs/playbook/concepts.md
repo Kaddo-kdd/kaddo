@@ -61,7 +61,7 @@ the structured input you hand to your agent.
 ## Agent Prompt Pack
 
 An **Agent Prompt Pack** is a versionable Markdown prompt (installed with `kaddo add agents`
-into `architecture/agents/*.md`) that tells the LLM what role to assume, what input to use
+into `knowledge/agents/*.md`) that tells the LLM what role to assume, what input to use
 and what artifact to produce. Kaddo ships the prompts; it does not run them.
 
 ## Ownership

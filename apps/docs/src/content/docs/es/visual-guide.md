@@ -11,6 +11,25 @@ abrirlo a pantalla completa.
 > Estos diagramas describen comportamiento que existe hoy. **No** implican ninguna
 > automatización futura — mira [Qué no significan los diagramas](#qué-no-significan-los-diagramas).
 
+## Capas de conocimiento (macro-flujo)
+
+Kaddo enmarca todo el proyecto en cuatro capas macro bajo `knowledge/`. Cada una responde
+una pregunta y se mantiene conectada con la de arriba.
+
+```mermaid
+flowchart TD
+    B[Business — por qué existe] --> P[Product — qué construimos]
+    P --> T[Tech — cómo lo construimos]
+    T --> D[Delivery — cómo lo evolucionamos]
+    B --> B1[problem · users · constraints · business-rules]
+    P --> P1[product-brief · capabilities]
+    T --> T1[codebase · current-state · decisions · modules]
+    D --> D1[roadmap · work-items]
+```
+
+`kaddo bootstrap` siembra la base mínima (Business + Product + `tech/codebase.md`);
+Delivery y las decisiones emergen después vía agentes y trabajo real.
+
 ## Kaddo Knowledge Loop
 
 El loop completo, desde un repo en crudo hasta un estado de conocimiento explicado. Los
@@ -71,7 +90,7 @@ flowchart LR
     end
     subgraph Repo["Repositorio de Conocimiento"]
         O[.kaddo/]
-        P[architecture/]
+        P[knowledge/]
         Q[work-items]
         R[globs de ownership]
     end
@@ -109,7 +128,7 @@ sequenceDiagram
     H->>CLI: kaddo context
     CLI->>Repo: context-pack.md
     H->>CLI: kaddo add agents
-    CLI->>Repo: architecture/agents/*.md
+    CLI->>Repo: knowledge/agents/*.md
     H->>CLI: kaddo understand
     CLI->>Repo: understand.md
     H->>LLM: context-pack + agente elegido
@@ -177,7 +196,7 @@ propia estructura de conocimiento. Los archivos existentes nunca se sobrescriben
 ```mermaid
 flowchart TD
     A[Repo de Arquitectura] --> B[.kaddo/modules.yml]
-    A --> C[architecture/modules/]
+    A --> C[knowledge/tech/modules/]
     B --> D[repo frontend]
     B --> E[repo backend]
     B --> F[repo worker]

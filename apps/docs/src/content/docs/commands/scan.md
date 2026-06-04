@@ -16,7 +16,7 @@ contract files, infra and test dirs. Suggests domains for human confirmation —
 
 - **`.kaddo/scan.json`** — structured, machine-readable. Used by the CLI and future
   context-pack commands. Always regenerated on each scan.
-- **`architecture/inventory.md`** — human-readable inventory you can paste into an LLM
+- **`knowledge/inventory.md`** — human-readable inventory you can paste into an LLM
   chat. Overwrite is confirmed if the file already exists.
 
 This baseline is the first input for the Knowledge Driven Development flow: the CLI
@@ -39,7 +39,7 @@ This is a pre-AI monorepo.
 Next: Use this baseline to create a context pack and understand the existing system with LLM agents.
 ```
 
-Example `architecture/inventory.md`:
+Example `knowledge/inventory.md`:
 
 ```markdown
 # Project Inventory

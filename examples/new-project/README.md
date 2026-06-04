@@ -10,12 +10,12 @@ before there is much code to scan.
 ## The flow
 
 ```bash
-kaddo init                       # → .kaddo/config.yml, architecture/{knowledge,roadmap}.md
+kaddo init                       # → .kaddo/config.yml, knowledge/{knowledge,roadmap}.md
 kaddo context                    # → .kaddo/context-pack.md
-kaddo add agents                 # → architecture/agents/*.md
+kaddo add agents                 # → knowledge/agents/*.md
 kaddo understand                 # recommends agents for a `new` project
 # in your LLM chat: run roadmap-agent, then architecture-agent
-kaddo create --from roadmap      # → architecture/work-items/WI-001-*.md
+kaddo create --from roadmap      # → knowledge/delivery/work-items/WI-001-*.md
 kaddo owners suggest             # declare code: globs on the work item
 kaddo explain                    # → .kaddo/explain.md
 ```
@@ -28,9 +28,9 @@ See [`expected-flow.md`](./expected-flow.md) for the step-by-step output, and
 | File | Who wrote it |
 |---|---|
 | `.kaddo/config.yml` | CLI (`init`) |
-| `architecture/roadmap.md` | CLI skeleton (`init`) → filled by `roadmap-agent` (LLM) |
+| `knowledge/delivery/roadmap.md` | CLI skeleton (`init`) → filled by `roadmap-agent` (LLM) |
 | `sample-agent-outputs/roadmap.md` | **Illustrative** LLM output |
-| `architecture/work-items/WI-001-add-task-reminders.md` | CLI (`create --from roadmap`) |
+| `knowledge/delivery/work-items/WI-001-add-task-reminders.md` | CLI (`create --from roadmap`) |
 | `.kaddo/explain.md` | CLI (`explain`) |
 
 ## CLI vs LLM

@@ -53,7 +53,7 @@ Kaddo context pack → agent framework → Kaddo artifacts
 Use Kaddo context packs and agent prompts directly inside your LLM chat.
 
 ```txt
-.kaddo/context-pack.md + architecture/agents/*.md → LLM output → architecture/*.md
+.kaddo/context-pack.md + knowledge/agents/*.md → LLM output → knowledge/*.md
 ```
 
 The CLI prepares the input; your LLM produces understanding; you save it back as artifacts.

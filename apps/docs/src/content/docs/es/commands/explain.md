@@ -49,7 +49,7 @@ salida es totalmente determinista.
 - Ownership coverage: 1/2 work items
 
 ## Suggested Next Steps
-1. Use capability-agent to create architecture/capabilities.md.
+1. Use capability-agent to create knowledge/product/capabilities.md.
 2. Run `kaddo owners suggest` for Work Items without code ownership.
 ```
 
@@ -89,4 +89,4 @@ La salida `--for agent` expone un arreglo estructurado `mapped_modules` (con la 
 de `artifacts` por módulo), distinto de `installed_modules`.
 
 > `explain` lee los módulos mapeados desde `.kaddo/modules.yml` y los artefactos de
-> `architecture/modules/<id>/` solamente. Nunca escanea los repos secundarios.
+> `knowledge/tech/modules/<id>/` solamente. Nunca escanea los repos secundarios.
