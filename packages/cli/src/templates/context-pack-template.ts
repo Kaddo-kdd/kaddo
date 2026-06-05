@@ -94,18 +94,18 @@ export function renderContextPack(pack: ContextPack): string {
   }
   parts.push((knowledge.roadmapSummary || 'No roadmap baseline found.') + '\n')
 
-  // 5. Existing Work Items
-  parts.push('## Existing Work Items\n')
+  // 5. Active Work Items
+  parts.push('## Active Work Items\n')
   if (knowledge.workItems.length > 0) {
     const lines = knowledge.workItems.map((wi) => {
       const level = wi.knowledgeLevel ? ` [${wi.knowledgeLevel}]` : ''
-      const status = wi.status ? ` (${wi.status})` : ''
+      const status = wi.lifecycle ? ` (${wi.lifecycle})` : wi.status ? ` (${wi.status})` : ''
       const domains = wi.domains.length > 0 ? ` · domains: ${wi.domains.join(', ')}` : ''
       return `- ${wi.id || wi.title} [${wi.type}]${level}${status} — ${wi.title}${domains}`
     })
     parts.push(lines.join('\n') + '\n')
   } else {
-    parts.push('No work items found.\n')
+    parts.push('No active work items found.\n')
   }
 
   // 6. Artifacts and Ownership

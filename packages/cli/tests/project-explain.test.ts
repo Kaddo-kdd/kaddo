@@ -261,6 +261,67 @@ describe('buildProjectExplanation — roadmap candidates vs materialized (VS-039
   })
 })
 
+describe('buildProjectExplanation — Work Item lifecycle (VS-041)', () => {
+  function writeWI(folder: string, id: string, status: string, initiative?: string) {
+    const init = initiative ? `initiative: ${initiative}\n` : ''
+    write(
+      `knowledge/delivery/work-items/${folder}/${id}.md`,
+      `---\nid: ${id}\ntype: feature\ntitle: ${id} title\nstatus: ${status}\n${init}---\n\nBody.\n`
+    )
+  }
+
+  it('counts work items by lifecycle state', () => {
+    initConfig()
+    writeWI('draft', 'WI-001', 'draft')
+    writeWI('ready', 'WI-002', 'ready')
+    writeWI('ready', 'WI-003', 'ready')
+    writeWI('in-progress', 'WI-004', 'in-progress')
+    writeWI('completed', 'WI-005', 'completed')
+    writeWI('archived', 'WI-006', 'archived')
+    const exp = buildProjectExplanation(tmpDir)
+    expect(exp.workItems.byState).toMatchObject({
+      draft: 1,
+      ready: 2,
+      'in-progress': 1,
+      blocked: 0,
+      completed: 1,
+      archived: 1,
+    })
+    expect(exp.workItems.total).toBe(6)
+  })
+
+  it('resolves legacy flat items (status done/cancelled) into the lifecycle', () => {
+    initConfig()
+    write(
+      'knowledge/delivery/work-items/WI-010-legacy.md',
+      '---\nid: WI-010\ntype: feature\ntitle: legacy\nstatus: done\n---\n\nx\n'
+    )
+    const exp = buildProjectExplanation(tmpDir)
+    expect(exp.workItems.byState.completed).toBe(1)
+  })
+
+  it('groups work items by initiative virtually (front matter, not folders)', () => {
+    initConfig()
+    writeWI('completed', 'WI-001', 'completed', 'Project Foundation')
+    writeWI('completed', 'WI-002', 'completed', 'Project Foundation')
+    writeWI('in-progress', 'WI-003', 'in-progress', 'Task Core')
+    const exp = buildProjectExplanation(tmpDir)
+    const found = exp.workItems.initiatives.find((g) => g.name === 'Project Foundation')
+    expect(found?.states.completed).toBe(2)
+    expect(exp.workItems.initiatives.find((g) => g.name === 'Task Core')?.states['in-progress']).toBe(1)
+  })
+
+  it('renders the lifecycle counts in human output', () => {
+    initConfig()
+    writeWI('ready', 'WI-001', 'ready')
+    writeWI('in-progress', 'WI-002', 'in-progress')
+    const out = renderExplanationHuman(buildProjectExplanation(tmpDir))
+    expect(out).toContain('## Work Items')
+    expect(out).toContain('Ready: 1')
+    expect(out).toContain('In Progress: 1')
+  })
+})
+
 describe('renderExplanationAgent', () => {
   it('produces valid JSON with the explanation shape', () => {
     initConfig()

@@ -59,7 +59,7 @@ flowchart TD
     I --> K[current-state.md]
     I --> L[roadmap.md]
     L --> M[kaddo create --from roadmap]
-    M --> N[work-items/*.md]
+    M --> N[work-items/draft/*.md]
     N --> O[kaddo owners suggest]
     O --> P[front matter code: globs]
     P --> Q[Code changes]
@@ -166,7 +166,7 @@ flowchart LR
     D --> E[capabilities.md]
     E --> F[current-state.md]
     F --> G[roadmap.md]
-    G --> H[work-items/*.md]
+    G --> H[work-items/state/*.md]
     H --> I[code: globs]
     I --> J[guard]
     J --> K[drift FYI]
@@ -246,9 +246,25 @@ materialize them into real Work Items with `kaddo create --from roadmap`. `expla
 flowchart LR
     A[roadmap-agent in LLM chat] --> B[knowledge/delivery/roadmap.md<br/>table · bullet · checklist · mixed]
     B --> C[Parsed candidates<br/>WI-001, WI-002, …]
-    C -->|kaddo create --from roadmap| D[Materialized Work Items<br/>knowledge/delivery/work-items/]
+    C -->|kaddo create --from roadmap| D[Materialized Work Items<br/>knowledge/delivery/work-items/draft/]
     C -.remaining candidates.-> E[explain · understand<br/>candidates vs materialized]
     D -.-> E
+```
+
+## Work Item lifecycle workspace
+
+Work Items are an active workspace organized by lifecycle state. Phase and initiative remain
+front matter metadata; they do not create folders.
+
+```mermaid
+flowchart TD
+    A[Roadmap Candidate] --> B[Draft]
+    B --> C[Ready]
+    C --> D[In Progress]
+    D --> E[Completed]
+    E --> F[Archived]
+    D --> G[Blocked]
+    G --> C
 ```
 
 ## Work Item delivery lifecycle

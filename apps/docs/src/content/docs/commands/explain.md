@@ -21,7 +21,8 @@ project** from existing Kaddo artifacts:
 - Detected stack (from `.kaddo/scan.json`)
 - Knowledge status (inventory, context pack, capabilities, architecture
   baseline, roadmap, agents)
-- Work items and their status
+- Work Items counted by lifecycle state (`draft`, `ready`, `in-progress`, `blocked`,
+  `completed`, `archived`)
 - Ownership coverage (how many work items declare `code:` globs)
 - Missing knowledge and **suggested next steps**
 
@@ -62,6 +63,9 @@ roadmap-agent proposed) from **materialized Work Items** (created under
 `explain` suggests materializing them with `kaddo create --from roadmap`. Candidates are read from
 any [supported roadmap format](/commands/create/#supported-roadmap-formats) (table, bullet,
 checklist, mixed initiatives, or the strict Kaddo Roadmap Agent format).
+
+`explain` also groups Work Items virtually by `initiative` front matter. Phase and initiative
+remain metadata for planning and functional traceability; folders represent lifecycle state only.
 
 ## `context` vs `explain`
 

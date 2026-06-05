@@ -30,6 +30,10 @@ knowledge/delivery/work-items/   # metadata de work items (solo front matter)
 Si falta algún archivo, el comando igual se ejecuta — esas secciones se marcan en
 **Missing Context** para que el LLM sepa qué falta.
 
+Por defecto, el context pack incluye solo Work Items activos: `draft`, `ready`,
+`in-progress` y `blocked`. `completed` y `archived` son conocimiento historico y se excluyen
+para que el trabajo antiguo no domine el handoff al LLM.
+
 ## Candidatos del roadmap vs materializados
 
 Cuando existe `knowledge/delivery/roadmap.md`, la sección `## Roadmap` reporta **candidatos**

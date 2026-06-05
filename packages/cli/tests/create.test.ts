@@ -57,7 +57,9 @@ function generateWorkItem(opts: {
     `id: ${opts.id}`,
     `title: "${opts.title}"`,
     `knowledge_level: ${opts.level}`,
-    `status: in-progress`,
+    `status: draft`,
+    `phase: now`,
+    `initiative:`,
     `domains: []`,
     `code: []`,
     `created_at: ${today}`,
@@ -72,6 +74,8 @@ function generateWorkItem(opts: {
   if (opts.acceptance_criteria) sections.push(`## Acceptance criteria\n\n- ${opts.acceptance_criteria}\n`)
   if (opts.design) sections.push(`## Design\n\n${opts.design}\n`)
   if (opts.risks) sections.push(`## Risks\n\n${opts.risks}\n`)
+  sections.push(`## Out of scope\n\n_Not included in this Work Item._\n`)
+  sections.push(`## Validation\n\n_How will this be validated?_\n`)
   if (opts.qualityGate.length > 0) {
     sections.push(`## Definition of Done\n\n${opts.qualityGate.map((g) => `- [ ] ${g}`).join('\n')}\n`)
   }
@@ -95,8 +99,12 @@ describe('create — work item file generation', () => {
     expect(fileName).toBe('WI-001-fix-null-pointer-in-payment-handler.md')
     expect(content).toContain('type: hotfix')
     expect(content).toContain('knowledge_level: K1')
+    expect(content).toContain('phase: now')
+    expect(content).toContain('initiative:')
     expect(content).toContain('## Problem')
     expect(content).toContain('## Expected result')
+    expect(content).toContain('## Out of scope')
+    expect(content).toContain('## Validation')
     expect(content).toContain('## Definition of Done')
     expect(content).toContain('## Learning')
     expect(content).not.toContain('## Design')
@@ -152,7 +160,7 @@ describe('create — work item file generation', () => {
     expect(content).toContain('code: []')
   })
 
-  it('front matter includes status: in-progress', () => {
+  it('front matter includes status: draft', () => {
     const { content } = generateWorkItem({
       id: 'WI-001',
       type: 'bugfix',
@@ -161,7 +169,7 @@ describe('create — work item file generation', () => {
       problem: 'Test problem',
       qualityGate: [],
     })
-    expect(content).toContain('status: in-progress')
+    expect(content).toContain('status: draft')
   })
 
   it('slugifies long titles correctly', () => {

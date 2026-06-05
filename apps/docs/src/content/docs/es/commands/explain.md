@@ -21,7 +21,8 @@ los artefactos que Kaddo ya tiene:
 - Stack detectado (desde `.kaddo/scan.json`)
 - Estado del conocimiento (inventory, context pack, capabilities, baseline de
   arquitectura, roadmap, agentes)
-- Work items y su estado
+- Work Items contados por estado de lifecycle (`draft`, `ready`, `in-progress`, `blocked`,
+  `completed`, `archived`)
 - Cobertura de ownership (cuántos work items declaran globs `code:`)
 - Conocimiento faltante y **siguientes pasos sugeridos**
 
@@ -62,6 +63,10 @@ propuso el roadmap-agent) de los **Work Items materializados** (creados bajo
 `explain` sugiere materializarlos con `kaddo create --from roadmap`. Los candidatos se leen desde
 cualquier [formato de roadmap soportado](/es/commands/create/#formatos-de-roadmap-soportados)
 (tabla, viñetas, checklist, iniciativas mixtas o el formato estricto del Kaddo Roadmap Agent).
+
+`explain` tambien agrupa Work Items virtualmente por el front matter `initiative`. Fase e
+iniciativa siguen siendo metadata para planificacion y trazabilidad funcional; las carpetas
+representan solamente el estado del lifecycle.
 
 ## `context` vs `explain`
 

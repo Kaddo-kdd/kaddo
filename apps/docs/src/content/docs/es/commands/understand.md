@@ -65,6 +65,13 @@ Los candidatos se detectan desde cualquier
 del roadmap se convierte en un Work Item real solo cuando lo creas — `understand` mantiene ese
 límite explícito para que nada se trate silenciosamente como trabajo en curso.
 
+## Trabajo activo
+
+`understand` razona sobre el lifecycle de Work Items y muestra el workspace activo actual:
+`draft`, `ready`, `in-progress` y `blocked`. Recomienda continuar un item en progreso,
+empezar uno ready, refinar un draft o resolver bloqueos. `completed` y `archived` quedan como
+conocimiento historico.
+
 ## Funciona aunque falte contexto
 
 Si falta el baseline de scan o algunos agentes, el comando igual produce un plan y te indica

@@ -10,6 +10,9 @@ kaddo create hotfix    # K1: 2 preguntas
 kaddo create spike     # K3: 4 preguntas
 ```
 
+Los Work Items nuevos se crean en `knowledge/delivery/work-items/draft/` con `status: draft`.
+Muevelos a `ready` cuando dependencias, alcance y criterios de aceptacion esten claros.
+
 Los módulos opcionales agregan más tipos (`adr`, `rfc`, `incident`, `migration`,
 `legacy`, `contract`, `capability`, `guard-rule`, `agent`, `skill`). Ver
 [Módulos](/es/modules/overview/).
@@ -37,7 +40,9 @@ El Work Item generado mantiene **trazabilidad de origen** en su front matter:
 type: spike
 id: WI-001
 knowledge_level: K2
-status: in-progress
+status: draft
+phase: now
+initiative: RM-001
 source: roadmap
 source_id: WI-CANDIDATE-001
 source_initiative: RM-001
@@ -90,6 +95,24 @@ Remaining candidates: 16
 
 Luego `kaddo understand` recomienda materializar los candidatos restantes con
 `kaddo create --from roadmap`.
+
+## Lifecycle de Work Items
+
+Los Work Items se organizan por estado operativo:
+
+```text
+knowledge/delivery/work-items/
+  draft/
+  ready/
+  in-progress/
+  blocked/
+  completed/
+  archived/
+```
+
+Los estados oficiales son `draft`, `ready`, `in-progress`, `blocked`, `completed` y
+`archived`. Los archivos planos heredados bajo `knowledge/delivery/work-items/*.md` se siguen
+leyendo como `ready` hasta que los migres a carpetas de estado.
 
 ## Activar Guard Lite
 

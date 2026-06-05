@@ -64,6 +64,13 @@ Candidates are detected from any [supported roadmap format](/commands/create/#su
 A roadmap candidate becomes a real Work Item only when you create it — `understand` keeps that
 boundary explicit so nothing is silently treated as in-flight work.
 
+## Active work
+
+`understand` reasons over the Work Item lifecycle and highlights the current active workspace:
+`draft`, `ready`, `in-progress` and `blocked`. It recommends continuing an in-progress item,
+starting a ready item, refining a draft, or resolving blockers. `completed` and `archived`
+remain historical knowledge.
+
 ## Works even when context is incomplete
 
 If the scan baseline or some agents are missing, the command still produces a plan and

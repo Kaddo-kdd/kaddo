@@ -40,6 +40,15 @@ describe('delivery lifecycle', () => {
     expect(active.map((w) => w.id)).toEqual(['WI-001'])
   })
 
+  it('finds in-progress work items by lifecycle folder when status is missing', () => {
+    const full = path.join(dir, 'knowledge', 'delivery', 'work-items', 'in-progress', 'WI-003.md')
+    fs.mkdirSync(path.dirname(full), { recursive: true })
+    fs.writeFileSync(full, `---\nid: WI-003\ntype: feature\ntitle: Folder active\n---\n\nBody\n`)
+
+    const active = activeWorkItems(dir)
+    expect(active.map((w) => w.id)).toEqual(['WI-003'])
+  })
+
   it('suggests a branch and commit from the work-item type', () => {
     writeWI('WI-001.md', 'feature', 'in-progress', 'Add Task Reminders')
     const wi = activeWorkItems(dir)[0]

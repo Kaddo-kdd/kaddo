@@ -11,6 +11,8 @@ export type Artifact = {
   codeGlobs: string[]
   domains: string[]
   status: string
+  phase: string
+  initiative: string
 }
 
 function parseArtifact(filePath: string, raw: string): Artifact | null {
@@ -28,6 +30,8 @@ function parseArtifact(filePath: string, raw: string): Artifact | null {
       codeGlobs: globs,
       domains: Array.isArray(data.domains) ? data.domains : [],
       status: String(data.status ?? ''),
+      phase: String(data.phase ?? ''),
+      initiative: String(data.initiative ?? data.source_initiative ?? ''),
     }
   } catch {
     return null

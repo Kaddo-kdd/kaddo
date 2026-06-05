@@ -552,7 +552,9 @@ existing Work Item file to refine.
 
 ## Expected Output
 
-A refined Work Item intended to be saved as \`knowledge/delivery/work-items/*.md\`.
+A refined Work Item intended to be saved under the lifecycle workspace:
+\`knowledge/delivery/work-items/draft/\`, \`ready/\`, \`in-progress/\`, \`blocked/\`,
+\`completed/\` or \`archived/\`.
 
 ## Instructions
 
@@ -560,9 +562,10 @@ A refined Work Item intended to be saved as \`knowledge/delivery/work-items/*.md
 2. Split the candidate if it is too large for a single Work Item.
 3. Validate the Knowledge Level (K0–K4) and propose a different one if needed.
 4. Propose acceptance criteria.
-5. Propose a Definition of Done.
-6. Identify open questions and assumptions.
-7. Suggest ownership candidates (code globs) if evident.
+5. Propose Out of scope and Validation sections.
+6. Propose a Definition of Done.
+7. Identify open questions and assumptions.
+8. Suggest ownership candidates (code globs) if evident.
 
 ## Constraints
 
@@ -584,6 +587,10 @@ A refined Work Item intended to be saved as \`knowledge/delivery/work-items/*.md
 
 **Acceptance criteria:**
 
+**Out of scope:**
+
+**Validation:**
+
 **Definition of Done:**
 
 **Open questions:**
@@ -593,7 +600,9 @@ A refined Work Item intended to be saved as \`knowledge/delivery/work-items/*.md
 
 ## Where to Save the Result
 
-Save the output as a file under \`knowledge/delivery/work-items/\`.
+Save new output as a draft under \`knowledge/delivery/work-items/draft/\` unless a human
+explicitly asks for another lifecycle state. Treat only \`draft\`, \`ready\`, \`in-progress\`
+and \`blocked\` as active work; \`completed\` and \`archived\` are historical knowledge.
 
 ## Delivery workflow
 

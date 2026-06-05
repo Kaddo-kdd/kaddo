@@ -5,6 +5,7 @@ import { readArtifacts, type Artifact } from '../services/artifact-reader.js'
 import { loadMappedModules, type MappedModuleWithCoverage } from '../services/mapped-modules.js'
 import { knowledgeLayers, type LayerStatus } from './layers.js'
 import { roadmapStats, type RoadmapStats } from './roadmap.js'
+import { lifecycleStateOf, isActiveState, type LifecycleState } from './lifecycle.js'
 
 export const CONTEXT_PACK_VERSION = '1'
 
@@ -13,6 +14,7 @@ export type ContextWorkItem = {
   type: string
   title: string
   status: string
+  lifecycle: LifecycleState
   knowledgeLevel: string
   domains: string[]
 }
@@ -170,6 +172,7 @@ function toContextWorkItem(a: Artifact): ContextWorkItem {
     type: a.type,
     title: a.title,
     status: a.status,
+    lifecycle: lifecycleStateOf({ status: a.status, filePath: a.filePath }),
     knowledgeLevel: a.knowledgeLevel,
     domains: a.domains,
   }
@@ -177,6 +180,10 @@ function toContextWorkItem(a: Artifact): ContextWorkItem {
 
 function toContextArtifact(a: Artifact): ContextArtifact {
   return { id: a.id, type: a.type, title: a.title, summary: a.summary, codeGlobs: a.codeGlobs }
+}
+
+function isDeliveryWorkItem(a: Artifact): boolean {
+  return a.filePath.replace(/\\/g, '/').includes('/delivery/work-items/') && Boolean(a.type)
 }
 
 /**
@@ -214,8 +221,14 @@ export function buildContextPack(
   // Artifact metadata only — never full content / source code.
   const archPath = join(dir, ARCH_DIR)
   const allArtifacts = exists(archPath) ? readArtifacts(archPath) : []
+  // Active workspace (VS-041): the pack ships only ACTIVE Work Items
+  // (draft/ready/in-progress/blocked). Completed and archived items are historical and would
+  // only add noise/tokens to the agent handoff, so they are excluded by default. Other typed
+  // knowledge artifacts (ADRs, etc.) are kept as-is.
   const workItems = allArtifacts.filter(
-    (a) => a.type && a.type !== 'current-state' && a.type !== 'roadmap'
+    (a) =>
+      isDeliveryWorkItem(a) &&
+      isActiveState(lifecycleStateOf({ status: a.status, filePath: a.filePath }))
   )
   if (workItems.length === 0) {
     missing.push('No work items found.')
@@ -259,7 +272,7 @@ export function buildContextPack(
       roadmapSummary,
       inventoryAvailable,
       workItems: workItems.map(toContextWorkItem),
-      artifacts: workItems.filter((a) => a.codeGlobs.length > 0).map(toContextArtifact),
+      artifacts: allArtifacts.filter((a) => a.codeGlobs.length > 0).map(toContextArtifact),
     },
     layers,
     roadmap,

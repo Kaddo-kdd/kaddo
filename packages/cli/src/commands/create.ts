@@ -1,12 +1,14 @@
 import { getLevel, getLevelForType, isValidType, type WorkItemType, type KLevel } from '../core/knowledge-levels.js'
 import { findWorkItemType } from '../modules/registry.js'
 import type { ModuleWorkItemType } from '../modules/types.js'
-import { exists, readFile, readDir, writeFile, join, cwd } from '../utils/fs.js'
+import { exists, readFile, readDir, writeFile, join, cwd, isFile } from '../utils/fs.js'
 import { intro, outro, log, text, select } from '../utils/ui.js'
 import { loadConfig, createGuidanceForState, ConfigError } from '../core/config.js'
 import { parseRoadmapCandidates, type RoadmapCandidateWorkItem } from '../core/roadmap.js'
 
 const WORK_ITEMS_DIR = 'knowledge/delivery/work-items'
+// New Work Items start in the `draft` lifecycle state (VS-041).
+const DRAFT_DIR = `${WORK_ITEMS_DIR}/draft`
 const ROADMAP_PATH = 'knowledge/delivery/roadmap.md'
 
 export type CreateOptions = { from?: string }
@@ -27,20 +29,26 @@ function printStateGuidance(dir: string): void {
   log.info(createGuidanceForState(config.project.state))
 }
 
+/** Highest WI-NNN across the work-items tree (recursive — items live in lifecycle subfolders). */
 function nextWorkItemId(dir: string): string {
   const wiDir = join(dir, WORK_ITEMS_DIR)
   if (!exists(wiDir)) return 'WI-001'
 
-  const files = readDir(wiDir).filter((f) => f.endsWith('.md'))
-  const nums = files
-    .map((f) => {
-      const m = f.match(/WI-(\d+)/)
-      return m ? parseInt(m[1], 10) : 0
-    })
-    .filter((n) => n > 0)
+  let max = 0
+  const walk = (d: string) => {
+    for (const entry of readDir(d)) {
+      const full = join(d, entry)
+      if (isFile(full)) {
+        const m = entry.match(/WI-(\d+)/)
+        if (m) max = Math.max(max, parseInt(m[1], 10))
+      } else if (!entry.startsWith('.')) {
+        walk(full)
+      }
+    }
+  }
+  walk(wiDir)
 
-  const next = nums.length > 0 ? Math.max(...nums) + 1 : 1
-  return `WI-${String(next).padStart(3, '0')}`
+  return `WI-${String(max + 1).padStart(3, '0')}`
 }
 
 function slugify(s: string): string {
@@ -69,7 +77,9 @@ function buildFrontMatter(
     `id: ${id}`,
     `title: "${title}"`,
     `knowledge_level: ${level}`,
-    `status: in-progress`,
+    `status: draft`,
+    `phase: now`,
+    `initiative:`,
     `domains: []`,
     `code: []`,
     `created_at: ${today}`,
@@ -119,6 +129,9 @@ function buildBody(
     sections.push(`## Risks\n\n${answers.risks}\n`)
   }
 
+  sections.push(`## Out of scope\n\n_Not included in this Work Item._\n`)
+  sections.push(`## Validation\n\n_How will this be validated?_\n`)
+
   // Definition of Done
   if (qualityGate.length > 0) {
     sections.push(`## Definition of Done\n\n${qualityGate.map((g) => `- [ ] ${g}`).join('\n')}\n`)
@@ -147,7 +160,9 @@ function buildModuleFrontMatter(
     `id: ${id}`,
     `title: "${title}"`,
     `knowledge_level: ${modType.knowledgeLevel}`,
-    `status: in-progress`,
+    `status: draft`,
+    `phase: now`,
+    `initiative:`,
     `domains: []`,
     `code: []`,
     `created_at: ${today}`,
@@ -174,6 +189,9 @@ function buildModuleBody(modType: ModuleWorkItemType, title: string, answers: Re
   if (modType.qualityGate.length > 0) {
     sections.push(`## Definition of Done\n\n${modType.qualityGate.map((g) => `- [ ] ${g}`).join('\n')}\n`)
   }
+
+  sections.push(`## Out of scope\n\n_Not included in this Work Item._\n`)
+  sections.push(`## Validation\n\n_How will this be validated?_\n`)
 
   sections.push(`## Learning\n\n_What did we learn from this change? Update after completion._\n`)
   return sections.join('\n')
@@ -237,7 +255,7 @@ export async function runCreate(type: string, opts: CreateOptions = {}): Promise
   const id = nextWorkItemId(dir)
   const slug = slugify(title)
   const fileName = `${id}-${slug}.md`
-  const filePath = join(dir, WORK_ITEMS_DIR, fileName)
+  const filePath = join(dir, DRAFT_DIR, fileName)
 
   const frontMatter = buildFrontMatter(id, workItemType, level, title.trim(), answers)
   const body = buildBody(workItemType, level, title.trim(), answers, levelDef.qualityGate)
@@ -249,7 +267,8 @@ export async function runCreate(type: string, opts: CreateOptions = {}): Promise
   }
 
   writeFile(filePath, content)
-  log.success(`Created ${WORK_ITEMS_DIR}/${fileName}`)
+  log.success(`Created ${DRAFT_DIR}/${fileName}`)
+  log.info(`New Work Items start in \`draft\`. Move to \`ready\` when scope and acceptance are set.`)
   log.info(`Add code globs to the front matter \`code:\` field to enable Guard Lite.`)
   outro(`Work item ${id} created.`)
 }
@@ -283,14 +302,14 @@ async function runCreateModule(dir: string, modType: ModuleWorkItemType): Promis
   const id = nextWorkItemId(dir)
   const slug = slugify(title)
   const fileName = `${id}-${slug}.md`
-  const filePath = join(dir, WORK_ITEMS_DIR, fileName)
+  const filePath = join(dir, DRAFT_DIR, fileName)
 
   const frontMatter = buildModuleFrontMatter(id, modType, title.trim(), answers)
   const body = buildModuleBody(modType, title.trim(), answers)
   const content = `${frontMatter}\n\n${body}`
 
   writeFile(filePath, content)
-  log.success(`Created ${WORK_ITEMS_DIR}/${fileName}`)
+  log.success(`Created ${DRAFT_DIR}/${fileName}`)
   log.info(`Add code globs to the front matter \`code:\` field to enable Guard Lite.`)
   outro(`Work item ${id} created.`)
 }
@@ -331,13 +350,16 @@ function buildRoadmapFrontMatter(
 ): string {
   const today = new Date().toISOString().split('T')[0]
   const summary = (answers.problem?.split('.')[0] ?? candidate.expectedValue ?? title).trim()
+  const initiative = candidate.initiative?.title ?? candidate.initiative?.id ?? ''
   const lines = [
     '---',
     `type: ${type}`,
     `id: ${id}`,
     `title: "${title}"`,
     `knowledge_level: ${level}`,
-    `status: in-progress`,
+    `status: draft`,
+    `phase: now`,
+    `initiative: "${initiative.replace(/"/g, "'")}"`,
     `domains: []`,
     `code: []`,
     `created_at: ${today}`,
@@ -413,6 +435,9 @@ function buildRoadmapBody(
 
   if (candidate.openQuestions?.length)
     sections.push(`## Open Questions\n\n${formatList(candidate.openQuestions)}\n`)
+
+  sections.push(`## Out of scope\n\n_Not included in this Work Item._\n`)
+  sections.push(`## Validation\n\n_How will this be validated?_\n`)
 
   if (qualityGate.length > 0)
     sections.push(`## Definition of Done\n\n${qualityGate.map((g) => `- [ ] ${g}`).join('\n')}\n`)
@@ -522,9 +547,9 @@ async function runCreateFromRoadmap(dir: string, cliType?: string): Promise<void
   // 5. Generate the Work Item file.
   const id = nextWorkItemId(dir)
   const { fileName, content } = buildRoadmapWorkItem({ id, type, level, candidate, answers })
-  writeFile(join(dir, WORK_ITEMS_DIR, fileName), content)
+  writeFile(join(dir, DRAFT_DIR, fileName), content)
 
-  log.success(`Created ${WORK_ITEMS_DIR}/${fileName}`)
+  log.success(`Created ${DRAFT_DIR}/${fileName}`)
   log.info(`Traced to roadmap candidate ${candidate.id}${candidate.initiative?.id ? ` (initiative ${candidate.initiative.id})` : ''}.`)
   log.info(`Add code globs to the front matter \`code:\` field to enable Guard Lite.`)
   outro(`Work item ${id} created from roadmap.`)

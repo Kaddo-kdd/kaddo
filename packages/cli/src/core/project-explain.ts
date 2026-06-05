@@ -14,6 +14,13 @@ import {
 } from '../services/mapped-modules.js'
 import { knowledgeLayers, renderLayersMarkdown, type LayerStatus } from './layers.js'
 import { roadmapStats, type RoadmapStats } from './roadmap.js'
+import {
+  LIFECYCLE_STATES,
+  lifecycleStateOf,
+  lifecycleCounts,
+  emptyLifecycleCounts,
+  type LifecycleState,
+} from './lifecycle.js'
 
 const ARCH_DIR = 'knowledge'
 
@@ -48,10 +55,14 @@ export type ProjectExplanation = {
     inProgress: number
     done: number
     cancelled: number
+    byState: Record<LifecycleState, number>
+    initiatives: { name: string; states: Record<LifecycleState, number> }[]
     items: {
       id: string
       title: string
       status: string
+      lifecycle: LifecycleState
+      initiative: string
       knowledgeLevel: string
       hasOwnership: boolean
       domains: string[]
@@ -183,16 +194,33 @@ export function buildProjectExplanation(dir: string): ProjectExplanation {
     id: a.id || a.title,
     title: a.title,
     status: a.status,
+    lifecycle: lifecycleStateOf({ status: a.status, filePath: a.filePath }),
+    initiative: a.initiative,
     knowledgeLevel: a.knowledgeLevel,
     hasOwnership: a.codeGlobs.length > 0,
     domains: a.domains,
   }))
 
+  const byState = lifecycleCounts(items.map((i) => i.lifecycle))
+
+  // Virtual grouping by initiative (functional traceability) — never folder-based.
+  const initiativeMap = new Map<string, Record<LifecycleState, number>>()
+  for (const i of items) {
+    const name = i.initiative || 'Unassigned'
+    if (!initiativeMap.has(name)) initiativeMap.set(name, emptyLifecycleCounts())
+    initiativeMap.get(name)![i.lifecycle]++
+  }
+  const initiatives = [...initiativeMap.entries()]
+    .map(([name, states]) => ({ name, states }))
+    .sort((a, b) => a.name.localeCompare(b.name))
+
   const workItems = {
     total: items.length,
-    inProgress: items.filter((i) => i.status === 'in-progress').length,
+    inProgress: items.filter((i) => i.lifecycle === 'in-progress').length,
     done: items.filter((i) => i.status === 'done').length,
     cancelled: items.filter((i) => i.status === 'cancelled').length,
+    byState,
+    initiatives,
     items,
   }
 
@@ -273,6 +301,15 @@ function stateLabel(state: string): string {
   return state === 'pre-ai' ? 'pre-ai' : state
 }
 
+const LIFECYCLE_LABEL: Record<LifecycleState, string> = {
+  draft: 'Draft',
+  ready: 'Ready',
+  'in-progress': 'In Progress',
+  blocked: 'Blocked',
+  completed: 'Completed',
+  archived: 'Archived',
+}
+
 export function renderExplanationHuman(exp: ProjectExplanation): string {
   const lines: string[] = []
   lines.push('# Project Explanation')
@@ -325,9 +362,32 @@ export function renderExplanationHuman(exp: ProjectExplanation): string {
   )
   lines.push('')
 
-  const active = exp.workItems.items.filter((i) => i.status === 'in-progress')
+  if (exp.workItems.total > 0) {
+    lines.push('## Work Items')
+    for (const s of LIFECYCLE_STATES) {
+      lines.push(`- ${LIFECYCLE_LABEL[s]}: ${exp.workItems.byState[s]}`)
+    }
+    lines.push('')
+
+    // Virtual grouping by initiative (functional traceability, not folders).
+    const grouped = exp.workItems.initiatives.filter((g) =>
+      LIFECYCLE_STATES.some((s) => g.states[s] > 0)
+    )
+    if (grouped.length > 0) {
+      lines.push('## Work Items by Initiative')
+      for (const g of grouped) {
+        const parts = LIFECYCLE_STATES.filter((s) => g.states[s] > 0).map(
+          (s) => `${LIFECYCLE_LABEL[s]}: ${g.states[s]}`
+        )
+        lines.push(`- ${g.name} — ${parts.join(' · ')}`)
+      }
+      lines.push('')
+    }
+  }
+
+  const active = exp.workItems.items.filter((i) => i.lifecycle === 'in-progress')
   if (active.length > 0) {
-    lines.push('## Active Work Items')
+    lines.push('## In Progress')
     for (const wi of active) {
       const level = wi.knowledgeLevel ? ` [${wi.knowledgeLevel}]` : ''
       const owned = wi.hasOwnership ? ' ●' : ' ○'

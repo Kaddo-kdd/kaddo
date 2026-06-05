@@ -53,11 +53,12 @@ const WORK_ITEM = `---
 type: feature
 id: WI-001
 title: "Short, action-oriented title"
-status: in-progress
+status: draft
 knowledge_level: K2
 source: manual
 source_id:
-source_initiative:
+phase: now
+initiative:
 domains: []
 capabilities: []
 code: []
@@ -87,6 +88,14 @@ _Optional. Key decisions or approach. Keep it minimal at low knowledge levels._
 ## Risks
 
 _Optional. What could go wrong?_
+
+## Out of scope
+
+_What is intentionally not included in this Work Item?_
+
+## Validation
+
+_How will this be validated?_
 
 ## Definition of Done
 

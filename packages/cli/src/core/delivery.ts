@@ -7,6 +7,7 @@
 import { exists, readFile, join } from '../utils/fs.js'
 import { parse as parseYaml } from 'yaml'
 import { readArtifacts, type Artifact } from '../services/artifact-reader.js'
+import { lifecycleStateOf } from './lifecycle.js'
 
 const DEFAULT_BRANCH_PATTERN = '{type}/{workItemId}-{slug}'
 
@@ -59,12 +60,16 @@ export function allWorkItems(dir: string): ActiveWorkItem[] {
     .map(toActive)
 }
 
-/** Active Work Items: under delivery/work-items/, typed, status in-progress. */
+/** Work Items currently being implemented. */
 export function activeWorkItems(dir: string): ActiveWorkItem[] {
   const archDir = join(dir, 'knowledge')
   if (!exists(archDir)) return []
   return readArtifacts(archDir)
-    .filter((a) => isWorkItem(a) && a.status === 'in-progress')
+    .filter(
+      (a) =>
+        isWorkItem(a) &&
+        lifecycleStateOf({ status: a.status, filePath: a.filePath }) === 'in-progress'
+    )
     .map(toActive)
 }
 

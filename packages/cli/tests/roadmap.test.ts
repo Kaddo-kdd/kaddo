@@ -172,7 +172,7 @@ describe('buildRoadmapWorkItem', () => {
     expect(content).toContain('source_initiative: RM-001')
     expect(content).toContain('type: spike')
     expect(content).toContain('knowledge_level: K2')
-    expect(content).toContain('status: in-progress')
+    expect(content).toContain('status: draft')
   })
 
   it('inherits roadmap context into the body', () => {

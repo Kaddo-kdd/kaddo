@@ -9,6 +9,7 @@ import { knowledgeLayers, currentPhase } from '../core/layers.js'
 import { roadmapHasUnmaterializedCandidates } from '../core/knowledge-discovery.js'
 import { AGENT_GROUPS, type AgentGroup } from '../agents/groups.js'
 import { activeWorkItems, renderDeliveryLifecycle } from '../core/delivery.js'
+import { buildProjectExplanation } from '../core/project-explain.js'
 
 export function runUnderstand(): void {
   const dir = cwd()
@@ -96,6 +97,26 @@ export function runUnderstand(): void {
   for (const step of NEXT_STEPS[group] ?? []) console.log(`  ${n++}. ${step}`)
   if (groupAgents.length > 0) {
     console.log(`Agents for this phase: ${groupAgents.join(', ')}`)
+  }
+
+  // 5b-bis. Lifecycle-aware active workspace summary (VS-041): what work needs attention now.
+  const exp = buildProjectExplanation(dir)
+  if (exp.workItems.total > 0) {
+    const bs = exp.workItems.byState
+    console.log('')
+    console.log('Current active work:')
+    console.log(`  Draft: ${bs.draft}  Ready: ${bs.ready}  In Progress: ${bs['in-progress']}  Blocked: ${bs.blocked}`)
+    const firstReady = exp.workItems.items.find((i) => i.lifecycle === 'ready')
+    const firstInProgress = exp.workItems.items.find((i) => i.lifecycle === 'in-progress')
+    if (firstInProgress) {
+      console.log(`  → Continue ${firstInProgress.id} — ${firstInProgress.title} (in progress).`)
+    } else if (firstReady) {
+      console.log(`  → Recommended next step: start ${firstReady.id} — ${firstReady.title}.`)
+    } else if (bs.draft > 0) {
+      console.log('  → Refine a draft Work Item to `ready` (scope + acceptance defined).')
+    } else if (bs.blocked > 0) {
+      console.log('  → All active work is blocked. Resolve the blockers to move forward.')
+    }
   }
 
   // 5c. If a Work Item is active, show the official delivery lifecycle.

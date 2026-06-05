@@ -93,6 +93,30 @@ describe('context-pack — roadmap candidates (VS-039)', () => {
   })
 })
 
+describe('context-pack — active workspace (VS-041)', () => {
+  it('ships only active Work Items, excluding completed and archived', () => {
+    writeConfig('pre-ai')
+    write(
+      'knowledge/delivery/work-items/in-progress/WI-001.md',
+      '---\nid: WI-001\ntype: feature\ntitle: Active one\nstatus: in-progress\n---\n\nx\n'
+    )
+    write(
+      'knowledge/delivery/work-items/ready/WI-002.md',
+      '---\nid: WI-002\ntype: feature\ntitle: Ready one\nstatus: ready\n---\n\nx\n'
+    )
+    write(
+      'knowledge/delivery/work-items/completed/WI-003.md',
+      '---\nid: WI-003\ntype: feature\ntitle: Done one\nstatus: completed\n---\n\nx\n'
+    )
+    write(
+      'knowledge/delivery/work-items/archived/WI-004.md',
+      '---\nid: WI-004\ntype: feature\ntitle: Old one\nstatus: archived\n---\n\nx\n'
+    )
+    const ids = build().knowledge.workItems.map((w) => w.id).sort()
+    expect(ids).toEqual(['WI-001', 'WI-002'])
+  })
+})
+
 describe('context-pack — buildContextPack', () => {
   it('assembles a full pack from config + scan + artifacts', () => {
     writeConfig('pre-ai')
@@ -116,6 +140,7 @@ describe('context-pack — buildContextPack', () => {
     expect(pack.knowledge.inventoryAvailable).toBe(true)
     expect(pack.knowledge.workItems).toHaveLength(1)
     expect(pack.knowledge.workItems[0].id).toBe('WI-001')
+    expect(pack.knowledge.workItems[0].lifecycle).toBe('in-progress')
     expect(pack.knowledge.artifacts[0].codeGlobs).toEqual(['src/auth/**'])
     expect(pack.missing).toHaveLength(0)
   })
@@ -182,7 +207,7 @@ describe('context-pack — renderContextPack', () => {
     expect(md).toContain('## Technical Inventory')
     expect(md).toContain('## Current Knowledge')
     expect(md).toContain('## Roadmap')
-    expect(md).toContain('## Existing Work Items')
+    expect(md).toContain('## Active Work Items')
     expect(md).toContain('## Missing Context')
     expect(md).toContain('## Recommended Agent Handoff')
     expect(md).toContain('## Instructions for the LLM')
@@ -203,7 +228,7 @@ describe('context-pack — renderContextPack', () => {
     writeConfig('new')
     const md = renderContextPack(build())
     expect(md).toContain('Scan baseline missing')
-    expect(md).toContain('No work items found.')
+    expect(md).toContain('No active work items found.')
   })
 })
 

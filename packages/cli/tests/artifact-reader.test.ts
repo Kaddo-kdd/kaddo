@@ -28,6 +28,8 @@ id: WI-001
 title: "Test feature"
 knowledge_level: K2
 status: in-progress
+phase: now
+initiative: Project Foundation
 code:
   - src/payments/**
 summary: "Test summary"
@@ -40,6 +42,8 @@ summary: "Test summary"
     expect(artifacts[0].id).toBe('WI-001')
     expect(artifacts[0].codeGlobs).toEqual(['src/payments/**'])
     expect(artifacts[0].knowledgeLevel).toBe('K2')
+    expect(artifacts[0].phase).toBe('now')
+    expect(artifacts[0].initiative).toBe('Project Foundation')
   })
 
   it('returns empty array for empty directory', () => {

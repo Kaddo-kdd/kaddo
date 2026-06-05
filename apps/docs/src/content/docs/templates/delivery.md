@@ -8,15 +8,20 @@ loop, under `knowledge/delivery/`.
 
 | Template | Purpose | Output path | Command | Agent |
 |---|---|---|---|---|
-| Work Item | Smallest traceable unit of product evolution | `knowledge/delivery/work-items/` | `kaddo create` | `work-item-agent` |
+| Work Item | Smallest traceable unit of product evolution | `knowledge/delivery/work-items/<state>/` | `kaddo create` | `work-item-agent` |
 | Roadmap | Initiatives + candidate work items | `knowledge/delivery/roadmap.md` | `kaddo create --from roadmap` | `roadmap-agent` |
 
 ## Work Item
 
 The unit Guard, classify, history and learn revolve around. Carries front matter for
 traceability (`id`, `type`, `knowledge_level`, `source`, `domains`, `capabilities`,
-`code`). Sections: Problem · Expected result · Acceptance criteria · Design (optional)
-· Risks (optional) · Definition of Done · Learning.
+`code`). Phase and initiative stay in front matter as planning and functional traceability;
+folders represent lifecycle state. Sections: Problem · Expected result · Acceptance criteria ·
+Design (optional) · Risks (optional) · Out of scope · Validation · Definition of Done · Learning.
+
+Official lifecycle states are `draft`, `ready`, `in-progress`, `blocked`, `completed` and
+`archived`. Agents should treat only `draft`, `ready`, `in-progress` and `blocked` as active
+work; `completed` and `archived` are historical knowledge.
 
 > Declare `code:` globs so Guard can relate changes to the work item.
 
