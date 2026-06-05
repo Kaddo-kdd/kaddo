@@ -436,6 +436,7 @@ create --from roadmap → owners → guard → explain`.
 | v3.2 | New-project flow hardening: agents in per-layer folders; `new` recommends capability+architecture agents; explain Work Item parser fix; intent vs reality (codebase vs current-state) |
 | v3.3 | Work Item delivery lifecycle: `understand` shows branch → scan → ownership → guard → knowledge → commit for active Work Items (suggestions only; Kaddo never runs git) |
 | v3.4 | Delivery protocol in the `work-item-agent`: branch first per the Git strategy, commit only with human confirmation (CLI never touches git) |
+| v3.5 | Knowledge discovery by front-matter type with per-layer maturity (explain/understand/context); context pack carries Operating Rules so agents never commit without confirmation |
 
 **Optional modules (installed with `kaddo add`):**
 

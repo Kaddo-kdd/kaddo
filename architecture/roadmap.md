@@ -38,6 +38,7 @@ no ownership inference · no Confidence Score · the human always confirms.
 | [v3.2.0](https://github.com/Kaddo-kdd/kaddo/releases/tag/v3.2.0) | New Project Flow Hardening: per-layer agent folders; capability+architecture in `new`; explain Work Item parser fix; intent vs reality (VS-031) |
 | [v3.3.0](https://github.com/Kaddo-kdd/kaddo/releases/tag/v3.3.0) | Work Item Delivery Workflow: `understand` delivery lifecycle (branch → scan → ownership → guard → knowledge → commit) for active Work Items (VS-035) |
 | [v3.4.0](https://github.com/Kaddo-kdd/kaddo/releases/tag/v3.4.0) | Delivery protocol in the work-item-agent: branch first per the Git strategy; commit only with human confirmation; CLI never touches git (VS-036) |
+| [v3.5.0](https://github.com/Kaddo-kdd/kaddo/releases/tag/v3.5.0) | Knowledge Discovery & Semantic Recognition (front-matter type, per-layer maturity); context pack Operating Rules (agents never commit without confirmation) (VS-037) |
 
 ---
 
