@@ -1,3 +1,4 @@
+import { createRequire } from 'node:module'
 import { Command } from 'commander'
 import { runInit } from './commands/init.js'
 import { runScan } from './commands/scan.js'
@@ -17,12 +18,19 @@ import { runModuleDescriptor } from './commands/module-descriptor.js'
 import { runModulesMap, runModulesList } from './commands/modules-map.js'
 import { runBootstrap } from './commands/bootstrap.js'
 
+// Single source of truth for the version: read it from package.json at runtime so the CLI
+// `--version` can never drift from the published package version. `../package.json` resolves
+// relative to dist/index.js (npm always ships package.json). createRequire keeps esbuild from
+// trying to inline it at build time.
+const require = createRequire(import.meta.url)
+const { version } = require('../package.json') as { version: string }
+
 const program = new Command()
 
 program
   .name('kaddo')
   .description('Knowledge Driven Development toolkit')
-  .version('3.6.0')
+  .version(version)
 
 program
   .command('init')

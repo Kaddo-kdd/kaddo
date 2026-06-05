@@ -47,6 +47,16 @@ jobs:
             exit 1
           fi
 
+      - name: Verify built CLI reports the package version
+        run: |
+          PKG=$(node -p "require('./packages/cli/package.json').version")
+          CLI=$(node packages/cli/dist/index.js --version)
+          echo "pkg=$PKG cli=$CLI"
+          if [ "$CLI" != "$PKG" ]; then
+            echo "::error::Built CLI --version ($CLI) does not match package version ($PKG)"
+            exit 1
+          fi
+
       - name: Publish to npm
         working-directory: packages/cli
         run: npm publish --provenance --access public
