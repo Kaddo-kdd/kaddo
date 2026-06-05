@@ -1,15 +1,15 @@
 # Tasks: Flexible Roadmap Parsing
 ## Phase 1 — Parser
-- [ ] Multi-strategy parseRoadmapCandidates (table/bullet/checklist/mixed + VS-010).
-- [ ] roadmapStats helper.
-- [ ] Tests for every format + back-compat.
+- [x] Multi-strategy parseRoadmapCandidates (table/bullet/checklist/mixed + VS-010).
+- [x] roadmapStats helper.
+- [x] Tests for every format + back-compat.
 ## Phase 2 — Wire in
-- [ ] explain: candidates vs materialized vs remaining.
-- [ ] understand: recommend materializing.
-- [ ] context: candidates/materialized.
-- [ ] Tests.
+- [x] explain: candidates vs materialized vs remaining.
+- [x] understand: recommend materializing.
+- [x] context: candidates/materialized.
+- [x] Tests.
 ## Phase 3 — Docs & examples (EN/ES)
-- [ ] roadmap/create/understand docs + visual guide; examples.
+- [x] roadmap/create/understand/context/explain docs + visual guide (EN/ES).
 ## Validation
-- [ ] pnpm --filter "@kaddo/cli" test
-- [ ] pnpm -r build
+- [x] pnpm --filter "@kaddo/cli" test (369 passing)
+- [x] pnpm -r build

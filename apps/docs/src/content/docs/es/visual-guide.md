@@ -237,6 +237,22 @@ flowchart LR
     E --> F[kaddo guard relaciona los cambios de código]
 ```
 
+## Roadmap → Candidatos → Work Items materializados
+
+Un roadmap lista **candidatos**, no Work Items. El roadmap-agent (en tu chat LLM) escribe el
+roadmap en cualquier formato soportado; el CLI de Kaddo parsea los candidatos de forma
+determinista; tú los materializas en Work Items reales con `kaddo create --from roadmap`.
+`explain` y `understand` reportan la brecha (candidatos restantes).
+
+```mermaid
+flowchart LR
+    A[roadmap-agent en chat LLM] --> B[knowledge/delivery/roadmap.md<br/>tabla · viñetas · checklist · mixto]
+    B --> C[Candidatos parseados<br/>WI-001, WI-002, …]
+    C -->|kaddo create --from roadmap| D[Work Items materializados<br/>knowledge/delivery/work-items/]
+    C -.candidatos restantes.-> E[explain · understand<br/>candidatos vs materializados]
+    D -.-> E
+```
+
 ## Ciclo de entrega de un Work Item
 
 De un Work Item a un commit, manteniendo el conocimiento sincronizado. El CLI de Kaddo

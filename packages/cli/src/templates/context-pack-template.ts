@@ -78,6 +78,20 @@ export function renderContextPack(pack: ContextPack): string {
 
   // 4. Roadmap
   parts.push('## Roadmap\n')
+  if (pack.roadmap.present) {
+    parts.push(
+      [
+        `- Roadmap candidates: ${pack.roadmap.candidates}`,
+        `- Materialized work items: ${pack.roadmap.materialized}`,
+        `- Remaining candidates: ${pack.roadmap.remaining}`,
+      ].join('\n') + '\n'
+    )
+    if (pack.roadmap.remaining > 0) {
+      parts.push(
+        'Candidates are not yet Work Items. Materialize them with `kaddo create --from roadmap`.\n'
+      )
+    }
+  }
   parts.push((knowledge.roadmapSummary || 'No roadmap baseline found.') + '\n')
 
   // 5. Existing Work Items

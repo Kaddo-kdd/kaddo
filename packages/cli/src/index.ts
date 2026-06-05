@@ -22,7 +22,7 @@ const program = new Command()
 program
   .name('kaddo')
   .description('Knowledge Driven Development toolkit')
-  .version('3.5.1')
+  .version('3.6.0')
 
 program
   .command('init')

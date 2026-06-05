@@ -48,8 +48,49 @@ This completes the Kaddo loop: `scan → context → agents → roadmap → work
 is generated in your LLM chat (never by the CLI), and its candidates are not Work Items until
 you create them here.
 
-> If `knowledge/delivery/roadmap.md` is missing, or it contains no candidates in the Kaddo Roadmap
-> Agent format, Kaddo shows a helpful message instead of creating an empty Work Item.
+### Supported roadmap formats
+
+`kaddo create --from roadmap` does not require a single rigid layout. The deterministic parser
+recognizes Work Item candidates across the most common roadmap shapes — it tries the strict Kaddo
+Roadmap Agent format first (full back-compat) and, if that yields nothing, falls back to flexible
+recognition:
+
+- **Table** — a Markdown table with an `ID`/`WI` column and a title/description column (a
+  `Depends on` column is read as dependencies):
+
+  ```markdown
+  | ID     | Work Item | Depends on |
+  |--------|-----------|------------|
+  | WI-001 | Cart      |            |
+  | WI-002 | Payment   | WI-001     |
+  ```
+
+- **Bullet list** — `- WI-001: Cart`, `- WI-001 — Cart`, or `- WI-001 Cart`.
+
+- **Checklist** — `- [ ] WI-001 Cart` / `- [x] WI-002 Payment`.
+
+- **Mixed initiatives** — `## RM-001: Checkout` headings group the candidates below them; the
+  initiative is recorded as `source_initiative`.
+
+Any `WI-*` id ending in a digit is treated as a candidate. Duplicate ids are de-duplicated.
+
+> If `knowledge/delivery/roadmap.md` is missing, or it contains no recognizable Work Item
+> candidates in any supported format, Kaddo shows a helpful message instead of creating an empty
+> Work Item.
+
+### Roadmap candidates vs materialized Work Items
+
+A roadmap lists **candidates** — they are *not* Work Items until you create them. `kaddo explain`
+and `kaddo understand` make this distinction explicit:
+
+```text
+Roadmap candidates: 21
+Materialized work items: 5
+Remaining candidates: 16
+```
+
+`kaddo understand` then recommends materializing the remaining candidates with
+`kaddo create --from roadmap`.
 
 ## Activate Guard Lite
 

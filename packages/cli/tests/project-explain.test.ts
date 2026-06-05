@@ -209,6 +209,58 @@ describe('renderExplanationHuman', () => {
   })
 })
 
+describe('buildProjectExplanation — roadmap candidates vs materialized (VS-039)', () => {
+  const roadmap = `# Roadmap
+
+## RM-001: Checkout
+
+| ID | Work Item | Depends on |
+|----|-----------|------------|
+| WI-001 | Cart | |
+| WI-002 | Payment | WI-001 |
+| WI-003 | Receipt | WI-002 |
+`
+
+  it('counts candidates and computes remaining when nothing is materialized', () => {
+    initConfig()
+    write('knowledge/delivery/roadmap.md', roadmap)
+    const exp = buildProjectExplanation(tmpDir)
+    expect(exp.roadmap.present).toBe(true)
+    expect(exp.roadmap.candidates).toBe(3)
+    expect(exp.roadmap.materialized).toBe(0)
+    expect(exp.roadmap.remaining).toBe(3)
+    expect(exp.suggestedNextSteps).toContain(
+      'Materialize 3 roadmap candidate(s) with `kaddo create --from roadmap`.'
+    )
+  })
+
+  it('subtracts materialized work items from remaining candidates', () => {
+    initConfig()
+    write('knowledge/delivery/roadmap.md', roadmap)
+    writeWorkItem('WI-001', 'done', ['src/**'])
+    const exp = buildProjectExplanation(tmpDir)
+    expect(exp.roadmap.candidates).toBe(3)
+    expect(exp.roadmap.materialized).toBe(1)
+    expect(exp.roadmap.remaining).toBe(2)
+  })
+
+  it('reports not present when there is no roadmap', () => {
+    initConfig()
+    const exp = buildProjectExplanation(tmpDir)
+    expect(exp.roadmap.present).toBe(false)
+    expect(exp.roadmap.candidates).toBe(0)
+  })
+
+  it('renders roadmap candidate stats in human output', () => {
+    initConfig()
+    write('knowledge/delivery/roadmap.md', roadmap)
+    const out = renderExplanationHuman(buildProjectExplanation(tmpDir))
+    expect(out).toContain('Roadmap candidates: 3')
+    expect(out).toContain('Materialized work items: 0')
+    expect(out).toContain('Remaining candidates: 3')
+  })
+})
+
 describe('renderExplanationAgent', () => {
   it('produces valid JSON with the explanation shape', () => {
     initConfig()

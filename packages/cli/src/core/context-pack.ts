@@ -4,6 +4,7 @@ import { loadConfig, type KaddoConfig, type ProjectState } from './config.js'
 import { readArtifacts, type Artifact } from '../services/artifact-reader.js'
 import { loadMappedModules, type MappedModuleWithCoverage } from '../services/mapped-modules.js'
 import { knowledgeLayers, type LayerStatus } from './layers.js'
+import { roadmapStats, type RoadmapStats } from './roadmap.js'
 
 export const CONTEXT_PACK_VERSION = '1'
 
@@ -51,6 +52,7 @@ export type ContextPack = {
     artifacts: ContextArtifact[]
   }
   layers: LayerStatus[]
+  roadmap: RoadmapStats
   mappedModules: MappedModuleWithCoverage[]
   missing: string[]
   handoff: {
@@ -221,6 +223,13 @@ export function buildContextPack(
 
   const state = config.project.state
 
+  // Roadmap candidates vs materialized work items (any roadmap format).
+  const roadmapPath = join(dir, ARCH_DIR, 'delivery', 'roadmap.md')
+  const materialized = allArtifacts.filter((a) =>
+    a.filePath.replace(/\\/g, '/').includes('/delivery/work-items/') && Boolean(a.type)
+  ).length
+  const roadmap = roadmapStats(exists(roadmapPath) ? readFile(roadmapPath) : null, materialized)
+
   // Multirepo modules from `.kaddo/modules.yml` (descriptor + artifact coverage only —
   // secondary repos are never scanned).
   const mappedModules = loadMappedModules(dir)
@@ -253,6 +262,7 @@ export function buildContextPack(
       artifacts: workItems.filter((a) => a.codeGlobs.length > 0).map(toContextArtifact),
     },
     layers,
+    roadmap,
     mappedModules,
     missing,
     handoff: {

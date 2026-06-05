@@ -13,6 +13,7 @@ import {
   type MappedModuleWithCoverage,
 } from '../services/mapped-modules.js'
 import { knowledgeLayers, renderLayersMarkdown, type LayerStatus } from './layers.js'
+import { roadmapStats, type RoadmapStats } from './roadmap.js'
 
 const ARCH_DIR = 'knowledge'
 
@@ -63,6 +64,7 @@ export type ProjectExplanation = {
   }
   domains: string[]
   layers: LayerStatus[]
+  roadmap: RoadmapStats
   mappedModules: MappedModuleWithCoverage[]
   missingKnowledge: string[]
   suggestedNextSteps: string[]
@@ -203,6 +205,11 @@ export function buildProjectExplanation(dir: string): ProjectExplanation {
 
   const domains = [...new Set(workItemArtifacts.flatMap((a) => a.domains))].filter(Boolean)
 
+  // Roadmap candidates vs materialized Work Items (any roadmap format).
+  const roadmapPath = join(dir, ARCH_DIR, 'delivery', 'roadmap.md')
+  const roadmapMd = exists(roadmapPath) ? readFile(roadmapPath) : null
+  const roadmap = roadmapStats(roadmapMd, items.length)
+
   // Multirepo modules registered with `kaddo modules map` (distinct from add-on modules
   // installed with `kaddo add`). Secondary repos are never scanned.
   const mappedModules = loadMappedModules(dir)
@@ -234,8 +241,12 @@ export function buildProjectExplanation(dir: string): ProjectExplanation {
   }
   if (!knowledge.hasRoadmap) {
     suggestedNextSteps.push('Use roadmap-agent to generate knowledge/delivery/roadmap.md.')
+  } else if (roadmap.remaining > 0) {
+    suggestedNextSteps.push(
+      `Materialize ${roadmap.remaining} roadmap candidate(s) with \`kaddo create --from roadmap\`.`
+    )
   }
-  if (items.length === 0) {
+  if (items.length === 0 && !roadmap.present) {
     suggestedNextSteps.push('Create your first Work Item with `kaddo create`.')
   } else if (ownership.workItemsMissingOwnership > 0) {
     suggestedNextSteps.push(
@@ -251,6 +262,7 @@ export function buildProjectExplanation(dir: string): ProjectExplanation {
     ownership,
     domains,
     layers,
+    roadmap,
     mappedModules,
     missingKnowledge,
     suggestedNextSteps,
@@ -300,7 +312,14 @@ export function renderExplanationHuman(exp: ProjectExplanation): string {
   lines.push(`- Tech: ${ls('Tech')}`)
   lines.push(`- Delivery: ${ls('Delivery')}`)
   lines.push(`- Agents: ${exp.knowledge.hasAgents ? 'available' : 'missing'}`)
-  lines.push(`- Work items: ${exp.workItems.total}`)
+  if (exp.roadmap.present) {
+    lines.push(`- Roadmap candidates: ${exp.roadmap.candidates}`)
+    lines.push(`- Materialized work items: ${exp.roadmap.materialized}`)
+    if (exp.roadmap.remaining > 0)
+      lines.push(`- Remaining candidates: ${exp.roadmap.remaining}`)
+  } else {
+    lines.push(`- Work items: ${exp.workItems.total}`)
+  }
   lines.push(
     `- Ownership coverage: ${exp.ownership.workItemsWithOwnership}/${exp.ownership.workItemsTotal} work items`
   )

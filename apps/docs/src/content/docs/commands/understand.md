@@ -49,6 +49,21 @@ Each step maps to an expected output, for example:
 - `roadmap-agent` → `knowledge/delivery/roadmap.md`
 - `legacy-agent` → `knowledge/legacy/risks.md`
 
+## Roadmap candidates → materialized Work Items
+
+When a roadmap exists but its candidates are not yet Work Items, `understand` calls it out and
+recommends materializing them:
+
+```text
+The roadmap has 16 unmaterialized Work Item candidate(s) (21 candidate(s), 5 materialized).
+  → Run `kaddo create --from roadmap`, or use the work-item-agent to
+    materialize them into knowledge/delivery/work-items/.
+```
+
+Candidates are detected from any [supported roadmap format](/commands/create/#supported-roadmap-formats).
+A roadmap candidate becomes a real Work Item only when you create it — `understand` keeps that
+boundary explicit so nothing is silently treated as in-flight work.
+
 ## Works even when context is incomplete
 
 If the scan baseline or some agents are missing, the command still produces a plan and

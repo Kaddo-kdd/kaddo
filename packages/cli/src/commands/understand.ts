@@ -77,8 +77,12 @@ export function runUnderstand(): void {
   }
   // Embedded Work Items: roadmap has candidates but none are materialized yet.
   if (roadmapHasUnmaterializedCandidates(dir)) {
+    const { candidates, materialized, remaining } = pack.roadmap
     console.log('')
-    console.log('The roadmap has Work Item candidates that are not materialized yet.')
+    console.log(
+      `The roadmap has ${remaining} unmaterialized Work Item candidate(s) ` +
+        `(${candidates} candidate(s), ${materialized} materialized).`
+    )
     console.log('  → Run `kaddo create --from roadmap`, or use the work-item-agent to')
     console.log('    materialize them into knowledge/delivery/work-items/.')
   }

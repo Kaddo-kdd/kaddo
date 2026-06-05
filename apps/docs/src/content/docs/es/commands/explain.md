@@ -45,13 +45,23 @@ salida es totalmente determinista.
 ## Knowledge Status
 - Capabilities: missing
 - Roadmap: available
-- Work items: 2
+- Roadmap candidates: 21
+- Materialized work items: 5
+- Remaining candidates: 16
 - Ownership coverage: 1/2 work items
 
 ## Suggested Next Steps
 1. Use capability-agent to create knowledge/product/capabilities.md.
-2. Run `kaddo owners suggest` for Work Items without code ownership.
+2. Materialize 16 roadmap candidate(s) with `kaddo create --from roadmap`.
+3. Run `kaddo owners suggest` for Work Items without code ownership.
 ```
+
+Cuando hay un roadmap presente, `explain` distingue los **candidatos del roadmap** (entradas que
+propuso el roadmap-agent) de los **Work Items materializados** (creados bajo
+`knowledge/delivery/work-items/`). El conteo de *candidatos restantes* es la brecha entre ambos, y
+`explain` sugiere materializarlos con `kaddo create --from roadmap`. Los candidatos se leen desde
+cualquier [formato de roadmap soportado](/es/commands/create/#formatos-de-roadmap-soportados)
+(tabla, viñetas, checklist, iniciativas mixtas o el formato estricto del Kaddo Roadmap Agent).
 
 ## `context` vs `explain`
 

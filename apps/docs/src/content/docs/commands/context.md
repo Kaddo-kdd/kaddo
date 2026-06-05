@@ -30,6 +30,14 @@ knowledge/delivery/work-items/   # work item metadata (front matter only)
 Missing files do not stop the command — their sections are marked under **Missing
 Context** so the LLM knows what is not yet available.
 
+## Roadmap candidates vs materialized
+
+When `knowledge/delivery/roadmap.md` is present, the `## Roadmap` section reports
+**candidates** (parsed from any [supported roadmap format](/commands/create/#supported-roadmap-formats)),
+**materialized work items**, and **remaining candidates**. The JSON exposes a `roadmap` object
+(`present`, `candidates`, `materialized`, `remaining`) so the agent knows which candidates are
+still waiting to become Work Items.
+
 ## Mapped modules (multirepo)
 
 If the project has modules registered with `kaddo modules map`, the pack adds a

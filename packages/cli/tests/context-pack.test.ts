@@ -65,6 +65,34 @@ afterEach(() => {
   fs.rmSync(tmpDir, { recursive: true, force: true })
 })
 
+describe('context-pack — roadmap candidates (VS-039)', () => {
+  it('exposes candidates and materialized counts and renders them', () => {
+    writeConfig('pre-ai')
+    write(
+      'knowledge/delivery/roadmap.md',
+      ['# Roadmap', '', '- WI-001 Cart', '- WI-002 Payment', '- WI-003 Receipt', ''].join('\n')
+    )
+    write(
+      'knowledge/delivery/work-items/WI-001.md',
+      '---\nid: WI-001\ntype: feature\ntitle: Cart\nstatus: done\n---\n\nBody\n'
+    )
+    const pack = build()
+    expect(pack.roadmap.present).toBe(true)
+    expect(pack.roadmap.candidates).toBe(3)
+    expect(pack.roadmap.materialized).toBe(1)
+    expect(pack.roadmap.remaining).toBe(2)
+    const md = renderContextPack(pack)
+    expect(md).toContain('Roadmap candidates: 3')
+    expect(md).toContain('Materialized work items: 1')
+    expect(md).toContain('Remaining candidates: 2')
+  })
+
+  it('reports roadmap not present when no roadmap file exists', () => {
+    writeConfig('pre-ai')
+    expect(build().roadmap.present).toBe(false)
+  })
+})
+
 describe('context-pack — buildContextPack', () => {
   it('assembles a full pack from config + scan + artifacts', () => {
     writeConfig('pre-ai')

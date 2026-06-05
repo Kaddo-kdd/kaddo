@@ -48,8 +48,48 @@ Esto cierra el loop de Kaddo: `scan → context → agents → roadmap → work 
 genera en tu chat LLM (nunca en el CLI), y sus candidatos no son Work Items hasta que los
 creas aquí.
 
-> Si falta `knowledge/delivery/roadmap.md`, o no contiene candidatos en el formato del Kaddo
-> Roadmap Agent, Kaddo muestra un mensaje útil en lugar de crear un Work Item vacío.
+### Formatos de roadmap soportados
+
+`kaddo create --from roadmap` no exige un único formato rígido. El parser determinista reconoce
+candidatos de Work Item en las formas de roadmap más comunes — primero intenta el formato estricto
+del Kaddo Roadmap Agent (compatibilidad total) y, si no encuentra nada, recurre al reconocimiento
+flexible:
+
+- **Tabla** — una tabla Markdown con una columna `ID`/`WI` y una columna de título/descripción
+  (una columna `Depends on` se lee como dependencias):
+
+  ```markdown
+  | ID     | Work Item | Depends on |
+  |--------|-----------|------------|
+  | WI-001 | Cart      |            |
+  | WI-002 | Payment   | WI-001     |
+  ```
+
+- **Lista con viñetas** — `- WI-001: Cart`, `- WI-001 — Cart` o `- WI-001 Cart`.
+
+- **Checklist** — `- [ ] WI-001 Cart` / `- [x] WI-002 Payment`.
+
+- **Iniciativas mixtas** — los encabezados `## RM-001: Checkout` agrupan los candidatos debajo;
+  la iniciativa se registra como `source_initiative`.
+
+Cualquier id `WI-*` que termine en dígito se trata como candidato. Los ids duplicados se descartan.
+
+> Si falta `knowledge/delivery/roadmap.md`, o no contiene candidatos de Work Item reconocibles en
+> ningún formato soportado, Kaddo muestra un mensaje útil en lugar de crear un Work Item vacío.
+
+### Candidatos del roadmap vs Work Items materializados
+
+Un roadmap lista **candidatos** — *no* son Work Items hasta que los creas. `kaddo explain` y
+`kaddo understand` hacen explícita esta distinción:
+
+```text
+Roadmap candidates: 21
+Materialized work items: 5
+Remaining candidates: 16
+```
+
+Luego `kaddo understand` recomienda materializar los candidatos restantes con
+`kaddo create --from roadmap`.
 
 ## Activar Guard Lite
 
