@@ -256,3 +256,66 @@ describe('kaddo create --from roadmap — command guards', () => {
     expect(errSpy).toHaveBeenCalledWith(expect.stringContaining('Unknown work item type'))
   })
 })
+
+describe('roadmap parser — flexible formats (VS flexible-roadmap-parsing)', () => {
+  it('AC2: table-based roadmap with Depends on column', () => {
+    const md = [
+      '### Initiative 1 — Project Foundation',
+      '',
+      '| ID | Work Item | Depends on |',
+      '|----|-----------|------------|',
+      '| WI-001 | Initialize TypeScript CLI project | — |',
+      '| WI-002 | Configure Vitest | WI-001 |',
+    ].join('\n')
+    const c = parseRoadmapCandidates(md)
+    expect(c.map((x) => x.id)).toEqual(['WI-001', 'WI-002'])
+    expect(c[0].title).toBe('Initialize TypeScript CLI project')
+    expect(c[0].initiative?.title).toContain('Project Foundation')
+    expect(c[1].dependencies).toEqual(['WI-001'])
+  })
+
+  it('AC3: bullet-based roadmap', () => {
+    const md = '## Plan\n- WI-001 Initialize CLI\n- WI-002: Configure tests\n'
+    const c = parseRoadmapCandidates(md)
+    expect(c.map((x) => x.id)).toEqual(['WI-001', 'WI-002'])
+    expect(c[0].title).toBe('Initialize CLI')
+    expect(c[1].title).toBe('Configure tests')
+  })
+
+  it('AC4: checklist-based roadmap', () => {
+    const md = '## Plan\n- [ ] WI-001 Initialize CLI\n- [x] WI-002 Configure tests\n'
+    const c = parseRoadmapCandidates(md)
+    expect(c.map((x) => x.id)).toEqual(['WI-001', 'WI-002'])
+  })
+
+  it('dedupes ids and keeps the first occurrence', () => {
+    const md = '- WI-001 First\n- WI-001 Duplicate\n'
+    const c = parseRoadmapCandidates(md)
+    expect(c).toHaveLength(1)
+    expect(c[0].title).toBe('First')
+  })
+
+  it('AC12: VS-010 candidate-style still parsed (strict wins)', () => {
+    const c = parseRoadmapCandidates(ROADMAP)
+    expect(c.some((x) => x.id === 'WI-CANDIDATE-001')).toBe(true)
+  })
+})
+
+describe('roadmapStats', () => {
+  it('counts candidates vs materialized vs remaining', async () => {
+    const { roadmapStats } = await import('../src/core/roadmap.js')
+    const md = '- WI-001 a\n- WI-002 b\n- WI-003 c\n'
+    expect(roadmapStats(md, 1)).toEqual({
+      present: true,
+      candidates: 3,
+      materialized: 1,
+      remaining: 2,
+    })
+    expect(roadmapStats(null, 0)).toEqual({
+      present: false,
+      candidates: 0,
+      materialized: 0,
+      remaining: 0,
+    })
+  })
+})

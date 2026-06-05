@@ -179,10 +179,128 @@ function parseBlock(block: InitiativeBlock): RoadmapCandidateWorkItem[] {
   }))
 }
 
+// ---------------------------------------------------------------------------
+// Flexible parsing (VS flexible-roadmap-parsing): recognize Work Item candidates across
+// reasonable human/agent roadmap formats — tables, bullets, checklists, mixed initiatives —
+// when the strict VS-010 parser finds nothing. Still deterministic; never calls an LLM.
+// ---------------------------------------------------------------------------
+
+const WI_ID_RE = /\bWI-[A-Za-z0-9-]*\d/
+const HEADING_RE = /^#{2,4}\s+(.*)$/
+// A bullet or checklist line: "- [ ] WI-001 Title", "- WI-001: Title", "- WI-001 — Title".
+const FLEX_BULLET_RE = /^\s*[-*]\s+(?:\[[ xX]?\]\s+)?(WI-[A-Za-z0-9-]*\d)\b[\s:.\-–)]*\s*(.*)$/
+const SEPARATOR_CELL_RE = /^:?-{2,}:?$/
+
+function splitRow(line: string): string[] {
+  return line
+    .replace(/^\s*\|/, '')
+    .replace(/\|\s*$/, '')
+    .split('|')
+    .map((c) => c.trim())
+}
+
+function isSeparatorRow(cells: string[]): boolean {
+  return cells.length > 0 && cells.every((c) => SEPARATOR_CELL_RE.test(c) || c === '')
+}
+
+function initiativeFromHeading(text: string): RoadmapInitiative {
+  const rm = text.match(/^(RM-[\w.-]+)\s*[:\-–]?\s*(.*)$/)
+  if (rm) return { id: rm[1], title: rm[2].trim() || undefined }
+  return { title: text.trim() || undefined }
+}
+
+function extractDeps(cell: string | undefined): string[] | undefined {
+  if (!cell) return undefined
+  const ids = cell.match(/WI-[A-Za-z0-9-]*\d/g)
+  return ids && ids.length ? [...new Set(ids)] : undefined
+}
+
+/** Flexible scan used when the strict parser yields nothing. */
+function parseFlexible(markdown: string): RoadmapCandidateWorkItem[] {
+  const out: RoadmapCandidateWorkItem[] = []
+  const seen = new Set<string>()
+  let initiative: RoadmapInitiative | undefined
+  let cols: { id: number; title: number; deps: number } | null = null
+
+  const push = (id: string, title: string, deps: string[] | undefined, raw: string) => {
+    if (seen.has(id)) return
+    seen.add(id)
+    out.push({
+      id,
+      title: title.trim() || id,
+      dependencies: deps,
+      initiative: initiative?.id || initiative?.title ? { ...initiative } : undefined,
+      rawMarkdown: raw.trim(),
+    })
+  }
+
+  for (const line of markdown.split(/\r?\n/)) {
+    const h = line.match(HEADING_RE)
+    if (h) {
+      initiative = initiativeFromHeading(h[1])
+      cols = null
+      continue
+    }
+
+    if (line.includes('|')) {
+      const cells = splitRow(line)
+      if (isSeparatorRow(cells)) continue
+      // Header row: locate the id / title / depends-on columns.
+      const lower = cells.map((c) => c.toLowerCase())
+      const idIdx = lower.findIndex((c) => c === 'id' || c === 'wi' || c === 'work item id')
+      if (idIdx >= 0 && !WI_ID_RE.test(line)) {
+        cols = {
+          id: idIdx,
+          title: lower.findIndex((c) => /work item|title|item|name|description/.test(c)),
+          deps: lower.findIndex((c) => /depend/.test(c)),
+        }
+        continue
+      }
+      // Data row with a WI id.
+      if (WI_ID_RE.test(line)) {
+        let idCell = cols && cols.id >= 0 ? cells[cols.id] : cells.find((c) => /^WI-/.test(c))
+        const idMatch = (idCell ?? line).match(/WI-[A-Za-z0-9-]*\d/)
+        if (!idMatch) continue
+        const id = idMatch[0]
+        const title =
+          cols && cols.title >= 0 ? cells[cols.title] ?? '' : cells.find((c) => !/^WI-/.test(c) && c) ?? ''
+        const deps = cols && cols.deps >= 0 ? extractDeps(cells[cols.deps]) : undefined
+        push(id, title, deps, line)
+        continue
+      }
+      continue
+    }
+
+    const b = line.match(FLEX_BULLET_RE)
+    if (b) {
+      push(b[1], b[2] ?? '', undefined, line)
+      continue
+    }
+  }
+  return out
+}
+
 /**
- * Parse candidate work items from a roadmap-agent generated `knowledge/delivery/roadmap.md`.
- * Returns an empty array if no candidates can be found.
+ * Parse candidate work items from `knowledge/delivery/roadmap.md`. Tries the strict VS-010
+ * format first (back-compat); if no candidates are found, falls back to flexible recognition
+ * (tables, bullets, checklists, mixed initiatives). Returns [] when nothing is recognized.
  */
 export function parseRoadmapCandidates(markdown: string): RoadmapCandidateWorkItem[] {
-  return splitInitiatives(markdown).flatMap(parseBlock)
+  const strict = splitInitiatives(markdown).flatMap(parseBlock)
+  if (strict.length > 0) return strict
+  return parseFlexible(markdown)
+}
+
+export type RoadmapStats = {
+  present: boolean
+  candidates: number
+  materialized: number
+  remaining: number
+}
+
+/** Roadmap candidate vs materialized stats for explain/context. */
+export function roadmapStats(markdown: string | null, materialized: number): RoadmapStats {
+  if (markdown == null) return { present: false, candidates: 0, materialized, remaining: 0 }
+  const candidates = parseRoadmapCandidates(markdown).length
+  return { present: true, candidates, materialized, remaining: Math.max(0, candidates - materialized) }
 }
