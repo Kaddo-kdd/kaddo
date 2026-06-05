@@ -30,6 +30,26 @@ flowchart TD
 `kaddo bootstrap` siembra la base mínima (Business + Product + `tech/codebase.md`);
 Delivery y las decisiones emergen después vía agentes y trabajo real.
 
+## Repository Exploration Tax
+
+Sin conocimiento estructurado, los agentes gastan parte de cada sesión redescubriendo el proyecto.
+Con Kaddo, pueden empezar desde un context pack construido a partir de conocimiento explícito.
+
+```mermaid
+flowchart LR
+    subgraph Without["Sin Kaddo"]
+        A[Repository] --> B[Search files]
+        B --> C[Infer architecture]
+        C --> D[Infer capabilities]
+        D --> E[Infer roadmap]
+    end
+
+    subgraph With["Con Kaddo"]
+        F[Knowledge] --> G[Context Pack]
+        G --> H[Agent]
+    end
+```
+
 ## Madurez del conocimiento
 
 Kaddo reconoce el conocimiento por el **type del front-matter** (no por el nombre) y reporta

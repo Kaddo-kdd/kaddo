@@ -34,6 +34,13 @@ empezar desde el roadmap. Ejecuta `scan` más tarde cuando el código crezca.
 
 Kaddo nunca llama a un LLM — prepara el contexto; tu LLM hace el pensamiento.
 
+## Eficiencia de contexto
+
+En un proyecto nuevo, Kaddo reduce exploración futura capturando conocimiento Business, Product,
+Tech y Delivery antes de que se disperse en chats, issues y decisiones medio recordadas. Los
+agentes empiezan desde la intención del proyecto y el roadmap, no adivinando por qué existe el
+código inicial.
+
 ## Artefactos esperados
 
 ```txt

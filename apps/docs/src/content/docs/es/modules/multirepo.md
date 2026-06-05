@@ -71,6 +71,14 @@ code:
 > [guard → Modo workspace](/es/commands/guard/#modo-workspace-multirepo). Nunca clona ni
 > llama a APIs remotas.
 
+## Eficiencia de contexto
+
+En un sistema multirepo, el Repository Exploration Tax se multiplica: un agente debe descubrir
+qué repo posee cada capacidad, dónde viven los contratos y qué estándares aplican al sistema.
+Kaddo reduce esa exploración mapeando cada repositorio como módulo, manteniendo conocimiento por
+módulo bajo `knowledge/tech/modules/<id>/` y mostrando el mapa de módulos en `context` y
+`explain`.
+
 ## Ejemplo: architecture-repo + frontend + backend + infra
 
 ```bash

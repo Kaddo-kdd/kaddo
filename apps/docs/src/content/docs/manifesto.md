@@ -299,10 +299,13 @@ Kaddo rests on these principles:
 6. **Governance appears by exception.** Not every change needs formal review. Only changes with relevant risk or impact.
 7. **Evidence must be explainable.** Kaddo must show signals, not magic percentages.
 8. **Current state and history are not the same.** The current state guides. History explains.
-9. **Context must be efficient.** Kaddo must load the minimum necessary, not the whole knowledge repository.
-10. **Extensions are optional.** Modules, agents, skills, and plugins add value, but must not be a Core requirement.
-11. **Affected knowledge is part of the Definition of Done.** A change is not done just when the code compiles. It is done when the relevant knowledge is updated or justified.
-12. **Kaddo must be honest.** If it cannot detect something with certainty, it must ask for confirmation or show limited evidence. Better useful and clear than magical and false.
+9. **Knowledge should be easier to discover than code.** Agents should not have to wander through
+   a repository just to infer the product, architecture, ownership and roadmap before they can
+   make a decision.
+10. **Context must be efficient.** Kaddo must load the minimum necessary, not the whole knowledge repository.
+11. **Extensions are optional.** Modules, agents, skills, and plugins add value, but must not be a Core requirement.
+12. **Affected knowledge is part of the Definition of Done.** A change is not done just when the code compiles. It is done when the relevant knowledge is updated or justified.
+13. **Kaddo must be honest.** If it cannot detect something with certainty, it must ask for confirmation or show limited evidence. Better useful and clear than magical and false.
 
 ## The vision
 

@@ -69,6 +69,13 @@ code:
 > [guard → Workspace mode](/commands/guard/#workspace-mode-multirepo). It never clones or
 > calls remote APIs.
 
+## Context efficiency
+
+In a multirepo system, the Repository Exploration Tax multiplies: an agent has to discover which
+repo owns which capability, where contracts live and which standards apply globally. Kaddo reduces
+that exploration by mapping each repository as a module, keeping module knowledge under
+`knowledge/tech/modules/<id>/` and surfacing the module map through `context` and `explain`.
+
 ## Example: architecture-repo + frontend + backend + infra
 
 ```bash

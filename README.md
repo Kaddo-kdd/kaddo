@@ -11,6 +11,9 @@ Kaddo is an open-source **CLI and agent prompt toolkit** that helps new, pre-AI 
 projects build a living knowledge layer close to the code. The CLI prepares and structures the
 context; your LLM agents turn it into product understanding.
 
+Kaddo reduces repository exploration by turning project knowledge into structured context.
+Token savings are a consequence, not the goal.
+
 > **Knowledge Driven Development ≠ Kaddo.** KDD is a prior concept in software engineering and
 > knowledge management. Kaddo is a **practical implementation of KDD principles for
 > AI-assisted software development** — it applies them; it did not invent them.
@@ -38,6 +41,17 @@ Projects degrade because knowledge is scattered across meetings, chats, tickets 
 docs. With AI, this gets worse: agents build on assumptions when they lack context. Kaddo
 keeps the minimum necessary context alive next to the code — without turning development into
 bureaucracy.
+
+## Why Kaddo improves context efficiency
+
+Kaddo does not optimize prompts. It does not compress context windows, summarize automatically,
+or remove tokens from a conversation.
+
+Kaddo optimizes what the agent needs to discover. It makes Business, Product, Tech and Delivery
+knowledge explicit so an agent can start from a context pack instead of repeatedly searching the
+repository, inferring architecture, guessing capabilities and reconstructing ownership. Less
+repository exploration leads to better context, better decisions and lower token consumption as a
+side effect.
 
 ## Install
 

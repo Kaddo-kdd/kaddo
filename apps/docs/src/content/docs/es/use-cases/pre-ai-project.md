@@ -34,6 +34,12 @@ kaddo explain                 # resume lo que Kaddo sabe actualmente
 `kaddo scan` detecta señales y hace preguntas de confirmación; nunca afirma entender tus
 capacidades de negocio. Esa interpretación ocurre en el LLM.
 
+## Eficiencia de contexto
+
+En un proyecto pre-IA, Kaddo reduce la exploración repetida del repositorio. La primera pasada
+convierte señales técnicas, capacidades, arquitectura y roadmap en conocimiento estructurado, para
+que los siguientes agentes lean el context pack y empiecen desde lo que el equipo ya aprendió.
+
 ## Artefactos esperados
 
 ```txt

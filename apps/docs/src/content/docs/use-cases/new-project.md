@@ -34,6 +34,12 @@ from the roadmap. Run `scan` later once the codebase grows.
 
 Kaddo never calls an LLM — it prepares the context; your LLM does the thinking.
 
+## Context efficiency
+
+In a new project, Kaddo reduces future exploration by capturing Business, Product, Tech and
+Delivery knowledge before it scatters across chats, issues and half-remembered decisions. Agents
+start from the project intent and roadmap instead of guessing why early code exists.
+
 ## Expected artifacts
 
 ```txt

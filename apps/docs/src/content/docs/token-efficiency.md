@@ -1,14 +1,113 @@
 ---
-title: Token efficiency
-description: How Kaddo's deterministic output scales in tokens as a real project grows.
+title: Context efficiency
+description: How Kaddo reduces unnecessary repository exploration through structured knowledge.
 ---
 
-A fair question for any AI-assisted tool: **does the context it produces stay efficient as the
-project grows?** Because Kaddo's output is deterministic, this is measurable — not a guess. The
-numbers below come from generating `kaddo context` and `kaddo explain` over synthetic projects of
-increasing size.
+Kaddo's main benefit is not prompt compression or token optimization. Kaddo does not
+compress prompts, summarize automatically, remove tokens, or dynamically optimize a context
+window.
 
-## Measured growth
+Kaddo improves **context efficiency** by reducing unnecessary repository exploration:
+
+```text
+Knowledge
+↓
+Context
+↓
+Less exploration
+↓
+Better decisions
+↓
+Token savings as a side effect
+```
+
+In one sentence: **Kaddo reduces repository exploration by turning project knowledge into
+structured context. Token savings are a consequence, not the goal.**
+
+## The Real Cost of Exploration
+
+The expensive part of many AI-assisted coding sessions is not only the price per token. It is
+the cost of discovering project knowledge from scratch:
+
+- Which business problem does this code support?
+- Which capabilities already exist?
+- Which architectural decisions are still current?
+- Which files own a Work Item?
+- Which roadmap item is actually active?
+
+Without structure, an agent pays this discovery cost over and over. It reads files, infers
+architecture, reconstructs capability boundaries, guesses ownership and asks for more context.
+Those extra reads become extra tokens, but the root problem is exploration.
+
+## Repository Exploration Tax
+
+Without Kaddo:
+
+```mermaid
+flowchart LR
+    A[Repository] --> B[Search Files]
+    B --> C[Infer Architecture]
+    C --> D[Infer Capabilities]
+    D --> E[Infer Roadmap]
+
+    style A fill:#f5f5f5
+```
+
+With Kaddo:
+
+```mermaid
+flowchart LR
+    A[Knowledge] --> B[Context Pack]
+    B --> C[LLM]
+
+    style A fill:#d9f5e5
+```
+
+The Repository Exploration Tax is the repeated work an agent does just to orient itself before it
+can make a useful decision. Kaddo lowers that tax by keeping project knowledge explicit,
+structured and close to the code.
+
+## Knowledge Layers
+
+Kaddo organizes knowledge into four layers:
+
+```mermaid
+flowchart TD
+    Business --> Product
+    Product --> Tech
+    Tech --> Delivery
+    Delivery --> ContextPack
+    ContextPack --> Agent
+```
+
+- **Business** explains why the product exists.
+- **Product** explains what capabilities and user value matter.
+- **Tech** explains how the system is built and why.
+- **Delivery** explains how the product evolves through roadmap and Work Items.
+
+These layers exist to reduce exploration. Instead of forcing an agent to rediscover the product
+from scattered code, Kaddo gives it a stable map of what is known, what is missing and what work
+is active.
+
+## Why Token Savings Happen
+
+Token savings happen because structured context prevents unnecessary reading. They are not the
+primary objective.
+
+Kaddo keeps context bounded by design:
+
+- `kaddo context` ships metadata and summaries, not source code.
+- Work Items contribute front matter, not full bodies.
+- Active Work Items are prioritized over completed and archived history.
+- `kaddo explain` can focus by scope, type or date when a full project view is not needed.
+
+That means tokens are spent on interpretation and decisions, not on rediscovering the same
+repository shape in every chat.
+
+## Measured Output Size
+
+The following numbers are still useful, but they should be read as evidence of bounded context,
+not as a promise that Kaddo directly optimizes tokens.
 
 | Scenario | Work items | Modules | `context` tokens | `explain` tokens | tokens / work item |
 |----------|-----------|---------|------------------|------------------|--------------------|
@@ -18,50 +117,21 @@ increasing size.
 | large    | 100 | 5  | 5,545  | 1,870 | 55 |
 | xlarge   | 500 | 20 | 25,229 | 8,040 | **50** |
 
-> Tokens ≈ characters ÷ 4 (the rough average for English + Markdown).
+> Tokens ≈ characters ÷ 4 (a rough average for English + Markdown).
 
-## What the numbers mean
+The growth is linear because the pack is deterministic and metadata-first. In the `xlarge`
+case, the raw knowledge files on disk are about **134,000 tokens**, while the generated context
+pack is **25,229**. Source code is never read into the pack.
 
-**Growth is linear, not explosive.** The marginal cost settles at **~50 tokens per work item** —
-a single metadata line (`id`, `type`, knowledge level, `status`, `domains`). The fixed overhead of
-an empty project is small (~620 tokens: operating rules, the knowledge-layer table, and section
-headers).
+## Context Efficiency Loop
 
-**Kaddo never ships bodies or source code.** The context pack uses bounded summaries
-(`firstParagraph`) for documents and only the **front matter** of work items. In the `xlarge`
-case, the raw knowledge files on disk are **~134,000 tokens**, while the pack is **25,229** — an
-**~81% reduction**. Source code is never read into the pack at all.
-
-**It is deterministic.** The same project always produces the same pack. There is zero token
-variance between runs, which makes the output cacheable and auditable.
-
-## Keeping it bounded at scale
-
-The figures above are for the **whole project, unfiltered**. A multi-year codebase with hundreds
-of closed work items will produce a large pack if you ask for everything — but you rarely need
-everything for a single task.
-
-`kaddo explain` already supports focusing the output, which is why its numbers stay far lower than
-`context` at the same project size:
-
-```bash
-kaddo explain --scope payments      # only one domain
-kaddo explain --type adr            # only one artifact type
-kaddo explain --since 2026-01-01    # only recent work
+```mermaid
+flowchart LR
+    Knowledge --> Context
+    Context --> LessExploration
+    LessExploration --> BetterDecisions
+    BetterDecisions --> FasterDelivery
 ```
 
-### Practical guidance
-
-- For day-to-day agent handoffs, scope to the **domain or work item you are touching** rather than
-  dumping the entire history.
-- Closed work items add up over time. Treat the full, unfiltered pack as an **onboarding / audit**
-  artifact, not the thing you paste into every chat.
-- Because the output is deterministic and front-matter-only, the pack is a **lower bound** on what
-  an equivalent hand-written briefing would cost — and it never leaks source code into the prompt.
-
-## Why this matters
-
-Kaddo's two-layer model (deterministic CLI → interpreting LLM) exists partly for this reason: the
-CLI does the cheap, repeatable packaging so your tokens are spent on **interpretation**, not on
-re-deriving project structure every time. Efficient context is a side effect of keeping the CLI
-deterministic and free of source code.
+Kaddo's job is to make project knowledge easier to discover than code. Lower token consumption
+is what happens when agents stop wandering through the repository just to learn where they are.

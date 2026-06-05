@@ -299,10 +299,13 @@ Kaddo se sostiene sobre estos principios:
 6. **La gobernanza aparece por excepción.** No todo cambio necesita revisión formal. Solo los cambios de riesgo o impacto relevante.
 7. **La evidencia debe ser explicable.** Kaddo debe mostrar señales, no porcentajes mágicos.
 8. **El estado actual y la historia no son lo mismo.** El estado actual guía. La historia explica.
-9. **El contexto debe ser eficiente.** Kaddo debe cargar lo mínimo necesario, no todo el repositorio de conocimiento.
-10. **Las extensiones son opcionales.** Módulos, agentes, skills y plugins agregan valor, pero no deben ser requisito del Core.
-11. **El conocimiento afectado hace parte del Definition of Done.** Un cambio no termina solo cuando el código compila. Termina cuando el conocimiento relevante queda actualizado o justificado.
-12. **Kaddo debe ser honesto.** Si no puede detectar algo con certeza, debe pedir confirmación o mostrar evidencia limitada. Mejor útil y claro que mágico y falso.
+9. **El conocimiento debe ser más fácil de descubrir que el código.** Los agentes no deberían
+   recorrer el repositorio solo para inferir producto, arquitectura, ownership y roadmap antes de
+   tomar una decisión.
+10. **El contexto debe ser eficiente.** Kaddo debe cargar lo mínimo necesario, no todo el repositorio de conocimiento.
+11. **Las extensiones son opcionales.** Módulos, agentes, skills y plugins agregan valor, pero no deben ser requisito del Core.
+12. **El conocimiento afectado hace parte del Definition of Done.** Un cambio no termina solo cuando el código compila. Termina cuando el conocimiento relevante queda actualizado o justificado.
+13. **Kaddo debe ser honesto.** Si no puede detectar algo con certeza, debe pedir confirmación o mostrar evidencia limitada. Mejor útil y claro que mágico y falso.
 
 ## La visión
 

@@ -35,6 +35,13 @@ kaddo explain                 # summarize what Kaddo currently knows
 Kaddo does **not** understand a legacy system automatically. It structures signals and guides
 your LLM — the human stays in control of every change.
 
+## Context efficiency
+
+In a legacy project, exploration is expensive because wrong assumptions can be dangerous. Kaddo
+reduces that cost by making risks, unknowns, ownership and current architecture explicit before
+implementation starts. Agents explore less code blindly and spend more attention on the parts
+humans have marked as risky.
+
 ## Expected artifacts
 
 ```txt
