@@ -438,6 +438,9 @@ create --from roadmap → owners → guard → explain`.
 | v3.4 | Delivery protocol in the `work-item-agent`: branch first per the Git strategy, commit only with human confirmation (CLI never touches git) |
 | v3.5 | Knowledge discovery by front-matter type with per-layer maturity (explain/understand/context); context pack carries Operating Rules so agents never commit without confirmation |
 | v3.5.1 | Author attribution & knowledge identity: Kaddo as a practical implementation of KDD for AI-assisted development (docs/README) |
+| v3.6 | Flexible roadmap parsing and roadmap candidate/materialized Work Item reporting |
+| v3.7 | Work Item lifecycle active workspace (`draft`, `ready`, `in-progress`, `blocked`, `completed`, `archived`) |
+| v3.7.1 | Context Efficiency positioning: Repository Exploration Tax and structured-knowledge narrative |
 
 **Optional modules (installed with `kaddo add`):**
 

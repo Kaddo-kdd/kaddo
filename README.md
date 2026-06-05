@@ -257,6 +257,18 @@ Guard is **silent** when no artifacts declare ownership — no noise on day one.
 | v2.6 | Multirepo modules (`modules map/list`), global standards/security/stack/git-strategy artifacts, six operational agents |
 | v2.6 | Central template registry (23 templates, layer categories (business/product/tech/delivery)) |
 | v2.6 | Demo example repositories (`examples/`): new, pre-AI, legacy, multirepo |
+| v2.7 | Multirepo hardening: template-based module artifacts, module-aware `context`/`explain`, opt-in `guard --workspace` |
+| v2.8 | `kaddo bootstrap` for new projects (Business → Product → Tech → Delivery) |
+| v3.0 | Knowledge-centric realignment: `architecture/` → `knowledge` with Business/Product/Tech/Delivery layers |
+| v3.1 | Minimum Sufficient Knowledge: consolidated layer files and progressive agent groups |
+| v3.2 | New-project flow hardening and clearer intent vs current-state responsibilities |
+| v3.3 | Work Item delivery lifecycle guidance in `understand` |
+| v3.4 | Branch-first delivery protocol in `work-item-agent`; CLI never touches git |
+| v3.5 | Semantic knowledge discovery by front-matter type and Operating Rules in context packs |
+| v3.5.1 | Author attribution and KDD identity docs |
+| v3.6 | Flexible roadmap parsing and roadmap candidate/materialized Work Item reporting |
+| v3.7 | Work Item lifecycle active workspace (`draft`, `ready`, `in-progress`, `blocked`, `completed`, `archived`) |
+| v3.7.1 | Context Efficiency positioning: Repository Exploration Tax and structured-knowledge narrative |
 
 **Optional modules (installed with `kaddo add`):**
 `adr` · `rfc` · `incident` · `migration` · `legacy` · `contracts` · `capabilities` ·

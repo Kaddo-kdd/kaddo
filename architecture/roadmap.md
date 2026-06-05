@@ -1,6 +1,6 @@
 ---
 type: roadmap
-updated_at: 2026-06-01
+updated_at: 2026-06-05
 ---
 
 # Kaddo — Product Roadmap
@@ -39,6 +39,9 @@ no ownership inference · no Confidence Score · the human always confirms.
 | [v3.3.0](https://github.com/Kaddo-kdd/kaddo/releases/tag/v3.3.0) | Work Item Delivery Workflow: `understand` delivery lifecycle (branch → scan → ownership → guard → knowledge → commit) for active Work Items (VS-035) |
 | [v3.4.0](https://github.com/Kaddo-kdd/kaddo/releases/tag/v3.4.0) | Delivery protocol in the work-item-agent: branch first per the Git strategy; commit only with human confirmation; CLI never touches git (VS-036) |
 | [v3.5.0](https://github.com/Kaddo-kdd/kaddo/releases/tag/v3.5.0) | Knowledge Discovery & Semantic Recognition (front-matter type, per-layer maturity); context pack Operating Rules (agents never commit without confirmation) (VS-037) |
+| [v3.6.0](https://github.com/Kaddo-kdd/kaddo/releases/tag/v3.6.0) | Flexible roadmap parsing + roadmap candidates vs materialized Work Items in context/explain/understand (VS-039) |
+| [v3.7.0](https://github.com/Kaddo-kdd/kaddo/releases/tag/v3.7.0) | Work Item lifecycle active workspace: draft/ready/in-progress/blocked/completed/archived, active context, recursive discovery (VS-041) |
+| [v3.7.1](https://github.com/Kaddo-kdd/kaddo/releases/tag/v3.7.1) | Context Efficiency positioning: Repository Exploration Tax, structured knowledge narrative, README/homepage/docs alignment (VS-043) |
 
 ---
 
@@ -81,7 +84,11 @@ scan → context → understand → agents → roadmap → work item → ownersh
 | VS-037 | Knowledge Discovery & Semantic Recognition | recognize knowledge by front-matter `type` (not path/name): discovery engine + per-layer maturity (Missing/Consolidated/Structured/Partial/Traceable); explain/understand/context recognize consolidated artifacts; understand recommends materializing roadmap candidates |
 | VS-038 | Author Attribution & Knowledge Identity | docs-only: `/about` + `/knowledge-driven-development` pages, homepage/footer/manifesto/README attribution, Person JSON-LD + author meta. Positions Kaddo as a practical implementation of KDD for AI-assisted development — never claiming to have invented KDD |
 
-**Tests:** 299 passing · CLI build + docs build green.
+| VS-039 | Flexible Roadmap Parsing | parse roadmap candidates from strict, table, bullet, checklist and mixed-initiative formats; report roadmap candidates vs materialized Work Items in context/explain/understand |
+| VS-041 | Work Item Lifecycle & Active Workspace | organize Work Items by lifecycle state (`draft`, `ready`, `in-progress`, `blocked`, `completed`, `archived`); context prioritizes active work; explain counts by state and initiative; flat legacy items remain compatible |
+| VS-043 | Context Efficiency positioning | reframe Token Efficiency as Context Efficiency through Structured Knowledge; introduce Repository Exploration Tax; align README, homepage, manifesto, visual guide and use cases EN/ES |
+
+**Tests:** 384 passing · CLI build + docs build green.
 
 ---
 
