@@ -57,6 +57,7 @@ export type ContextPack = {
     recommendedAgents: string[]
     nextSteps: string[]
     instructions: string[]
+    operatingRules: string[]
   }
 }
 
@@ -145,6 +146,20 @@ const LLM_INSTRUCTIONS = [
   'Do not write code yet.',
   'First extract: system capabilities, architecture notes, risks, open questions and roadmap candidates.',
   'This pack is deterministic CLI output — it does not interpret the system. That is your job.',
+]
+
+/**
+ * Operating rules the implementing agent MUST follow. Emitted prominently so a coding
+ * assistant pasted this pack does not commit on its own.
+ */
+const OPERATING_RULES = [
+  '**Never run `git commit`, `git push` or `git merge` without explicit human confirmation.**',
+  'Never push or merge automatically — ever. Suggest a Conventional Commit message and wait.',
+  'When implementing a Work Item, create a branch FIRST (per the project Git strategy, ' +
+    '`.kaddo/git.yml`, default `feature/<id>-<slug>`). Never work directly on `main`.',
+  'After significant changes run `kaddo scan`, `kaddo owners suggest` and `kaddo guard`, and ' +
+    'update the affected knowledge (ADR / capabilities / current-state).',
+  'Kaddo itself never calls an LLM and never runs git — every git action is the human’s.',
 ]
 
 function toContextWorkItem(a: Artifact): ContextWorkItem {
@@ -244,6 +259,7 @@ export function buildContextPack(
       recommendedAgents: recommendedAgentsForState(state),
       nextSteps: nextStepsForState(state),
       instructions: LLM_INSTRUCTIONS,
+      operatingRules: OPERATING_RULES,
     },
   }
 }

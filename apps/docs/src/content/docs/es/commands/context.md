@@ -44,6 +44,14 @@ los repositorios secundarios**.
 Ensambla metadata y resúmenes — nunca el código fuente completo. La interpretación es
 tarea del agente.
 
+## Reglas operativas (al inicio del pack)
+
+El pack empieza con un bloque de **Operating Rules** que el agente que implementa debe
+seguir — para que un coding assistant al que se lo pegues no commitee por su cuenta. En
+particular: **nunca `git commit`, `push` ni `merge` sin confirmación humana explícita**,
+crear una rama antes de implementar un Work Item, y correr `kaddo scan` / `owners suggest` /
+`guard` tras cambios significativos. El CLI de Kaddo nunca corre git.
+
 ## Handoff según el estado
 
 Los agentes recomendados se adaptan al estado del proyecto definido en `kaddo init`:

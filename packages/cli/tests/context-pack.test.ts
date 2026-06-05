@@ -162,6 +162,15 @@ describe('context-pack — renderContextPack', () => {
     expect(md).toContain('1. capability-agent')
   })
 
+  it('includes Operating Rules that forbid committing without confirmation', () => {
+    writeConfig('new')
+    const md = renderContextPack(build())
+    expect(md).toContain('## Operating Rules (read first)')
+    expect(md.toLowerCase()).toContain('without explicit human confirmation')
+    expect(md.toLowerCase()).toContain('never push or merge')
+    expect(md.toLowerCase()).toContain('create a branch first')
+  })
+
   it('states missing context when scan is absent', () => {
     writeConfig('new')
     const md = renderContextPack(build())

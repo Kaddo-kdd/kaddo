@@ -108,6 +108,11 @@ export async function runBootstrap(dir: string = cwd()): Promise<void> {
   }
   console.log('')
 
+  console.log('')
+  log.info(
+    'When you pass the context pack to your LLM/coding agent, it must never commit, push or ' +
+      'merge without your confirmation — and create a branch before implementing.'
+  )
   outro(
     'Minimal knowledge base ready (Business → Product → Tech). Run `kaddo context` and ' +
       '`kaddo add agents`, then refine with the business-agent, bootstrap-agent and ' +

@@ -44,6 +44,14 @@ artifacts exist. Kaddo reads `.kaddo/modules.yml` and the module artifacts only 
 assembles metadata and summaries — never full source code. Interpretation is the agent's
 job.
 
+## Operating rules (top of the pack)
+
+The pack starts with an **Operating Rules** block that the implementing agent must follow —
+so a coding assistant you paste it into does not commit on its own. In particular: **never
+`git commit`, `push` or `merge` without explicit human confirmation**, create a branch
+before implementing a Work Item, and run `kaddo scan` / `owners suggest` / `guard` after
+significant changes. The Kaddo CLI never runs git.
+
 ## State-aware handoff
 
 Recommended agents adapt to the project state recorded by `kaddo init`:
