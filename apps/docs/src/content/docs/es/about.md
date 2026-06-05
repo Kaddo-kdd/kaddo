@@ -51,4 +51,4 @@ siendo humanas.
 ---
 
 Creado por **Julian Dario Luna Patiño** · [GitHub](https://github.com/judlup) ·
-[TryCatch.tv](https://trycatch.tv)
+[LinkedIn](https://www.linkedin.com/in/judlup/) · [TryCatch.tv](https://trycatch.tv)

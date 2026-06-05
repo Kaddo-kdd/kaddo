@@ -58,7 +58,11 @@ export default defineConfig({
             url: 'https://kaddo.trycatch.tv/about/',
             jobTitle: 'Cloud Solutions Architect Lead',
             worksFor: { '@type': 'Organization', name: 'TryCatch.tv', url: 'https://trycatch.tv' },
-            sameAs: ['https://github.com/judlup', 'https://github.com/Kaddo-kdd'],
+            sameAs: [
+              'https://github.com/judlup',
+              'https://www.linkedin.com/in/judlup/',
+              'https://github.com/Kaddo-kdd',
+            ],
             knowsAbout: [
               'Knowledge Driven Development',
               'Software Architecture',

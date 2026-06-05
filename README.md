@@ -263,7 +263,8 @@ Lead, AWS Community Builder and content creator at [TryCatch.tv](https://trycatc
 the result of years designing software architectures, leading development teams and
 documenting systems. Kaddo applies Knowledge Driven Development principles to AI-assisted
 software development; it does not claim to have invented KDD.
-[GitHub](https://github.com/judlup) · [About](https://kaddo.trycatch.tv/about/).
+[GitHub](https://github.com/judlup) · [LinkedIn](https://www.linkedin.com/in/judlup/) ·
+[About](https://kaddo.trycatch.tv/about/).
 
 ## Contributing
 
