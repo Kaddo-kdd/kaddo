@@ -320,4 +320,10 @@ Kaddo's advantage is not in generating ADRs, RFCs, Work Items, agents, or skills
 
 The MVP must be humble. The vision can be ambitious. Because the future of development with AI will not be just writing code faster: it will be building systems that better understand what they are changing.
 
-Kaddo is Knowledge Driven Development. Software guided by knowledge, living architecture, minimum context, and traceable evolution.
+Kaddo brings Knowledge Driven Development to AI-assisted software development: software guided by knowledge, living architecture, minimum context, and traceable evolution.
+
+## Origin
+
+**Knowledge Driven Development (KDD)** is a prior concept in software engineering and knowledge management — Kaddo did not invent it. Kaddo is a **practical implementation of KDD principles for the AI era**: LLMs, agents and modern repositories.
+
+Kaddo was created by **Julian Dario Luna Patiño** out of years of designing architectures, leading teams and documenting systems — and the conviction that, with AI in the loop, projects need their knowledge to live next to the code. The goal is not to write code faster, but to build systems that understand what they are changing — while critical decisions remain human. See [Knowledge Driven Development](/knowledge-driven-development/) and [About](/about/).

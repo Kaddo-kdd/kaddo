@@ -16,6 +16,11 @@ Trabaja en dos capas: el **CLI** hace el trabajo determinístico (sin IA, sin AP
 **LLM** hace la interpretación usando los agentes de Kaddo. Mira la página de [Flujo de
 trabajo](/es/workflow/) para el loop completo y el reparto CLI vs LLM.
 
+> **Knowledge Driven Development ≠ Kaddo.** KDD es un concepto previo de la ingeniería de
+> software y la gestión del conocimiento. Kaddo es una **implementación práctica de los
+> principios de KDD para el desarrollo de software asistido por IA** — los aplica; no los
+> inventó. Mira [Knowledge Driven Development](/es/knowledge-driven-development/).
+
 **La pregunta central:** *¿Cómo sabe Kaddo qué conocimiento se vio impactado por este cambio?*
 
 ## Qué no es Kaddo

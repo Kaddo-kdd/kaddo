@@ -1,0 +1,24 @@
+---
+// Custom footer: keep Starlight's default footer, then append author attribution.
+import Default from '@astrojs/starlight/components/Footer.astro'
+const isEs = Astro.url.pathname.startsWith('/es/')
+const aboutHref = isEs ? '/es/about/' : '/about/'
+const label = isEs ? 'Creado por' : 'Created by'
+---
+
+<Default><slot /></Default>
+<p class="kaddo-author-credit">
+  {label} <a href={aboutHref}>Julian Dario Luna Patiño</a>
+</p>
+
+<style>
+  .kaddo-author-credit {
+    margin-top: 0.5rem;
+    font-size: var(--sl-text-xs);
+    color: var(--sl-color-gray-3);
+    text-align: center;
+  }
+  .kaddo-author-credit a {
+    color: var(--sl-color-gray-2);
+  }
+</style>

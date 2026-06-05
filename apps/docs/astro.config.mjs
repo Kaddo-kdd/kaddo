@@ -39,7 +39,37 @@ export default defineConfig({
           tag: 'script',
           attrs: { src: '/mermaid-zoom.js', defer: true },
         },
+        // Author/creator attribution for SEO + semantic indexing.
+        {
+          tag: 'meta',
+          attrs: { name: 'author', content: 'Julian Dario Luna Patiño' },
+        },
+        {
+          tag: 'meta',
+          attrs: { property: 'article:author', content: 'Julian Dario Luna Patiño' },
+        },
+        {
+          tag: 'script',
+          attrs: { type: 'application/ld+json' },
+          content: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'Person',
+            name: 'Julian Dario Luna Patiño',
+            url: 'https://kaddo.trycatch.tv/about/',
+            jobTitle: 'Cloud Solutions Architect Lead',
+            worksFor: { '@type': 'Organization', name: 'TryCatch.tv', url: 'https://trycatch.tv' },
+            sameAs: ['https://github.com/judlup', 'https://github.com/Kaddo-kdd'],
+            knowsAbout: [
+              'Knowledge Driven Development',
+              'Software Architecture',
+              'AI-assisted software development',
+            ],
+          }),
+        },
       ],
+      components: {
+        Footer: './src/components/Footer.astro',
+      },
       social: {
         github: 'https://github.com/Kaddo-kdd/kaddo',
       },
@@ -59,7 +89,9 @@ export default defineConfig({
             { label: 'Visual Guide', translations: { es: 'Guía visual' }, slug: 'visual-guide' },
             { label: 'Project scope', translations: { es: 'Alcance del proyecto' }, slug: 'project-scope' },
             { label: 'Knowledge Levels', translations: { es: 'Niveles de Conocimiento' }, slug: 'knowledge-levels' },
+            { label: 'Knowledge Driven Development', translations: { es: 'Knowledge Driven Development' }, slug: 'knowledge-driven-development' },
             { label: 'KDD Manifesto', translations: { es: 'Manifiesto KDD' }, slug: 'manifesto' },
+            { label: 'About', translations: { es: 'Acerca de' }, slug: 'about' },
           ],
         },
         {

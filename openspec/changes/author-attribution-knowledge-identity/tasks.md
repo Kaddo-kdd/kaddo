@@ -1,0 +1,11 @@
+# Tasks: Author Attribution & Knowledge Identity
+- [ ] /about page (EN/ES).
+- [ ] /knowledge-driven-development page (EN/ES).
+- [ ] Sidebar entries (EN/ES).
+- [ ] Homepage attribution (EN/ES).
+- [ ] Footer override component.
+- [ ] Manifesto Origin section (EN/ES).
+- [ ] Introduction KDD≠Kaddo line (EN/ES).
+- [ ] README author + why.
+- [ ] SEO: author meta + Person JSON-LD.
+- [ ] pnpm --filter docs build green.

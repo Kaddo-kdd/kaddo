@@ -79,6 +79,7 @@ scan → context → understand → agents → roadmap → work item → ownersh
 | VS-035 | Work Item Delivery Workflow | official delivery lifecycle (Roadmap → Work Item → Branch → Implementation → Scan → Ownership → Guard → Knowledge → Review → Commit); `understand` shows it for active Work Items with suggested branch/commit; Guard-before-commit + knowledge-update guidance; docs + examples; Kaddo never runs git |
 | VS-036 | Work-item branch in the implementing agent | branch-first is a configuration in the `work-item-agent` prompt (create the branch per the Git strategy before coding, so work never lands on `main`; commit only with human confirmation). The Kaddo CLI stays deterministic and never touches git (no `kaddo start` command) |
 | VS-037 | Knowledge Discovery & Semantic Recognition | recognize knowledge by front-matter `type` (not path/name): discovery engine + per-layer maturity (Missing/Consolidated/Structured/Partial/Traceable); explain/understand/context recognize consolidated artifacts; understand recommends materializing roadmap candidates |
+| VS-038 | Author Attribution & Knowledge Identity | docs-only: `/about` + `/knowledge-driven-development` pages, homepage/footer/manifesto/README attribution, Person JSON-LD + author meta. Positions Kaddo as a practical implementation of KDD for AI-assisted development — never claiming to have invented KDD |
 
 **Tests:** 299 passing · CLI build + docs build green.
 

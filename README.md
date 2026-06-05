@@ -11,6 +11,10 @@ Kaddo is an open-source **CLI and agent prompt toolkit** that helps new, pre-AI 
 projects build a living knowledge layer close to the code. The CLI prepares and structures the
 context; your LLM agents turn it into product understanding.
 
+> **Knowledge Driven Development ≠ Kaddo.** KDD is a prior concept in software engineering and
+> knowledge management. Kaddo is a **practical implementation of KDD principles for
+> AI-assisted software development** — it applies them; it did not invent them.
+
 ## What is Kaddo?
 
 A practical toolkit for **Knowledge Driven Development (KDD)**. It scans your repo, prepares
@@ -243,6 +247,23 @@ Guard is **silent** when no artifacts declare ownership — no noise on day one.
 **Optional modules (installed with `kaddo add`):**
 `adr` · `rfc` · `incident` · `migration` · `legacy` · `contracts` · `capabilities` ·
 `guard-advanced` · `agents` · `skills` · `standards` · `security` · `stack` · `git-strategy`
+
+## Why Kaddo exists
+
+Projects degrade because knowledge is scattered across meetings, chats, tickets and outdated
+docs. With AI this gets worse: agents build on assumptions when they lack context. Kaddo keeps
+the **minimum sufficient knowledge** alive next to the code and packages it deterministically
+for LLMs and agents — so software evolves with humans and AI, and critical decisions stay
+human.
+
+## About the author
+
+Kaddo is created and maintained by **Julian Dario Luna Patiño** — Cloud Solutions Architect
+Lead, AWS Community Builder and content creator at [TryCatch.tv](https://trycatch.tv). It is
+the result of years designing software architectures, leading development teams and
+documenting systems. Kaddo applies Knowledge Driven Development principles to AI-assisted
+software development; it does not claim to have invented KDD.
+[GitHub](https://github.com/judlup) · [About](https://kaddo.trycatch.tv/about/).
 
 ## Contributing
 
