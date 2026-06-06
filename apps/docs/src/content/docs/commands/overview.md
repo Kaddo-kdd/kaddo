@@ -64,7 +64,7 @@ answers:
 
 | Command | Purpose | Input | Output | Answers |
 |---|---|---|---|---|
-| `scan` | Detect technical signals | the repository | `.kaddo/scan.json`, `knowledge/tech/inventory.md` | "What is this codebase made of?" |
+| `scan` | Detect technical signals | the repository | `.kaddo/scan.json`, `knowledge/inventory.md` | "What is this codebase made of?" |
 | `context` | Package knowledge for an LLM | knowledge + scan | `.kaddo/context-pack.md` / `.json` | "What does the agent need to know?" |
 | `explain` | Summarize what Kaddo knows | knowledge | `.kaddo/explain.md` / `.json` | "What does Kaddo know?" |
 | `understand` | Build the CLI → agent handoff | knowledge + scan | `.kaddo/understand.md` + recommendation | "What should I do now?" |

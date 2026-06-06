@@ -1,4 +1,5 @@
 import type { UnderstandPlan } from '../core/understand.js'
+import { agentInstallPath } from '../agents/groups.js'
 
 function stateLabel(state: string): string {
   return state === 'pre-ai' ? 'pre-AI' : state
@@ -54,7 +55,7 @@ export function renderUnderstand(plan: UnderstandPlan): string {
   // Agent Prompts
   parts.push('## Agent Prompts\n')
   parts.push(
-    steps.map((s) => `- \`knowledge/agents/${s.agent}\``).join('\n') + '\n'
+    steps.map((s) => `- \`${agentInstallPath(s.agent)}\``).join('\n') + '\n'
   )
 
   // Expected Outputs
@@ -71,7 +72,7 @@ export function renderUnderstand(plan: UnderstandPlan): string {
         '',
         '1. Open your preferred LLM chat (Claude, ChatGPT, Cursor, Copilot, Windsurf…).',
         `2. Paste the context pack: \`${plan.contextPackPath}\``,
-        `3. Paste the agent prompt: \`knowledge/agents/${first.agent}\``,
+        `3. Paste the agent prompt: \`${agentInstallPath(first.agent)}\``,
         `4. Ask the LLM to produce: \`${first.output}\``,
         `5. Save the result in: \`${first.output}\``,
       ].join('\n') + '\n'
@@ -118,7 +119,7 @@ export function renderUnderstandTerminal(plan: UnderstandPlan): string {
     lines.push(`First step: use ${agentName(first.agent)}.`)
     lines.push('')
     lines.push(`  Context:         ${plan.contextPackPath}`)
-    lines.push(`  Agent prompt:    knowledge/agents/${first.agent}`)
+    lines.push(`  Agent prompt:    ${agentInstallPath(first.agent)}`)
     lines.push(`  Expected output: ${first.output}`)
     lines.push('')
     lines.push('Instructions:')

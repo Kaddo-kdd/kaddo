@@ -131,7 +131,7 @@ Recommended flow:
 First step: use capability-agent.
 
   Context:         .kaddo/context-pack.md
-  Agent prompt:    knowledge/agents/capability-agent.md
+  Agent prompt:    knowledge/agents/product/capability-agent.md
   Expected output: knowledge/product/capabilities.md
 
 Kaddo does not call an LLM. You stay in control of the interpretation.

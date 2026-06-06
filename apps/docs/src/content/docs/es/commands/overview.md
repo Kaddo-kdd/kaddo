@@ -64,7 +64,7 @@ responde:
 
 | Comando | Propósito | Input | Output | Responde |
 |---|---|---|---|---|
-| `scan` | Detectar señales técnicas | el repositorio | `.kaddo/scan.json`, `knowledge/tech/inventory.md` | "¿De qué está hecho este código?" |
+| `scan` | Detectar señales técnicas | el repositorio | `.kaddo/scan.json`, `knowledge/inventory.md` | "¿De qué está hecho este código?" |
 | `context` | Empaquetar conocimiento para un LLM | conocimiento + scan | `.kaddo/context-pack.md` / `.json` | "¿Qué necesita saber el agente?" |
 | `explain` | Resumir lo que Kaddo sabe | conocimiento | `.kaddo/explain.md` / `.json` | "¿Qué sabe Kaddo?" |
 | `understand` | Construir el handoff CLI → agente | conocimiento + scan | `.kaddo/understand.md` + recomendación | "¿Qué debería hacer ahora?" |
