@@ -92,6 +92,28 @@ flowchart TD
     V --> W[explain.md]
 ```
 
+## Agent flow & responsibility boundaries
+
+Each agent produces knowledge and hands off to the next. Only the **implementation-agent** may
+suggest a Git branch — and only by respecting the project Git strategy. The roadmap-agent and
+work-item-agent never suggest branches or commits.
+
+```mermaid
+flowchart TD
+    A[business-agent] --> B[product-agent]
+    B --> C[codebase-agent]
+    C --> D[architecture-agent]
+    D --> E[roadmap-agent]
+    E --> F[kaddo create --from roadmap]
+    F --> G[work-item-agent]
+    G --> H[implementation-agent]
+    H --> I[kaddo scan]
+    I --> J[kaddo owners suggest]
+    J --> K[kaddo guard]
+    K --> L[kaddo explain]
+    H -. only this agent suggests a branch .-> H
+```
+
 ## CLI vs LLM
 
 Kaddo works in two layers. The CLI is deterministic and never calls an LLM; your LLM

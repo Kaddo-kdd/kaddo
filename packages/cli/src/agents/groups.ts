@@ -21,7 +21,12 @@ export const AGENT_GROUPS: Record<AgentGroup, string[]> = {
     'module-design-agent.md',
     'adr-agent.md',
   ],
-  delivery: ['roadmap-agent.md', 'work-item-agent.md', 'git-strategy-agent.md'],
+  delivery: [
+    'roadmap-agent.md',
+    'work-item-agent.md',
+    'implementation-agent.md',
+    'git-strategy-agent.md',
+  ],
   utilities: ['legacy-agent.md'],
 }
 
@@ -50,6 +55,7 @@ const RECOMMENDED_BY_STATE: Record<ProjectState, string[]> = {
     'codebase-agent.md',
     'roadmap-agent.md',
     'work-item-agent.md',
+    'implementation-agent.md',
     'adr-agent.md',
   ],
   'pre-ai': [
@@ -57,6 +63,7 @@ const RECOMMENDED_BY_STATE: Record<ProjectState, string[]> = {
     'architecture-agent.md',
     'roadmap-agent.md',
     'work-item-agent.md',
+    'implementation-agent.md',
   ],
   legacy: [
     'legacy-agent.md',
@@ -64,6 +71,7 @@ const RECOMMENDED_BY_STATE: Record<ProjectState, string[]> = {
     'capability-agent.md',
     'roadmap-agent.md',
     'work-item-agent.md',
+    'implementation-agent.md',
   ],
 }
 

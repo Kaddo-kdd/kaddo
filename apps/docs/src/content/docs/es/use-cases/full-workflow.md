@@ -142,6 +142,28 @@ kaddo explain
 - **Pasos 7–10 (CLI):** Kaddo convierte el roadmap en Work Items, los conecta al código vía
   ownership y cierra el loop — Guard avisa sobre la deriva y Explain resume el estado.
 
+## Quién produjo qué (Agent Trace)
+
+Cada agente de Kaddo termina su respuesta con un **Agent Trace** para que el flujo sea auditable —
+quién produjo el resultado, qué produjo y qué sigue:
+
+```text
+Agent: roadmap-agent
+Produced: knowledge/delivery/roadmap.md
+Next: kaddo create --from roadmap → work-item-agent
+
+Agent: work-item-agent
+Produced: knowledge/delivery/work-items/draft/WI-001.md
+Next: implementation-agent
+
+Agent: implementation-agent
+Produced: código · tests · conocimiento actualizado
+Next: kaddo scan → kaddo owners suggest → kaddo guard → kaddo explain
+```
+
+Solo el **implementation-agent** puede sugerir una rama de Git (respetando la estrategia de Git del
+proyecto); el roadmap-agent y el work-item-agent nunca lo hacen.
+
 ## Cómo se cierra el loop
 
 `kaddo guard` lee el `git diff`, cruza los archivos cambiados con los globs `code:` de cada

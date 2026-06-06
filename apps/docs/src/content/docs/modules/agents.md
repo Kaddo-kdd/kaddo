@@ -27,7 +27,7 @@ knowledge/agents/
   product/    bootstrap-agent.md · capability-agent.md
   tech/       architecture-agent.md · codebase-agent.md · stack-agent.md ·
               security-agent.md · standards-agent.md · module-design-agent.md · adr-agent.md
-  delivery/   roadmap-agent.md · work-item-agent.md · git-strategy-agent.md
+  delivery/   roadmap-agent.md · work-item-agent.md · implementation-agent.md · git-strategy-agent.md
   utilities/  legacy-agent.md
 ```
 
@@ -41,9 +41,9 @@ By default `kaddo add agents` installs only the set recommended for your project
 
 | State | Installs |
 |---|---|
-| `new` | business-agent · bootstrap-agent · codebase-agent · roadmap-agent · work-item-agent |
-| `pre-ai` | capability-agent · architecture-agent · roadmap-agent · work-item-agent |
-| `legacy` | legacy-agent · architecture-agent · capability-agent · roadmap-agent · work-item-agent |
+| `new` | business-agent · bootstrap-agent · codebase-agent · roadmap-agent · work-item-agent · implementation-agent |
+| `pre-ai` | capability-agent · architecture-agent · roadmap-agent · work-item-agent · implementation-agent |
+| `legacy` | legacy-agent · architecture-agent · capability-agent · roadmap-agent · work-item-agent · implementation-agent |
 
 Agents are organized into **groups** by layer:
 
@@ -52,7 +52,7 @@ Agents are organized into **groups** by layer:
 | `business` | business-agent |
 | `product` | bootstrap-agent · capability-agent |
 | `tech` | architecture-agent · codebase-agent · stack-agent · security-agent · standards-agent · module-design-agent · adr-agent |
-| `delivery` | roadmap-agent · work-item-agent · git-strategy-agent |
+| `delivery` | roadmap-agent · work-item-agent · implementation-agent · git-strategy-agent |
 | `utilities` | legacy-agent |
 
 ```bash
@@ -92,6 +92,7 @@ These support day-to-day execution and the multirepo / global artifacts (VS-017)
 | Agent | Purpose | Saves to |
 |---|---|---|
 | `work-item-agent` | Draft and refine a work item from context | active work item |
+| `implementation-agent` | Implement a refined Work Item; suggest branch/scan/owners/guard | code · tests · updated knowledge |
 | `git-strategy-agent` | Refine the Git strategy | `knowledge/tech/git-strategy.md` |
 | `security-agent` | Document security considerations (no scanning) | `knowledge/tech/security.md` |
 | `standards-agent` | Define lightweight standards | `knowledge/tech/standards.md` |
@@ -101,6 +102,68 @@ These support day-to-day execution and the multirepo / global artifacts (VS-017)
 Each prompt declares: Role · When to Use · Input Required · Expected Output · Instructions ·
 Constraints · Output Format · Where to Save the Result · Quality Checklist. The primary
 input is always `.kaddo/context-pack.md`.
+
+## Responsibility boundaries & Agent Trace
+
+Every official agent knows its **responsibility**, its **limits** and the **next step** in the
+flow. Each prompt ends with two standard blocks so the flow stays auditable and no agent drifts
+outside its lane:
+
+- **Responsibility & Boundaries** — what the agent is responsible for, produces, may suggest and
+  must NOT suggest. Agents produce **knowledge only**: they never run Git, code or commands.
+- **Agent Trace** — a footer every response repeats:
+
+```text
+────────────────────────
+Agent: roadmap-agent
+
+Produced:
+knowledge/delivery/roadmap.md
+
+Next:
+kaddo create --from roadmap
+work-item-agent
+────────────────────────
+```
+
+This answers, for any response: **who produced it, what it produced, and what runs next.**
+
+### Responsibility matrix
+
+| Agent | Responsible for | Produces | May suggest | Must NOT suggest |
+|---|---|---|---|---|
+| `business-agent` | Problem, Users, Rules, Constraints | `knowledge/business/business.md` | product-agent | Git, branches, commits, code |
+| `product-agent` | Product, Capabilities, Scope | `product.md`, `capabilities.md` | roadmap-agent | Git, implementation |
+| `capability-agent` | Capabilities | `capabilities.md` | roadmap-agent | Git, implementation |
+| `codebase-agent` | Stack, Structure, Standards | `knowledge/tech/codebase.md` | architecture-agent, decision-agent | Git, production code |
+| `architecture-agent` | Architecture, Technical state, Risks | `current-state.md` | decision-agent, roadmap-agent | Git, branches, code |
+| `decision-agent` / `adr-agent` | ADRs | `knowledge/tech/decisions/` | implementation-agent | Git, branches, code |
+| `roadmap-agent` | Roadmap, Initiatives, WI candidates | `roadmap.md` | `kaddo create --from roadmap`, work-item-agent | **branches, commits, PRs**, code |
+| `work-item-agent` | Work Item refinement | `work-items/` | implementation-agent | **commits, PRs, branches** |
+| `implementation-agent` | Implementation | code, tests, migrations | **a branch** (per Git strategy), scan, owners suggest, guard | running git, committing without confirmation |
+| `guard-agent` | Knowledge drift | findings, warnings | update knowledge, update ownership | branches, commits, code |
+
+### Git responsibility model
+
+Only the **implementation-agent** may suggest a Git branch, and only by respecting
+`knowledge/tech/git-strategy.md` (`.kaddo/git.yml`). It still never runs git — it suggests and
+waits for explicit human confirmation. The roadmap-agent, work-item-agent, business-agent and
+product-agent must **never** suggest branches, commits or pull requests.
+
+> This fixes a real drift seen in validation, where the roadmap-agent suggested
+> `Create branch feature/wi-001-...` before any Work Item existed.
+
+### Handoff rules
+
+```text
+roadmap-agent
+  → kaddo create --from roadmap
+  → work-item-agent
+  → implementation-agent
+  → kaddo scan → kaddo owners suggest → kaddo guard → kaddo explain
+```
+
+`kaddo understand` recommends agents following exactly these handoffs.
 
 ## Writing a custom agent
 

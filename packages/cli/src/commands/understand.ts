@@ -72,7 +72,9 @@ export function runUnderstand(): void {
     ],
     delivery: [
       'Use roadmap-agent → knowledge/delivery/roadmap.md',
-      'Run `kaddo create --from roadmap`, then `kaddo owners suggest`',
+      'Run `kaddo create --from roadmap` (candidates → Work Items)',
+      'Use work-item-agent → refine into knowledge/delivery/work-items/',
+      'Use implementation-agent → implement, then `kaddo scan`, `kaddo owners suggest`, `kaddo guard`',
     ],
     utilities: ['Use legacy-agent to surface risks and unknowns'],
   }
