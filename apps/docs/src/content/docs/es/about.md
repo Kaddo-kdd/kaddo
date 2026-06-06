@@ -3,50 +3,43 @@ title: Acerca de
 description: Acerca de Kaddo y su creador, Julian Dario Luna Patiño.
 ---
 
-## Acerca de Julian Dario Luna Patiño
+## La persona detrás de Kaddo
 
-Kaddo es creado y mantenido por **Julian Dario Luna Patiño**:
+Kaddo es creado y mantenido por **Julian Dario Luna Patiño** — Cloud Solutions Architect Lead y
+AWS Community Builder que crea contenido técnico en [TryCatch.tv](https://trycatch.tv), investiga
+en gestión de la innovación tecnológica y construye comunidades de desarrollo.
 
-- Cloud Solutions Architect Lead
-- AWS Community Builder
-- Content Creator en [TryCatch.tv](https://trycatch.tv)
-- Investigador en Gestión de la Innovación Tecnológica
-- Autor y community builder
+Nació de años diseñando arquitecturas de software, liderando equipos y documentando sistemas — y
+de una frustración recurrente: el conocimiento que explica *por qué* un sistema es como es se
+pierde una y otra vez, mientras el código sigue vivo. Kaddo es el intento de convertir ese
+conocimiento en una parte viva y navegable del proyecto.
 
-Kaddo es el resultado de años de experiencia diseñando arquitecturas de software, liderando
-equipos de desarrollo, documentando sistemas y explorando formas prácticas de conectar el
-conocimiento con la entrega de software.
+## Por qué existe Kaddo
 
-## Por qué se creó Kaddo
+Los proyectos rara vez se degradan porque el código envejezca; se degradan porque el conocimiento
+se dispersa en reuniones, chats, tickets y documentos que en silencio quedan desactualizados. La
+IA agranda la brecha: un agente sin contexto construye sobre suposiciones, no sobre comprensión.
 
-Los proyectos se degradan porque el conocimiento está disperso en reuniones, chats, tickets y
-documentos desactualizados. Con IA esto empeora: los agentes construyen sobre suposiciones
-cuando les falta contexto. Kaddo se creó para mantener el **conocimiento mínimo suficiente**
-vivo junto al código — y empaquetarlo de forma determinística para LLMs y agentes — para que
-el software evolucione con humanos e IA sin convertir el desarrollo en burocracia.
+La respuesta de Kaddo es mantener el **conocimiento mínimo suficiente** vivo junto al código y
+empaquetarlo de forma determinística para LLMs y agentes, para que el proyecto evolucione con
+humanos e IA sin convertir el desarrollo en burocracia.
 
-> Kaddo es un toolkit open-source que aplica los principios de **Knowledge Driven
-> Development** al **desarrollo de software asistido por IA**. No inventó KDD — operacionaliza
-> sus principios para la era de los LLMs y los agentes. Mira
-> [Knowledge Driven Development](/es/knowledge-driven-development/).
+> Kaddo aplica los principios de **Knowledge Driven Development** al desarrollo de software
+> asistido por IA. No inventó KDD — operacionaliza esos principios para la era de los LLMs y los
+> agentes. Mira [Knowledge Driven Development](/es/knowledge-driven-development/).
 
-## Evolución del proyecto
+## Cómo ha crecido
 
-Kaddo creció de un detector de drift (Guard Lite) a un loop completo de conocimiento: scan →
-context → understand → agentes → roadmap → work items → ownership → guard → explain,
-organizado en torno a las capas **Business → Product → Tech → Delivery**, con el conocimiento
-reconocido por significado en vez de por nombres de archivo.
+Kaddo empezó como un humilde detector de drift (Guard Lite) y creció hasta un loop completo de
+conocimiento — `scan → context → understand → agentes → roadmap → work items → ownership → guard →
+explain` — organizado en torno a las capas **Business → Product → Tech → Delivery**, donde el
+conocimiento se reconoce por significado y no por nombres de archivo. Las ideas detrás de Kaddo se
+comparten, enseñan y discuten abiertamente en [TryCatch.tv](https://trycatch.tv).
 
-## Relación con TryCatch.tv
+## La visión
 
-[TryCatch.tv](https://trycatch.tv) es la plataforma de contenido y comunidad donde se
-comparten, enseñan y discuten las ideas detrás de Kaddo.
-
-## Visión a futuro
-
-Un mundo donde cada repositorio recuerda por qué existe su código — donde humanos e IA
-construyen sobre conocimiento real y observable, y donde las decisiones críticas siguen
-siendo humanas.
+Un mundo donde cada repositorio recuerda por qué existe su código — donde humanos e IA construyen
+sobre conocimiento real y observable, y donde las decisiones que importan siguen siendo humanas.
 
 ---
 

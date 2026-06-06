@@ -3,49 +3,43 @@ title: About
 description: About Kaddo and its creator, Julian Dario Luna Patiño.
 ---
 
-## About Julian Dario Luna Patiño
+## The person behind Kaddo
 
-Kaddo is created and maintained by **Julian Dario Luna Patiño**:
+Kaddo is created and maintained by **Julian Dario Luna Patiño** — a Cloud Solutions Architect
+Lead and AWS Community Builder who creates technical content at [TryCatch.tv](https://trycatch.tv),
+researches technology innovation management, and builds developer communities.
 
-- Cloud Solutions Architect Lead
-- AWS Community Builder
-- Content Creator at [TryCatch.tv](https://trycatch.tv)
-- Researcher in Technology Innovation Management
-- Author and community builder
+It grew out of years spent designing software architectures, leading development teams and
+documenting systems — and from one recurring frustration: the knowledge that explains *why* a
+system is the way it is keeps getting lost, while the code lives on. Kaddo is the attempt to make
+that knowledge a living, navigable part of the project instead.
 
-Kaddo is the result of years of experience designing software architectures, leading
-development teams, documenting systems, and exploring practical ways to connect knowledge
-and software delivery.
+## Why Kaddo exists
 
-## Why Kaddo was created
+Projects rarely degrade because the code ages; they degrade because knowledge scatters across
+meetings, chats, tickets and docs that quietly fall out of date. AI makes the gap sharper — an
+agent without context builds on assumptions rather than understanding.
 
-Projects degrade because knowledge is scattered across meetings, chats, tickets and outdated
-docs. With AI this gets worse: agents build on assumptions when they lack context. Kaddo was
-created to keep the **minimum sufficient knowledge** alive next to the code — and to package
-it deterministically for LLMs and agents — so software can evolve with humans and AI without
+Kaddo's answer is to keep the **minimum sufficient knowledge** alive next to the code and package
+it deterministically for LLMs and agents, so a project can evolve with both humans and AI without
 turning development into bureaucracy.
 
-> Kaddo is an open-source toolkit that applies **Knowledge Driven Development** principles to
-> **AI-assisted software development**. It did not invent KDD — it operationalizes its
-> principles for the era of LLMs and agents. See
+> Kaddo applies **Knowledge Driven Development** principles to AI-assisted software development. It
+> did not invent KDD — it operationalizes those principles for the era of LLMs and agents. See
 > [Knowledge Driven Development](/knowledge-driven-development/).
 
-## Evolution of the project
+## How it has grown
 
-Kaddo grew from a Guard-Lite drift detector into a full knowledge loop: scan → context →
-understand → agents → roadmap → work items → ownership → guard → explain, organized around
-the **Business → Product → Tech → Delivery** layers, with knowledge recognized by meaning
-rather than file names.
+Kaddo started as a humble Guard-Lite drift detector and grew into a full knowledge loop —
+`scan → context → understand → agents → roadmap → work items → ownership → guard → explain` —
+organized around the **Business → Product → Tech → Delivery** layers, where knowledge is
+recognized by meaning rather than by file names. The ideas behind it are shared, taught and
+discussed openly through [TryCatch.tv](https://trycatch.tv).
 
-## Relationship with TryCatch.tv
+## The vision
 
-[TryCatch.tv](https://trycatch.tv) is the content and community platform where the ideas
-behind Kaddo are shared, taught and discussed.
-
-## Future vision
-
-A world where every repository remembers why its code exists — where humans and AI build on
-real, observable knowledge, and where critical decisions remain human.
+A world where every repository remembers why its code exists — where humans and AI build on real,
+observable knowledge, and where the decisions that matter stay human.
 
 ---
 
