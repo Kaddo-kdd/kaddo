@@ -93,7 +93,7 @@ export default defineConfig({
             { label: 'Visual Guide', translations: { es: 'Guía visual' }, slug: 'visual-guide' },
             { label: 'Project scope', translations: { es: 'Alcance del proyecto' }, slug: 'project-scope' },
             { label: 'Knowledge Levels', translations: { es: 'Niveles de Conocimiento' }, slug: 'knowledge-levels' },
-            { label: 'Token efficiency', translations: { es: 'Eficiencia en tokens' }, slug: 'token-efficiency' },
+            { label: 'Context efficiency', translations: { es: 'Eficiencia de contexto' }, slug: 'token-efficiency' },
             { label: 'Knowledge Driven Development', translations: { es: 'Knowledge Driven Development' }, slug: 'knowledge-driven-development' },
             { label: 'KDD Manifesto', translations: { es: 'Manifiesto KDD' }, slug: 'manifesto' },
             { label: 'About', translations: { es: 'Acerca de' }, slug: 'about' },

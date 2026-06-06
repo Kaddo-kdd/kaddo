@@ -61,8 +61,9 @@ kaddo add agents --all           # todos los agentes
 kaddo add agents --group tech    # un grupo de capa
 ```
 
-`kaddo understand` muestra tu **fase actual** (Business → Product → Tech → Delivery) y
-recomienda los agentes de esa fase.
+`kaddo understand` reporta tu **fase actual** a partir del estado real del conocimiento —
+Discovery → Planning → Delivery Preparation → Active Delivery → Maintenance — y recomienda el
+agente para esa fase (ver [understand](/es/commands/understand/#recomendaciones-según-el-estado-real)).
 
 ## Agentes de entendimiento
 

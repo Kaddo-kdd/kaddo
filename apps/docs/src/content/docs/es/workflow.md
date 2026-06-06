@@ -62,7 +62,7 @@ Estos cuatro comandos suelen confundirse — hacen cosas distintas:
 |---|---|---|
 | `kaddo scan` | Detecta la estructura técnica (stack, carpetas, señales) | `.kaddo/scan.json`, `knowledge/inventory.md` |
 | `kaddo context` | Empaqueta el conocimiento existente para tu LLM | `.kaddo/context-pack.md` / `.json` |
-| `kaddo understand` | Recomienda los siguientes pasos y agentes para tu fase actual | `.kaddo/understand.md` |
+| `kaddo understand` | Recomienda el siguiente paso + agente desde el estado real (fase) | `.kaddo/understand.md` |
 | `kaddo explain` | Resume lo que Kaddo sabe (por capa) | `.kaddo/explain.md` / `.json` |
 
 ## Intención vs realidad

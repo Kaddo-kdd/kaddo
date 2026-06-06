@@ -61,8 +61,9 @@ kaddo add agents --all           # every agent
 kaddo add agents --group tech    # one layer group
 ```
 
-`kaddo understand` shows your **current phase** (Business → Product → Tech → Delivery) and
-recommends that phase's agents.
+`kaddo understand` reports your **current phase** from the real knowledge state — Discovery →
+Planning → Delivery Preparation → Active Delivery → Maintenance — and recommends the agent for
+that phase (see [understand](/commands/understand/#state-aware-recommendations)).
 
 ## Understanding agents
 
