@@ -6,7 +6,8 @@ import { discoverKnowledge } from '../services/knowledge-artifacts.js'
 import { loadMappedModules, type MappedModuleWithCoverage } from '../services/mapped-modules.js'
 import { knowledgeLayers, type LayerStatus } from './layers.js'
 import { roadmapStats, type RoadmapStats } from './roadmap.js'
-import { lifecycleStateOf, isActiveState, type LifecycleState } from './lifecycle.js'
+import { lifecycleStateOf, isActiveState, lifecycleCounts, type LifecycleState } from './lifecycle.js'
+import { assessPhase, type PhaseAssessment } from './delivery-phase.js'
 
 export const CONTEXT_PACK_VERSION = '1'
 
@@ -56,6 +57,8 @@ export type ContextPack = {
   }
   layers: LayerStatus[]
   roadmap: RoadmapStats
+  /** State-aware phase + next-step recommendation (VS-047). */
+  phase: PhaseAssessment
   /** Active Work Items distribution by type (feature/bugfix/hotfix/spike/chore/…). */
   deliveryMix: Record<string, number>
   mappedModules: MappedModuleWithCoverage[]
@@ -260,6 +263,30 @@ export function buildContextPack(
   const mappedModules = loadMappedModules(dir)
   const layers = knowledgeLayers(dir)
 
+  // State-aware phase + next-step recommendation (VS-047) from the real knowledge state.
+  const allWorkItems = allArtifacts.filter((a) => a.isWorkItem)
+  const wiWithOwnership = allWorkItems.filter((a) => a.codeGlobs.length > 0).length
+  const phase = assessPhase({
+    layers,
+    roadmap,
+    workItems: {
+      total: allWorkItems.length,
+      byState: lifecycleCounts(
+        allWorkItems.map((a) => lifecycleStateOf({ status: a.status, filePath: a.filePath }))
+      ),
+      items: allWorkItems.map((a) => ({
+        id: a.id || a.title,
+        title: a.title,
+        lifecycle: lifecycleStateOf({ status: a.status, filePath: a.filePath }),
+      })),
+    },
+    ownership: {
+      workItemsTotal: allWorkItems.length,
+      workItemsWithOwnership: wiWithOwnership,
+      workItemsMissingOwnership: allWorkItems.length - wiWithOwnership,
+    },
+  })
+
   return {
     version: CONTEXT_PACK_VERSION,
     generatedAt: now.toISOString(),
@@ -288,6 +315,7 @@ export function buildContextPack(
     },
     layers,
     roadmap,
+    phase,
     deliveryMix,
     mappedModules,
     missing,

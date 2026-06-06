@@ -7,6 +7,7 @@
 import { exists, readFile, readDir, join, isFile } from '../utils/fs.js'
 import { loadConfig } from './config.js'
 import { discoverWorkItems } from '../services/knowledge-artifacts.js'
+import { assessPhase } from './delivery-phase.js'
 import {
   loadMappedModules,
   presentArtifacts,
@@ -445,6 +446,17 @@ export function renderExplanationHuman(exp: ProjectExplanation): string {
     for (const m of exp.missingKnowledge) lines.push(`- ${m}`)
     lines.push('')
   }
+
+  // Phase + reason (VS-047): explain why the project is where it is, from real knowledge state.
+  const assessment = assessPhase(exp)
+  lines.push('## Phase')
+  lines.push(`- Phase: ${assessment.phase}`)
+  if (assessment.reasons.length > 0) {
+    lines.push('- Reason:')
+    for (const r of assessment.reasons) lines.push(`  - ${r}`)
+  }
+  if (assessment.nextStep) lines.push(`- Next step: ${assessment.nextStep}`)
+  lines.push('')
 
   if (exp.suggestedNextSteps.length > 0) {
     lines.push('## Suggested Next Steps')

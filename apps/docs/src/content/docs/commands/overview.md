@@ -18,6 +18,29 @@ Commands in workflow order:
 | `kaddo guard` | Check if modified code has related artifacts that were not updated |
 | `kaddo explain` | Summarize what Kaddo currently knows about the project |
 
+## scan · context · explain · understand
+
+These four are easy to confuse. Each has a distinct purpose, input, output and the question it
+answers:
+
+| Command | Purpose | Input | Output | Answers |
+|---|---|---|---|---|
+| `scan` | Detect technical signals | the repository | `.kaddo/scan.json`, `knowledge/tech/inventory.md` | "What is this codebase made of?" |
+| `context` | Package knowledge for an LLM | knowledge + scan | `.kaddo/context-pack.md` / `.json` | "What does the agent need to know?" |
+| `explain` | Summarize what Kaddo knows | knowledge | `.kaddo/explain.md` / `.json` | "What does Kaddo know?" |
+| `understand` | Build the CLI → agent handoff | knowledge + scan | `.kaddo/understand.md` + recommendation | "What should I do now?" |
+
+- **scan** detects; it never interprets architecture, builds a roadmap or calls an LLM. Run it
+  after significant technical changes or after implementing a Work Item.
+- **context** consolidates Business → Product → Tech → Delivery + ownership + roadmap + Work Items
+  into a pack. It does not recommend or analyze. Run it before using any agent.
+- **explain** reports maturity and coverage. It does not recommend agents or build LLM context.
+- **understand** decides the next step from the **real** knowledge state (roadmap, Work Items,
+  ownership) — not just `project.state` — and recommends the agent to run next.
+
+**Recommended order:** `scan → context → understand` (then run the recommended agent), and
+`explain` any time to inspect state.
+
 Supporting commands:
 
 | Command | What it does |

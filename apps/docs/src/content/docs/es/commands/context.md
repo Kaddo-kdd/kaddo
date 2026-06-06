@@ -65,6 +65,23 @@ particular: **nunca `git commit`, `push` ni `merge` sin confirmación humana exp
 crear una rama antes de implementar un Work Item, y correr `kaddo scan` / `owners suggest` /
 `guard` tras cambios significativos. El CLI de Kaddo nunca corre git.
 
+## Fase actual
+
+El pack abre con un bloque **Current Phase** derivado del estado real del conocimiento (capas,
+roadmap, Work Items, ownership) — Discovery / Planning / Delivery Preparation / Active Delivery /
+Maintenance — con la razón y el siguiente agente recomendado. Así el agente que lee el pack ve qué
+hacer según la realidad, no solo `project.state`:
+
+```text
+## Current Phase
+Phase: Active Delivery
+Reason:
+- Roadmap available
+- 1 materialized work item(s)
+Recommended next: implementation-agent
+Next step: Start WI-014 — Create task (ready → in-progress)
+```
+
 ## Handoff según el estado
 
 Los agentes recomendados se adaptan al estado del proyecto definido en `kaddo init`:

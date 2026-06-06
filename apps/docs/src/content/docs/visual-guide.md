@@ -114,6 +114,20 @@ flowchart TD
     H -. only this agent suggests a branch .-> H
 ```
 
+## Command roles: scan · context · explain · understand
+
+Each command has a distinct role. `understand` recommends the next step from the **real** knowledge
+state, not just the configured `project.state`.
+
+```mermaid
+flowchart LR
+    S[scan<br/>detect signals] --> X[explain<br/>what Kaddo knows]
+    S --> C[context<br/>package for LLM]
+    C --> U[understand<br/>what to do now]
+    X -.inspect anytime.-> U
+    U --> A[recommended agent]
+```
+
 ## Unified knowledge discovery
 
 Every command discovers knowledge artifacts through one shared service, so `explain`, `context`,

@@ -5,11 +5,9 @@ import { buildContextPack, serializeContextPackJson } from '../core/context-pack
 import { renderContextPack } from '../templates/context-pack-template.js'
 import { buildUnderstandPlan } from '../core/understand.js'
 import { renderUnderstand, renderUnderstandTerminal } from '../templates/understand-template.js'
-import { knowledgeLayers, currentPhase } from '../core/layers.js'
-import { roadmapHasUnmaterializedCandidates } from '../core/knowledge-discovery.js'
-import { AGENT_GROUPS, type AgentGroup } from '../agents/groups.js'
 import { activeWorkItems, renderDeliveryLifecycle } from '../core/delivery.js'
 import { buildProjectExplanation } from '../core/project-explain.js'
+import { assessPhase } from '../core/delivery-phase.js'
 
 export function runUnderstand(): void {
   const dir = cwd()
@@ -55,70 +53,21 @@ export function runUnderstand(): void {
   // 5. Print the concise handoff and write the reusable guide.
   console.log(renderUnderstandTerminal(plan))
 
-  // 5b. Contextual recommendation: current phase + concrete next steps for it.
-  const phase = currentPhase(knowledgeLayers(dir))
-  const group = phase.toLowerCase() as AgentGroup
-  const groupAgents = (AGENT_GROUPS[group] ?? []).map((a) => a.replace(/\.md$/, ''))
-  const NEXT_STEPS: Record<AgentGroup, string[]> = {
-    business: ['Use business-agent → refine knowledge/business/business.md'],
-    product: [
-      'Use bootstrap-agent → refine knowledge/product/product.md',
-      'Use capability-agent → knowledge/product/capabilities.md',
-    ],
-    tech: [
-      'Use architecture-agent → knowledge/tech/current-state.md (reality)',
-      'Use codebase-agent → knowledge/tech/codebase.md (intent)',
-      'Record decisions as ADRs in knowledge/tech/decisions/',
-    ],
-    delivery: [
-      'Use roadmap-agent → knowledge/delivery/roadmap.md',
-      'Run `kaddo create --from roadmap` (candidates → Work Items)',
-      'Use work-item-agent → refine into knowledge/delivery/work-items/',
-      'Use implementation-agent → implement, then `kaddo scan`, `kaddo owners suggest`, `kaddo guard`',
-    ],
-    utilities: ['Use legacy-agent to surface risks and unknowns'],
-  }
-  // Embedded Work Items: roadmap has candidates but none are materialized yet.
-  if (roadmapHasUnmaterializedCandidates(dir)) {
-    const { candidates, materialized, remaining } = pack.roadmap
-    console.log('')
-    console.log(
-      `The roadmap has ${remaining} unmaterialized Work Item candidate(s) ` +
-        `(${candidates} candidate(s), ${materialized} materialized).`
-    )
-    console.log('  → Run `kaddo create --from roadmap`, or use the work-item-agent to')
-    console.log('    materialize them into knowledge/delivery/work-items/.')
-  }
-
-  console.log('')
-  console.log(`Current phase: ${phase}`)
-  console.log('Recommended next steps:')
-  console.log('  1. Run `kaddo scan`   (technical signals → knowledge/inventory.md)')
-  console.log('  2. Run `kaddo context`  (package knowledge for your LLM)')
-  let n = 3
-  for (const step of NEXT_STEPS[group] ?? []) console.log(`  ${n++}. ${step}`)
-  if (groupAgents.length > 0) {
-    console.log(`Agents for this phase: ${groupAgents.join(', ')}`)
-  }
-
-  // 5b-bis. Lifecycle-aware active workspace summary (VS-041): what work needs attention now.
+  // 5b. State-aware recommendation (VS-047): phase + reason + next step from the REAL knowledge
+  // state (layers, roadmap, Work Items, ownership) — not only the configured project.state.
   const exp = buildProjectExplanation(dir)
-  if (exp.workItems.total > 0) {
-    const bs = exp.workItems.byState
-    console.log('')
-    console.log('Current active work:')
-    console.log(`  Draft: ${bs.draft}  Ready: ${bs.ready}  In Progress: ${bs['in-progress']}  Blocked: ${bs.blocked}`)
-    const firstReady = exp.workItems.items.find((i) => i.lifecycle === 'ready')
-    const firstInProgress = exp.workItems.items.find((i) => i.lifecycle === 'in-progress')
-    if (firstInProgress) {
-      console.log(`  → Continue ${firstInProgress.id} — ${firstInProgress.title} (in progress).`)
-    } else if (firstReady) {
-      console.log(`  → Recommended next step: start ${firstReady.id} — ${firstReady.title}.`)
-    } else if (bs.draft > 0) {
-      console.log('  → Refine a draft Work Item to `ready` (scope + acceptance defined).')
-    } else if (bs.blocked > 0) {
-      console.log('  → All active work is blocked. Resolve the blockers to move forward.')
-    }
+  const assessment = assessPhase(exp)
+  console.log('')
+  console.log(`Current phase: ${assessment.phase}`)
+  if (assessment.reasons.length > 0) {
+    console.log('Reason:')
+    for (const r of assessment.reasons) console.log(`  - ${r}`)
+  }
+  if (assessment.recommendedAgents.length > 0) {
+    console.log(`Recommended: ${assessment.recommendedAgents.join(', ')}`)
+  }
+  if (assessment.nextStep) {
+    console.log(`Next step: ${assessment.nextStep}`)
   }
 
   // 5c. If a Work Item is active, show the official delivery lifecycle.

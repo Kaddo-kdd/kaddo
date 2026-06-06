@@ -116,6 +116,20 @@ flowchart TD
     H -. solo este agente sugiere una rama .-> H
 ```
 
+## Roles de comandos: scan · context · explain · understand
+
+Cada comando tiene un rol distinto. `understand` recomienda el siguiente paso a partir del estado
+**real** del conocimiento, no solo del `project.state` configurado.
+
+```mermaid
+flowchart LR
+    S[scan<br/>detectar señales] --> X[explain<br/>qué sabe Kaddo]
+    S --> C[context<br/>empaquetar para el LLM]
+    C --> U[understand<br/>qué hacer ahora]
+    X -.inspeccionar cuando quieras.-> U
+    U --> A[agente recomendado]
+```
+
 ## Descubrimiento unificado de conocimiento
 
 Cada comando descubre los artefactos de conocimiento a través de un único servicio compartido,

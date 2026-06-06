@@ -64,6 +64,23 @@ so a coding assistant you paste it into does not commit on its own. In particula
 before implementing a Work Item, and run `kaddo scan` / `owners suggest` / `guard` after
 significant changes. The Kaddo CLI never runs git.
 
+## Current phase
+
+The pack opens with a **Current Phase** block derived from the real knowledge state (layers,
+roadmap, Work Items, ownership) — Discovery / Planning / Delivery Preparation / Active Delivery /
+Maintenance — with the reason and the recommended next agent. So the agent reading the pack sees
+what to do next based on reality, not just `project.state`:
+
+```text
+## Current Phase
+Phase: Active Delivery
+Reason:
+- Roadmap available
+- 1 materialized work item(s)
+Recommended next: implementation-agent
+Next step: Start WI-014 — Create task (ready → in-progress)
+```
+
 ## State-aware handoff
 
 Recommended agents adapt to the project state recorded by `kaddo init`:

@@ -1,0 +1,161 @@
+// State-aware phase & next-step recommendations (VS-047).
+//
+// Kaddo recommends the next step from the REAL state of the knowledge base (layers, roadmap, Work
+// Items, ownership) — not only the configured project.state. Deterministic; no LLM.
+
+import type { LayerName, LayerStatus, LayerMaturity } from './knowledge-discovery.js'
+import { LIFECYCLE_STATES, type LifecycleState } from './lifecycle.js'
+
+export type DeliveryPhase =
+  | 'Discovery'
+  | 'Planning'
+  | 'Delivery Preparation'
+  | 'Active Delivery'
+  | 'Maintenance'
+
+/** Minimal structural input so both explain and context can reuse this without coupling. */
+export type PhaseInput = {
+  layers: LayerStatus[]
+  roadmap: { present: boolean; candidates: number; materialized: number; remaining: number }
+  workItems: {
+    total: number
+    byState: Record<LifecycleState, number>
+    items: { id: string; title: string; lifecycle: LifecycleState }[]
+  }
+  ownership: { workItemsTotal: number; workItemsWithOwnership: number; workItemsMissingOwnership: number }
+}
+
+export type PhaseAssessment = {
+  phase: DeliveryPhase
+  reasons: string[]
+  recommendedAgents: string[]
+  nextStep: string
+}
+
+function layer(layers: LayerStatus[], name: LayerName): LayerMaturity {
+  return layers.find((l) => l.layer === name)?.status ?? 'Missing'
+}
+
+function baseComplete(layers: LayerStatus[]): boolean {
+  return (
+    layer(layers, 'Business') !== 'Missing' &&
+    layer(layers, 'Product') !== 'Missing' &&
+    layer(layers, 'Tech') !== 'Missing'
+  )
+}
+
+/** Determine the real delivery phase from knowledge state. */
+export function determinePhase(input: PhaseInput): DeliveryPhase {
+  const { roadmap, workItems } = input
+  const active =
+    workItems.byState.draft +
+    workItems.byState.ready +
+    workItems.byState['in-progress'] +
+    workItems.byState.blocked
+
+  if (!baseComplete(input.layers)) return 'Discovery'
+  if (!roadmap.present) return 'Planning'
+  if (workItems.total === 0) return 'Delivery Preparation'
+  if (active > 0) return 'Active Delivery'
+  return 'Maintenance'
+}
+
+function ownershipPct(o: PhaseInput['ownership']): number {
+  if (o.workItemsTotal === 0) return 100
+  return Math.round((o.workItemsWithOwnership / o.workItemsTotal) * 100)
+}
+
+function buildReasons(input: PhaseInput): string[] {
+  const reasons: string[] = []
+  reasons.push(input.roadmap.present ? 'Roadmap available' : 'No roadmap yet')
+  if (input.roadmap.present) {
+    reasons.push(`${input.roadmap.materialized} materialized work item(s)`)
+    if (input.roadmap.remaining > 0) reasons.push(`${input.roadmap.remaining} roadmap candidate(s) remaining`)
+  }
+  const active = LIFECYCLE_STATES.filter((s) => input.workItems.byState[s] > 0 && s !== 'completed' && s !== 'archived')
+  if (active.length > 0) {
+    reasons.push(active.map((s) => `${s}: ${input.workItems.byState[s]}`).join(', '))
+  }
+  if (input.workItems.total > 0) reasons.push(`Ownership coverage ${ownershipPct(input.ownership)}%`)
+  return reasons
+}
+
+function firstMissingLayerAgent(layers: LayerStatus[]): { agent: string; step: string } {
+  if (layer(layers, 'Business') === 'Missing')
+    return { agent: 'business-agent', step: 'Use business-agent to create knowledge/business/business.md' }
+  if (layer(layers, 'Product') === 'Missing')
+    return { agent: 'capability-agent', step: 'Use capability-agent to create knowledge/product/capabilities.md' }
+  return { agent: 'architecture-agent', step: 'Use architecture-agent to create knowledge/tech/current-state.md' }
+}
+
+/**
+ * Recommend the next agent(s) and a concrete next step from the real knowledge state.
+ */
+export function assessPhase(input: PhaseInput): PhaseAssessment {
+  const phase = determinePhase(input)
+  const reasons = buildReasons(input)
+  const bs = input.workItems.byState
+  const items = input.workItems.items
+  const firstOf = (s: LifecycleState) => items.find((i) => i.lifecycle === s)
+
+  let recommendedAgents: string[] = []
+  let nextStep = ''
+
+  switch (phase) {
+    case 'Discovery': {
+      const m = firstMissingLayerAgent(input.layers)
+      recommendedAgents = [m.agent]
+      nextStep = m.step
+      break
+    }
+    case 'Planning': {
+      recommendedAgents = ['roadmap-agent']
+      nextStep = 'Use roadmap-agent to create knowledge/delivery/roadmap.md'
+      break
+    }
+    case 'Delivery Preparation': {
+      recommendedAgents = ['kaddo create --from roadmap', 'work-item-agent']
+      const n = input.roadmap.remaining || input.roadmap.candidates
+      nextStep = `Run \`kaddo create --from roadmap\`${n ? ` (${n} candidate(s))` : ''}, then refine with work-item-agent`
+      break
+    }
+    case 'Active Delivery': {
+      if (bs.ready > 0) {
+        const wi = firstOf('ready')
+        recommendedAgents = ['implementation-agent']
+        nextStep = wi ? `Start ${wi.id} — ${wi.title} (ready → in-progress)` : 'Start a ready Work Item'
+      } else if (bs['in-progress'] > 0) {
+        const wi = firstOf('in-progress')
+        recommendedAgents = ['implementation-agent', 'kaddo scan', 'kaddo owners suggest', 'kaddo guard']
+        nextStep = wi
+          ? `Continue ${wi.id} — ${wi.title}; then run kaddo scan, owners suggest, guard`
+          : 'Continue the in-progress Work Item; then scan, owners suggest, guard'
+      } else if (bs.draft > 0) {
+        const wi = firstOf('draft')
+        recommendedAgents = ['work-item-agent']
+        nextStep = wi ? `Refine ${wi.id} from draft to ready` : 'Refine a draft Work Item to ready'
+      } else if (bs.blocked > 0) {
+        const wi = firstOf('blocked')
+        recommendedAgents = ['work-item-agent']
+        nextStep = wi ? `Resolve the blocker on ${wi.id} — ${wi.title}` : 'Resolve the blockers on active work'
+      }
+      // Ownership gap is a parallel recommendation.
+      if (input.ownership.workItemsMissingOwnership > 0) {
+        recommendedAgents.push('kaddo owners suggest')
+      }
+      break
+    }
+    case 'Maintenance': {
+      if (input.roadmap.remaining > 0) {
+        recommendedAgents = ['kaddo create --from roadmap', 'work-item-agent']
+        nextStep = `Materialize ${input.roadmap.remaining} remaining roadmap candidate(s)`
+      } else {
+        recommendedAgents = ['roadmap-agent']
+        nextStep = 'No active work — use roadmap-agent to plan the next initiative'
+      }
+      break
+    }
+  }
+
+  return { phase, reasons, recommendedAgents, nextStep }
+}

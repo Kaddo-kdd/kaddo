@@ -34,7 +34,37 @@ control of the interpretation.
 
 ## State-aware agent flow
 
-The recommended flow adapts to the project state recorded by `kaddo init`:
+## State-aware recommendations
+
+`understand` recommends the next step from the **real** knowledge state — layers, roadmap, Work
+Items and ownership — not only the `project.state` recorded by `kaddo init`. It reports the current
+**phase**, the **reason**, the recommended agent(s) and a concrete **next step**:
+
+```text
+Current phase: Active Delivery
+Reason:
+  - Roadmap available
+  - 1 materialized work item(s)
+  - ready: 1
+  - Ownership coverage 100%
+Recommended: implementation-agent
+Next step: Start WI-014 — Create task (ready → in-progress)
+```
+
+Phases are derived from what actually exists:
+
+| Phase | When |
+|---|---|
+| Discovery | base layers missing (business / product / codebase) |
+| Planning | base knowledge exists, no roadmap yet |
+| Delivery Preparation | roadmap exists, no Work Items yet |
+| Active Delivery | active Work Items exist (draft / ready / in-progress / blocked) |
+| Maintenance | Work Items completed and the roadmap is mostly materialized |
+
+So once a roadmap and Work Items exist, `understand` stops recommending the roadmap-agent and points
+you at the work that actually needs attention.
+
+The legacy state-based flow still informs early phases:
 
 | State | Recommended flow |
 |---|---|

@@ -34,6 +34,20 @@ export function renderContextPack(pack: ContextPack): string {
     ].join('\n') + '\n'
   )
 
+  // 1a. Current phase + recommended next agent (VS-047) — state-aware, not just project.state.
+  parts.push('## Current Phase\n')
+  parts.push(`Phase: ${pack.phase.phase}\n`)
+  if (pack.phase.reasons.length > 0) {
+    parts.push('Reason:\n')
+    parts.push(pack.phase.reasons.map((r) => `- ${r}`).join('\n') + '\n')
+  }
+  if (pack.phase.recommendedAgents.length > 0) {
+    parts.push(`Recommended next: ${pack.phase.recommendedAgents.join(', ')}\n`)
+  }
+  if (pack.phase.nextStep) {
+    parts.push(`Next step: ${pack.phase.nextStep}\n`)
+  }
+
   // 1b. Knowledge Layers + maturity (Business → Product → Tech → Delivery)
   parts.push('## Knowledge Layers\n')
   parts.push(

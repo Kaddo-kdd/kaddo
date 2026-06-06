@@ -34,7 +34,37 @@ Tú mantienes el control de la interpretación.
 
 ## Flujo de agentes según el estado
 
-El flujo recomendado se adapta al estado del proyecto definido en `kaddo init`:
+## Recomendaciones según el estado real
+
+`understand` recomienda el siguiente paso a partir del estado **real** del conocimiento — capas,
+roadmap, Work Items y ownership — no solo del `project.state` definido en `kaddo init`. Reporta la
+**fase** actual, la **razón**, los agentes recomendados y un **siguiente paso** concreto:
+
+```text
+Current phase: Active Delivery
+Reason:
+  - Roadmap available
+  - 1 materialized work item(s)
+  - ready: 1
+  - Ownership coverage 100%
+Recommended: implementation-agent
+Next step: Start WI-014 — Create task (ready → in-progress)
+```
+
+Las fases se derivan de lo que realmente existe:
+
+| Fase | Cuándo |
+|---|---|
+| Discovery | faltan capas base (business / product / codebase) |
+| Planning | existe conocimiento base, aún no hay roadmap |
+| Delivery Preparation | existe roadmap, aún no hay Work Items |
+| Active Delivery | hay Work Items activos (draft / ready / in-progress / blocked) |
+| Maintenance | Work Items completados y roadmap mayormente materializado |
+
+Así, una vez que existen roadmap y Work Items, `understand` deja de recomendar el roadmap-agent y te
+apunta al trabajo que realmente necesita atención.
+
+El flujo basado en estado todavía guía las fases tempranas:
 
 | Estado | Flujo recomendado |
 |---|---|
