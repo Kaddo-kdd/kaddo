@@ -1182,7 +1182,7 @@ Conventional Commit message — as suggestions, never executed.
 
 1. **Suggest a branch first** (do not run it). Follow the Git strategy
    (\`.kaddo/git.yml\` → \`branchNaming.pattern\`, default \`feature/<work-item-id>-<slug>\`;
-   also \`bugfix/\`, \`hotfix/\`, \`spike/\`). If no strategy exists, suggest the default and say so.
+   also \`bugfix/\`, \`hotfix/\`, \`spike/\`, \`chore/\`). If no strategy exists, suggest the default and say so.
 2. Implement the change with tests.
 3. Suggest running \`kaddo scan\` after adding modules, migrations, contracts or significant
    structure.

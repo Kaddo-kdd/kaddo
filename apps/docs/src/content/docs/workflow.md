@@ -93,7 +93,7 @@ Knowledge update → Review → Commit (with confirmation)
 
 1. **Create** — `kaddo create --from roadmap` → `knowledge/delivery/work-items/`.
 2. **Branch** — the implementing agent creates a branch from your Git strategy
-   (`.kaddo/git.yml`, default `feature/WI-001-<slug>`; also `bugfix/`, `hotfix/`, `spike/`)
+   (`.kaddo/git.yml`, default `feature/WI-001-<slug>`; also `bugfix/`, `hotfix/`, `spike/`, `chore/`)
    **before** changing code, so nothing lands on the default branch by accident.
 3. **Implement** — you or your agent make the change.
 4. **Scan** — after new modules/migrations/contracts: `kaddo scan`.

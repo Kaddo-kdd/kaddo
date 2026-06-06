@@ -69,6 +69,8 @@ export function branchPrefix(type: string): string {
       return 'hotfix'
     case 'spike':
       return 'spike'
+    case 'chore':
+      return 'chore'
     default:
       return 'feature'
   }
@@ -81,6 +83,7 @@ export function commitPrefix(type: string): string {
     case 'hotfix':
       return 'fix'
     case 'spike':
+    case 'chore':
       return 'chore'
     default:
       return 'feat'

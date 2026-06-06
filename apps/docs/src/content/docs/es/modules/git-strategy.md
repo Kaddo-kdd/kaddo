@@ -30,8 +30,8 @@ Conventional Commits.
 
 Las convenciones de rama y commit se atan al Work Item que estás entregando:
 
-- Rama: `feature/WI-001-<slug>` (o `bugfix/` · `hotfix/` · `spike/`).
-- Commit: `feat(scope): mensaje` (`fix:` para bugfix/hotfix, `chore:` para spike).
+- Rama: `feature/WI-001-<slug>` (o `bugfix/` · `hotfix/` · `spike/` · `chore/`).
+- Commit: `feat(scope): mensaje` (`fix:` para bugfix/hotfix, `chore:` para spike/chore).
 - **Antes de commitear, corre `kaddo guard`** para detectar posible knowledge drift.
 
 `kaddo understand` sugiere la rama y el commit para un Work Item activo — pero Kaddo

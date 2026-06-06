@@ -58,5 +58,8 @@ Empieza por las capacidades de mayor valor, declara ownership en los artefactos 
 código real y deja que `kaddo guard` te avise cuando los cambios se alejen del conocimiento
 documentado. Mira el [Flujo completo](/es/use-cases/full-workflow/).
 
+> ¿No sabes qué ejecutar en algún punto? `kaddo understand` responde *"¿Qué debería hacer ahora?"*
+> a partir del estado real del proyecto.
+
 Míralo en acción: el repo de demo [**Loyalty Lite**](https://github.com/Kaddo-kdd/kaddo/tree/main/examples/pre-ai-project)
 (incluye una demo de drift con Guard), o explora todos los [Ejemplos](/es/examples/).

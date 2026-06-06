@@ -19,24 +19,6 @@ export function knowledgeLayers(dir: string): LayerStatus[] {
   return discoverLayers(dir)
 }
 
-const COMPLETE: Record<LayerName, (s: LayerMaturity) => boolean> = {
-  Business: (s) => s !== 'Missing',
-  Product: (s) => s !== 'Missing',
-  Tech: (s) => s !== 'Missing',
-  Delivery: (s) => s === 'Traceable',
-}
-
-/**
- * The current phase: the first layer (Business → Product → Tech → Delivery) that is not yet
- * complete. Returns 'Delivery' when everything earlier is complete.
- */
-export function currentPhase(layers: LayerStatus[]): LayerName {
-  for (const l of layers) {
-    if (!COMPLETE[l.layer](l.status)) return l.layer
-  }
-  return 'Delivery'
-}
-
 /** Render the per-layer maturity + detected artifacts as markdown. */
 export function renderLayersMarkdown(layers: LayerStatus[]): string {
   const lines: string[] = []

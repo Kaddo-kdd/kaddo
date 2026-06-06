@@ -2,11 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import fs from 'fs'
 import os from 'os'
 import path from 'path'
-import {
-  discoverLayers,
-  layerForType,
-  roadmapHasUnmaterializedCandidates,
-} from '../src/core/knowledge-discovery.js'
+import { discoverLayers, layerForType } from '../src/core/knowledge-discovery.js'
 
 let dir: string
 
@@ -68,17 +64,5 @@ describe('discoverLayers — semantic recognition', () => {
   it('AC7: does not depend on exact filenames', () => {
     write('knowledge/business/anything-at-all.md', fm('problem'))
     expect(statusOf(dir, 'Business')).toBe('Structured')
-  })
-})
-
-describe('roadmapHasUnmaterializedCandidates', () => {
-  it('true when roadmap has WI candidates but work-items is empty', () => {
-    write('knowledge/delivery/roadmap.md', '# Roadmap\n- WI-CANDIDATE-001 — do a thing\n')
-    expect(roadmapHasUnmaterializedCandidates(dir)).toBe(true)
-  })
-  it('false once work items are materialized', () => {
-    write('knowledge/delivery/roadmap.md', '# Roadmap\n- WI-001\n')
-    write('knowledge/delivery/work-items/WI-001.md', fm('feature'))
-    expect(roadmapHasUnmaterializedCandidates(dir)).toBe(false)
   })
 })

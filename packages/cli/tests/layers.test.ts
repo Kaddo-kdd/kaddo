@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import fs from 'fs'
 import os from 'os'
 import path from 'path'
-import { knowledgeLayers, currentPhase, renderLayersMarkdown } from '../src/core/layers.js'
+import { knowledgeLayers, renderLayersMarkdown } from '../src/core/layers.js'
 
 let dir: string
 
@@ -54,12 +54,6 @@ describe('knowledgeLayers (discovery)', () => {
     expect(statusOf(knowledgeLayers(dir), 'Delivery')).toBe('Partial')
     write('knowledge/delivery/work-items/WI-001.md', 'feature')
     expect(statusOf(knowledgeLayers(dir), 'Delivery')).toBe('Traceable')
-  })
-
-  it('currentPhase points at the first incomplete layer', () => {
-    write('knowledge/business/business.md', 'business')
-    // Product missing → current phase is Product
-    expect(currentPhase(knowledgeLayers(dir))).toBe('Product')
   })
 
   it('renders maturity + detected artifacts', () => {

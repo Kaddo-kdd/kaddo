@@ -29,8 +29,8 @@ Release notes are sourced from Kaddo Work Items + Conventional Commits.
 
 Branch and commit conventions tie to the Work Item you are delivering:
 
-- Branch: `feature/WI-001-<slug>` (or `bugfix/` · `hotfix/` · `spike/`).
-- Commit: `feat(scope): message` (`fix:` for bugfix/hotfix, `chore:` for spike).
+- Branch: `feature/WI-001-<slug>` (or `bugfix/` · `hotfix/` · `spike/` · `chore/`).
+- Commit: `feat(scope): message` (`fix:` for bugfix/hotfix, `chore:` for spike/chore).
 - **Before committing, run `kaddo guard`** to detect possible knowledge drift.
 
 `kaddo understand` suggests the branch and commit for an active Work Item — but Kaddo

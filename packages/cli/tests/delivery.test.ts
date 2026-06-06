@@ -64,6 +64,11 @@ describe('delivery lifecycle', () => {
     expect(commitPrefix('feature')).toBe('feat')
   })
 
+  it('maps chore to a chore/ branch and chore: commit', () => {
+    expect(branchPrefix('chore')).toBe('chore')
+    expect(commitPrefix('chore')).toBe('chore')
+  })
+
   it('renders the lifecycle with guard, ownership and scan steps', () => {
     writeWI('WI-001.md', 'feature', 'in-progress', 'Add task reminders')
     const lines = renderDeliveryLifecycle(activeWorkItems(dir)[0]).join('\n')

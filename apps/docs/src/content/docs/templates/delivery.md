@@ -23,6 +23,9 @@ Official lifecycle states are `draft`, `ready`, `in-progress`, `blocked`, `compl
 `archived`. Agents should treat only `draft`, `ready`, `in-progress` and `blocked` as active
 work; `completed` and `archived` are historical knowledge.
 
+Official Work Item types are `feature`, `bugfix`, `hotfix`, `spike` and `chore` (technical /
+maintenance / tooling work). See [create](/commands/create/#work-item-types).
+
 > Declare `code:` globs so Guard can relate changes to the work item.
 
 ## Roadmap

@@ -61,5 +61,8 @@ Prefiere Work Items pequeños, captura las incógnitas a medida que aprendes y d
 primero en las zonas más riesgosas para que `kaddo guard` marque los cambios que puedan
 necesitar revisión de conocimiento. Mira el [Flujo completo](/es/use-cases/full-workflow/).
 
+> ¿No sabes qué ejecutar en algún punto? `kaddo understand` responde *"¿Qué debería hacer ahora?"*
+> a partir del estado real del proyecto.
+
 Míralo en acción: el repo de demo [**Old Orders**](https://github.com/Kaddo-kdd/kaddo/tree/main/examples/legacy-project),
 o explora todos los [Ejemplos](/es/examples/).

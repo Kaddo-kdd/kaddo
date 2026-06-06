@@ -58,5 +58,8 @@ Start with the highest-value capabilities, declare ownership on the artifacts th
 code, and let `kaddo guard` warn you when changes drift from the documented knowledge. See the
 [Full workflow](/use-cases/full-workflow/).
 
+> Not sure what to run next at any point? `kaddo understand` answers *"What should I do now?"*
+> from the real state of the project.
+
 See it in action: the [**Loyalty Lite**](https://github.com/Kaddo-kdd/kaddo/tree/main/examples/pre-ai-project)
 demo repo (includes a Guard drift demo), or browse all [Examples](/examples/).

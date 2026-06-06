@@ -60,5 +60,8 @@ Prefer small Work Items, capture unknowns as you learn, and declare ownership on
 areas first so `kaddo guard` flags changes that may need knowledge review. See the
 [Full workflow](/use-cases/full-workflow/).
 
+> Not sure what to run next at any point? `kaddo understand` answers *"What should I do now?"*
+> from the real state of the project.
+
 See it in action: the [**Old Orders**](https://github.com/Kaddo-kdd/kaddo/tree/main/examples/legacy-project)
 demo repo, or browse all [Examples](/examples/).

@@ -125,7 +125,7 @@ Este modelo permite que Kaddo sea liviano cuando el cambio es simple y más rigu
 
 Kaddo usa Work Items como unidades trazables de cambio. Un Work Item no es solo una tarea: es una forma de conectar intención, contexto, decisión, implementación y aprendizaje.
 
-Un Work Item puede ser un bugfix, hotfix, feature, capability, spike, RFC, migration, architecture change, incident o vertical slice.
+Un Work Item puede ser un bugfix, hotfix, feature, chore, capability, spike, RFC, migration, architecture change, incident o vertical slice.
 
 No todo debe ser un vertical slice, no todo debe ser un ADR y no todo debe pasar por el mismo flujo. Cada tipo de cambio necesita el nivel de conocimiento adecuado.
 

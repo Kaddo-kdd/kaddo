@@ -24,6 +24,9 @@ Los estados oficiales son `draft`, `ready`, `in-progress`, `blocked`, `completed
 Los agentes deben tratar solo `draft`, `ready`, `in-progress` y `blocked` como trabajo activo;
 `completed` y `archived` son conocimiento histórico.
 
+Los tipos oficiales de Work Item son `feature`, `bugfix`, `hotfix`, `spike` y `chore` (trabajo
+técnico / mantenimiento / tooling). Ver [create](/es/commands/create/#tipos-de-work-item).
+
 > Declara globs `code:` para que Guard relacione los cambios con el work item.
 
 ## Roadmap
