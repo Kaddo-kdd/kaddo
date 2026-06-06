@@ -130,6 +130,20 @@ flowchart LR
     U --> A[agente recomendado]
 ```
 
+Todos los comandos siguen la misma forma — y `scan`/`context`/`explain`/`understand` imprimen las
+últimas dos líneas como pie:
+
+```text
+Pregunta  →  Comando  →  Salida  →  Siguiente acción
+```
+
+| Pregunta | Comando | Salida | Siguiente |
+|---|---|---|---|
+| ¿Qué hay en el repo? | `scan` | scan.json · inventory | explain / context |
+| ¿Qué sabe Kaddo? | `explain` | explain.md | understand |
+| ¿Qué le doy a un LLM? | `context` | context-pack.md | agente recomendado |
+| ¿Qué debería hacer ahora? | `understand` | understand.md + recomendación | la acción recomendada |
+
 ## Descubrimiento unificado de conocimiento
 
 Cada comando descubre los artefactos de conocimiento a través de un único servicio compartido,

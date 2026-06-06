@@ -128,6 +128,20 @@ flowchart LR
     U --> A[recommended agent]
 ```
 
+Every command follows the same shape — and `scan`/`context`/`explain`/`understand` print the last
+two lines as a footer:
+
+```text
+Question  →  Command  →  Output  →  Next action
+```
+
+| Question | Command | Output | Next |
+|---|---|---|---|
+| What exists in the repo? | `scan` | scan.json · inventory | explain / context |
+| What does Kaddo know? | `explain` | explain.md | understand |
+| What do I give an LLM? | `context` | context-pack.md | recommended agent |
+| What should I do now? | `understand` | understand.md + recommendation | the recommended action |
+
 ## Unified knowledge discovery
 
 Every command discovers knowledge artifacts through one shared service, so `explain`, `context`,

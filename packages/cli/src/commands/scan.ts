@@ -5,6 +5,7 @@ import { parse as parseYaml, stringify as stringifyYaml } from 'yaml'
 import { buildBaseline, serializeBaseline, readProjectContext } from '../core/scan-baseline.js'
 import { renderInventory } from '../templates/inventory-template.js'
 import { loadConfig, describeProject, nextStepsForState, ConfigError } from '../core/config.js'
+import { printCommandFooter } from '../core/command-help.js'
 
 function formatList(items: string[]): string {
   return items.length > 0 ? items.map((i) => `  - ${i}`).join('\n') : '  (none detected)'
@@ -163,6 +164,7 @@ export async function runScan(): Promise<void> {
   }
 
   printStateAwareNextStep(dir)
+  printCommandFooter('scan')
 
   outro('Scan complete.')
 }

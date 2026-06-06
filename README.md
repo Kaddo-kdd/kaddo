@@ -124,18 +124,24 @@ replace human review, or replace Jira / Linear / GitHub Issues.
 
 ## Commands
 
-| Command | What it does |
-|---|---|
-| `kaddo init` | Initialize Kaddo in the current project |
-| `kaddo bootstrap` | Build the initial knowledge base for a new project (Business → Product → Tech → Delivery) |
-| `kaddo scan` | Detect stack and suggest domains; writes `.kaddo/scan.json` + `knowledge/inventory.md` |
-| `kaddo context` | Generate an LLM context pack for agent handoff |
-| `kaddo add agents` | Install agent prompt packs |
-| `kaddo understand` | Guide the CLI → LLM handoff with a state-aware agent plan |
-| `kaddo create [--from roadmap]` | Create a Work Item (feature, bugfix, hotfix, spike) |
-| `kaddo owners [suggest]` | List domain owners, or declare `code:` ownership on artifacts |
-| `kaddo guard` | Detect when modified code has related artifacts that were not updated |
-| `kaddo explain` | Summarize what Kaddo currently knows about the project |
+Each command answers one question and has a clear next step. **Lost? Run `kaddo understand`** — it
+always answers *"What should I do now?"* from the real state of your project.
+
+| Command | Question answered | Suggested next |
+|---|---|---|
+| `kaddo init` | How do I start a Kaddo project? | `kaddo bootstrap` |
+| `kaddo bootstrap` | What minimum knowledge should exist? | `kaddo add agents` → `kaddo context` |
+| `kaddo scan` | What technical signals exist in the repo? | `kaddo explain` / `kaddo context` |
+| `kaddo context` | What should I give to an LLM? | the recommended agent |
+| `kaddo understand` | What should I do now? | the recommended action |
+| `kaddo explain` | What does Kaddo know? | `kaddo understand` |
+| `kaddo create --from roadmap` | How do roadmap candidates become Work Items? | work-item-agent |
+| `kaddo owners suggest` | Who owns this code? | `kaddo guard` |
+| `kaddo guard` | Is knowledge drifting from code? | update the affected knowledge |
+| `kaddo add agents` | Which agents are available? | `kaddo understand` |
+
+`scan`, `context`, `explain` and `understand` print a **Question answered / Suggested next** footer
+so the next step is always one glance away.
 
 Supporting commands: `kaddo status`, `kaddo learn`, `kaddo classify`, `kaddo history`,
 `kaddo module`, `kaddo modules map|list`, `kaddo add <module>`.

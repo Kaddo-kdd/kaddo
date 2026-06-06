@@ -3,6 +3,45 @@ title: Resumen de comandos
 description: La superficie de la CLI de Kaddo.
 ---
 
+## Matriz de responsabilidades de comandos
+
+Cada comando responde una pregunta y tiene un siguiente paso claro:
+
+| Comando | Pregunta que responde | Siguiente sugerido |
+|---|---|---|
+| `kaddo init` | ¿Cómo inicio un proyecto Kaddo? | `kaddo bootstrap` |
+| `kaddo bootstrap` | ¿Qué conocimiento mínimo debe existir? | `kaddo add agents`, luego `kaddo context` |
+| `kaddo scan` | ¿Qué señales técnicas hay en el repositorio? | `kaddo explain` o `kaddo context` |
+| `kaddo context` | ¿Qué le doy a un LLM? | Usar el agente recomendado (`kaddo understand`) |
+| `kaddo understand` | ¿Qué debería hacer ahora? | Ejecutar la acción recomendada |
+| `kaddo explain` | ¿Qué sabe Kaddo? | `kaddo understand` |
+| `kaddo create --from roadmap` | ¿Cómo se vuelven Work Items los candidatos? | Refinar con el work-item-agent |
+| `kaddo owners suggest` | ¿Quién es dueño de este código? | `kaddo guard` |
+| `kaddo guard` | ¿El conocimiento se está desincronizando del código? | Actualizar el conocimiento afectado |
+| `kaddo add agents` | ¿Qué agentes hay disponibles? | `kaddo understand` |
+
+> `scan`, `context`, `explain` y `understand` también imprimen esto — un pie **Question answered /
+> Suggested next** — al final de su salida, para que el siguiente paso esté siempre a la vista.
+
+## Flujos recomendados
+
+**Proyecto nuevo**
+
+```text
+init → bootstrap → add agents → context → business-agent → product-agent →
+codebase-agent → roadmap-agent → create --from roadmap → work-item-agent →
+implementation-agent
+```
+
+**Desarrollo activo**
+
+```text
+implementation-agent → scan → owners suggest → guard → explain
+```
+
+**Perdido / con dudas** — ejecuta `kaddo understand`. Siempre responde *"¿Qué debería hacer
+ahora?"* a partir del estado real del conocimiento.
+
 Comandos en orden del flujo de trabajo:
 
 | Comando | Qué hace |

@@ -8,6 +8,7 @@ import { renderUnderstand, renderUnderstandTerminal } from '../templates/underst
 import { activeWorkItems, renderDeliveryLifecycle } from '../core/delivery.js'
 import { buildProjectExplanation } from '../core/project-explain.js'
 import { assessPhase } from '../core/delivery-phase.js'
+import { printCommandFooter } from '../core/command-help.js'
 
 export function runUnderstand(): void {
   const dir = cwd()
@@ -84,5 +85,6 @@ export function runUnderstand(): void {
   writeFile(join(dir, '.kaddo', 'understand.md'), renderUnderstand(plan))
   log.success('Wrote .kaddo/understand.md')
 
+  printCommandFooter('understand')
   outro('Handoff ready. CLI prepares context — your LLM creates the understanding.')
 }

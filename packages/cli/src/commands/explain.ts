@@ -1,4 +1,5 @@
 import { readArtifacts } from '../services/artifact-reader.js'
+import { printCommandFooter } from '../core/command-help.js'
 import { loadOwners } from '../services/owners.js'
 import { loadMappedModules } from '../services/mapped-modules.js'
 import { exists, join, cwd, readFile, writeFile } from '../utils/fs.js'
@@ -265,5 +266,6 @@ export function runExplain(opts: ExplainOpts): void {
     explainForAgent(dir, artifacts, opts)
   } else {
     explainForHuman(dir, artifacts, opts)
+    printCommandFooter('explain')
   }
 }

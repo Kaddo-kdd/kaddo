@@ -57,5 +57,26 @@ kaddo guard                   # detect possible knowledge drift before committin
 kaddo explain                 # summarize what Kaddo currently knows
 ```
 
+## Which command, when?
+
+Each command answers one question. If you are ever unsure what to do next, run
+**`kaddo understand`** — it answers *"What should I do now?"* from the real state of your project.
+
+| You want to… | Run | You get |
+|---|---|---|
+| Start a project | `kaddo init` | `.kaddo/config.yml` |
+| Create the knowledge baseline | `kaddo bootstrap` | `knowledge/**` |
+| See the tech reality | `kaddo scan` | `scan.json` · inventory |
+| Package context for an LLM | `kaddo context` | `context-pack.md` |
+| Know what to do next | `kaddo understand` | phase + recommendation |
+| See what Kaddo knows | `kaddo explain` | project summary |
+| Materialize a roadmap item | `kaddo create --from roadmap` | a Work Item |
+| Connect knowledge to code | `kaddo owners suggest` | `code:` globs |
+| Check for drift | `kaddo guard` | drift warnings |
+
+`scan`, `context`, `explain` and `understand` end with a **Question answered / Suggested next**
+footer, so the next step is always one glance away. The full table lives in the
+[Commands overview](/commands/overview/).
+
 See the [Workflow](/workflow/) page for the CLI vs LLM split and how Kaddo supports new,
 pre-AI and legacy projects.

@@ -3,6 +3,7 @@ import { intro, outro, log } from '../utils/ui.js'
 import { loadConfig, ConfigError } from '../core/config.js'
 import { buildContextPack, serializeContextPackJson } from '../core/context-pack.js'
 import { renderContextPack } from '../templates/context-pack-template.js'
+import { printCommandFooter } from '../core/command-help.js'
 
 type ContextFormat = 'markdown' | 'json'
 type ContextOpts = { format?: string }
@@ -50,5 +51,6 @@ export function runContext(opts: ContextOpts = {}): void {
   }
 
   log.info('Paste .kaddo/context-pack.md into your LLM chat alongside a Kaddo agent prompt.')
+  printCommandFooter('context')
   outro('Context pack ready.')
 }

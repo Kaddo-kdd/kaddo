@@ -3,6 +3,45 @@ title: Commands overview
 description: The Kaddo CLI surface.
 ---
 
+## Command responsibility matrix
+
+Each command answers one question and has a clear next step:
+
+| Command | Question answered | Suggested next |
+|---|---|---|
+| `kaddo init` | How do I start a Kaddo project? | `kaddo bootstrap` |
+| `kaddo bootstrap` | What minimum knowledge should exist? | `kaddo add agents`, then `kaddo context` |
+| `kaddo scan` | What technical signals exist in the repository? | `kaddo explain` or `kaddo context` |
+| `kaddo context` | What should I give to an LLM? | Use the recommended agent (`kaddo understand`) |
+| `kaddo understand` | What should I do now? | Execute the recommended action |
+| `kaddo explain` | What does Kaddo know? | `kaddo understand` |
+| `kaddo create --from roadmap` | How do roadmap candidates become Work Items? | Refine with the work-item-agent |
+| `kaddo owners suggest` | Who owns this code? | `kaddo guard` |
+| `kaddo guard` | Is knowledge drifting from code? | Update the affected knowledge |
+| `kaddo add agents` | Which agents are available? | `kaddo understand` |
+
+> `scan`, `context`, `explain` and `understand` also print this — a **Question answered /
+> Suggested next** footer — at the end of their output, so the next step is always one glance away.
+
+## Recommended workflows
+
+**New project**
+
+```text
+init → bootstrap → add agents → context → business-agent → product-agent →
+codebase-agent → roadmap-agent → create --from roadmap → work-item-agent →
+implementation-agent
+```
+
+**Active development**
+
+```text
+implementation-agent → scan → owners suggest → guard → explain
+```
+
+**Lost / unsure** — run `kaddo understand`. It always answers *"What should I do now?"* from the
+real knowledge state.
+
 Commands in workflow order:
 
 | Command | What it does |
