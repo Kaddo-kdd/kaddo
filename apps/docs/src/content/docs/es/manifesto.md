@@ -45,9 +45,11 @@ El conocimiento fluye hacia abajo por estas capas — así product responde a bu
 
 Cada estado de proyecto entra y recorre estas capas de forma distinta:
 
-- **new** — empieza en Business y construye las capas desde una idea (es lo que hace `kaddo bootstrap` hoy).
-- **pre-AI** — _fases por definir._ Las capas ya existen implícitas en el código; Kaddo las reconstruye hacia arriba como conocimiento explícito.
-- **legacy** — _fases por definir._ Las capas se entran con cautela, entendiendo antes de cambiar.
+- **new** — empieza en Business y construye las capas desde una idea (`kaddo bootstrap`).
+- **pre-AI** — las capas ya existen implícitas en el código; Kaddo las reconstruye hacia arriba como conocimiento explícito (`kaddo scan` → `kaddo context` → agentes).
+- **legacy** — las capas se entran con cautela, entendiendo antes de cambiar (empieza con el legacy-agent).
+
+Sea cual sea el punto de entrada, Kaddo deriva la **fase real** del proyecto — Discovery → Planning → Delivery Preparation → Active Delivery → Maintenance — a partir del conocimiento que realmente existe, y `kaddo understand` recomienda el siguiente paso desde ahí (no solo desde el estado configurado).
 
 El ciclo por cambio (Clasifica → Captura → Estructura → Construye → Aprende) opera _dentro_ de estas capas; las capas le dan forma al proyecto, el ciclo lo mantiene vivo.
 
@@ -181,7 +183,7 @@ La idea no es frenar al equipo. La idea es proteger el conocimiento donde realme
 
 Kaddo distingue entre el conocimiento que representa el estado actual del producto y el conocimiento histórico. El estado actual responde *¿qué es verdad ahora?*; el histórico responde *¿por qué llegamos a esto?*. Ambos son importantes, pero no deben usarse igual.
 
-El estado actual puede vivir en `knowledge.md`, `roadmap.md`, `capabilities.md`, `contracts/`, `module.md` y `.kaddo/config.yml`. El histórico puede vivir en ADRs, RFCs, Work Items, Vertical Slices, incidentes, migraciones, release notes y aprendizajes.
+El estado actual puede vivir en `knowledge.md`, `roadmap.md`, `capabilities.md`, `contracts/`, `module.yml` y `.kaddo/config.yml`. El histórico puede vivir en ADRs, RFCs, Work Items, Vertical Slices, incidentes, migraciones, release notes y aprendizajes.
 
 Kaddo no elimina la historia: la convierte en evidencia. Pero el runtime no debería cargar toda la historia para cada acción; primero debe consultar el estado actual y solo cargar artifacts históricos cuando sean relevantes. La historia explica; el estado actual guía.
 
@@ -271,15 +273,19 @@ Comandos esperados:
 - `kaddo init` — Inicializa la estructura base.
 - `kaddo bootstrap` — Para proyectos nuevos: construye la base de conocimiento inicial en las capas Business → Product → Tech → Delivery.
 - `kaddo scan` — Detecta estructura, stack y posibles dominios.
-- `kaddo create` — Crea Work Items o artifacts.
+- `kaddo context` — Empaqueta el conocimiento en un context pack para el handoff a agentes.
+- `kaddo understand` — Recomienda el siguiente paso + agente desde el estado real (fase).
+- `kaddo create` — Crea Work Items o artifacts (`--from roadmap` materializa candidatos).
+- `kaddo owners suggest` — Conecta conocimiento con código vía globs `code:`.
 - `kaddo guard` — Revisa cambios contra ownership declarado.
 - `kaddo status` — Muestra estado del conocimiento.
 - `kaddo explain` — Explica el proyecto para humanos o agentes.
 - `kaddo learn` — Registra aprendizaje y actualiza estado actual.
 - `kaddo classify` — Contrasta clasificación declarada con señales observadas.
 - `kaddo history` — Consulta histórico por dominio, artifact o rango.
+- `kaddo add` — Instala módulos opcionales y agent prompt packs.
 
-El comando `kaddo explain` es especialmente importante porque convierte el Knowledge Repository en onboarding humano y contexto eficiente para agentes.
+El comando `kaddo explain` es especialmente importante porque convierte el Knowledge Repository en onboarding humano y contexto eficiente para agentes; `kaddo understand` lo complementa respondiendo *"¿qué debería hacer ahora?"* desde el estado real.
 
 ## Open Source y extensibilidad
 

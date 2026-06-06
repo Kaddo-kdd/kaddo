@@ -45,9 +45,11 @@ Knowledge flows down these layers — so product answers to business, tech answe
 
 Every project state enters and traverses these layers differently:
 
-- **new** — start at Business and build the layers from an idea (this is what `kaddo bootstrap` does today).
-- **pre-AI** — _phases to be defined._ The layers already exist implicitly in the code; Kaddo reconstructs them upward into explicit knowledge.
-- **legacy** — _phases to be defined._ The layers are entered cautiously, understanding before changing.
+- **new** — start at Business and build the layers from an idea (`kaddo bootstrap`).
+- **pre-AI** — the layers already exist implicitly in the code; Kaddo reconstructs them upward into explicit knowledge (`kaddo scan` → `kaddo context` → agents).
+- **legacy** — the layers are entered cautiously, understanding before changing (start with the legacy-agent).
+
+Whatever the entry point, Kaddo derives the project's **real phase** — Discovery → Planning → Delivery Preparation → Active Delivery → Maintenance — from the knowledge that actually exists, and `kaddo understand` recommends the next step from it (not only from the configured state).
 
 The per-change cycle (Classify → Capture → Structure → Build → Learn) operates _inside_ these layers; the layers give the project its shape, the cycle keeps it alive.
 
@@ -181,7 +183,7 @@ The idea is not to slow the team down. The idea is to protect knowledge where it
 
 Kaddo distinguishes between knowledge that represents the product's current state and historical knowledge. The current state answers *what is true now?*; the historical answers *why did we get here?*. Both are important, but they should not be used the same way.
 
-The current state can live in `knowledge.md`, `roadmap.md`, `capabilities.md`, `contracts/`, `module.md`, and `.kaddo/config.yml`. The historical can live in ADRs, RFCs, Work Items, Vertical Slices, incidents, migrations, release notes, and learnings.
+The current state can live in `knowledge.md`, `roadmap.md`, `capabilities.md`, `contracts/`, `module.yml`, and `.kaddo/config.yml`. The historical can live in ADRs, RFCs, Work Items, Vertical Slices, incidents, migrations, release notes, and learnings.
 
 Kaddo does not delete history: it turns it into evidence. But the runtime should not load all history for every action; first it must consult the current state and only load historical artifacts when they are relevant. History explains; the current state guides.
 
@@ -271,15 +273,19 @@ Expected commands:
 - `kaddo init` — Initializes the base structure.
 - `kaddo bootstrap` — For new projects: builds the initial knowledge base across Business → Product → Tech → Delivery.
 - `kaddo scan` — Detects structure, stack, and possible domains.
-- `kaddo create` — Creates Work Items or artifacts.
+- `kaddo context` — Packages the knowledge into an LLM context pack for agent handoff.
+- `kaddo understand` — Recommends the next step + agent from the real knowledge state (phase).
+- `kaddo create` — Creates Work Items or artifacts (`--from roadmap` materializes candidates).
+- `kaddo owners suggest` — Connects knowledge to code via `code:` ownership globs.
 - `kaddo guard` — Checks changes against declared ownership.
 - `kaddo status` — Shows the knowledge state.
 - `kaddo explain` — Explains the project for humans or agents.
 - `kaddo learn` — Records learning and updates the current state.
 - `kaddo classify` — Contrasts declared classification with observed signals.
 - `kaddo history` — Queries history by domain, artifact, or range.
+- `kaddo add` — Installs optional modules and agent prompt packs.
 
-The `kaddo explain` command is especially important because it turns the Knowledge Repository into human onboarding and efficient context for agents.
+The `kaddo explain` command is especially important because it turns the Knowledge Repository into human onboarding and efficient context for agents; `kaddo understand` complements it by answering *"what should I do now?"* from the real state.
 
 ## Open Source and extensibility
 
