@@ -257,6 +257,9 @@ Produce a roadmap where each initiative includes:
 7. Dependencies.
 8. Why this comes now.
 9. Candidate work items (each with type, suggested knowledge level, expected value, notes).
+   Use only the official Work Item types: \`feature\`, \`bugfix\`, \`hotfix\`, \`spike\`, \`chore\`.
+   Use \`chore\` for technical/maintenance/tooling/config/infra work (e.g. "Initialize
+   TypeScript project", "Configure Vitest", "Setup CI") — do not label such work \`feature\`.
 10. Open questions.
 
 Then add a suggested execution order, risks and constraints, a "Not Now" list, and the
@@ -565,12 +568,14 @@ A refined Work Item intended to be saved under the lifecycle workspace:
 
 1. Restate the problem in one clear sentence.
 2. Split the candidate if it is too large for a single Work Item.
-3. Validate the Knowledge Level (K0–K4) and propose a different one if needed.
-4. Propose acceptance criteria.
-5. Propose Out of scope and Validation sections.
-6. Propose a Definition of Done.
-7. Identify open questions and assumptions.
-8. Suggest ownership candidates (code globs) if evident.
+3. Preserve the candidate's type (\`feature\`, \`bugfix\`, \`hotfix\`, \`spike\`, \`chore\`).
+   Keep \`chore\` for maintenance/tooling/config/infra work — never upgrade a chore to a feature.
+4. Validate the Knowledge Level (K0–K4) and propose a different one if needed.
+5. Propose acceptance criteria.
+6. Propose Out of scope and Validation sections.
+7. Propose a Definition of Done.
+8. Identify open questions and assumptions.
+9. Suggest ownership candidates (code globs) if evident.
 
 ## Constraints
 

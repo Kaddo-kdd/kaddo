@@ -1,6 +1,24 @@
 export type KLevel = 'K0' | 'K1' | 'K2' | 'K3' | 'K4'
 
-export type WorkItemType = 'feature' | 'bugfix' | 'hotfix' | 'spike'
+export type WorkItemType = 'feature' | 'bugfix' | 'hotfix' | 'spike' | 'chore'
+
+/** The official Work Item type catalog (VS-045). */
+export const WORK_ITEM_TYPES: WorkItemType[] = ['feature', 'bugfix', 'hotfix', 'spike', 'chore']
+
+/**
+ * Optional aliases that resolve to an official type. Lets roadmaps/agents use natural words for
+ * technical/maintenance work without forcing it to be a `feature`.
+ */
+const TYPE_ALIASES: Record<string, WorkItemType> = {
+  setup: 'chore',
+  maintenance: 'chore',
+  tooling: 'chore',
+  infrastructure: 'chore',
+  infra: 'chore',
+  config: 'chore',
+  configuration: 'chore',
+  refactor: 'chore',
+}
 
 export type Question = {
   id: string
@@ -173,6 +191,8 @@ const TYPE_TO_LEVEL: Record<WorkItemType, KLevel> = {
   bugfix: 'K2',
   feature: 'K2',
   spike: 'K3',
+  // Chores are maintenance/config/tooling work — low ceremony (problem + expected result).
+  chore: 'K1',
 }
 
 export function getLevel(level: KLevel): KnowledgeLevel {
@@ -184,5 +204,16 @@ export function getLevelForType(type: WorkItemType): KLevel {
 }
 
 export function isValidType(type: string): type is WorkItemType {
-  return ['feature', 'bugfix', 'hotfix', 'spike'].includes(type)
+  return (WORK_ITEM_TYPES as string[]).includes(type)
+}
+
+/**
+ * Normalize a raw type string to an official Work Item type, applying aliases
+ * (setup/maintenance/tooling/infrastructure/… → chore). Returns null if unrecognized.
+ */
+export function normalizeType(raw: string | undefined): WorkItemType | null {
+  if (!raw) return null
+  const t = raw.trim().toLowerCase()
+  if (isValidType(t)) return t
+  return TYPE_ALIASES[t] ?? null
 }

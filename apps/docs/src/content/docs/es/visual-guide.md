@@ -300,8 +300,13 @@ flowchart LR
 Los Work Items son un area de trabajo activa organizada por estado del lifecycle. Fase e
 iniciativa permanecen como metadata de front matter; no crean carpetas.
 
+Cada Work Item tiene un **tipo** — `feature`, `bugfix`, `hotfix`, `spike` o `chore` — que recorre
+el mismo lifecycle. `chore` evita que el trabajo de mantenimiento/tooling/config/infra se
+etiquete erróneamente como feature.
+
 ```mermaid
 flowchart TD
+    T["type: feature · bugfix · hotfix · spike · chore"] --> A
     A[Roadmap Candidate] --> B[Draft]
     B --> C[Ready]
     C --> D[In Progress]

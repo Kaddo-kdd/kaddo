@@ -320,6 +320,24 @@ describe('buildProjectExplanation — Work Item lifecycle (VS-041)', () => {
     expect(out).toContain('Ready: 1')
     expect(out).toContain('In Progress: 1')
   })
+
+  it('AC5: reports distribution by Work Item type, recognizing chore', () => {
+    initConfig()
+    write(
+      'knowledge/delivery/work-items/draft/WI-001.md',
+      '---\nid: WI-001\ntype: chore\ntitle: Configure CI\nstatus: draft\n---\n\nx\n'
+    )
+    write(
+      'knowledge/delivery/work-items/ready/WI-002.md',
+      '---\nid: WI-002\ntype: feature\ntitle: Create task\nstatus: ready\n---\n\nx\n'
+    )
+    const exp = buildProjectExplanation(tmpDir)
+    expect(exp.workItems.byType).toMatchObject({ chore: 1, feature: 1 })
+    const out = renderExplanationHuman(exp)
+    expect(out).toContain('## Work Items by Type')
+    expect(out).toContain('Chores: 1')
+    expect(out).toContain('Features: 1')
+  })
 })
 
 describe('renderExplanationAgent', () => {

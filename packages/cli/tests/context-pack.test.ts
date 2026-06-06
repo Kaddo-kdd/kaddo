@@ -117,6 +117,31 @@ describe('context-pack — active workspace (VS-041)', () => {
   })
 })
 
+describe('context-pack — delivery mix by type (VS-045)', () => {
+  it('AC6: includes active Work Items distribution by type and renders it', () => {
+    writeConfig('pre-ai')
+    write(
+      'knowledge/delivery/work-items/in-progress/WI-001.md',
+      '---\nid: WI-001\ntype: feature\ntitle: Create task\nstatus: in-progress\n---\n\nx\n'
+    )
+    write(
+      'knowledge/delivery/work-items/ready/WI-002.md',
+      '---\nid: WI-002\ntype: chore\ntitle: Configure CI\nstatus: ready\n---\n\nx\n'
+    )
+    write(
+      'knowledge/delivery/work-items/completed/WI-003.md',
+      '---\nid: WI-003\ntype: chore\ntitle: Old chore\nstatus: completed\n---\n\nx\n'
+    )
+    const pack = build()
+    // completed item excluded from the active mix
+    expect(pack.deliveryMix).toMatchObject({ feature: 1, chore: 1 })
+    const md = renderContextPack(pack)
+    expect(md).toContain('## Delivery Mix')
+    expect(md).toContain('Features: 1')
+    expect(md).toContain('Chores: 1')
+  })
+})
+
 describe('context-pack — buildContextPack', () => {
   it('assembles a full pack from config + scan + artifacts', () => {
     writeConfig('pre-ai')

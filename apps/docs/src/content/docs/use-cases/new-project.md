@@ -52,6 +52,23 @@ knowledge/delivery/work-items/*.md
 .kaddo/explain.md
 ```
 
+## Foundation work is `chore`, not `feature`
+
+A new project's first initiative is mostly technical enablement. Use the **`chore`** type for it
+so it is not mislabeled as a feature:
+
+```txt
+WI-001  chore    Initialize TypeScript project
+WI-002  chore    Configure Vitest
+WI-003  chore    Setup database
+WI-004  feature  Create task
+WI-005  feature  List tasks
+```
+
+The roadmap-agent emits `type: chore` for this work, and `kaddo create --from roadmap`
+materializes it as `type: chore` without asking you to pick a type. `kaddo explain` then shows the
+mix (e.g. `Chores: 3 · Features: 2`) so foundation work stays visible.
+
 ## Next steps
 
 Keep creating Work Items from the roadmap, declare ownership as the code lands, and run

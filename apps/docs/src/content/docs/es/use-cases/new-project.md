@@ -53,6 +53,23 @@ knowledge/delivery/work-items/*.md
 .kaddo/explain.md
 ```
 
+## El trabajo de base es `chore`, no `feature`
+
+La primera iniciativa de un proyecto nuevo es sobre todo habilitación técnica. Usa el tipo
+**`chore`** para que no se etiquete como feature:
+
+```txt
+WI-001  chore    Inicializar proyecto TypeScript
+WI-002  chore    Configurar Vitest
+WI-003  chore    Setup de base de datos
+WI-004  feature  Crear tarea
+WI-005  feature  Listar tareas
+```
+
+El roadmap-agent emite `type: chore` para este trabajo, y `kaddo create --from roadmap` lo
+materializa como `type: chore` sin pedirte elegir tipo. Luego `kaddo explain` muestra el mix (p. ej.
+`Chores: 3 · Features: 2`) para que el trabajo de base quede visible.
+
 ## Siguientes pasos
 
 Sigue creando Work Items desde el roadmap, declara ownership a medida que llega el código y

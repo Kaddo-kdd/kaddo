@@ -56,10 +56,12 @@ export type ProjectExplanation = {
     done: number
     cancelled: number
     byState: Record<LifecycleState, number>
+    byType: Record<string, number>
     initiatives: { name: string; states: Record<LifecycleState, number> }[]
     items: {
       id: string
       title: string
+      type: string
       status: string
       lifecycle: LifecycleState
       initiative: string
@@ -193,6 +195,7 @@ export function buildProjectExplanation(dir: string): ProjectExplanation {
   const items = workItemArtifacts.map((a) => ({
     id: a.id || a.title,
     title: a.title,
+    type: a.type,
     status: a.status,
     lifecycle: lifecycleStateOf({ status: a.status, filePath: a.filePath }),
     initiative: a.initiative,
@@ -202,6 +205,13 @@ export function buildProjectExplanation(dir: string): ProjectExplanation {
   }))
 
   const byState = lifecycleCounts(items.map((i) => i.lifecycle))
+
+  // Distribution by Work Item type (feature/bugfix/hotfix/spike/chore/…).
+  const byType: Record<string, number> = {}
+  for (const i of items) {
+    const t = i.type || 'unknown'
+    byType[t] = (byType[t] ?? 0) + 1
+  }
 
   // Virtual grouping by initiative (functional traceability) — never folder-based.
   const initiativeMap = new Map<string, Record<LifecycleState, number>>()
@@ -220,6 +230,7 @@ export function buildProjectExplanation(dir: string): ProjectExplanation {
     done: items.filter((i) => i.status === 'done').length,
     cancelled: items.filter((i) => i.status === 'cancelled').length,
     byState,
+    byType,
     initiatives,
     items,
   }
@@ -301,6 +312,12 @@ function stateLabel(state: string): string {
   return state === 'pre-ai' ? 'pre-ai' : state
 }
 
+/** Pluralized, capitalized label for a Work Item type (e.g. feature → Features). */
+function typeLabel(type: string): string {
+  const cap = type.charAt(0).toUpperCase() + type.slice(1)
+  return cap.endsWith('s') ? cap : `${cap}s`
+}
+
 const LIFECYCLE_LABEL: Record<LifecycleState, string> = {
   draft: 'Draft',
   ready: 'Ready',
@@ -368,6 +385,14 @@ export function renderExplanationHuman(exp: ProjectExplanation): string {
       lines.push(`- ${LIFECYCLE_LABEL[s]}: ${exp.workItems.byState[s]}`)
     }
     lines.push('')
+
+    // Distribution by type (VS-045) — keeps chores/tooling distinct from features.
+    const typeEntries = Object.entries(exp.workItems.byType).sort((a, b) => b[1] - a[1])
+    if (typeEntries.length > 0) {
+      lines.push('## Work Items by Type')
+      for (const [t, n] of typeEntries) lines.push(`- ${typeLabel(t)}: ${n}`)
+      lines.push('')
+    }
 
     // Virtual grouping by initiative (functional traceability, not folders).
     const grouped = exp.workItems.initiatives.filter((g) =>

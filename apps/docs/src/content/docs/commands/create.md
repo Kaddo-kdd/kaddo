@@ -4,11 +4,29 @@ description: Create a Work Item with the minimum context for its Knowledge Level
 ---
 
 ```bash
-kaddo create feature   # K2: 4 questions
-kaddo create bugfix    # K2: 4 questions
-kaddo create hotfix    # K1: 2 questions
-kaddo create spike     # K3: 4 questions
+kaddo create feature   # K2: delivers a user-facing capability
+kaddo create bugfix    # K2: fixes a known defect
+kaddo create hotfix    # K1: urgent fix on a released version
+kaddo create spike     # K3: exploratory / reduce uncertainty
+kaddo create chore     # K1: maintenance, tooling, config, infra
 ```
+
+## Work Item types
+
+| Type | Use it for | Examples |
+|---|---|---|
+| `feature` | A user-facing capability | Create task · List tasks |
+| `bugfix` | A known defect | Filter returns wrong results |
+| `hotfix` | Urgent fix on a released version | Production crash · auth outage |
+| `spike` | Exploration to reduce uncertainty | Evaluate SQLite vs PostgreSQL |
+| `chore` | Technical/maintenance work that enables the project but adds no direct user capability | Initialize TypeScript · Configure Vitest · Setup CI · Update dependencies |
+
+A Work Item is a **`chore`** when it does not add a capability, fix a defect, handle an emergency
+or perform research — but is needed for maintenance, configuration, tooling, infrastructure or
+developer experience. Classifying such work as `feature` distorts the meaning of Feature.
+
+**Aliases** (resolve to `chore` automatically, from the CLI or a roadmap candidate):
+`setup`, `maintenance`, `tooling`, `infrastructure`, `infra`, `refactor`, `config`.
 
 New Work Items are created in `knowledge/delivery/work-items/draft/` with `status: draft`.
 Move them to `ready` when dependencies, scope and acceptance criteria are clear.

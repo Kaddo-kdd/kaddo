@@ -57,6 +57,18 @@ salida es totalmente determinista.
 3. Run `kaddo owners suggest` for Work Items without code ownership.
 ```
 
+`explain` también reporta la distribución **Work Items by Type** (Features / Bugfixes / Hotfixes /
+Spikes / Chores), para que el trabajo técnico y de mantenimiento (`chore`) quede visible y
+diferenciado de las features entregadas:
+
+```text
+## Work Items by Type
+- Features: 12
+- Chores: 4
+- Spikes: 2
+- Bugfixes: 1
+```
+
 Cuando hay un roadmap presente, `explain` distingue los **candidatos del roadmap** (entradas que
 propuso el roadmap-agent) de los **Work Items materializados** (creados bajo
 `knowledge/delivery/work-items/`). El conteo de *candidatos restantes* es la brecha entre ambos, y

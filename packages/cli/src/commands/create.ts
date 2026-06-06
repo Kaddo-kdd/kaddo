@@ -1,4 +1,4 @@
-import { getLevel, getLevelForType, isValidType, type WorkItemType, type KLevel } from '../core/knowledge-levels.js'
+import { getLevel, getLevelForType, normalizeType, type WorkItemType, type KLevel } from '../core/knowledge-levels.js'
 import { findWorkItemType } from '../modules/registry.js'
 import type { ModuleWorkItemType } from '../modules/types.js'
 import { exists, readFile, readDir, writeFile, join, cwd, isFile } from '../utils/fs.js'
@@ -207,7 +207,7 @@ export async function runCreate(type: string, opts: CreateOptions = {}): Promise
 
   if (!type) {
     console.error('Missing work item type.')
-    console.error('Usage: kaddo create <feature|bugfix|hotfix|spike> [--from roadmap]')
+    console.error('Usage: kaddo create <feature|bugfix|hotfix|spike|chore> [--from roadmap]')
     process.exit(1)
   }
 
@@ -218,14 +218,16 @@ export async function runCreate(type: string, opts: CreateOptions = {}): Promise
     return runCreateModule(dir, modWorkItemType)
   }
 
-  if (!isValidType(type)) {
+  // Accept official types and aliases (setup/tooling/… → chore).
+  const workItemType = normalizeType(type)
+  if (!workItemType) {
     console.error(`Unknown work item type: "${type}"`)
-    console.error('Valid types: feature, bugfix, hotfix, spike')
+    console.error('Valid types: feature, bugfix, hotfix, spike, chore')
+    console.error('Aliases: setup, maintenance, tooling, infrastructure, refactor → chore')
     console.error('Module types: adr, incident, rfc, migration, legacy (run `kaddo add <module>` first)')
     process.exit(1)
   }
 
-  const workItemType = type as WorkItemType
   const level = getLevelForType(workItemType)
   const levelDef = getLevel(level)
 
@@ -235,7 +237,7 @@ export async function runCreate(type: string, opts: CreateOptions = {}): Promise
 
   const title = await text({
     message: 'Title for this work item',
-    placeholder: `e.g. ${workItemType === 'feature' ? 'Add email verification to checkout' : workItemType === 'hotfix' ? 'Fix null pointer in payment handler' : workItemType === 'bugfix' ? 'Fix broken pagination on orders list' : 'Explore caching strategies for API responses'}`,
+    placeholder: `e.g. ${workItemType === 'feature' ? 'Add email verification to checkout' : workItemType === 'hotfix' ? 'Fix null pointer in payment handler' : workItemType === 'bugfix' ? 'Fix broken pagination on orders list' : workItemType === 'chore' ? 'Configure Vitest and CI pipeline' : 'Explore caching strategies for API responses'}`,
     validate: (v) => (v.trim().length === 0 ? 'Title is required.' : undefined),
   })
 
@@ -325,9 +327,8 @@ export function resolveCandidateType(
   candidate: RoadmapCandidateWorkItem,
   cliType?: string
 ): WorkItemType | null {
-  if (candidate.type && isValidType(candidate.type)) return candidate.type
-  if (cliType && isValidType(cliType)) return cliType
-  return null
+  // Accept official types AND aliases (chore, setup, tooling, …) without asking the user.
+  return normalizeType(candidate.type) ?? normalizeType(cliType)
 }
 
 /** Resolve the Knowledge Level for a candidate: prefer its suggestion, else derive from type. */
@@ -517,6 +518,7 @@ async function runCreateFromRoadmap(dir: string, cliType?: string): Promise<void
         { value: 'bugfix', label: 'bugfix' },
         { value: 'hotfix', label: 'hotfix' },
         { value: 'spike', label: 'spike' },
+        { value: 'chore', label: 'chore' },
       ],
     })
   }

@@ -55,7 +55,7 @@ program
 
 program
   .command('create [type]')
-  .description('Create a work item (feature, bugfix, hotfix, spike). Use --from roadmap to create from a roadmap candidate.')
+  .description('Create a work item (feature, bugfix, hotfix, spike, chore). Use --from roadmap to create from a roadmap candidate.')
   .option('--from <source>', 'Create from a source artifact (currently: roadmap)')
   .action(async (type: string | undefined, opts: { from?: string }) => {
     await runCreate(type ?? '', opts)

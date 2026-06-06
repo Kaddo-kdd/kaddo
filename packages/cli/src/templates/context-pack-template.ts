@@ -108,6 +108,18 @@ export function renderContextPack(pack: ContextPack): string {
     parts.push('No active work items found.\n')
   }
 
+  // 5b. Delivery Mix — active Work Items by type (VS-045)
+  const mixEntries = Object.entries(pack.deliveryMix).sort((a, b) => b[1] - a[1])
+  if (mixEntries.length > 0) {
+    parts.push('## Delivery Mix\n')
+    parts.push('Active Work Items by type:\n')
+    const label = (t: string) => {
+      const c = t.charAt(0).toUpperCase() + t.slice(1)
+      return c.endsWith('s') ? c : `${c}s`
+    }
+    parts.push(mixEntries.map(([t, n]) => `- ${label(t)}: ${n}`).join('\n') + '\n')
+  }
+
   // 6. Artifacts and Ownership
   parts.push('## Artifacts and Ownership\n')
   if (knowledge.artifacts.length > 0) {

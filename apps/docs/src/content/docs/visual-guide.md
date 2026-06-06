@@ -298,8 +298,13 @@ flowchart LR
 Work Items are an active workspace organized by lifecycle state. Phase and initiative remain
 front matter metadata; they do not create folders.
 
+Each Work Item has a **type** — `feature`, `bugfix`, `hotfix`, `spike` or `chore` — that flows
+through the same lifecycle. `chore` keeps maintenance/tooling/config/infra work from being
+mislabeled as a feature.
+
 ```mermaid
 flowchart TD
+    T["type: feature · bugfix · hotfix · spike · chore"] --> A
     A[Roadmap Candidate] --> B[Draft]
     B --> C[Ready]
     C --> D[In Progress]

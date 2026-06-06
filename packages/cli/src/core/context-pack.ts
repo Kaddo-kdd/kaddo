@@ -55,6 +55,8 @@ export type ContextPack = {
   }
   layers: LayerStatus[]
   roadmap: RoadmapStats
+  /** Active Work Items distribution by type (feature/bugfix/hotfix/spike/chore/…). */
+  deliveryMix: Record<string, number>
   mappedModules: MappedModuleWithCoverage[]
   missing: string[]
   handoff: {
@@ -243,6 +245,15 @@ export function buildContextPack(
   ).length
   const roadmap = roadmapStats(exists(roadmapPath) ? readFile(roadmapPath) : null, materialized)
 
+  // Delivery mix: active Work Items by type (VS-045). Distinguishes chores/tooling from features.
+  const deliveryMix: Record<string, number> = {}
+  for (const a of allArtifacts) {
+    const p = a.filePath.replace(/\\/g, '/')
+    if (!a.type || !p.includes('/delivery/work-items/')) continue
+    if (!isActiveState(lifecycleStateOf({ status: a.status, filePath: a.filePath }))) continue
+    deliveryMix[a.type] = (deliveryMix[a.type] ?? 0) + 1
+  }
+
   // Multirepo modules from `.kaddo/modules.yml` (descriptor + artifact coverage only —
   // secondary repos are never scanned).
   const mappedModules = loadMappedModules(dir)
@@ -276,6 +287,7 @@ export function buildContextPack(
     },
     layers,
     roadmap,
+    deliveryMix,
     mappedModules,
     missing,
     handoff: {

@@ -13,7 +13,7 @@ Commands in workflow order:
 | `kaddo context` | Generate an LLM context pack for agent handoff |
 | `kaddo add agents` | Install agent prompt packs for your LLM chat |
 | `kaddo understand` | Guide the CLI → LLM handoff with a state-aware agent plan |
-| `kaddo create <type>` / `--from roadmap` | Create a Work Item (feature, bugfix, hotfix, spike) |
+| `kaddo create <type>` / `--from roadmap` | Create a Work Item (feature, bugfix, hotfix, spike, chore) |
 | `kaddo owners suggest` | Assistant to declare `code:` ownership on artifacts |
 | `kaddo guard` | Check if modified code has related artifacts that were not updated |
 | `kaddo explain` | Summarize what Kaddo currently knows about the project |
