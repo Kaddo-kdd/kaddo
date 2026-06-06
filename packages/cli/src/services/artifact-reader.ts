@@ -10,9 +10,11 @@ export type Artifact = {
   knowledgeLevel: string
   codeGlobs: string[]
   domains: string[]
+  capabilities: string[]
   status: string
   phase: string
   initiative: string
+  source: string
 }
 
 function parseArtifact(filePath: string, raw: string): Artifact | null {
@@ -29,9 +31,11 @@ function parseArtifact(filePath: string, raw: string): Artifact | null {
       knowledgeLevel: String(data.knowledge_level ?? ''),
       codeGlobs: globs,
       domains: Array.isArray(data.domains) ? data.domains : [],
+      capabilities: Array.isArray(data.capabilities) ? data.capabilities.map(String).filter(Boolean) : [],
       status: String(data.status ?? ''),
       phase: String(data.phase ?? ''),
       initiative: String(data.initiative ?? data.source_initiative ?? ''),
+      source: data.source ? String(data.source) : '',
     }
   } catch {
     return null

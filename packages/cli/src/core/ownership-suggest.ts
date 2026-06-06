@@ -5,9 +5,9 @@
 // CLI suggests candidates from scan signals + artifact metadata; the human confirms.
 
 import matter from 'gray-matter'
-import { exists, readFile, readDir, join, isFile } from '../utils/fs.js'
+import { exists, readFile, join } from '../utils/fs.js'
+import { discoverWorkItems } from '../services/knowledge-artifacts.js'
 
-const WORK_ITEMS_DIR = 'knowledge/delivery/work-items'
 const SCAN_PATH = '.kaddo/scan.json'
 
 export type OwnershipArtifact = {
@@ -63,19 +63,24 @@ export function parseOwnershipArtifact(
   }
 }
 
-/** Find Work Item artifacts (v1 scope). Skips artifacts with invalid front matter. */
+/**
+ * Find Work Item artifacts via the unified discovery service (VS-046) — recursive across lifecycle
+ * subfolders (draft/ready/in-progress/…), front-matter aware. This guarantees `owners suggest`
+ * sees exactly the same Work Items as `explain`, `context` and `guard`.
+ */
 export function findWorkItemArtifacts(dir: string): OwnershipArtifact[] {
-  const wiDir = join(dir, WORK_ITEMS_DIR)
-  if (!exists(wiDir)) return []
-
-  const artifacts: OwnershipArtifact[] = []
-  for (const entry of readDir(wiDir)) {
-    const full = join(wiDir, entry)
-    if (!isFile(full) || !entry.endsWith('.md')) continue
-    const parsed = parseOwnershipArtifact(full, `${WORK_ITEMS_DIR}/${entry}`, readFile(full))
-    if (parsed) artifacts.push(parsed)
-  }
-  return artifacts
+  return discoverWorkItems(dir).map((a) => ({
+    filePath: a.filePath,
+    relPath: a.relPath,
+    id: a.id,
+    title: a.title,
+    type: a.type,
+    domains: a.domains,
+    capabilities: a.capabilities,
+    codeGlobs: a.codeGlobs,
+    source: a.source || undefined,
+    hasOwnership: a.codeGlobs.length > 0,
+  }))
 }
 
 /** Artifacts that have no declared ownership (`code:` absent or empty). */

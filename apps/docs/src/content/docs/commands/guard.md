@@ -28,6 +28,13 @@ Touched files:
     or ignore this artifact below if the change does not affect the knowledge.
 ```
 
+## Unified discovery
+
+Guard discovers knowledge artifacts through the same shared service as `explain`, `context`,
+`understand` and `owners suggest`, so every command sees exactly the same artifacts. Work Items
+are found recursively across lifecycle subfolders (`draft/`, `ready/`, `in-progress/`, …) and are
+recognized by their front matter, not their path or file name.
+
 ## Declaring ownership
 
 Guard only acts on **declared ownership** — it never guesses which artifact owns a file.

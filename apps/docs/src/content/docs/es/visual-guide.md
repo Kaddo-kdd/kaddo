@@ -116,6 +116,22 @@ flowchart TD
     H -. solo este agente sugiere una rama .-> H
 ```
 
+## Descubrimiento unificado de conocimiento
+
+Cada comando descubre los artefactos de conocimiento a través de un único servicio compartido,
+para que `explain`, `context`, `understand`, `owners suggest` y `guard` siempre coincidan en qué
+existe. Los Work Items se descubren recursivamente en las subcarpetas del lifecycle.
+
+```mermaid
+flowchart TD
+    K[artefactos en knowledge/<br/>recursivo · consciente del front matter] --> D[Servicio de descubrimiento unificado]
+    D --> E[explain]
+    D --> C[context]
+    D --> U[understand]
+    D --> O[owners suggest]
+    D --> G[guard]
+```
+
 ## CLI vs LLM
 
 Kaddo trabaja en dos capas. El CLI es determinístico y nunca llama a un LLM; tu chat LLM

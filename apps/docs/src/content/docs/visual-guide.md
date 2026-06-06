@@ -114,6 +114,22 @@ flowchart TD
     H -. only this agent suggests a branch .-> H
 ```
 
+## Unified knowledge discovery
+
+Every command discovers knowledge artifacts through one shared service, so `explain`, `context`,
+`understand`, `owners suggest` and `guard` always agree on what exists. Work Items are discovered
+recursively across lifecycle subfolders.
+
+```mermaid
+flowchart TD
+    K[knowledge/ artifacts<br/>recursive · front-matter aware] --> D[Unified discovery service]
+    D --> E[explain]
+    D --> C[context]
+    D --> U[understand]
+    D --> O[owners suggest]
+    D --> G[guard]
+```
+
 ## CLI vs LLM
 
 Kaddo works in two layers. The CLI is deterministic and never calls an LLM; your LLM

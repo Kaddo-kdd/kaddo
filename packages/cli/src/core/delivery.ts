@@ -6,8 +6,8 @@
 
 import { exists, readFile, join } from '../utils/fs.js'
 import { parse as parseYaml } from 'yaml'
-import { readArtifacts, type Artifact } from '../services/artifact-reader.js'
-import { lifecycleStateOf } from './lifecycle.js'
+import { type Artifact } from '../services/artifact-reader.js'
+import { discoverWorkItems } from '../services/knowledge-artifacts.js'
 
 const DEFAULT_BRANCH_PATTERN = '{type}/{workItemId}-{slug}'
 
@@ -42,34 +42,20 @@ function slugify(s: string): string {
     .replace(/^-+|-+$/g, '')
 }
 
-function isWorkItem(a: Artifact): boolean {
-  return a.filePath.replace(/\\/g, '/').includes('/delivery/work-items/') && Boolean(a.type)
-}
-
 function toActive(a: Artifact): ActiveWorkItem {
   const id = a.id || a.title || 'WI'
   return { id, title: a.title || id, type: a.type, slug: slugify(a.title || id) }
 }
 
-/** All Work Items under delivery/work-items/ (typed). */
+/** All Work Items under delivery/work-items/ (typed) — unified discovery (VS-046). */
 export function allWorkItems(dir: string): ActiveWorkItem[] {
-  const archDir = join(dir, 'knowledge')
-  if (!exists(archDir)) return []
-  return readArtifacts(archDir)
-    .filter(isWorkItem)
-    .map(toActive)
+  return discoverWorkItems(dir).map(toActive)
 }
 
 /** Work Items currently being implemented. */
 export function activeWorkItems(dir: string): ActiveWorkItem[] {
-  const archDir = join(dir, 'knowledge')
-  if (!exists(archDir)) return []
-  return readArtifacts(archDir)
-    .filter(
-      (a) =>
-        isWorkItem(a) &&
-        lifecycleStateOf({ status: a.status, filePath: a.filePath }) === 'in-progress'
-    )
+  return discoverWorkItems(dir)
+    .filter((a) => a.lifecycle === 'in-progress')
     .map(toActive)
 }
 

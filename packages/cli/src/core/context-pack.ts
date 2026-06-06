@@ -1,7 +1,8 @@
 import matter from 'gray-matter'
 import { exists, readFile, join } from '../utils/fs.js'
 import { loadConfig, type KaddoConfig, type ProjectState } from './config.js'
-import { readArtifacts, type Artifact } from '../services/artifact-reader.js'
+import { type Artifact } from '../services/artifact-reader.js'
+import { discoverKnowledge } from '../services/knowledge-artifacts.js'
 import { loadMappedModules, type MappedModuleWithCoverage } from '../services/mapped-modules.js'
 import { knowledgeLayers, type LayerStatus } from './layers.js'
 import { roadmapStats, type RoadmapStats } from './roadmap.js'
@@ -220,9 +221,9 @@ export function buildContextPack(
     missing.push('No roadmap baseline found.')
   }
 
-  // Artifact metadata only — never full content / source code.
-  const archPath = join(dir, ARCH_DIR)
-  const allArtifacts = exists(archPath) ? readArtifacts(archPath) : []
+  // Artifact metadata only — never full content / source code. Unified discovery (VS-046) so the
+  // pack reflects exactly the same artifacts as explain/owners/guard.
+  const allArtifacts = discoverKnowledge(dir)
   // Active workspace (VS-041): the pack ships only ACTIVE Work Items
   // (draft/ready/in-progress/blocked). Completed and archived items are historical and would
   // only add noise/tokens to the agent handoff, so they are excluded by default. Other typed

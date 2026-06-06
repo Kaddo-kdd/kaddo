@@ -28,6 +28,14 @@ Touched files:
     or ignore this artifact below if the change does not affect the knowledge.
 ```
 
+## Descubrimiento unificado
+
+Guard descubre los artefactos de conocimiento mediante el mismo servicio compartido que
+`explain`, `context`, `understand` y `owners suggest`, de modo que todos los comandos ven
+exactamente los mismos artefactos. Los Work Items se descubren recursivamente en las subcarpetas
+del lifecycle (`draft/`, `ready/`, `in-progress/`, …) y se reconocen por su front matter, no por su
+ruta ni su nombre de archivo.
+
 ## Declarar propiedad
 
 Guard solo actúa sobre la **propiedad declarada**: nunca adivina qué artefacto posee un

@@ -1,5 +1,5 @@
 import { getModifiedFiles, isGitRepo } from '../services/git.js'
-import { readArtifacts } from '../services/artifact-reader.js'
+import { discoverKnowledge } from '../services/knowledge-artifacts.js'
 import { analyzeGuard, type ArtifactMatch } from '../core/diff-analysis.js'
 import { loadIgnores, saveIgnore, isIgnored } from '../services/ignore-store.js'
 import { collectWorkspaceChanges, type WorkspaceScan } from '../services/workspace-guard.js'
@@ -200,7 +200,8 @@ export async function runGuard(opts: { staged?: boolean; interactive?: boolean; 
     return
   }
 
-  const artifacts = readArtifacts(archDir)
+  // Unified discovery (VS-046): guard analyzes exactly the artifacts explain/owners/context see.
+  const artifacts = discoverKnowledge(dir)
   const result = analyzeGuard(touchedFiles, artifacts, silentWithoutOwnership)
 
   // Run plugins on current-repo files only — workspace mode never reads sibling source.

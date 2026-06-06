@@ -121,17 +121,30 @@ export async function runOwnersSuggest(): Promise<void> {
 
   const artifacts = findWorkItemArtifacts(dir)
   if (artifacts.length === 0) {
-    log.warn('No knowledge artifacts found. Create a Work Item first.')
+    log.warn(
+      'No Work Items found under knowledge/delivery/work-items/ (searched recursively, including ' +
+        'draft/ ready/ in-progress/ …).'
+    )
+    log.info('Create one with `kaddo create` or `kaddo create --from roadmap`.')
     outro('Nothing to do.')
     return
   }
 
   const missing = artifactsMissingOwnership(artifacts)
   if (missing.length === 0) {
-    log.info('All detected artifacts already declare code ownership.')
+    // Be precise about WHY there is nothing to do (VS-046): the items exist, they are just
+    // already owned.
+    log.success(
+      `Found ${artifacts.length} Work Item${artifacts.length === 1 ? '' : 's'}; ` +
+        'all already declare code ownership.'
+    )
     outro('Nothing to do.')
     return
   }
+  log.info(
+    `Found ${artifacts.length} Work Item${artifacts.length === 1 ? '' : 's'}; ` +
+      `${missing.length} missing code ownership.`
+  )
 
   // 1. Select an artifact.
   const relPath =
