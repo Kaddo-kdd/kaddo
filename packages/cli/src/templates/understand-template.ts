@@ -106,26 +106,27 @@ export function renderUnderstandTerminal(plan: UnderstandPlan): string {
   lines.push(`Team: ${project.teamSize}`)
   lines.push(`Structure: ${project.structure}`)
   lines.push('')
-  lines.push('Recommended flow:')
-  steps.forEach((s, i) => {
-    const flag = s.installed ? '' : '  (not installed)'
-    lines.push(`  ${i + 1}. ${agentName(s.agent)} → ${s.output}${flag}`)
-  })
-  lines.push('')
 
   const first = steps[0]
   if (first) {
+    lines.push('Foundational knowledge still needed:')
+    steps.forEach((s, i) => {
+      const flag = s.installed ? '' : '  (not installed)'
+      lines.push(`  ${i + 1}. ${agentName(s.agent)} → ${s.output}${flag}`)
+    })
+    lines.push('')
     lines.push(`First step: use ${agentName(first.agent)}.`)
     lines.push('')
     lines.push(`  Context:         ${plan.contextPackPath}`)
     lines.push(`  Agent prompt:    knowledge/agents/${first.agent}`)
     lines.push(`  Expected output: ${first.output}`)
     lines.push('')
+    lines.push('Instructions:')
+    lines.push('  Open your preferred LLM chat, paste the context pack, then paste the agent')
+    lines.push('  prompt. Ask the LLM to generate the expected output and save it in the target file.')
+  } else {
+    lines.push('Foundational knowledge looks complete — see the phase recommendation below.')
   }
-
-  lines.push('Instructions:')
-  lines.push('  Open your preferred LLM chat, paste the context pack, then paste the agent')
-  lines.push('  prompt. Ask the LLM to generate the expected output and save it in the target file.')
   lines.push('')
   lines.push('Kaddo does not call an LLM. You stay in control of the interpretation.')
   lines.push('')
