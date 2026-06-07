@@ -621,6 +621,12 @@ You do **not** suggest branches, commits or pull requests — implementation (in
 branch suggestion) is the implementation-agent's responsibility, and only by respecting the
 project Git strategy. Your job ends at a clear, traceable Work Item.
 
+## Git boundaries
+
+Never run Git. Do not create or switch branches, create worktrees, stash, commit, push or merge.
+Work only inside the currently selected workspace. If a workspace or branch change is required,
+stop and ask the human.
+
 ## Quality Checklist
 
 - The problem is one clear sentence.
@@ -1195,6 +1201,10 @@ Conventional Commit message — as suggestions, never executed.
 ## Constraints
 
 - Never run Git. Never commit, push or merge — suggest and wait for the human.
+- **Do not create branches, switch branches, create worktrees, or stash changes.** You may
+  *suggest* a branch name; the human creates the branch and selects the workspace.
+- **Work only inside the currently selected workspace** (repository root or the active Git
+  worktree). If a branch or workspace change is required, stop and ask the human.
 - Respect \`knowledge/tech/git-strategy.md\` when it exists.
 - Keep knowledge in sync with the code you change.
 - Do not invent business facts.

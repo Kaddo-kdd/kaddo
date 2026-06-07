@@ -93,4 +93,12 @@ describe('agent prompts carry Agent Trace (AC1)', () => {
     expect(wi.content).toContain('implementation-agent')
     expect(wi.content).not.toContain('Commit only with explicit human confirmation')
   })
+
+  it('VS-049: implementation + work-item agents forbid automatic git/worktree ops', () => {
+    for (const file of ['implementation-agent.md', 'work-item-agent.md']) {
+      const p = AGENT_PROMPTS.find((x) => x.fileName === file)!
+      expect(p.content.toLowerCase(), file).toContain('worktree')
+      expect(p.content.toLowerCase(), file).toMatch(/do not create branches|create or switch branches/)
+    }
+  })
 })

@@ -8,6 +8,7 @@ import { exists, readFile, readDir, join, isFile } from '../utils/fs.js'
 import { loadConfig } from './config.js'
 import { discoverWorkItems } from '../services/knowledge-artifacts.js'
 import { assessPhase } from './delivery-phase.js'
+import { detectWorkspace, type WorkspaceInfo } from './workspace.js'
 import {
   loadMappedModules,
   presentArtifacts,
@@ -77,6 +78,7 @@ export type ProjectExplanation = {
     workItemsMissingOwnership: number
   }
   domains: string[]
+  workspace: WorkspaceInfo
   layers: LayerStatus[]
   roadmap: RoadmapStats
   mappedModules: MappedModuleWithCoverage[]
@@ -240,6 +242,9 @@ export function buildProjectExplanation(dir: string): ProjectExplanation {
 
   const domains = [...new Set(workItemArtifacts.flatMap((a) => a.domains))].filter(Boolean)
 
+  // Active workspace / worktree awareness (VS-049).
+  const workspace = detectWorkspace(dir)
+
   // Roadmap candidates vs materialized Work Items (any roadmap format).
   const roadmapPath = join(dir, ARCH_DIR, 'delivery', 'roadmap.md')
   const roadmapMd = exists(roadmapPath) ? readFile(roadmapPath) : null
@@ -296,6 +301,7 @@ export function buildProjectExplanation(dir: string): ProjectExplanation {
     workItems,
     ownership,
     domains,
+    workspace,
     layers,
     roadmap,
     mappedModules,
@@ -333,6 +339,24 @@ export function renderExplanationHuman(exp: ProjectExplanation): string {
   lines.push(`- State: ${stateLabel(exp.project.state)}`)
   lines.push(`- Team: ${exp.project.teamSize}`)
   lines.push(`- Structure: ${exp.project.structure}`)
+  lines.push('')
+
+  lines.push('## Workspace')
+  if (exp.workspace.isGitRepo) {
+    lines.push(`- Repository root: ${exp.workspace.root ?? 'unknown'}`)
+    lines.push(`- Git worktree: ${exp.workspace.isWorktree ? 'yes' : 'no'}`)
+    lines.push(`- Active branch: ${exp.workspace.branch ?? 'unknown'}`)
+    if (exp.workspace.isWorktree) {
+      lines.push('')
+      lines.push(
+        '> Worktree detected. Run all Kaddo commands (scan, guard, owners suggest, explain) ' +
+          'from this worktree while implementation is active, so they observe the same files ' +
+          'the agent is changing.'
+      )
+    }
+  } else {
+    lines.push('- Not a Git repository')
+  }
   lines.push('')
 
   lines.push('## Knowledge Layers')

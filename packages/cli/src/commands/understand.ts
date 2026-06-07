@@ -71,6 +71,14 @@ export function runUnderstand(): void {
     console.log(`Next step: ${assessment.nextStep}`)
   }
 
+  // 5b-ws. Workspace / worktree awareness (VS-049).
+  if (exp.workspace.isWorktree) {
+    console.log('')
+    console.log(`Current implementation workspace: ${exp.workspace.branch ?? '(detached)'}`)
+    console.log('  → You are inside a Git worktree. Run scan, owners suggest, guard and explain')
+    console.log('    from this worktree so they reflect the code being changed here.')
+  }
+
   // 5c. If a Work Item is active, show the official delivery lifecycle.
   const active = activeWorkItems(dir)
   if (active.length > 0) {

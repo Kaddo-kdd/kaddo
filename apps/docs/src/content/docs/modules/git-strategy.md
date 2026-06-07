@@ -37,6 +37,13 @@ Branch and commit conventions tie to the Work Item you are delivering:
 **never** creates branches, commits or merges. See the
 [Work Item delivery lifecycle](/workflow/#work-item-delivery-lifecycle).
 
+## Agent Git boundaries
+
+Agents may **suggest** branch names, commit messages and a Git strategy — but they must **not**
+create or switch branches, create worktrees, stash, commit, push or merge. The human executes any
+Git state change. If an agent works in a Git worktree, run all Kaddo commands from that workspace.
+See [Worktrees & Git boundaries](/worktrees/).
+
 ## Customization
 
 The default is a **recommendation**, not a rule. Edit `.kaddo/git.yml` to switch
