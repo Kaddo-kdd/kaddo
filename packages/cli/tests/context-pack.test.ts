@@ -139,9 +139,6 @@ describe('context-pack — delivery mix by type (VS-045)', () => {
     expect(md).toContain('## Delivery Mix')
     expect(md).toContain('Features: 1')
     expect(md).toContain('Chores: 1')
-    // VS-049: execution context section present
-    expect(md).toContain('## Execution Context')
-    expect(pack.workspace).toBeDefined()
   })
 })
 

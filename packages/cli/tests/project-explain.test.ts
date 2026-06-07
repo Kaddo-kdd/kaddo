@@ -191,7 +191,6 @@ describe('renderExplanationHuman', () => {
     expect(out).toContain('### Business')
     expect(out).toContain('### Delivery')
     expect(out).toContain('## Detected Stack')
-    expect(out).toContain('## Workspace')
     expect(out).toContain('## Knowledge Status')
     expect(out).toContain('Ownership coverage: 1/1')
     expect(out).toContain('## Suggested Next Steps')

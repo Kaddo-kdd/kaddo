@@ -34,25 +34,6 @@ export function renderContextPack(pack: ContextPack): string {
     ].join('\n') + '\n'
   )
 
-  // 1·0 Execution context (VS-049) — tell the agent WHERE it really is.
-  parts.push('## Execution Context\n')
-  if (pack.workspace.isGitRepo) {
-    parts.push(
-      [
-        `- Repository root: ${pack.workspace.root ?? 'unknown'}`,
-        `- Current branch: ${pack.workspace.branch ?? 'unknown'}`,
-        `- Git worktree: ${pack.workspace.isWorktree ? 'yes' : 'no'}`,
-      ].join('\n') + '\n'
-    )
-    if (pack.workspace.isWorktree) {
-      parts.push(
-        'You are inside a Git worktree. Work only in this workspace; run Kaddo commands from here.\n'
-      )
-    }
-  } else {
-    parts.push('- Not a Git repository\n')
-  }
-
   // 1a. Current phase + recommended next agent (VS-047) — state-aware, not just project.state.
   parts.push('## Current Phase\n')
   parts.push(`Phase: ${pack.phase.phase}\n`)

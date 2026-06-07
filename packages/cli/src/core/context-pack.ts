@@ -8,7 +8,6 @@ import { knowledgeLayers, type LayerStatus } from './layers.js'
 import { roadmapStats, type RoadmapStats } from './roadmap.js'
 import { lifecycleStateOf, isActiveState, lifecycleCounts, type LifecycleState } from './lifecycle.js'
 import { assessPhase, type PhaseAssessment } from './delivery-phase.js'
-import { detectWorkspace, type WorkspaceInfo } from './workspace.js'
 
 export const CONTEXT_PACK_VERSION = '1'
 
@@ -60,8 +59,6 @@ export type ContextPack = {
   roadmap: RoadmapStats
   /** State-aware phase + next-step recommendation (VS-047). */
   phase: PhaseAssessment
-  /** Active workspace / worktree execution context (VS-049). */
-  workspace: WorkspaceInfo
   /** Active Work Items distribution by type (feature/bugfix/hotfix/spike/chore/…). */
   deliveryMix: Record<string, number>
   mappedModules: MappedModuleWithCoverage[]
@@ -319,7 +316,6 @@ export function buildContextPack(
     layers,
     roadmap,
     phase,
-    workspace: detectWorkspace(dir),
     deliveryMix,
     mappedModules,
     missing,

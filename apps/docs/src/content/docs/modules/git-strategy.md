@@ -40,9 +40,9 @@ Branch and commit conventions tie to the Work Item you are delivering:
 ## Agent Git boundaries
 
 Agents may **suggest** branch names, commit messages and a Git strategy — but they must **not**
-create or switch branches, create worktrees, stash, commit, push or merge. The human executes any
-Git state change. If an agent works in a Git worktree, run all Kaddo commands from that workspace.
-See [Worktrees & Git boundaries](/worktrees/).
+create or switch branches, stash, commit, push or merge. Kaddo never runs Git either; the human
+executes any Git state change. See the
+[responsibility matrix](/modules/agents/#responsibility-boundaries--agent-trace).
 
 ## Customization
 

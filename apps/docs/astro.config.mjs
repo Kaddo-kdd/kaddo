@@ -94,7 +94,6 @@ export default defineConfig({
             { label: 'Project scope', translations: { es: 'Alcance del proyecto' }, slug: 'project-scope' },
             { label: 'Knowledge Levels', translations: { es: 'Niveles de Conocimiento' }, slug: 'knowledge-levels' },
             { label: 'Context efficiency', translations: { es: 'Eficiencia de contexto' }, slug: 'token-efficiency' },
-            { label: 'Worktrees & Git boundaries', translations: { es: 'Worktrees y límites de Git' }, slug: 'worktrees' },
             { label: 'Knowledge Driven Development', translations: { es: 'Knowledge Driven Development' }, slug: 'knowledge-driven-development' },
             { label: 'KDD Manifesto', translations: { es: 'Manifiesto KDD' }, slug: 'manifesto' },
             { label: 'About', translations: { es: 'Acerca de' }, slug: 'about' },

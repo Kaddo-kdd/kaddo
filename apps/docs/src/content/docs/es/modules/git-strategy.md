@@ -41,9 +41,9 @@ Las convenciones de rama y commit se atan al Work Item que estás entregando:
 ## Límites de Git de los agentes
 
 Los agentes pueden **sugerir** nombres de rama, mensajes de commit y una estrategia de Git — pero
-**no** deben crear o cambiar de rama, crear worktrees, hacer stash, commit, push ni merge. El humano
-ejecuta cualquier cambio de estado de Git. Si un agente trabaja en un Git worktree, ejecuta todos
-los comandos de Kaddo desde ese workspace. Ver [Worktrees y límites de Git](/es/worktrees/).
+**no** deben crear o cambiar de rama, hacer stash, commit, push ni merge. Kaddo tampoco ejecuta
+Git; el humano ejecuta cualquier cambio de estado de Git. Ver la
+[matriz de responsabilidades](/es/modules/agents/#límites-de-responsabilidad-y-agent-trace).
 
 ## Personalización
 
