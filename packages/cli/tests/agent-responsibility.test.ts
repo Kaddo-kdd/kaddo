@@ -109,6 +109,13 @@ describe('agent prompts carry Agent Trace (AC1)', () => {
     expect(wi.content).not.toContain('Commit only with explicit human confirmation')
   })
 
+  it('work-item & implementation agents say how to test what is built', () => {
+    for (const file of ['work-item-agent.md', 'implementation-agent.md']) {
+      const p = AGENT_PROMPTS.find((x) => x.fileName === file)!
+      expect(p.content.toLowerCase(), file).toContain('how to test it')
+    }
+  })
+
   it('implementation-agent forbids running git / committing without confirmation', () => {
     const p = AGENT_PROMPTS.find((x) => x.fileName === 'implementation-agent.md')!
     expect(p.content.toLowerCase()).toContain('never run git')

@@ -17,7 +17,9 @@ The unit Guard, classify, history and learn revolve around. Carries front matter
 traceability (`id`, `type`, `knowledge_level`, `source`, `domains`, `capabilities`,
 `code`). Phase and initiative stay in front matter as planning and functional traceability;
 folders represent lifecycle state. Sections: Problem · Expected result · Acceptance criteria ·
-Design (optional) · Risks (optional) · Out of scope · Validation · Definition of Done · Learning.
+Design (optional) · Risks (optional) · Out of scope · How to test it (validation) ·
+Definition of Done · Learning. The work-item-agent and implementation-agent always state
+**how to test it** so a finished change can be verified.
 
 Official lifecycle states are `draft`, `ready`, `in-progress`, `blocked`, `completed` and
 `archived`. Agents should treat only `draft`, `ready`, `in-progress` and `blocked` as active

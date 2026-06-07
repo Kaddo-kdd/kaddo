@@ -18,7 +18,8 @@ de trazabilidad (`id`, `type`, `knowledge_level`, `source`, `domains`, `capabili
 `code`). Fase e iniciativa permanecen en front matter como planificación y trazabilidad
 funcional; las carpetas representan el estado del lifecycle. Secciones: Problema · Resultado
 esperado · Criterios de aceptación · Diseño (opcional) · Riesgos (opcional) · Out of scope ·
-Validation · Definition of Done · Aprendizaje.
+Cómo probarlo (validation) · Definition of Done · Aprendizaje. El work-item-agent y el
+implementation-agent siempre indican **cómo probarlo** para verificar el cambio terminado.
 
 Los estados oficiales son `draft`, `ready`, `in-progress`, `blocked`, `completed` y `archived`.
 Los agentes deben tratar solo `draft`, `ready`, `in-progress` y `blocked` como trabajo activo;

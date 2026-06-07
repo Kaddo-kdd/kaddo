@@ -572,10 +572,12 @@ A refined Work Item intended to be saved under the lifecycle workspace:
    Keep \`chore\` for maintenance/tooling/config/infra work — never upgrade a chore to a feature.
 4. Validate the Knowledge Level (K0–K4) and propose a different one if needed.
 5. Propose acceptance criteria.
-6. Propose Out of scope and Validation sections.
-7. Propose a Definition of Done.
-8. Identify open questions and assumptions.
-9. Suggest ownership candidates (code globs) if evident.
+6. Propose an Out of scope section.
+7. Propose **how to test it** — concrete validation steps (commands to run, manual steps, or
+   test cases) that prove the change works once implemented. This is mandatory.
+8. Propose a Definition of Done.
+9. Identify open questions and assumptions.
+10. Suggest ownership candidates (code globs) if evident.
 
 ## Constraints
 
@@ -599,7 +601,11 @@ A refined Work Item intended to be saved under the lifecycle workspace:
 
 **Out of scope:**
 
-**Validation:**
+**How to test it (validation):**
+<!-- concrete steps to verify once implemented, e.g.:
+1. \`pnpm test path/to/spec\`  (or the project's test command)
+2. Manual: <action> → expected <result>
+3. \`kaddo guard\` shows no unexpected drift -->
 
 **Definition of Done:**
 
@@ -619,7 +625,7 @@ and \`blocked\` as active work; \`completed\` and \`archived\` are historical kn
 When the Work Item is refined and ready to build, **hand off to the implementation-agent**.
 You do **not** suggest branches, commits or pull requests — implementation (including any Git
 branch suggestion) is the implementation-agent's responsibility, and only by respecting the
-project Git strategy. Your job ends at a clear, traceable Work Item.
+project Git strategy. Your job ends at a clear, traceable Work Item that **states how to test it**.
 
 ## Quality Checklist
 
@@ -627,7 +633,8 @@ project Git strategy. Your job ends at a clear, traceable Work Item.
 - Large candidates are split.
 - Knowledge Level is justified.
 - Acceptance criteria are testable.
-- Out of scope and Validation are stated.
+- Out of scope is stated.
+- **How to test it** is concrete (commands, manual steps, or test cases).
 - Open questions are explicit.
 - Handoff: next step is the implementation-agent (never a branch or commit).
 `
@@ -1189,7 +1196,9 @@ Conventional Commit message — as suggestions, never executed.
 4. Suggest running \`kaddo owners suggest\` and confirm the \`code:\` globs.
 5. Suggest running \`kaddo guard\` before committing to detect knowledge drift.
 6. Update affected knowledge (ADR / capabilities.md / current-state.md).
-7. Suggest a Conventional Commit message and **wait for explicit human confirmation**. Never
+7. **Explain how to test it** — the exact commands and/or manual steps to verify the change works
+   (run the Work Item's "How to test it" steps and report the result).
+8. Suggest a Conventional Commit message and **wait for explicit human confirmation**. Never
    commit, push or merge on your own.
 
 ## Constraints
@@ -1212,6 +1221,9 @@ Conventional Commit message — as suggestions, never executed.
 
 ## Tests
 
+## How to test it
+<!-- exact commands and/or manual steps to verify, e.g. run the test suite, start the app then <action> -->
+
 ## Knowledge to update
 
 ## Suggested commit (await human confirmation)
@@ -1225,6 +1237,7 @@ Code, tests and migrations live in the repository. Knowledge updates go under \`
 
 - A branch is suggested per the Git strategy (never executed).
 - Tests accompany the change.
+- **How to test it** is stated (exact commands / manual steps to verify).
 - \`kaddo scan\` / \`owners suggest\` / \`guard\` are suggested at the right moments.
 - Affected knowledge is updated.
 - Commit is suggested and awaits human confirmation — never run automatically.
