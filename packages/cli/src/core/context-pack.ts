@@ -1,6 +1,6 @@
 import matter from 'gray-matter'
 import { exists, readFile, join } from '../utils/fs.js'
-import { loadConfig, type KaddoConfig, type ProjectState } from './config.js'
+import { loadConfig, languageLabel, projectLanguage, type KaddoConfig, type ProjectState } from './config.js'
 import { type Artifact } from '../services/artifact-reader.js'
 import { discoverKnowledge } from '../services/knowledge-artifacts.js'
 import { loadMappedModules, type MappedModuleWithCoverage } from '../services/mapped-modules.js'
@@ -37,6 +37,8 @@ export type ContextPack = {
     state: string
     teamSize: string
     structure: string
+    /** Knowledge language label, e.g. "English" / "Spanish" (VS-051). */
+    language: string
   }
   scan: {
     available: boolean
@@ -295,6 +297,7 @@ export function buildContextPack(
       state,
       teamSize: config.team.size,
       structure: config.project.structure,
+      language: languageLabel(projectLanguage(config)),
     },
     scan: {
       available: scanJson !== null,

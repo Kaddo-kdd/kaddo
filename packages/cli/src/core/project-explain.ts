@@ -5,7 +5,7 @@
 // what is missing plus actionable next steps. No LLM, no inference — pure file reads.
 
 import { exists, readFile, readDir, join, isFile } from '../utils/fs.js'
-import { loadConfig } from './config.js'
+import { loadConfig, languageLabel, projectLanguage } from './config.js'
 import { discoverWorkItems } from '../services/knowledge-artifacts.js'
 import { assessPhase } from './delivery-phase.js'
 import {
@@ -31,6 +31,7 @@ export type ProjectExplanation = {
     state: string
     teamSize: string
     structure: string
+    language: string
   }
   stack: {
     language?: string
@@ -152,6 +153,7 @@ export function buildProjectExplanation(dir: string): ProjectExplanation {
     state: config?.project.state ?? 'unknown',
     teamSize: config?.team.size ?? 'unknown',
     structure: config?.project.structure ?? 'unknown',
+    language: config ? languageLabel(projectLanguage(config)) : 'English',
   }
 
   const scan = loadScan(dir)
@@ -333,6 +335,7 @@ export function renderExplanationHuman(exp: ProjectExplanation): string {
   lines.push(`- State: ${stateLabel(exp.project.state)}`)
   lines.push(`- Team: ${exp.project.teamSize}`)
   lines.push(`- Structure: ${exp.project.structure}`)
+  lines.push(`- Project language: ${exp.project.language}`)
   lines.push('')
 
   lines.push('## Knowledge Layers')

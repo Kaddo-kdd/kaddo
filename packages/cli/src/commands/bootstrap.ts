@@ -10,7 +10,7 @@
 
 import { cwd, exists, join, writeFile } from '../utils/fs.js'
 import { intro, outro, log, confirm } from '../utils/ui.js'
-import { loadConfig, ConfigError } from '../core/config.js'
+import { loadConfig, projectLanguage, ConfigError, type ProjectLanguage } from '../core/config.js'
 import { getTemplate } from '../templates/registry.js'
 
 const CONFIG_PATH = '.kaddo/config.yml'
@@ -44,6 +44,16 @@ export function bootstrap(dir: string): BootstrapResult {
   const written: string[] = []
   const skipped: string[] = []
 
+  // Knowledge language (VS-051). The CLI does not translate template prose — it records the
+  // language directive so the bootstrap-agent fills the body in the configured language.
+  let language: ProjectLanguage = 'en'
+  try {
+    const config = loadConfig(dir)
+    if (config) language = projectLanguage(config)
+  } catch {
+    // fall back to English on unreadable config
+  }
+
   for (const target of TARGETS) {
     const full = join(dir, target.path)
     if (exists(full)) {
@@ -51,12 +61,24 @@ export function bootstrap(dir: string): BootstrapResult {
       continue
     }
     const tpl = getTemplate(target.templateId)
-    const content = tpl ? tpl.content : ''
+    const base = tpl ? tpl.content : ''
+    const content = withLanguageDirective(base, language)
     writeFile(full, content.endsWith('\n') ? content : `${content}\n`)
     written.push(target.path)
   }
 
   return { written, skipped, layers: BOOTSTRAP_LAYERS }
+}
+
+/** Insert a project-language directive after the front matter (no-op for English). */
+function withLanguageDirective(content: string, language: ProjectLanguage): string {
+  if (language !== 'es') return content
+  const note =
+    '> Idioma del proyecto: **español**. Escribe este conocimiento en español. ' +
+    'Mantén en inglés el código, los nombres de archivo, los comandos y las claves de configuración.\n'
+  const fm = content.match(/^---\n[\s\S]*?\n---\n/)
+  if (fm) return content.slice(0, fm[0].length) + '\n' + note + content.slice(fm[0].length)
+  return `${note}\n${content}`
 }
 
 export async function runBootstrap(dir: string = cwd()): Promise<void> {

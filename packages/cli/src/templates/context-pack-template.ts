@@ -31,6 +31,7 @@ export function renderContextPack(pack: ContextPack): string {
       `- State: ${project.state}`,
       `- Team size: ${project.teamSize}`,
       `- Structure: ${project.structure}`,
+      `- Language: ${project.language}`,
     ].join('\n') + '\n'
   )
 

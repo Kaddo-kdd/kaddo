@@ -169,6 +169,19 @@ Pregunta  →  Comando  →  Salida  →  Siguiente acción
 | ¿Qué le doy a un LLM? | `context` | context-pack.md | agente recomendado |
 | ¿Qué debería hacer ahora? | `understand` | understand.md + recomendación | la acción recomendada |
 
+## Idioma del conocimiento del proyecto
+
+El idioma del proyecto (`en`/`es`, definido en `kaddo init`) fluye a todo lo que Kaddo genera —
+pero no al CLI, que sigue en inglés.
+
+```mermaid
+flowchart LR
+    L[project.language] --> T[Templates]
+    T --> K[Conocimiento]
+    K --> A[Salidas de agentes]
+    L -. nunca cambia .-> C[CLI · comandos · flags · nombres de archivo]
+```
+
 ## Descubrimiento unificado de conocimiento
 
 Cada comando descubre los artefactos de conocimiento a través de un único servicio compartido,

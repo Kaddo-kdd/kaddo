@@ -33,6 +33,25 @@ knowledge/
   config.yml        ← project config
 ```
 
+## Project knowledge language vs CLI language
+
+`kaddo init` asks for a **project language** (`en` or `es`). This sets the language of the
+**project knowledge** only — templates, agent outputs, the context pack, roadmap, Work Items,
+ADRs, capabilities and current-state. It defaults to English.
+
+The **CLI itself is always English**: commands, flags, configuration keys, interactive prompts and
+messages do not change. File names also stay stable (`business.md`, `product.md`, `codebase.md`)
+regardless of language.
+
+```yaml
+project:
+  language: es   # knowledge is written in Spanish; the CLI stays English
+```
+
+Every agent is instructed to write generated knowledge in the configured language (and never to
+translate code, file names, CLI commands or config keys). `explain`, `context` and `understand`
+all report the active project language.
+
 ## The full workflow
 
 ```bash

@@ -157,7 +157,7 @@ describe('context-pack — buildContextPack', () => {
     const pack = build()
     expect(pack.version).toBe(CONTEXT_PACK_VERSION)
     expect(pack.generatedAt).toBe('2026-01-01T00:00:00.000Z')
-    expect(pack.project).toEqual({ name: 'demo', state: 'pre-ai', teamSize: 'indie', structure: 'monorepo' })
+    expect(pack.project).toEqual({ name: 'demo', state: 'pre-ai', teamSize: 'indie', structure: 'monorepo', language: 'English' })
     expect(pack.scan.available).toBe(true)
     expect(pack.scan.frameworks).toEqual(['next'])
     expect(pack.knowledge.summary).toContain('product does X')

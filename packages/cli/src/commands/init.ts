@@ -27,6 +27,7 @@ interface ProjectMeta {
   state: string
   teamSize: string
   structure: string
+  language: string
 }
 
 function buildConfig(meta: ProjectMeta): string {
@@ -35,6 +36,7 @@ project:
   name: "${meta.name}"
   state: ${meta.state}
   structure: ${meta.structure}
+  language: ${meta.language}
   domains: []
 team:
   size: ${meta.teamSize}
@@ -156,11 +158,22 @@ export async function runInit(): Promise<void> {
     initialValue: 'monorepo',
   })
 
+  // Knowledge language (VS-051) — the CLI stays in English; this only affects generated knowledge.
+  const language = await select<string>({
+    message: 'Project knowledge language (the CLI stays in English)',
+    options: [
+      { value: 'en', label: 'English' },
+      { value: 'es', label: 'Spanish' },
+    ],
+    initialValue: 'en',
+  })
+
   const meta: ProjectMeta = {
     name: projectName.trim(),
     state,
     teamSize,
     structure,
+    language,
   }
 
   // Create .kaddo/

@@ -29,6 +29,7 @@ project:
   name: "my-app"
   state: pre-ai      # new | pre-ai | legacy
   structure: monorepo # monorepo | multirepo
+  language: en       # en | es — language of the project KNOWLEDGE
   domains: []
 team:
   size: indie        # indie | small | medium | enterprise
@@ -46,6 +47,11 @@ team:
 
 **Repository structure** — `monorepo` or `multirepo`.
 
+**Project language** — `en` or `es`. This is the language of the **project knowledge** (templates,
+agent outputs, context pack, roadmap, Work Items, ADRs, capabilities…), **not** the CLI. The CLI —
+its commands, flags, prompts and messages — is always English. See
+[Project knowledge language](/getting-started/#project-knowledge-language-vs-cli-language).
+
 Old config files keep working: missing fields fall back to safe defaults
-(`state: pre-ai`, `structure: monorepo`, `team.size: indie`). Invalid enum values
+(`state: pre-ai`, `structure: monorepo`, `team.size: indie`, `language: en`). Invalid enum values
 produce a clear validation error listing the valid options.

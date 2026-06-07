@@ -33,6 +33,25 @@ knowledge/
   config.yml        ← configuración del proyecto
 ```
 
+## Idioma del conocimiento vs idioma del CLI
+
+`kaddo init` pregunta un **idioma del proyecto** (`en` o `es`). Define el idioma del
+**conocimiento** únicamente — templates, salidas de agentes, context pack, roadmap, Work Items,
+ADRs, capabilities y current-state. Por defecto es inglés.
+
+El **CLI siempre está en inglés**: comandos, flags, claves de configuración, prompts interactivos y
+mensajes no cambian. Los nombres de archivo también se mantienen estables (`business.md`,
+`product.md`, `codebase.md`) sin importar el idioma.
+
+```yaml
+project:
+  language: es   # el conocimiento se escribe en español; el CLI sigue en inglés
+```
+
+A cada agente se le indica escribir el conocimiento generado en el idioma configurado (y nunca
+traducir código, nombres de archivo, comandos ni claves de config). `explain`, `context` y
+`understand` reportan el idioma activo del proyecto.
+
 ## El flujo completo
 
 ```bash

@@ -53,6 +53,8 @@ export function runUnderstand(): void {
 
   // 5. Print the concise handoff and write the reusable guide.
   console.log(renderUnderstandTerminal(plan))
+  // Knowledge language for the handoff (VS-051) — the CLI stays in English.
+  console.log(`Project language: ${pack.project.language} (knowledge artifacts are written in this language)`)
 
   // 5b. State-aware recommendation (VS-047): phase + reason + next step from the REAL knowledge
   // state (layers, roadmap, Work Items, ownership) — not only the configured project.state.

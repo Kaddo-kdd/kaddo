@@ -261,11 +261,28 @@ export function renderAgentTrace(agent: string): string {
   ].join('\n')
 }
 
-/** Append the boundaries + trace sections to an agent prompt (no-op if no matrix entry). */
+/**
+ * Standard project-language rule (VS-051) appended to every prompt: knowledge is written in the
+ * configured language; technical identifiers are never translated. The CLI itself stays English.
+ */
+export function renderLanguageRule(): string {
+  return [
+    '## Project Language',
+    '',
+    'The project knowledge language is defined in `.kaddo/config.yml` (`project.language`) and shown',
+    "in the context pack's Project Metadata (`Language:`). Write **all** generated knowledge",
+    'artifacts in that language (default: English).',
+    '',
+    'Do not translate: code, file names, CLI commands or configuration keys.',
+    '',
+  ].join('\n')
+}
+
+/** Append language rule + boundaries + trace sections to an agent prompt (no-op if no entry). */
 export function withResponsibilityTrace(fileName: string, content: string): string {
   const agent = fileName.replace(/\.md$/, '')
   if (!RESPONSIBILITY_MATRIX[agent]) return content
-  return `${content.trimEnd()}\n\n${renderAgentBoundaries(agent)}\n${renderAgentTrace(agent)}`
+  return `${content.trimEnd()}\n\n${renderLanguageRule()}\n${renderAgentBoundaries(agent)}\n${renderAgentTrace(agent)}`
 }
 
 /** Render the full responsibility matrix as Markdown (docs + reference). */

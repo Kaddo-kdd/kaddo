@@ -167,6 +167,19 @@ Question  →  Command  →  Output  →  Next action
 | What do I give an LLM? | `context` | context-pack.md | recommended agent |
 | What should I do now? | `understand` | understand.md + recommendation | the recommended action |
 
+## Project knowledge language
+
+The project language (`en`/`es`, set at `kaddo init`) flows into everything Kaddo generates — but
+not the CLI, which stays English.
+
+```mermaid
+flowchart LR
+    L[project.language] --> T[Templates]
+    T --> K[Knowledge]
+    K --> A[Agent outputs]
+    L -. never changes .-> C[CLI · commands · flags · file names]
+```
+
 ## Unified knowledge discovery
 
 Every command discovers knowledge artifacts through one shared service, so `explain`, `context`,

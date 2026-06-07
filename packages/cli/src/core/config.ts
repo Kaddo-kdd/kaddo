@@ -5,16 +5,31 @@ import { parse as parseYaml } from 'yaml'
 export type ProjectState = 'new' | 'pre-ai' | 'legacy'
 export type TeamSize = 'indie' | 'small' | 'medium' | 'enterprise'
 export type RepositoryStructure = 'monorepo' | 'multirepo'
+/** Language of the project KNOWLEDGE (not the CLI, which is always English). VS-051. */
+export type ProjectLanguage = 'en' | 'es'
 
 export const PROJECT_STATES: ProjectState[] = ['new', 'pre-ai', 'legacy']
 export const TEAM_SIZES: TeamSize[] = ['indie', 'small', 'medium', 'enterprise']
 export const REPOSITORY_STRUCTURES: RepositoryStructure[] = ['monorepo', 'multirepo']
+export const PROJECT_LANGUAGES: ProjectLanguage[] = ['en', 'es']
 
 /** Safe defaults applied only when optional fields are absent. */
 const DEFAULTS = {
   state: 'pre-ai' as ProjectState,
   structure: 'monorepo' as RepositoryStructure,
   teamSize: 'indie' as TeamSize,
+  language: 'en' as ProjectLanguage,
+}
+
+/** Human-readable label for a project knowledge language. */
+export function languageLabel(lang: string | undefined): string {
+  return lang === 'es' ? 'Spanish' : 'English'
+}
+
+/** The configured knowledge language, defaulting to English (back-compat). */
+export function projectLanguage(config: KaddoConfig): ProjectLanguage {
+  const lang = (config.project as { language?: string }).language
+  return lang === 'es' ? 'es' : 'en'
 }
 
 /** Raised when config exists but cannot be read or fails validation. */
@@ -43,6 +58,12 @@ const structureSchema = z.enum(['monorepo', 'multirepo'], {
   }),
 })
 
+const languageSchema = z.enum(['en', 'es'], {
+  errorMap: () => ({
+    message: `project.language must be one of: ${PROJECT_LANGUAGES.join(', ')}`,
+  }),
+})
+
 const configSchema = z
   .object({
     version: z.union([z.string(), z.number()]).optional(),
@@ -51,6 +72,7 @@ const configSchema = z
         name: z.string().default('project'),
         state: projectStateSchema.default(DEFAULTS.state),
         structure: structureSchema.default(DEFAULTS.structure),
+        language: languageSchema.default(DEFAULTS.language),
         domains: z.array(z.string()).optional(),
       })
       .passthrough()
