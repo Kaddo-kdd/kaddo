@@ -48,6 +48,10 @@ Then use your LLM (Claude, ChatGPT, Cursor, Copilot, Windsurf…) with the gener
 context pack and Kaddo agents to create capabilities, architecture and a roadmap. The CLI
 never calls an LLM — it prepares the context; your LLM does the interpretation.
 
+> Have a new idea outside the roadmap at any time? Capture it with the
+> [`backlog-agent`](/modules/agents/) — it turns free text, bullets or notes into a Work Item
+> draft or a roadmap candidate, then hands back to you to decide the next step.
+
 Back in the CLI, turn understanding into evolving code:
 
 ```bash

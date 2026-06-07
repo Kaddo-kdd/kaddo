@@ -24,6 +24,10 @@ En una frase: **escanea el repo → prepara el contexto → usa agentes en tu LL
 items guiados por el roadmap → conecta el conocimiento al código → vigila la deriva →
 explica el estado.**
 
+Las ideas nuevas pueden entrar al loop en cualquier punto mediante el
+[`backlog-agent`](/es/modules/agents/), que las captura como draft de Work Item o candidato de
+roadmap antes del refinamiento — siempre decides tú el siguiente paso.
+
 ```mermaid
 flowchart LR
     A[Petición] --> B[Discovery]
