@@ -14,6 +14,7 @@ son totalmente determinísticos y no necesitan LLM.
 | Entender capacidades | context pack | `capability-agent` | capacidades | `knowledge/product/capabilities.md` |
 | Entender arquitectura | context + capacidades | `architecture-agent` | baseline de arquitectura | `knowledge/tech/current-state.md` |
 | Roadmap | context + capacidades + arquitectura | `roadmap-agent` | roadmap | `knowledge/delivery/roadmap.md` |
+| Captura de backlog | una idea / notas / transcripción | `backlog-agent` | draft de Work Item o candidato de roadmap | `knowledge/delivery/work-items/draft/*.md` o un candidato de roadmap |
 | Work Item | roadmap | ninguno | work item | `knowledge/delivery/work-items/*.md` |
 | Ownership | work item + scan | ninguno | ownership en front matter | Work Item actualizado |
 | Guard | `git diff` + ownership | ninguno | aviso de drift | salida de terminal |
@@ -63,6 +64,22 @@ Eres el agente de roadmap de Kaddo. Usando el context pack, capabilities y curre
 propón un roadmap priorizado de Work Items candidatos. Para cada candidato: título,
 problema, resultado esperado, dominios afectados y un nivel de conocimiento sugerido
 (K0–K4). Salida en Markdown para knowledge/delivery/roadmap.md.
+```
+
+### backlog-agent
+
+```txt
+Usando el backlog-agent, captura la siguiente idea:
+
+[pega texto libre, viñetas, notas de reunión o una transcripción]
+
+Decide dónde debería vivir: un draft de Work Item (claro y acotado) o un candidato de roadmap
+(demasiado grande), y divídela en items separados si contiene varias ideas. Infiere iniciativa,
+dominios, tipo sugerido (feature/bugfix/hotfix/spike/chore) y nivel de conocimiento, y marca
+duplicados o dependencias. No refines del todo, no escribas código, no ejecutes otros agentes.
+Termina con un handoff de decisión humana (refinar / agregar candidato / dividir / mantener draft).
+Genera Markdown para un draft en knowledge/delivery/work-items/draft/ (o propón un WI-CANDIDATE
+para el roadmap).
 ```
 
 ### legacy-agent

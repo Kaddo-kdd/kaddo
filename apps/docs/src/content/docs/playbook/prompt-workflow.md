@@ -14,6 +14,7 @@ deterministic and need no LLM.
 | Capability understanding | context pack | `capability-agent` | capabilities | `knowledge/product/capabilities.md` |
 | Architecture understanding | context + capabilities | `architecture-agent` | architecture baseline | `knowledge/tech/current-state.md` |
 | Roadmap | context + capabilities + architecture | `roadmap-agent` | roadmap | `knowledge/delivery/roadmap.md` |
+| Backlog capture | a raw idea / notes / transcript | `backlog-agent` | Work Item draft or roadmap candidate | `knowledge/delivery/work-items/draft/*.md` or a roadmap candidate |
 | Work Item | roadmap | none | work item | `knowledge/delivery/work-items/*.md` |
 | Ownership | work item + scan | none | front matter ownership | updated Work Item |
 | Guard | `git diff` + ownership | none | drift warning | terminal output |
@@ -62,6 +63,21 @@ You are the Kaddo roadmap agent. Using the context pack, capabilities and curren
 propose a prioritized roadmap of candidate Work Items. For each candidate: title, problem,
 expected result, affected domains and a suggested knowledge level (K0–K4). Output Markdown
 for knowledge/delivery/roadmap.md.
+```
+
+### backlog-agent
+
+```txt
+Using the backlog-agent, capture the following idea:
+
+[paste free text, bullets, meeting notes or a transcript]
+
+Decide where it should live: a Work Item draft (clear and small) or a roadmap candidate
+(too large), and split it into separate items if it contains multiple ideas. Infer initiative,
+domains, suggested type (feature/bugfix/hotfix/spike/chore) and knowledge level, and flag
+duplicates or dependencies. Do not refine fully, do not write code, do not run other agents.
+End with a human-decision handoff (refine / add candidate / split / keep draft). Output Markdown
+for a draft under knowledge/delivery/work-items/draft/ (or propose a WI-CANDIDATE for the roadmap).
 ```
 
 ### legacy-agent
