@@ -132,6 +132,20 @@ export const RESPONSIBILITY_MATRIX: Record<string, AgentResponsibility> = {
     cannotSuggest: ['branches', 'commits', 'pull requests', 'code'],
     next: ['kaddo create --from roadmap', 'work-item-agent'],
   },
+  'backlog-agent': {
+    agent: 'backlog-agent',
+    responsibleFor: ['Capturing ideas', 'Structuring new work'],
+    produces: ['knowledge/delivery/work-items/draft/', 'roadmap candidates'],
+    canSuggest: ['work-item-agent', 'roadmap-agent'],
+    cannotSuggest: [
+      'code',
+      'branches',
+      'commits',
+      'editing the roadmap automatically',
+      'auto-executing other agents',
+    ],
+    next: ['human decision (refine / add candidate / split / keep draft)'],
+  },
   'work-item-agent': {
     agent: 'work-item-agent',
     responsibleFor: ['Work Item refinement'],
@@ -263,6 +277,7 @@ export function renderResponsibilityMatrixMarkdown(): string {
     'codebase-agent',
     'architecture-agent',
     'decision-agent',
+    'backlog-agent',
     'roadmap-agent',
     'work-item-agent',
     'implementation-agent',

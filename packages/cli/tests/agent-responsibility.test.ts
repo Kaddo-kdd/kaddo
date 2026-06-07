@@ -83,6 +83,21 @@ describe('agent prompts carry Agent Trace (AC1)', () => {
     expect(AGENT_PROMPTS.map((p) => p.fileName)).toContain('implementation-agent.md')
   })
 
+  it('VS-050: backlog-agent exists, never implements and never auto-executes', () => {
+    expect(RESPONSIBILITY_MATRIX['backlog-agent']).toBeDefined()
+    const p = AGENT_PROMPTS.find((x) => x.fileName === 'backlog-agent.md')!
+    expect(p, 'backlog-agent.md prompt').toBeDefined()
+    const lower = p.content.toLowerCase()
+    expect(lower).toContain('do not write code')
+    expect(lower).toContain('never auto-execute')
+    expect(lower).toMatch(/work item draft|roadmap candidate/)
+    expect(lower).toContain('human decision')
+    // It must not run git nor the downstream agents automatically.
+    expect(RESPONSIBILITY_MATRIX['backlog-agent'].cannotSuggest.join(' ')).toMatch(
+      /auto-executing other agents/
+    )
+  })
+
   it('roadmap-agent prompt explicitly forbids suggesting branches', () => {
     const roadmap = AGENT_PROMPTS.find((p) => p.fileName === 'roadmap-agent.md')!
     expect(roadmap.content.toLowerCase()).toContain('do not suggest branches')

@@ -116,6 +116,31 @@ flowchart TD
     H -. solo este agente sugiere una rama .-> H
 ```
 
+## Captura de backlog (idea → trabajo estructurado)
+
+El **backlog-agent** convierte cualquier idea, nota o transcripción cruda en un draft de Work Item
+o un candidato de roadmap. Nunca refina, implementa ni auto-ejecuta el siguiente agente — siempre
+decide un humano qué sigue.
+
+```mermaid
+flowchart TD
+    I[Idea / notas / transcripción] --> BL[backlog-agent]
+    BL --> D[Draft de Work Item]
+    BL --> RC[Candidato de roadmap]
+    BL --> M[Varios items - dividir]
+    D --> H{Decide el humano}
+    RC --> H
+    M --> H
+    H --> WI[work-item-agent]
+    WI --> R[ready] --> IMPL[implementation-agent]
+```
+
+| Idea | salida del backlog-agent |
+|---|---|
+| "Exportar tareas a CSV" | un draft de Work Item |
+| "Un sistema completo de autenticación" | un candidato de roadmap |
+| "Login · Reportes · Notificaciones" | 3 backlog items |
+
 ## Roles de comandos: scan · context · explain · understand
 
 Cada comando tiene un rol distinto. `understand` recomienda el siguiente paso a partir del estado

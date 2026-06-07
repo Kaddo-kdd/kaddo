@@ -27,7 +27,7 @@ knowledge/agents/
   product/    bootstrap-agent.md · capability-agent.md
   tech/       architecture-agent.md · codebase-agent.md · stack-agent.md ·
               security-agent.md · standards-agent.md · module-design-agent.md · adr-agent.md
-  delivery/   roadmap-agent.md · work-item-agent.md · implementation-agent.md · git-strategy-agent.md
+  delivery/   backlog-agent.md · roadmap-agent.md · work-item-agent.md · implementation-agent.md · git-strategy-agent.md
   utilities/  legacy-agent.md
 ```
 
@@ -41,9 +41,9 @@ By default `kaddo add agents` installs only the set recommended for your project
 
 | State | Installs |
 |---|---|
-| `new` | business-agent · bootstrap-agent · codebase-agent · roadmap-agent · work-item-agent · implementation-agent |
-| `pre-ai` | capability-agent · architecture-agent · roadmap-agent · work-item-agent · implementation-agent |
-| `legacy` | legacy-agent · architecture-agent · capability-agent · roadmap-agent · work-item-agent · implementation-agent |
+| `new` | business-agent · bootstrap-agent · codebase-agent · roadmap-agent · backlog-agent · work-item-agent · implementation-agent |
+| `pre-ai` | capability-agent · architecture-agent · roadmap-agent · backlog-agent · work-item-agent · implementation-agent |
+| `legacy` | legacy-agent · architecture-agent · capability-agent · roadmap-agent · backlog-agent · work-item-agent · implementation-agent |
 
 Agents are organized into **groups** by layer:
 
@@ -52,7 +52,7 @@ Agents are organized into **groups** by layer:
 | `business` | business-agent |
 | `product` | bootstrap-agent · capability-agent |
 | `tech` | architecture-agent · codebase-agent · stack-agent · security-agent · standards-agent · module-design-agent · adr-agent |
-| `delivery` | roadmap-agent · work-item-agent · implementation-agent · git-strategy-agent |
+| `delivery` | backlog-agent · roadmap-agent · work-item-agent · implementation-agent · git-strategy-agent |
 | `utilities` | legacy-agent |
 
 ```bash
@@ -92,6 +92,7 @@ These support day-to-day execution and the multirepo / global artifacts (VS-017)
 
 | Agent | Purpose | Saves to |
 |---|---|---|
+| `backlog-agent` | Capture raw ideas/notes into a draft or roadmap candidate (no refinement) | `knowledge/delivery/work-items/draft/` or a roadmap candidate |
 | `work-item-agent` | Draft and refine a work item from context | active work item |
 | `implementation-agent` | Implement a refined Work Item; suggest branch/scan/owners/guard | code · tests · updated knowledge |
 | `git-strategy-agent` | Refine the Git strategy | `knowledge/tech/git-strategy.md` |
@@ -140,6 +141,7 @@ This answers, for any response: **who produced it, what it produced, and what ru
 | `architecture-agent` | Architecture, Technical state, Risks | `current-state.md` | decision-agent, roadmap-agent | Git, branches, code |
 | `decision-agent` / `adr-agent` | ADRs | `knowledge/tech/decisions/` | implementation-agent | Git, branches, code |
 | `roadmap-agent` | Roadmap, Initiatives, WI candidates | `roadmap.md` | `kaddo create --from roadmap`, work-item-agent | **branches, commits, PRs**, code |
+| `backlog-agent` | Capture ideas, structure new work | `work-items/draft/`, roadmap candidates | work-item-agent, roadmap-agent | code, git, **auto-running other agents** |
 | `work-item-agent` | Work Item refinement | `work-items/` | implementation-agent | **commits, PRs, branches** |
 | `implementation-agent` | Implementation | code, tests, migrations | **a branch** (per Git strategy), scan, owners suggest, guard | running git, committing without confirmation |
 | `guard-agent` | Knowledge drift | findings, warnings | update knowledge, update ownership | branches, commits, code |
@@ -162,9 +164,17 @@ roadmap-agent
   → work-item-agent
   → implementation-agent
   → kaddo scan → kaddo owners suggest → kaddo guard → kaddo explain
+
+idea (anytime)
+  → backlog-agent → draft / roadmap candidate → (human decides) → work-item-agent
 ```
 
 `kaddo understand` recommends agents following exactly these handoffs.
+
+The **backlog-agent** is the front door for new ideas: it captures free text, bullets, meeting
+notes or transcripts into a Work Item **draft** or a **roadmap candidate**, never refines or
+implements, and always hands back to a human decision — it never auto-runs the work-item-agent or
+implementation-agent.
 
 ## Writing a custom agent
 

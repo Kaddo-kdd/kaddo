@@ -27,7 +27,7 @@ knowledge/agents/
   product/    bootstrap-agent.md · capability-agent.md
   tech/       architecture-agent.md · codebase-agent.md · stack-agent.md ·
               security-agent.md · standards-agent.md · module-design-agent.md · adr-agent.md
-  delivery/   roadmap-agent.md · work-item-agent.md · implementation-agent.md · git-strategy-agent.md
+  delivery/   backlog-agent.md · roadmap-agent.md · work-item-agent.md · implementation-agent.md · git-strategy-agent.md
   utilities/  legacy-agent.md
 ```
 
@@ -41,9 +41,9 @@ defecto `kaddo add agents` instala solo el conjunto recomendado para el estado d
 
 | Estado | Instala |
 |---|---|
-| `new` | business-agent · bootstrap-agent · codebase-agent · roadmap-agent · work-item-agent · implementation-agent |
-| `pre-ai` | capability-agent · architecture-agent · roadmap-agent · work-item-agent · implementation-agent |
-| `legacy` | legacy-agent · architecture-agent · capability-agent · roadmap-agent · work-item-agent · implementation-agent |
+| `new` | business-agent · bootstrap-agent · codebase-agent · roadmap-agent · backlog-agent · work-item-agent · implementation-agent |
+| `pre-ai` | capability-agent · architecture-agent · roadmap-agent · backlog-agent · work-item-agent · implementation-agent |
+| `legacy` | legacy-agent · architecture-agent · capability-agent · roadmap-agent · backlog-agent · work-item-agent · implementation-agent |
 
 Los agentes se organizan en **grupos** por capa:
 
@@ -52,7 +52,7 @@ Los agentes se organizan en **grupos** por capa:
 | `business` | business-agent |
 | `product` | bootstrap-agent · capability-agent |
 | `tech` | architecture-agent · codebase-agent · stack-agent · security-agent · standards-agent · module-design-agent · adr-agent |
-| `delivery` | roadmap-agent · work-item-agent · implementation-agent · git-strategy-agent |
+| `delivery` | backlog-agent · roadmap-agent · work-item-agent · implementation-agent · git-strategy-agent |
 | `utilities` | legacy-agent |
 
 ```bash
@@ -92,6 +92,7 @@ Apoyan la ejecución diaria y los artefactos multirepo / globales (VS-017).
 
 | Agente | Propósito | Guarda en |
 |---|---|---|
+| `backlog-agent` | Capturar ideas/notas crudas en un draft o candidato de roadmap (sin refinar) | `knowledge/delivery/work-items/draft/` o un candidato de roadmap |
 | `work-item-agent` | Redactar y refinar un work item desde el contexto | work item activo |
 | `implementation-agent` | Implementar un Work Item refinado; sugerir branch/scan/owners/guard | código · tests · conocimiento actualizado |
 | `git-strategy-agent` | Refinar la estrategia de Git | `knowledge/tech/git-strategy.md` |
@@ -141,6 +142,7 @@ Responde, para cualquier respuesta: **quién la produjo, qué produjo y qué sig
 | `architecture-agent` | Arquitectura, Estado técnico, Riesgos | `current-state.md` | decision-agent, roadmap-agent | Git, ramas, código |
 | `decision-agent` / `adr-agent` | ADRs | `knowledge/tech/decisions/` | implementation-agent | Git, ramas, código |
 | `roadmap-agent` | Roadmap, Iniciativas, Candidatos WI | `roadmap.md` | `kaddo create --from roadmap`, work-item-agent | **ramas, commits, PRs**, código |
+| `backlog-agent` | Capturar ideas, estructurar trabajo nuevo | `work-items/draft/`, candidatos de roadmap | work-item-agent, roadmap-agent | código, git, **auto-ejecutar otros agentes** |
 | `work-item-agent` | Refinamiento de Work Items | `work-items/` | implementation-agent | **commits, PRs, ramas** |
 | `implementation-agent` | Implementación | código, tests, migraciones | **una rama** (según estrategia de Git), scan, owners suggest, guard | ejecutar git, commitear sin confirmación |
 | `guard-agent` | Knowledge drift | hallazgos, advertencias | actualizar conocimiento, actualizar ownership | ramas, commits, código |
@@ -163,9 +165,17 @@ roadmap-agent
   → work-item-agent
   → implementation-agent
   → kaddo scan → kaddo owners suggest → kaddo guard → kaddo explain
+
+idea (en cualquier momento)
+  → backlog-agent → draft / candidato de roadmap → (decide el humano) → work-item-agent
 ```
 
 `kaddo understand` recomienda agentes siguiendo exactamente estos handoffs.
+
+El **backlog-agent** es la puerta de entrada para ideas nuevas: captura texto libre, viñetas,
+notas de reunión o transcripciones en un **draft** de Work Item o un **candidato de roadmap**, no
+refina ni implementa, y siempre devuelve a una decisión humana — nunca auto-ejecuta el
+work-item-agent ni el implementation-agent.
 
 ## Escribir un agente custom
 
