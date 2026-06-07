@@ -143,7 +143,7 @@ This answers, for any response: **who produced it, what it produced, and what ru
 | `roadmap-agent` | Roadmap, Initiatives, WI candidates | `roadmap.md` | `kaddo create --from roadmap`, work-item-agent | **branches, commits, PRs**, code |
 | `backlog-agent` | Capture ideas, structure new work | `work-items/draft/`, roadmap candidates | work-item-agent, roadmap-agent | code, git, **auto-running other agents** |
 | `work-item-agent` | Work Item refinement | `work-items/` | implementation-agent | **commits, PRs, branches** |
-| `implementation-agent` | Implementation | code, tests, migrations | **a branch** (per Git strategy), scan, owners suggest, guard | running git, committing without confirmation |
+| `implementation-agent` | Implementation | code, tests, migrations | **a branch** (per Git strategy), **a commit message**, scan, owners suggest, guard | running git, committing/pushing/merging without confirmation |
 | `guard-agent` | Knowledge drift | findings, warnings | update knowledge, update ownership | branches, commits, code |
 
 ### Git responsibility model

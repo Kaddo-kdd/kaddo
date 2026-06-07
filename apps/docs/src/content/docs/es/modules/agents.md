@@ -144,7 +144,7 @@ Responde, para cualquier respuesta: **quién la produjo, qué produjo y qué sig
 | `roadmap-agent` | Roadmap, Iniciativas, Candidatos WI | `roadmap.md` | `kaddo create --from roadmap`, work-item-agent | **ramas, commits, PRs**, código |
 | `backlog-agent` | Capturar ideas, estructurar trabajo nuevo | `work-items/draft/`, candidatos de roadmap | work-item-agent, roadmap-agent | código, git, **auto-ejecutar otros agentes** |
 | `work-item-agent` | Refinamiento de Work Items | `work-items/` | implementation-agent | **commits, PRs, ramas** |
-| `implementation-agent` | Implementación | código, tests, migraciones | **una rama** (según estrategia de Git), scan, owners suggest, guard | ejecutar git, commitear sin confirmación |
+| `implementation-agent` | Implementación | código, tests, migraciones | **una rama** (según estrategia de Git), **un mensaje de commit**, scan, owners suggest, guard | ejecutar git, commitear/pushear/mergear sin confirmación |
 | `guard-agent` | Knowledge drift | hallazgos, advertencias | actualizar conocimiento, actualizar ownership | ramas, commits, código |
 
 ### Modelo de responsabilidad de Git
