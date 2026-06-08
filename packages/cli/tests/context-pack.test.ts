@@ -203,10 +203,11 @@ describe('context-pack — state-aware recommendations', () => {
   it('recommends legacy-agent first for legacy', () => {
     expect(recommendedAgentsForState('legacy')[0]).toBe('legacy-agent')
   })
-  it('wires recommendations into the built pack per state', () => {
+  it('wires phase-based recommendations into the built pack (VS-052)', () => {
+    // Empty project → Discovery phase → recommends the missing-base-layer agent, not project.state.
     writeConfig('legacy')
     const pack = build()
-    expect(pack.handoff.recommendedAgents[0]).toBe('legacy-agent')
+    expect(pack.handoff.recommendedAgents[0]).toBe('business-agent')
   })
 })
 
@@ -237,7 +238,8 @@ describe('context-pack — renderContextPack', () => {
     expect(md).toContain('## Recommended Agent Handoff')
     expect(md).toContain('## Instructions for the LLM')
     expect(md).toContain('Name: demo')
-    expect(md).toContain('1. capability-agent')
+    // Phase-based handoff (VS-052): empty project → Discovery → business-agent.
+    expect(md).toContain('1. business-agent')
   })
 
   it('includes Operating Rules that forbid committing without confirmation', () => {

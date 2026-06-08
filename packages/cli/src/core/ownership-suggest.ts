@@ -5,10 +5,88 @@
 // CLI suggests candidates from scan signals + artifact metadata; the human confirms.
 
 import matter from 'gray-matter'
-import { exists, readFile, join } from '../utils/fs.js'
+import { exists, readFile, readDir, join } from '../utils/fs.js'
 import { discoverWorkItems } from '../services/knowledge-artifacts.js'
 
 const SCAN_PATH = '.kaddo/scan.json'
+
+// ---------------------------------------------------------------------------
+// Glob assistance (VS-052): normalize, validate paths and warn on broad globs.
+// ---------------------------------------------------------------------------
+
+/** Normalize a user-entered glob: `src/cli` → `src/cli/**`, `src/cli/` → `src/cli/**`. */
+export function normalizeGlob(input: string): string {
+  let g = input.trim().replace(/\\/g, '/')
+  if (!g) return g
+  if (g.endsWith('/')) return `${g.slice(0, -1)}/**`
+  if (!g.includes('*')) {
+    const base = g.split('/').pop() ?? ''
+    const looksLikeFile = /\.[A-Za-z0-9]+$/.test(base) // e.g. package.json, tsconfig.json
+    if (!looksLikeFile) return `${g}/**`
+  }
+  return g
+}
+
+function levenshtein(a: string, b: string): number {
+  const m = a.length
+  const n = b.length
+  const d = Array.from({ length: m + 1 }, (_, i) => [i, ...Array(n).fill(0)])
+  for (let j = 0; j <= n; j++) d[0][j] = j
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1
+      d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + cost)
+    }
+  }
+  return d[m][n]
+}
+
+export type GlobAnalysis = { normalized: string; warnings: string[]; suggestion?: string }
+
+/**
+ * Analyze a glob against the project: normalize it, warn when it is too broad, and when its
+ * literal path does not exist try a "did you mean" suggestion from nearby directory names.
+ */
+export function analyzeGlob(dir: string, input: string): GlobAnalysis {
+  const normalized = normalizeGlob(input)
+  const warnings: string[] = []
+  let suggestion: string | undefined
+
+  // Too broad: bare `**`, or a single top-level directory like `src/**`.
+  if (/^\*+$/.test(normalized) || /^[^/*]+\/\*\*$/.test(normalized)) {
+    warnings.push(
+      'This glob is broad and may reduce Guard usefulness. Prefer narrower ownership when possible.'
+    )
+  }
+
+  // Path existence on the literal prefix (before the first `*`).
+  const starIdx = normalized.indexOf('*')
+  const literal = (starIdx >= 0 ? normalized.slice(0, starIdx) : normalized).replace(/\/+$/, '')
+  if (literal && !exists(join(dir, literal))) {
+    const slash = literal.lastIndexOf('/')
+    const parent = slash >= 0 ? literal.slice(0, slash) : ''
+    const target = slash >= 0 ? literal.slice(slash + 1) : literal
+    const parentFull = parent ? join(dir, parent) : dir
+    let near: string | undefined
+    try {
+      if (exists(parentFull)) {
+        near = readDir(parentFull).find(
+          (e) => e !== target && levenshtein(e.toLowerCase(), target.toLowerCase()) <= 2
+        )
+      }
+    } catch {
+      // ignore unreadable dirs
+    }
+    if (near) {
+      suggestion = `${parent ? parent + '/' : ''}${near}${normalized.slice(literal.length)}`
+      warnings.push(`Path does not exist. Did you mean ${suggestion}?`)
+    } else {
+      warnings.push(`Path "${literal}" does not exist in the project.`)
+    }
+  }
+
+  return { normalized, warnings, suggestion }
+}
 
 export type OwnershipArtifact = {
   /** Absolute path on disk. */

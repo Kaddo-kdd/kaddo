@@ -27,7 +27,7 @@ knowledge/agents/
   product/    bootstrap-agent.md · capability-agent.md
   tech/       architecture-agent.md · codebase-agent.md · stack-agent.md ·
               security-agent.md · standards-agent.md · module-design-agent.md · adr-agent.md
-  delivery/   backlog-agent.md · roadmap-agent.md · work-item-agent.md · implementation-agent.md · git-strategy-agent.md
+  delivery/   backlog-agent.md · roadmap-agent.md · work-item-agent.md · implementation-agent.md · ownership-agent.md · git-strategy-agent.md
   utilities/  legacy-agent.md
 ```
 
@@ -52,7 +52,7 @@ Los agentes se organizan en **grupos** por capa:
 | `business` | business-agent |
 | `product` | bootstrap-agent · capability-agent |
 | `tech` | architecture-agent · codebase-agent · stack-agent · security-agent · standards-agent · module-design-agent · adr-agent |
-| `delivery` | backlog-agent · roadmap-agent · work-item-agent · implementation-agent · git-strategy-agent |
+| `delivery` | backlog-agent · roadmap-agent · work-item-agent · implementation-agent · ownership-agent · git-strategy-agent |
 | `utilities` | legacy-agent |
 
 ```bash
@@ -95,6 +95,7 @@ Apoyan la ejecución diaria y los artefactos multirepo / globales (VS-017).
 | `backlog-agent` | Capturar ideas/notas crudas en un draft o candidato de roadmap (sin refinar) | `knowledge/delivery/work-items/draft/` o un candidato de roadmap |
 | `work-item-agent` | Redactar y refinar un work item desde el contexto | work item activo |
 | `implementation-agent` | Implementar un Work Item refinado; sugerir branch/scan/owners/guard | código · tests · conocimiento actualizado |
+| `ownership-agent` | Proponer globs `code:` precisos para Work Items/artefactos | globs `code:` propuestos (los aplica el humano) |
 | `git-strategy-agent` | Refinar la estrategia de Git | `knowledge/tech/git-strategy.md` |
 | `security-agent` | Documentar consideraciones de seguridad (sin escaneo) | `knowledge/tech/security.md` |
 | `standards-agent` | Definir estándares ligeros | `knowledge/tech/standards.md` |
@@ -145,6 +146,7 @@ Responde, para cualquier respuesta: **quién la produjo, qué produjo y qué sig
 | `backlog-agent` | Capturar ideas, estructurar trabajo nuevo | `work-items/draft/`, candidatos de roadmap | work-item-agent, roadmap-agent | código, git, **auto-ejecutar otros agentes** |
 | `work-item-agent` | Refinamiento de Work Items | `work-items/` | implementation-agent | **commits, PRs, ramas** |
 | `implementation-agent` | Implementación | código, tests, migraciones | **una rama** (según estrategia de Git), **un mensaje de commit**, scan, owners suggest, guard | ejecutar git, commitear/pushear/mergear sin confirmación |
+| `ownership-agent` | Ownership `code:` preciso | globs propuestos | `kaddo owners suggest`, `kaddo guard` | código, git, modificar archivos sin confirmación |
 | `guard-agent` | Knowledge drift | hallazgos, advertencias | actualizar conocimiento, actualizar ownership | ramas, commits, código |
 
 ### Modelo de responsabilidad de Git

@@ -28,6 +28,22 @@ Touched files:
     or ignore this artifact below if the change does not affect the knowledge.
 ```
 
+## Untracked files
+
+Guard reads the Git diff (modified/staged files), so brand-new files Git does not track yet are
+invisible to it. When untracked files exist, Guard prints a **non-blocking FYI** so you are not
+misled by a "no modified files detected" message:
+
+```text
+Untracked files detected (3):
+  - package.json
+  - src/index.ts
+  - tsconfig.json
+Guard may not fully evaluate these files until they are tracked. (FYI — non-blocking)
+```
+
+Track the files (`git add`) for Guard to relate them to artifact ownership.
+
 ## Unified discovery
 
 Guard discovers knowledge artifacts through the same shared service as `explain`, `context`,

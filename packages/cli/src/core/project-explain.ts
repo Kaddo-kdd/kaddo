@@ -78,11 +78,49 @@ export type ProjectExplanation = {
     workItemsMissingOwnership: number
   }
   domains: string[]
+  /** Possible duplicate Work Items (same source_id or normalized title). VS-052. */
+  duplicateWorkItems: { reason: string; items: { id: string; title: string }[] }[]
   layers: LayerStatus[]
   roadmap: RoadmapStats
   mappedModules: MappedModuleWithCoverage[]
   missingKnowledge: string[]
   suggestedNextSteps: string[]
+}
+
+function normalizeTitle(t: string): string {
+  return t
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
+}
+
+/** Detect possible duplicate Work Items by shared source_id or normalized title (VS-052). */
+export function findDuplicateWorkItems(
+  items: { id: string; title: string; sourceId?: string }[]
+): { reason: string; items: { id: string; title: string }[] }[] {
+  const groups: { reason: string; items: { id: string; title: string }[] }[] = []
+  const seen = new Set<string>()
+  const bucket = (key: string, reason: string, pred: (i: typeof items[number]) => boolean) => {
+    const matched = items.filter(pred)
+    if (matched.length > 1) {
+      const id = `${reason}:${key}:${matched.map((m) => m.id).sort().join(',')}`
+      if (!seen.has(id)) {
+        seen.add(id)
+        groups.push({ reason, items: matched.map((m) => ({ id: m.id, title: m.title })) })
+      }
+    }
+  }
+  // Same roadmap source candidate.
+  for (const sid of new Set(items.map((i) => i.sourceId).filter(Boolean) as string[])) {
+    bucket(sid, `same source candidate (${sid})`, (i) => i.sourceId === sid)
+  }
+  // Same normalized title (catches translations after accent/whitespace normalization).
+  for (const nt of new Set(items.map((i) => normalizeTitle(i.title)).filter(Boolean))) {
+    bucket(nt, 'same normalized title', (i) => normalizeTitle(i.title) === nt)
+  }
+  return groups
 }
 
 function first(values: unknown): string | undefined {
@@ -242,6 +280,11 @@ export function buildProjectExplanation(dir: string): ProjectExplanation {
 
   const domains = [...new Set(workItemArtifacts.flatMap((a) => a.domains))].filter(Boolean)
 
+  // Possible duplicate Work Items (VS-052) — non-blocking warning.
+  const duplicateWorkItems = findDuplicateWorkItems(
+    workItemArtifacts.map((a) => ({ id: a.id || a.title, title: a.title, sourceId: a.sourceId }))
+  )
+
   // Roadmap candidates vs materialized Work Items (any roadmap format).
   const roadmapPath = join(dir, ARCH_DIR, 'delivery', 'roadmap.md')
   const roadmapMd = exists(roadmapPath) ? readFile(roadmapPath) : null
@@ -298,6 +341,7 @@ export function buildProjectExplanation(dir: string): ProjectExplanation {
     workItems,
     ownership,
     domains,
+    duplicateWorkItems,
     layers,
     roadmap,
     mappedModules,
@@ -447,6 +491,16 @@ export function renderExplanationHuman(exp: ProjectExplanation): string {
   if (exp.missingKnowledge.length > 0) {
     lines.push('## Missing Knowledge')
     for (const m of exp.missingKnowledge) lines.push(`- ${m}`)
+    lines.push('')
+  }
+
+  if (exp.duplicateWorkItems.length > 0) {
+    lines.push('## Possible Duplicate Work Items')
+    for (const g of exp.duplicateWorkItems) {
+      lines.push(`- ${g.reason}:`)
+      for (const i of g.items) lines.push(`  - ${i.id} — ${i.title}`)
+    }
+    lines.push('Review before continuing (non-blocking).')
     lines.push('')
   }
 

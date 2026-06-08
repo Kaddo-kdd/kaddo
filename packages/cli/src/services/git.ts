@@ -62,6 +62,19 @@ export async function isGitRepo(dir: string): Promise<boolean> {
   }
 }
 
+/** Untracked files not ignored by .gitignore (read-only — never mutates git). VS-052. */
+export async function getUntrackedFiles(): Promise<string[]> {
+  try {
+    const result = await execa('git', ['ls-files', '--others', '--exclude-standard'])
+    return result.stdout
+      .split('\n')
+      .map((f) => f.trim())
+      .filter(Boolean)
+  } catch {
+    return []
+  }
+}
+
 export async function getModifiedFilesInCommit(ref = 'HEAD'): Promise<string[]> {
   try {
     const result = await execa('git', ['diff-tree', '--no-commit-id', '-r', '--name-only', ref])

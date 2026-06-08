@@ -69,6 +69,11 @@ delivered features:
 - Bugfixes: 1
 ```
 
+`explain` also flags **possible duplicate Work Items** (non-blocking) — items sharing the same
+roadmap source candidate or the same normalized title (which catches translated duplicates like
+`Initialize TypeScript CLI project` / `Inicializar proyecto TypeScript CLI`). Review them before
+continuing.
+
 When a roadmap is present, `explain` distinguishes **roadmap candidates** (entries the
 roadmap-agent proposed) from **materialized Work Items** (created under
 `knowledge/delivery/work-items/`). The *remaining candidates* count is the gap between them, and

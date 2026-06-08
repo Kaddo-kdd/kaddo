@@ -347,6 +347,20 @@ flowchart TD
     K --> K1["stack · security · standards · diagrams · adrs"]
 ```
 
+## Ownership asistido por agente
+
+El ownership-agent propone globs `code:` precisos; tú confirmas y los aplicas. `owners suggest` es
+la herramienta manual/override (con normalización de globs y validación de rutas).
+
+```mermaid
+flowchart LR
+    S[kaddo scan] --> C[kaddo context]
+    C --> O[ownership-agent]
+    O --> H{El humano confirma}
+    H --> A[kaddo owners suggest / apply]
+    A --> G[kaddo guard]
+```
+
 ## Flujo de ownership
 
 El ownership lo propone un agente a partir de las señales del scan y lo **confirma un

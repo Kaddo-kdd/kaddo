@@ -26,6 +26,7 @@ export const AGENT_GROUPS: Record<AgentGroup, string[]> = {
     'roadmap-agent.md',
     'work-item-agent.md',
     'implementation-agent.md',
+    'ownership-agent.md',
     'git-strategy-agent.md',
   ],
   utilities: ['legacy-agent.md'],
@@ -67,6 +68,7 @@ const RECOMMENDED_BY_STATE: Record<ProjectState, string[]> = {
     'backlog-agent.md',
     'work-item-agent.md',
     'implementation-agent.md',
+    'ownership-agent.md',
   ],
   legacy: [
     'legacy-agent.md',
@@ -76,6 +78,7 @@ const RECOMMENDED_BY_STATE: Record<ProjectState, string[]> = {
     'backlog-agent.md',
     'work-item-agent.md',
     'implementation-agent.md',
+    'ownership-agent.md',
   ],
 }
 

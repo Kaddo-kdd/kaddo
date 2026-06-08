@@ -2,10 +2,6 @@ import type { ContextPack } from '../core/context-pack.js'
 import { presentArtifacts } from '../services/mapped-modules.js'
 import { renderLayersMarkdown } from '../core/layers.js'
 
-function stateLabel(state: string): string {
-  return state === 'pre-ai' ? 'pre-AI' : state
-}
-
 /**
  * Render an LLM-friendly markdown context pack.
  * Deterministic, concise — meant to be pasted into a chat alongside a Kaddo agent prompt.
@@ -172,16 +168,17 @@ export function renderContextPack(pack: ContextPack): string {
     parts.push('_None — all expected context is present._\n')
   }
 
-  // 8. Recommended Agent Handoff
+  // 8. Recommended Agent Handoff — driven by the real phase (VS-052), so it agrees with the
+  // Current Phase block above instead of recommending early-stage agents by project.state.
   parts.push('## Recommended Agent Handoff\n')
-  parts.push(`Recommended agents for a ${stateLabel(project.state)} project:\n`)
+  parts.push(`Recommended next for the **${pack.phase.phase}** phase:\n`)
   parts.push(handoff.recommendedAgents.map((a, i) => `${i + 1}. ${a}`).join('\n') + '\n')
   if (handoff.nextSteps.length > 0) {
-    parts.push('Next steps:\n')
+    parts.push('Next step:\n')
     parts.push(handoff.nextSteps.map((s) => `- ${s}`).join('\n') + '\n')
   }
 
-  // 9. Instructions for the LLM
+  // 9. Instructions for the LLM — phase-specific (VS-052).
   parts.push('## Instructions for the LLM\n')
   parts.push(handoff.instructions.map((i) => `- ${i}`).join('\n') + '\n')
 

@@ -1,4 +1,4 @@
-import { getModifiedFiles, isGitRepo } from '../services/git.js'
+import { getModifiedFiles, getUntrackedFiles, isGitRepo } from '../services/git.js'
 import { discoverKnowledge } from '../services/knowledge-artifacts.js'
 import { analyzeGuard, type ArtifactMatch } from '../core/diff-analysis.js'
 import { loadIgnores, saveIgnore, isIgnored } from '../services/ignore-store.js'
@@ -175,6 +175,17 @@ export async function runGuard(opts: { staged?: boolean; interactive?: boolean; 
   const mode = opts.staged ? 'staged' : 'head'
   const currentFiles = await getModifiedFiles(mode)
 
+  // Untracked-file awareness (VS-052): new files git does not see yet. FYI only, never blocks.
+  const untrackedFiles = opts.staged ? [] : await getUntrackedFiles()
+  const printUntracked = (): void => {
+    if (untrackedFiles.length === 0 || jsonMode) return
+    console.log('')
+    console.log(`Untracked files detected (${untrackedFiles.length}):`)
+    for (const f of untrackedFiles.slice(0, 10)) console.log(`  - ${f}`)
+    if (untrackedFiles.length > 10) console.log(`  …and ${untrackedFiles.length - 10} more`)
+    console.log('Guard may not fully evaluate these files until they are tracked. (FYI — non-blocking)')
+  }
+
   // Workspace mode (opt-in): also collect diffs from local mapped module repos.
   let workspaceScan: WorkspaceScan | null = null
   if (opts.workspace) {
@@ -191,6 +202,7 @@ export async function runGuard(opts: { staged?: boolean; interactive?: boolean; 
   if (touchedFiles.length === 0) {
     if (workspaceScan) printWorkspaceHeader(workspaceScan)
     console.log('kaddo guard: no modified files detected.')
+    printUntracked()
     return
   }
 
@@ -236,11 +248,13 @@ export async function runGuard(opts: { staged?: boolean; interactive?: boolean; 
     if (workspaceScan) printWorkspaceHeader(workspaceScan)
     printHeader(touchedFiles)
     console.log('  No artifact ownership matches found.')
+    printUntracked()
     return
   }
 
   if (workspaceScan) printWorkspaceHeader(workspaceScan)
   printHeader(touchedFiles)
+  printUntracked()
 
   // Show active FYIs
   for (const match of activeMatches) {

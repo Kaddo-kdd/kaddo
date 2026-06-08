@@ -172,6 +172,19 @@ export const RESPONSIBILITY_MATRIX: Record<string, AgentResponsibility> = {
     ],
     next: ['kaddo scan', 'kaddo owners suggest', 'kaddo guard', 'kaddo explain'],
   },
+  'ownership-agent': {
+    agent: 'ownership-agent',
+    responsibleFor: ['Precise code: ownership for Work Items and artifacts'],
+    produces: ['proposed code: globs'],
+    canSuggest: ['kaddo owners suggest', 'kaddo guard'],
+    cannotSuggest: [
+      'code',
+      'branches',
+      'commits',
+      'modifying files without confirmation',
+    ],
+    next: ['kaddo owners suggest', 'kaddo guard'],
+  },
   'guard-agent': {
     agent: 'guard-agent',
     responsibleFor: ['Knowledge drift'],
@@ -298,6 +311,7 @@ export function renderResponsibilityMatrixMarkdown(): string {
     'roadmap-agent',
     'work-item-agent',
     'implementation-agent',
+    'ownership-agent',
     'guard-agent',
   ]
   const lines: string[] = []

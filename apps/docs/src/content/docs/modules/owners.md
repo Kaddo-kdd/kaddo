@@ -47,5 +47,21 @@ code:
 The assistant is **deterministic**: Kaddo suggests, you confirm. It never calls an LLM and
 never edits source code. If `.kaddo/scan.json` is missing, you can still enter globs manually.
 
-**Workflow:** `kaddo create` (or `kaddo create --from roadmap`) → `kaddo owners suggest` →
-`kaddo guard`.
+## Assisted manual entry
+
+When you type a glob by hand, Kaddo helps you avoid common mistakes:
+
+- **Normalizes** a directory path to a glob — `src/cli` → `src/cli/**`.
+- **Validates the path** and offers a near match — `src/shares/**` → *"Path does not exist. Did you
+  mean `src/shared/**`?"*.
+- **Warns on broad globs** — `src/**` → *"This glob is broad and may reduce Guard usefulness."*
+
+## Agent-assisted ownership
+
+For a precise, project-wide proposal, use the **`ownership-agent`**: it reads the context pack,
+Work Items, `codebase.md` and inventory and proposes narrow `code:` globs. You then confirm and
+apply them with `kaddo owners suggest` — the agent never modifies files. Think of
+`owners suggest` as the manual/override tool and the ownership-agent as the proposer.
+
+**Workflow:** `kaddo scan` → `kaddo context` → ownership-agent → human confirms →
+`kaddo owners suggest` → `kaddo guard`.

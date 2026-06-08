@@ -7,6 +7,7 @@ import {
   loadScanSignals,
   suggestGlobs,
   applyOwnership,
+  analyzeGlob,
   type OwnershipArtifact,
   type MergeMode,
 } from '../core/ownership-suggest.js'
@@ -102,7 +103,20 @@ async function chooseGlobs(suggested: string[]): Promise<string[]> {
       placeholder: 'src/payments/**',
       validate: (v) => (v.trim().length === 0 ? 'A glob is required.' : undefined),
     })
-    chosen.push(glob.trim())
+    // Assisted entry (VS-052): normalize, validate the path, warn on broad globs.
+    const analysis = analyzeGlob(cwd(), glob)
+    for (const w of analysis.warnings) log.warn(w)
+    let value = analysis.normalized
+    if (analysis.suggestion) {
+      const useSuggested = await confirm({
+        message: `Use ${analysis.suggestion} instead?`,
+        initialValue: true,
+      })
+      if (useSuggested) value = analysis.suggestion
+    } else if (analysis.normalized !== glob.trim()) {
+      log.info(`Normalized to ${analysis.normalized}`)
+    }
+    chosen.push(value)
     addMore = await confirm({ message: 'Add another glob?', initialValue: false })
   }
 

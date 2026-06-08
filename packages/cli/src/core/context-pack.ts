@@ -322,10 +322,14 @@ export function buildContextPack(
     deliveryMix,
     mappedModules,
     missing,
+    // VS-052: the handoff is driven by the REAL phase, not project.state, so the pack never
+    // contradicts the Current Phase block above it.
     handoff: {
-      recommendedAgents: recommendedAgentsForState(state),
-      nextSteps: nextStepsForState(state),
-      instructions: LLM_INSTRUCTIONS,
+      recommendedAgents: phase.recommendedAgents.length > 0
+        ? phase.recommendedAgents
+        : recommendedAgentsForState(state),
+      nextSteps: phase.nextStep ? [phase.nextStep] : nextStepsForState(state),
+      instructions: phase.llmInstructions.length > 0 ? phase.llmInstructions : LLM_INSTRUCTIONS,
       operatingRules: OPERATING_RULES,
     },
   }

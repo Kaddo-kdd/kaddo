@@ -345,6 +345,20 @@ flowchart TD
     K --> K1["stack · security · standards · diagrams · adrs"]
 ```
 
+## Ownership: agent-assisted
+
+The ownership-agent proposes precise `code:` globs; you confirm and apply them. `owners suggest`
+is the manual/override tool (with glob normalization and path validation).
+
+```mermaid
+flowchart LR
+    S[kaddo scan] --> C[kaddo context]
+    C --> O[ownership-agent]
+    O --> H{Human confirms}
+    H --> A[kaddo owners suggest / apply]
+    A --> G[kaddo guard]
+```
+
 ## Ownership flow
 
 Ownership is proposed from scan signals by an agent and **confirmed by a human** before it

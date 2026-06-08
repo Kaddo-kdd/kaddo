@@ -69,6 +69,11 @@ diferenciado de las features entregadas:
 - Bugfixes: 1
 ```
 
+`explain` también advierte **posibles Work Items duplicados** (no bloqueante) — items que comparten
+el mismo candidato de origen del roadmap o el mismo título normalizado (lo que detecta duplicados
+traducidos como `Initialize TypeScript CLI project` / `Inicializar proyecto TypeScript CLI`).
+Revísalos antes de continuar.
+
 Cuando hay un roadmap presente, `explain` distingue los **candidatos del roadmap** (entradas que
 propuso el roadmap-agent) de los **Work Items materializados** (creados bajo
 `knowledge/delivery/work-items/`). El conteo de *candidatos restantes* es la brecha entre ambos, y

@@ -28,6 +28,22 @@ Touched files:
     or ignore this artifact below if the change does not affect the knowledge.
 ```
 
+## Archivos untracked
+
+Guard lee el diff de Git (archivos modificados/staged), así que los archivos nuevos que Git todavía
+no trackea son invisibles para él. Cuando hay archivos untracked, Guard imprime un **FYI no
+bloqueante** para que un mensaje de "no modified files detected" no te confunda:
+
+```text
+Untracked files detected (3):
+  - package.json
+  - src/index.ts
+  - tsconfig.json
+Guard may not fully evaluate these files until they are tracked. (FYI — non-blocking)
+```
+
+Trackea los archivos (`git add`) para que Guard pueda relacionarlos con el ownership de artefactos.
+
 ## Descubrimiento unificado
 
 Guard descubre los artefactos de conocimiento mediante el mismo servicio compartido que

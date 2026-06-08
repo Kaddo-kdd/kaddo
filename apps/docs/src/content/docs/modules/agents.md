@@ -27,7 +27,7 @@ knowledge/agents/
   product/    bootstrap-agent.md · capability-agent.md
   tech/       architecture-agent.md · codebase-agent.md · stack-agent.md ·
               security-agent.md · standards-agent.md · module-design-agent.md · adr-agent.md
-  delivery/   backlog-agent.md · roadmap-agent.md · work-item-agent.md · implementation-agent.md · git-strategy-agent.md
+  delivery/   backlog-agent.md · roadmap-agent.md · work-item-agent.md · implementation-agent.md · ownership-agent.md · git-strategy-agent.md
   utilities/  legacy-agent.md
 ```
 
@@ -52,7 +52,7 @@ Agents are organized into **groups** by layer:
 | `business` | business-agent |
 | `product` | bootstrap-agent · capability-agent |
 | `tech` | architecture-agent · codebase-agent · stack-agent · security-agent · standards-agent · module-design-agent · adr-agent |
-| `delivery` | backlog-agent · roadmap-agent · work-item-agent · implementation-agent · git-strategy-agent |
+| `delivery` | backlog-agent · roadmap-agent · work-item-agent · implementation-agent · ownership-agent · git-strategy-agent |
 | `utilities` | legacy-agent |
 
 ```bash
@@ -95,6 +95,7 @@ These support day-to-day execution and the multirepo / global artifacts (VS-017)
 | `backlog-agent` | Capture raw ideas/notes into a draft or roadmap candidate (no refinement) | `knowledge/delivery/work-items/draft/` or a roadmap candidate |
 | `work-item-agent` | Draft and refine a work item from context | active work item |
 | `implementation-agent` | Implement a refined Work Item; suggest branch/scan/owners/guard | code · tests · updated knowledge |
+| `ownership-agent` | Propose precise `code:` ownership globs for Work Items/artifacts | proposed `code:` globs (human applies) |
 | `git-strategy-agent` | Refine the Git strategy | `knowledge/tech/git-strategy.md` |
 | `security-agent` | Document security considerations (no scanning) | `knowledge/tech/security.md` |
 | `standards-agent` | Define lightweight standards | `knowledge/tech/standards.md` |
@@ -144,6 +145,7 @@ This answers, for any response: **who produced it, what it produced, and what ru
 | `backlog-agent` | Capture ideas, structure new work | `work-items/draft/`, roadmap candidates | work-item-agent, roadmap-agent | code, git, **auto-running other agents** |
 | `work-item-agent` | Work Item refinement | `work-items/` | implementation-agent | **commits, PRs, branches** |
 | `implementation-agent` | Implementation | code, tests, migrations | **a branch** (per Git strategy), **a commit message**, scan, owners suggest, guard | running git, committing/pushing/merging without confirmation |
+| `ownership-agent` | Precise `code:` ownership | proposed globs | `kaddo owners suggest`, `kaddo guard` | code, git, modifying files without confirmation |
 | `guard-agent` | Knowledge drift | findings, warnings | update knowledge, update ownership | branches, commits, code |
 
 ### Git responsibility model

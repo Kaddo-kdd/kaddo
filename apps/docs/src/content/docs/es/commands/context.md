@@ -82,9 +82,17 @@ Recommended next: implementation-agent
 Next step: Start WI-014 — Create task (ready → in-progress)
 ```
 
+El **Recommended Agent Handoff** y las **Instructions for the LLM** también se basan en esta fase
+real (VS-052) — no en `project.state` — para que el pack nunca recomiende agentes de etapa
+temprana si el proyecto ya está en Active Delivery. Las instrucciones al LLM cambian por fase (p.
+ej. Active Delivery / ready → "usa el implementation-agent, sugiere solo el nombre de rama, no
+ejecutes git"; Active Delivery / draft → "refina los Work Items draft, no implementes salvo que se
+pida explícitamente").
+
 ## Handoff según el estado
 
-Los agentes recomendados se adaptan al estado del proyecto definido en `kaddo init`:
+El conjunto basado en estado sigue sembrando las fases tempranas; las recomendaciones se adaptan al
+estado del proyecto definido en `kaddo init`:
 
 | Estado | Handoff recomendado |
 |---|---|

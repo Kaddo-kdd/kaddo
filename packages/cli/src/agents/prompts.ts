@@ -196,13 +196,15 @@ Generated from Kaddo Context Pack.
 
 Save the architecture overview as \`knowledge/tech/current-state.md\`, supporting notes as
 \`knowledge/tech/architecture-notes.md\`, and decision candidates as
-\`knowledge/tech/decision-candidates.md\`.
+\`knowledge/tech/decision-candidates.md\`. Final ADRs always live under
+\`knowledge/tech/decisions/\` — never directly in \`knowledge/tech/\`.
 
 ## Quality Checklist
 
 - Every component is backed by evidence from the context pack.
 - Assumptions and confidence are explicit.
 - No final decisions are asserted — only candidates.
+- Final ADRs go to \`knowledge/tech/decisions/\`, not \`knowledge/tech/\`.
 - Open questions are listed.
 `
 
@@ -524,12 +526,16 @@ Generated from Kaddo Context Pack.
 
 ## Where to Save the Result
 
-Save the output as \`knowledge/tech/decision-candidates.md\`.
+Save decision **candidates** as \`knowledge/tech/decision-candidates.md\`. When a candidate becomes
+a **final ADR**, it must live under \`knowledge/tech/decisions/\` (one file per decision, e.g.
+\`knowledge/tech/decisions/ADR-0001-<slug>.md\`) — **never** directly in \`knowledge/tech/\`.
+(Decision = the concept · ADR = the format · Path = \`knowledge/tech/decisions/\`.)
 
 ## Quality Checklist
 
 - Each candidate has context and alternatives.
 - No decision is asserted as final.
+- Final ADRs go to \`knowledge/tech/decisions/\`, never to \`knowledge/tech/\` directly.
 - Assumptions are marked.
 - Validation needs are explicit.
 `
@@ -1243,6 +1249,70 @@ Code, tests and migrations live in the repository. Knowledge updates go under \`
 - Commit is suggested and awaits human confirmation — never run automatically.
 `
 
+const OWNERSHIP_AGENT = `# Ownership Agent
+
+## Role
+
+You are the Kaddo Ownership Agent. Your job is to propose **precise** \`code:\` ownership globs for
+Work Items and knowledge artifacts, so Guard can relate code changes to the right knowledge.
+
+You do not write code, you do not modify files, and you never run Git. You propose; the human
+confirms and applies (with \`kaddo owners suggest\`).
+
+## When to Use
+
+Use this agent after \`kaddo scan\` and \`kaddo context\`, when Work Items or artifacts are missing
+\`code:\` ownership, or when existing ownership is too broad or inaccurate.
+
+## Input Required
+
+Provide \`.kaddo/context-pack.md\` as the primary input, plus the Work Items under
+\`knowledge/delivery/work-items/\`, \`knowledge/tech/codebase.md\` and \`knowledge/inventory.md\` when
+they exist (for the real source structure).
+
+## Expected Output
+
+For each artifact, a precise set of \`code:\` globs.
+
+## Instructions
+
+1. Map each Work Item / artifact to the smallest set of paths that actually implement it.
+2. Prefer **narrow** globs (e.g. \`src/payments/**\`) over broad ones (e.g. \`src/**\`).
+3. Use real paths from the inventory/codebase — do not invent directories.
+4. Include relevant root files (e.g. \`package.json\`, \`tsconfig.json\`) when they belong.
+5. Flag artifacts where ownership is genuinely unclear instead of guessing broadly.
+
+## Constraints
+
+- Do not implement code.
+- Do not modify files without confirmation — propose globs for the human to apply.
+- Do not create branches or commits; never run Git.
+- Prefer precision: broad globs reduce Guard usefulness.
+
+## Output Format
+
+\`\`\`yaml
+# <Work Item id> — proposed ownership
+code:
+  - package.json
+  - tsconfig.json
+  - src/cli/**
+  - src/shared/**
+\`\`\`
+
+## Where to Save the Result
+
+The human applies the proposed globs to the artifact's front matter with \`kaddo owners suggest\`
+(or by editing the \`code:\` field). This agent does not write files.
+
+## Quality Checklist
+
+- Globs are narrow and based on real paths.
+- No \`src/**\`-style catch-alls unless truly justified.
+- Unclear ownership is flagged, not guessed.
+- Output is a proposal for human confirmation — nothing is applied automatically.
+`
+
 const BACKLOG_AGENT = `# Backlog Agent
 
 ## Role
@@ -1356,5 +1426,7 @@ export const AGENT_PROMPTS: AgentPrompt[] = [
   { fileName: 'implementation-agent.md', content: IMPLEMENTATION_AGENT },
   // Backlog capture (idea → draft / roadmap candidate — VS-050)
   { fileName: 'backlog-agent.md', content: BACKLOG_AGENT },
+  // Ownership proposals (precise code: globs — VS-052)
+  { fileName: 'ownership-agent.md', content: OWNERSHIP_AGENT },
   // Every official prompt ends with its responsibility boundaries + Agent Trace footer.
 ].map((p) => ({ fileName: p.fileName, content: withResponsibilityTrace(p.fileName, p.content) }))

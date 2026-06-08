@@ -15,6 +15,7 @@ export type Artifact = {
   phase: string
   initiative: string
   source: string
+  sourceId: string
 }
 
 function parseArtifact(filePath: string, raw: string): Artifact | null {
@@ -36,6 +37,7 @@ function parseArtifact(filePath: string, raw: string): Artifact | null {
       phase: String(data.phase ?? ''),
       initiative: String(data.initiative ?? data.source_initiative ?? ''),
       source: data.source ? String(data.source) : '',
+      sourceId: String(data.source_id ?? ''),
     }
   } catch {
     return null

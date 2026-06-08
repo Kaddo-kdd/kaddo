@@ -30,6 +30,8 @@ export type PhaseAssessment = {
   reasons: string[]
   recommendedAgents: string[]
   nextStep: string
+  /** Phase-specific instructions for the LLM reading the context pack (VS-052). */
+  llmInstructions: string[]
 }
 
 function layer(layers: LayerStatus[], name: LayerName): LayerMaturity {
@@ -100,23 +102,31 @@ export function assessPhase(input: PhaseInput): PhaseAssessment {
 
   let recommendedAgents: string[] = []
   let nextStep = ''
+  let llmInstructions: string[] = []
 
   switch (phase) {
     case 'Discovery': {
       const m = firstMissingLayerAgent(input.layers)
       recommendedAgents = [m.agent]
       nextStep = m.step
+      llmInstructions = [`Use the ${m.agent} to fill the missing base knowledge.`, 'Do not write code.']
       break
     }
     case 'Planning': {
       recommendedAgents = ['roadmap-agent']
       nextStep = 'Use roadmap-agent to create knowledge/delivery/roadmap.md'
+      llmInstructions = ['Use the roadmap-agent.', 'Do not write code.', 'Generate roadmap candidates.']
       break
     }
     case 'Delivery Preparation': {
       recommendedAgents = ['kaddo create --from roadmap', 'work-item-agent']
       const n = input.roadmap.remaining || input.roadmap.candidates
       nextStep = `Run \`kaddo create --from roadmap\`${n ? ` (${n} candidate(s))` : ''}, then refine with work-item-agent`
+      llmInstructions = [
+        'Materialize roadmap candidates with `kaddo create --from roadmap`.',
+        'Use the work-item-agent to refine them.',
+        'Do not implement yet.',
+      ]
       break
     }
     case 'Active Delivery': {
@@ -124,24 +134,44 @@ export function assessPhase(input: PhaseInput): PhaseAssessment {
         const wi = firstOf('ready')
         recommendedAgents = ['implementation-agent']
         nextStep = wi ? `Start ${wi.id} — ${wi.title} (ready → in-progress)` : 'Start a ready Work Item'
+        llmInstructions = [
+          'Use the implementation-agent.',
+          'Suggest a branch name only.',
+          'Do not run git commands.',
+        ]
       } else if (bs['in-progress'] > 0) {
         const wi = firstOf('in-progress')
         recommendedAgents = ['implementation-agent', 'kaddo scan', 'kaddo owners suggest', 'kaddo guard']
         nextStep = wi
           ? `Continue ${wi.id} — ${wi.title}; then run kaddo scan, owners suggest, guard`
           : 'Continue the in-progress Work Item; then scan, owners suggest, guard'
+        llmInstructions = [
+          'Continue the in-progress Work Item with the implementation-agent.',
+          'After changes, run `kaddo scan`, `kaddo owners suggest` and `kaddo guard`.',
+          'Do not commit, push or merge without explicit human confirmation.',
+        ]
       } else if (bs.draft > 0) {
         const wi = firstOf('draft')
         recommendedAgents = ['work-item-agent']
         nextStep = wi ? `Refine ${wi.id} from draft to ready` : 'Refine a draft Work Item to ready'
+        llmInstructions = [
+          'Refine draft Work Items to ready.',
+          'Use the work-item-agent.',
+          'Do not implement unless the user explicitly asks.',
+        ]
       } else if (bs.blocked > 0) {
         const wi = firstOf('blocked')
         recommendedAgents = ['work-item-agent']
         nextStep = wi ? `Resolve the blocker on ${wi.id} — ${wi.title}` : 'Resolve the blockers on active work'
+        llmInstructions = [
+          'Resolve the blockers with the work-item-agent.',
+          'Do not implement blocked work.',
+        ]
       }
       // Ownership gap is a parallel recommendation.
       if (input.ownership.workItemsMissingOwnership > 0) {
         recommendedAgents.push('kaddo owners suggest')
+        llmInstructions.push('Ownership is incomplete — propose `code:` globs (run `kaddo owners suggest`).')
       }
       break
     }
@@ -149,13 +179,15 @@ export function assessPhase(input: PhaseInput): PhaseAssessment {
       if (input.roadmap.remaining > 0) {
         recommendedAgents = ['kaddo create --from roadmap', 'work-item-agent']
         nextStep = `Materialize ${input.roadmap.remaining} remaining roadmap candidate(s)`
+        llmInstructions = ['Materialize the remaining roadmap candidates.', 'Do not implement yet.']
       } else {
         recommendedAgents = ['roadmap-agent']
         nextStep = 'No active work — use roadmap-agent to plan the next initiative'
+        llmInstructions = ['No active work.', 'Use the roadmap-agent to plan the next initiative.']
       }
       break
     }
   }
 
-  return { phase, reasons, recommendedAgents, nextStep }
+  return { phase, reasons, recommendedAgents, nextStep, llmInstructions }
 }
