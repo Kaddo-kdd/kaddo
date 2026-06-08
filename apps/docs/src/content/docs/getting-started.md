@@ -75,10 +75,20 @@ Back in the CLI, turn understanding into evolving code:
 
 ```bash
 kaddo create --from roadmap   # turn a roadmap candidate into a Work Item
-kaddo owners suggest          # declare code: ownership on the Work Item
+# work-item-agent → refine it · ownership-agent → propose code: globs
+kaddo owners suggest          # confirm or adjust the proposed ownership
+# implementation-agent → implement
+kaddo scan                    # refresh the technical inventory
 kaddo guard                   # detect possible knowledge drift before committing
 kaddo explain                 # summarize what Kaddo currently knows
 ```
+
+After creating or refining a Work Item, use the [`ownership-agent`](/modules/agents/) to propose
+precise `code:` globs. Then confirm or adjust them with `kaddo owners suggest`. This keeps
+ownership human-controlled while avoiding broad guesses like `src/**`.
+
+> **Ownership in Kaddo:** the agent proposes · the human confirms · the CLI records · Guard
+> verifies.
 
 ## Which command, when?
 

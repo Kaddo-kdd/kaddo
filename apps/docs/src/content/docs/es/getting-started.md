@@ -75,10 +75,20 @@ De vuelta en el CLI, convierte el entendimiento en evolución del código:
 
 ```bash
 kaddo create --from roadmap   # convierte un candidato del roadmap en un Work Item
-kaddo owners suggest          # declara el ownership (code:) en el Work Item
+# work-item-agent → refinarlo · ownership-agent → proponer globs code:
+kaddo owners suggest          # confirma o ajusta el ownership propuesto
+# implementation-agent → implementar
+kaddo scan                    # refresca el inventario técnico
 kaddo guard                   # detecta posible deriva antes de hacer commit
 kaddo explain                 # resume lo que Kaddo sabe actualmente
 ```
+
+Después de crear o refinar un Work Item, usa el [`ownership-agent`](/es/modules/agents/) para
+proponer globs de código precisos. Luego confírmalos o ajústalos con `kaddo owners suggest`. Esto
+mantiene el ownership bajo control humano y evita aproximaciones demasiado amplias como `src/**`.
+
+> **Ownership en Kaddo:** el agente propone · el humano confirma · el CLI registra · Guard
+> verifica.
 
 ## ¿Qué comando y cuándo?
 
