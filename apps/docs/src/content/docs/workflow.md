@@ -121,8 +121,12 @@ commit rules live in the `work-item-agent` prompt — the Kaddo CLI never runs g
 Ownership is declared on artifacts and confirmed by a human:
 
 ```txt
-kaddo scan → kaddo owners suggest → agent interprets → human confirms → ownership recorded
+kaddo scan → kaddo context → ownership-agent → human confirms → kaddo owners suggest → kaddo guard
 ```
+
+The **ownership-agent** proposes precise `code:` globs; `kaddo owners suggest` is the manual /
+override tool (it normalizes paths like `src/cli` → `src/cli/**`, validates them and warns on broad
+globs like `src/**`).
 
 `code:` accepts **multiple globs**:
 

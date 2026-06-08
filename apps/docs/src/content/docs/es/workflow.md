@@ -121,8 +121,12 @@ commit viven en el prompt del `work-item-agent` — el CLI de Kaddo nunca corre 
 El ownership se declara en los artefactos y lo confirma un humano:
 
 ```txt
-kaddo scan → kaddo owners suggest → el agente interpreta → el humano confirma → ownership registrado
+kaddo scan → kaddo context → ownership-agent → el humano confirma → kaddo owners suggest → kaddo guard
 ```
+
+El **ownership-agent** propone globs `code:` precisos; `kaddo owners suggest` es la herramienta
+manual / override (normaliza rutas como `src/cli` → `src/cli/**`, las valida y advierte por globs
+amplios como `src/**`).
 
 `code:` acepta **múltiples globs**:
 
