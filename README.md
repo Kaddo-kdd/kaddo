@@ -61,6 +61,22 @@ npx @kaddo/cli init
 npm install -g @kaddo/cli && kaddo --help
 ```
 
+## Operating moments
+
+Kaddo matures a project's knowledge through four moments — **Base → Definition → Projection →
+Execution** — rather than a flat list of commands:
+
+- **Base** — `init` · `bootstrap` · `scan` · `add agents` · `context` · `understand` (set up the
+  workspace and knowledge structure).
+- **Definition** — business-agent · product-agent · capability-agent · codebase-agent ·
+  architecture-agent (turn the idea into clear knowledge).
+- **Projection** — roadmap-agent · backlog-agent · `create --from roadmap` · work-item-agent ·
+  ownership-agent (turn knowledge into a delivery plan).
+- **Execution** — implementation-agent · `scan` · `owners suggest` · `guard` · `explain` (build,
+  verify and keep knowledge in sync).
+
+See [**Operating Moments**](https://kaddo.trycatch.tv/operating-moments/) for the full breakdown.
+
 ## Full workflow
 
 ```bash

@@ -14,6 +14,17 @@ Kaddo en conocimiento estructurado del proyecto.
 > **Kaddo no ejecuta estos agentes.** El CLI prepara contexto determinista; el LLM hace la
 > interpretación. Sin API key, sin proveedor de modelo, sin automatización.
 
+## Agentes por momento de operación
+
+Cada agente interviene en uno de los [momentos de operación](/es/operating-moments/) de Kaddo:
+
+| Momento | Agentes |
+|---|---|
+| **Base** | bootstrap-agent · business-agent · codebase-agent |
+| **Definición** | business-agent · product-agent · capability-agent · codebase-agent · architecture-agent · adr-agent/decision-agent |
+| **Proyección** | roadmap-agent · backlog-agent · work-item-agent · ownership-agent |
+| **Ejecución** | implementation-agent · ownership-agent · architecture-agent · capability-agent · adr-agent · guard-agent |
+
 ## Instalación
 
 `kaddo add agents` crea `knowledge/agents/`:

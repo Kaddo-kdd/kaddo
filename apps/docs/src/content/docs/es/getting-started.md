@@ -3,6 +3,11 @@ title: Primeros pasos
 description: Instala Kaddo e inicialízalo en tu proyecto.
 ---
 
+Kaddo madura el conocimiento de un proyecto en cuatro momentos — **Base → Definición → Proyección →
+Ejecución**. Esta página cubre los primeros pasos; ver
+[Momentos de operación](/es/operating-moments/) para el flujo completo (comandos, agentes y
+resultado esperado por momento).
+
 ## Instalación
 
 ```bash

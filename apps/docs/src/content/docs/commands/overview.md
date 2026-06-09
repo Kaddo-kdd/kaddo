@@ -3,6 +3,9 @@ title: Commands overview
 description: The Kaddo CLI surface.
 ---
 
+These commands group into Kaddo's four [operating moments](/operating-moments/) —
+**Base → Definition → Projection → Execution** — which explain *when* each one is used.
+
 ## Command responsibility matrix
 
 Each command answers one question and has a clear next step:

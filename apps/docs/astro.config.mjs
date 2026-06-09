@@ -89,6 +89,7 @@ export default defineConfig({
           items: [
             { label: 'Introduction', translations: { es: 'Introducción' }, slug: 'introduction' },
             { label: 'Getting started', translations: { es: 'Primeros pasos' }, slug: 'getting-started' },
+            { label: 'Operating Moments', translations: { es: 'Momentos de operación' }, slug: 'operating-moments' },
             { label: 'Workflow', translations: { es: 'Flujo de trabajo' }, slug: 'workflow' },
             { label: 'Visual Guide', translations: { es: 'Guía visual' }, slug: 'visual-guide' },
             { label: 'Project scope', translations: { es: 'Alcance del proyecto' }, slug: 'project-scope' },

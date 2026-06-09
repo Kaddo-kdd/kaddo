@@ -3,6 +3,11 @@ title: Flujo de trabajo
 description: El loop completo de Kaddo, el reparto CLI vs LLM y cómo apoya proyectos nuevos, pre-IA y legacy.
 ---
 
+Kaddo madura el conocimiento de un proyecto en cuatro **momentos de operación** — **Base →
+Definición → Proyección → Ejecución**. Esta página es el loop práctico; ver
+[Momentos de operación](/es/operating-moments/) para los comandos, agentes y resultado esperado de
+cada momento.
+
 Kaddo tiene un único loop práctico:
 
 ```bash

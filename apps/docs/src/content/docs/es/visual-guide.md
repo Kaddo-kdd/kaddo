@@ -11,6 +11,19 @@ abrirlo a pantalla completa.
 > Estos diagramas describen comportamiento que existe hoy. **No** implican ninguna
 > automatización futura — mira [Qué no significan los diagramas](#qué-no-significan-los-diagramas).
 
+## Momentos de operación
+
+Kaddo madura el conocimiento de un proyecto en cuatro momentos. Ver
+[Momentos de operación](/es/operating-moments/) para el detalle completo.
+
+```mermaid
+flowchart TD
+    A["Base — init · bootstrap · scan · add agents · context · understand"] -->
+    B["Definición — business-agent · product-agent · capability-agent · codebase-agent"]
+    B --> C["Proyección — roadmap-agent · backlog-agent · create --from roadmap · work-item-agent"]
+    C --> D["Ejecución — implementation-agent · scan · owners suggest · guard · explain"]
+```
+
 ## Capas de conocimiento (macro-flujo)
 
 Kaddo enmarca todo el proyecto en cuatro capas macro bajo `knowledge/`. Cada una responde

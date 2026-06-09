@@ -10,6 +10,19 @@ Guard, multirepo and governance fit in. Click any diagram to open it full-screen
 > These diagrams describe behavior that exists today. They do **not** imply any future
 > automation — see [What the diagrams do not mean](#what-the-diagrams-do-not-mean).
 
+## Operating moments
+
+Kaddo matures a project's knowledge through four moments. See
+[Operating Moments](/operating-moments/) for the full breakdown.
+
+```mermaid
+flowchart TD
+    A["Base — init · bootstrap · scan · add agents · context · understand"] -->
+    B["Definition — business-agent · product-agent · capability-agent · codebase-agent"]
+    B --> C["Projection — roadmap-agent · backlog-agent · create --from roadmap · work-item-agent"]
+    C --> D["Execution — implementation-agent · scan · owners suggest · guard · explain"]
+```
+
 ## Knowledge layers (macro flow)
 
 Kaddo frames the whole project as four macro layers under `knowledge/`. Each answers one

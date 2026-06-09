@@ -3,6 +3,11 @@ title: Workflow
 description: The full Kaddo loop, the CLI vs LLM split, and how it supports new, pre-AI and legacy projects.
 ---
 
+Kaddo matures a project's knowledge through four **operating moments** — **Base → Definition →
+Projection → Execution**. This page is the practical loop; see
+[Operating Moments](/operating-moments/) for the commands, agents and expected result of each
+moment.
+
 Kaddo has one practical loop:
 
 ```bash

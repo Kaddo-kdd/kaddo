@@ -3,6 +3,10 @@ title: Getting started
 description: Install Kaddo and initialize it in your project.
 ---
 
+Kaddo matures a project's knowledge through four moments — **Base → Definition → Projection →
+Execution**. This page covers the first steps; see [Operating Moments](/operating-moments/) for the
+full flow (commands, agents and expected result per moment).
+
 ## Install
 
 ```bash

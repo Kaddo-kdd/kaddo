@@ -3,6 +3,9 @@ title: Resumen de comandos
 description: La superficie de la CLI de Kaddo.
 ---
 
+Estos comandos se agrupan en los cuatro [momentos de operación](/es/operating-moments/) de Kaddo —
+**Base → Definición → Proyección → Ejecución** — que explican *cuándo* se usa cada uno.
+
 ## Matriz de responsabilidades de comandos
 
 Cada comando responde una pregunta y tiene un siguiente paso claro:
