@@ -6,6 +6,10 @@ description: Map secondary repositories as living modules of one system.
 Kaddo represents not only the main architecture repo, but also the **secondary
 repos** (frontend, backend, workers, infra…) as living modules of the same system.
 
+> **Multirepo vs Knowledge Capsules.** Map a repo as a module when you have access and it is in
+> scope. When a repo belongs to another team, is access-restricted, or you only need integration
+> context, import a [Knowledge Capsule](/knowledge-capsules/) instead — no mapping, no source.
+
 ## Two levels of descriptor
 
 - **`kaddo module --init`** writes `knowledge/module.yml` — a repo describing

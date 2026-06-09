@@ -160,6 +160,23 @@ export function renderContextPack(pack: ContextPack): string {
     )
   }
 
+  // 6c. External Knowledge — imported Knowledge Capsules (VS-054).
+  if (pack.external.length > 0) {
+    parts.push('## External Knowledge\n')
+    parts.push(
+      'Imported Knowledge Capsules — minimal context about external systems (not their source).\n'
+    )
+    for (const cap of pack.external) {
+      const lines = [`### ${cap.system}`, '']
+      if (cap.purpose) lines.push(`- Purpose: ${cap.purpose}`)
+      if (cap.capabilities.length) lines.push(`- Capabilities: ${cap.capabilities.join(', ')}`)
+      if (cap.contracts.length) lines.push(`- Contracts: ${cap.contracts.join(', ')}`)
+      if (cap.owner) lines.push(`- Owner: ${cap.owner}`)
+      if (cap.knownRisks.length) lines.push(`- Known risks: ${cap.knownRisks.join('; ')}`)
+      parts.push(lines.join('\n') + '\n')
+    }
+  }
+
   // 7. Missing Context
   parts.push('## Missing Context\n')
   if (missing.length > 0) {

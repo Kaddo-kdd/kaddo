@@ -358,6 +358,20 @@ flowchart TD
     K --> K1["stack · security · standards · diagrams · adrs"]
 ```
 
+## Knowledge Capsules (external context)
+
+A project exports a [Knowledge Capsule](/knowledge-capsules/); another imports it as external
+context — no multirepo mapping, no source access.
+
+```mermaid
+flowchart LR
+    R[External repo] --> E[kaddo capsule export]
+    E --> CAP[Knowledge Capsule]
+    CAP --> A[kaddo capsule add]
+    A --> CTX["External Knowledge in context-pack"]
+    CTX --> L[LLM agent]
+```
+
 ## Ownership: agent-assisted
 
 The ownership-agent proposes precise `code:` globs; you confirm and apply them. `owners suggest`

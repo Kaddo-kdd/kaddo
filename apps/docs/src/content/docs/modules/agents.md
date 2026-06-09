@@ -37,7 +37,7 @@ knowledge/agents/
   business/   business-agent.md
   product/    bootstrap-agent.md · capability-agent.md
   tech/       architecture-agent.md · codebase-agent.md · stack-agent.md ·
-              security-agent.md · standards-agent.md · module-design-agent.md · adr-agent.md
+              security-agent.md · standards-agent.md · module-design-agent.md · adr-agent.md · capsule-agent.md
   delivery/   backlog-agent.md · roadmap-agent.md · work-item-agent.md · implementation-agent.md · ownership-agent.md · git-strategy-agent.md
   utilities/  legacy-agent.md
 ```
@@ -62,7 +62,7 @@ Agents are organized into **groups** by layer:
 |---|---|
 | `business` | business-agent |
 | `product` | bootstrap-agent · capability-agent |
-| `tech` | architecture-agent · codebase-agent · stack-agent · security-agent · standards-agent · module-design-agent · adr-agent |
+| `tech` | architecture-agent · codebase-agent · stack-agent · security-agent · standards-agent · module-design-agent · adr-agent · capsule-agent |
 | `delivery` | backlog-agent · roadmap-agent · work-item-agent · implementation-agent · ownership-agent · git-strategy-agent |
 | `utilities` | legacy-agent |
 
@@ -107,6 +107,7 @@ These support day-to-day execution and the multirepo / global artifacts (VS-017)
 | `work-item-agent` | Draft and refine a work item from context | active work item |
 | `implementation-agent` | Implement a refined Work Item; suggest branch/scan/owners/guard | code · tests · updated knowledge |
 | `ownership-agent` | Propose precise `code:` ownership globs for Work Items/artifacts | proposed `code:` globs (human applies) |
+| `capsule-agent` | Refine/validate a Knowledge Capsule for external sharing (no secrets/source) | `.kaddo/exports/<system>.capsule.md` |
 | `git-strategy-agent` | Refine the Git strategy | `knowledge/tech/git-strategy.md` |
 | `security-agent` | Document security considerations (no scanning) | `knowledge/tech/security.md` |
 | `standards-agent` | Define lightweight standards | `knowledge/tech/standards.md` |

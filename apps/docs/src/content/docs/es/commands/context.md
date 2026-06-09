@@ -34,6 +34,12 @@ Por defecto, el context pack incluye solo Work Items activos: `draft`, `ready`,
 `in-progress` y `blocked`. `completed` y `archived` son conocimiento historico y se excluyen
 para que el trabajo antiguo no domine el handoff al LLM.
 
+## External Knowledge
+
+Si importaste [Knowledge Capsules](/es/knowledge-capsules/) (`kaddo capsule add`), el pack agrega
+una sección `## External Knowledge` que resume cada sistema externo (propósito · capacidades ·
+contratos · owner · riesgos) — contexto mínimo de sistemas que no mapeas como multirepo.
+
 ## Candidatos del roadmap vs materializados
 
 Cuando existe `knowledge/delivery/roadmap.md`, la sección `## Roadmap` reporta **candidatos**

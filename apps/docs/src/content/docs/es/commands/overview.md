@@ -93,4 +93,6 @@ Comandos de apoyo:
 | `kaddo history` | Lista Work Items con filtros |
 | `kaddo owners` | Lista los dueños de dominio |
 | `kaddo module` | Muestra o inicializa el descriptor de módulo multirepo |
+| `kaddo capsule export` | Exporta una [Knowledge Capsule](/es/knowledge-capsules/) de este proyecto |
+| `kaddo capsule add <path>` | Importa una Knowledge Capsule externa como contexto |
 | `kaddo add <module>` | Instala un módulo opcional |

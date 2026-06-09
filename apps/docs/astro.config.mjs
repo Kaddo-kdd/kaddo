@@ -159,6 +159,7 @@ export default defineConfig({
             { label: 'Agent Prompt Packs', translations: { es: 'Agentes (Prompt Packs)' }, slug: 'modules/agents' },
             { label: 'Domain Owners', translations: { es: 'Domain Owners' }, slug: 'modules/owners' },
             { label: 'Multirepo modules', translations: { es: 'Módulos multirepo' }, slug: 'modules/multirepo' },
+            { label: 'Knowledge Capsules', translations: { es: 'Knowledge Capsules' }, slug: 'knowledge-capsules' },
             { label: 'Standards, security & stack', translations: { es: 'Estándares, seguridad y stack' }, slug: 'modules/global-docs' },
             { label: 'Git strategy', translations: { es: 'Estrategia de Git' }, slug: 'modules/git-strategy' },
           ],

@@ -360,6 +360,20 @@ flowchart TD
     K --> K1["stack · security · standards · diagrams · adrs"]
 ```
 
+## Knowledge Capsules (contexto externo)
+
+Un proyecto exporta una [Knowledge Capsule](/es/knowledge-capsules/); otro la importa como contexto
+externo — sin mapeo multirepo, sin acceso al código.
+
+```mermaid
+flowchart LR
+    R[Repo externo] --> E[kaddo capsule export]
+    E --> CAP[Knowledge Capsule]
+    CAP --> A[kaddo capsule add]
+    A --> CTX["External Knowledge en el context-pack"]
+    CTX --> L[Agente LLM]
+```
+
 ## Ownership asistido por agente
 
 El ownership-agent propone globs `code:` precisos; tú confirmas y los aplicas. `owners suggest` es

@@ -17,6 +17,7 @@ import { runOwners, runOwnersSuggest } from './commands/owners.js'
 import { runModuleDescriptor } from './commands/module-descriptor.js'
 import { runModulesMap, runModulesList } from './commands/modules-map.js'
 import { runBootstrap } from './commands/bootstrap.js'
+import { runCapsuleExport, runCapsuleAdd } from './commands/capsule.js'
 
 // Single source of truth for the version: read it from package.json at runtime so the CLI
 // `--version` can never drift from the published package version. `../package.json` resolves
@@ -59,6 +60,24 @@ program
   .option('--from <source>', 'Create from a source artifact (currently: roadmap)')
   .action(async (type: string | undefined, opts: { from?: string }) => {
     await runCreate(type ?? '', opts)
+  })
+
+const capsuleCmd = program
+  .command('capsule')
+  .description('Export this project as a Knowledge Capsule, or import an external one as context')
+
+capsuleCmd
+  .command('export')
+  .description('Write a Knowledge Capsule about this project to .kaddo/exports/')
+  .action(() => {
+    runCapsuleExport()
+  })
+
+capsuleCmd
+  .command('add <path>')
+  .description('Register an external Knowledge Capsule as project context (.kaddo/external.yml)')
+  .action((path: string) => {
+    runCapsuleAdd(path)
   })
 
 program

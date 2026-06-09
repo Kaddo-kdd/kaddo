@@ -172,6 +172,20 @@ export const RESPONSIBILITY_MATRIX: Record<string, AgentResponsibility> = {
     ],
     next: ['kaddo scan', 'kaddo owners suggest', 'kaddo guard', 'kaddo explain'],
   },
+  'capsule-agent': {
+    agent: 'capsule-agent',
+    responsibleFor: ['Refining/validating a Knowledge Capsule for external sharing'],
+    produces: ['.kaddo/exports/<system>.capsule.md'],
+    canSuggest: ['kaddo capsule export'],
+    cannotSuggest: [
+      'exporting secrets',
+      'exporting source code',
+      'inventing contracts',
+      'code',
+      'git',
+    ],
+    next: ['kaddo capsule export'],
+  },
   'ownership-agent': {
     agent: 'ownership-agent',
     responsibleFor: ['Precise code: ownership for Work Items and artifacts'],

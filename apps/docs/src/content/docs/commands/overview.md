@@ -93,4 +93,6 @@ Supporting commands:
 | `kaddo history` | List Work Items with filters |
 | `kaddo owners` | List domain owners |
 | `kaddo module` | Show or init the multirepo module descriptor |
+| `kaddo capsule export` | Export a [Knowledge Capsule](/knowledge-capsules/) about this project |
+| `kaddo capsule add <path>` | Import an external Knowledge Capsule as context |
 | `kaddo add <module>` | Install an optional module |

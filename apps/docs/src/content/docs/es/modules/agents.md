@@ -37,7 +37,7 @@ knowledge/agents/
   business/   business-agent.md
   product/    bootstrap-agent.md · capability-agent.md
   tech/       architecture-agent.md · codebase-agent.md · stack-agent.md ·
-              security-agent.md · standards-agent.md · module-design-agent.md · adr-agent.md
+              security-agent.md · standards-agent.md · module-design-agent.md · adr-agent.md · capsule-agent.md
   delivery/   backlog-agent.md · roadmap-agent.md · work-item-agent.md · implementation-agent.md · ownership-agent.md · git-strategy-agent.md
   utilities/  legacy-agent.md
 ```
@@ -62,7 +62,7 @@ Los agentes se organizan en **grupos** por capa:
 |---|---|
 | `business` | business-agent |
 | `product` | bootstrap-agent · capability-agent |
-| `tech` | architecture-agent · codebase-agent · stack-agent · security-agent · standards-agent · module-design-agent · adr-agent |
+| `tech` | architecture-agent · codebase-agent · stack-agent · security-agent · standards-agent · module-design-agent · adr-agent · capsule-agent |
 | `delivery` | backlog-agent · roadmap-agent · work-item-agent · implementation-agent · ownership-agent · git-strategy-agent |
 | `utilities` | legacy-agent |
 
@@ -107,6 +107,7 @@ Apoyan la ejecución diaria y los artefactos multirepo / globales (VS-017).
 | `work-item-agent` | Redactar y refinar un work item desde el contexto | work item activo |
 | `implementation-agent` | Implementar un Work Item refinado; sugerir branch/scan/owners/guard | código · tests · conocimiento actualizado |
 | `ownership-agent` | Proponer globs `code:` precisos para Work Items/artefactos | globs `code:` propuestos (los aplica el humano) |
+| `capsule-agent` | Refinar/validar una Knowledge Capsule para compartir externamente (sin secretos/código) | `.kaddo/exports/<system>.capsule.md` |
 | `git-strategy-agent` | Refinar la estrategia de Git | `knowledge/tech/git-strategy.md` |
 | `security-agent` | Documentar consideraciones de seguridad (sin escaneo) | `knowledge/tech/security.md` |
 | `standards-agent` | Definir estándares ligeros | `knowledge/tech/standards.md` |

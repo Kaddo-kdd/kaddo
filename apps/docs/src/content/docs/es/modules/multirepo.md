@@ -7,6 +7,11 @@ Kaddo representa no solo el repo principal de arquitectura, sino también los **
 secundarios** (frontend, backend, workers, infra…) como módulos vivos del mismo
 sistema.
 
+> **Multirepo vs Knowledge Capsules.** Mapea un repo como módulo cuando tienes acceso y está en
+> alcance. Cuando un repo pertenece a otro equipo, tiene acceso restringido o solo necesitas
+> contexto de integración, importa una [Knowledge Capsule](/es/knowledge-capsules/) — sin mapeo,
+> sin código.
+
 ## Dos niveles de descriptor
 
 - **`kaddo module --init`** escribe `knowledge/module.yml` — un repo que se

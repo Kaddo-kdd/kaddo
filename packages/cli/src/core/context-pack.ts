@@ -8,6 +8,7 @@ import { knowledgeLayers, type LayerStatus } from './layers.js'
 import { roadmapStats, type RoadmapStats } from './roadmap.js'
 import { lifecycleStateOf, isActiveState, lifecycleCounts, type LifecycleState } from './lifecycle.js'
 import { assessPhase, type PhaseAssessment } from './delivery-phase.js'
+import { loadExternalCapsules, type ConsumedCapsule } from './capsule.js'
 
 export const CONTEXT_PACK_VERSION = '1'
 
@@ -63,6 +64,8 @@ export type ContextPack = {
   phase: PhaseAssessment
   /** Active Work Items distribution by type (feature/bugfix/hotfix/spike/chore/…). */
   deliveryMix: Record<string, number>
+  /** External Knowledge Capsules imported as context (VS-054). */
+  external: ConsumedCapsule[]
   mappedModules: MappedModuleWithCoverage[]
   missing: string[]
   handoff: {
@@ -320,6 +323,7 @@ export function buildContextPack(
     roadmap,
     phase,
     deliveryMix,
+    external: loadExternalCapsules(dir),
     mappedModules,
     missing,
     // VS-052: the handoff is driven by the REAL phase, not project.state, so the pack never

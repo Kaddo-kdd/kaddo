@@ -8,6 +8,7 @@ import { exists, readFile, readDir, join, isFile } from '../utils/fs.js'
 import { loadConfig, languageLabel, projectLanguage } from './config.js'
 import { discoverWorkItems } from '../services/knowledge-artifacts.js'
 import { assessPhase } from './delivery-phase.js'
+import { loadExternalCapsules, type ConsumedCapsule } from './capsule.js'
 import {
   loadMappedModules,
   presentArtifacts,
@@ -80,6 +81,8 @@ export type ProjectExplanation = {
   domains: string[]
   /** Possible duplicate Work Items (same source_id or normalized title). VS-052. */
   duplicateWorkItems: { reason: string; items: { id: string; title: string }[] }[]
+  /** External Knowledge Capsules imported as context (VS-054). */
+  externalCapsules: ConsumedCapsule[]
   layers: LayerStatus[]
   roadmap: RoadmapStats
   mappedModules: MappedModuleWithCoverage[]
@@ -342,6 +345,7 @@ export function buildProjectExplanation(dir: string): ProjectExplanation {
     ownership,
     domains,
     duplicateWorkItems,
+    externalCapsules: loadExternalCapsules(dir),
     layers,
     roadmap,
     mappedModules,
@@ -485,6 +489,19 @@ export function renderExplanationHuman(exp: ProjectExplanation): string {
     lines.push('')
   } else {
     lines.push('- Mapped modules: 0')
+    lines.push('')
+  }
+
+  // External Knowledge Capsules (VS-054) + staleness warning.
+  if (exp.externalCapsules.length > 0) {
+    lines.push(`## External Knowledge Capsules: ${exp.externalCapsules.length}`)
+    for (const cap of exp.externalCapsules) {
+      const owner = cap.owner ? ` — owner: ${cap.owner}` : ''
+      lines.push(`- ${cap.system}${owner}`)
+      if (cap.ageDays !== null && cap.ageDays >= 90) {
+        lines.push(`  ⚠ capsule last updated ${cap.ageDays} days ago — it may be stale.`)
+      }
+    }
     lines.push('')
   }
 

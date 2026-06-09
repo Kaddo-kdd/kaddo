@@ -73,6 +73,16 @@ export function runUnderstand(): void {
     console.log(`Next step: ${assessment.nextStep}`)
   }
 
+  // 5b-ext. External Knowledge Capsules (VS-054) — remind the agent of external dependencies.
+  if (exp.externalCapsules.length > 0) {
+    console.log('')
+    console.log('External knowledge:')
+    for (const cap of exp.externalCapsules) {
+      console.log(`  - ${cap.system}${cap.owner ? ` (owner: ${cap.owner})` : ''}`)
+    }
+    console.log('  → Review the relevant capsule before changing integration behavior with it.')
+  }
+
   // 5c. If a Work Item is active, show the official delivery lifecycle.
   const active = activeWorkItems(dir)
   if (active.length > 0) {
