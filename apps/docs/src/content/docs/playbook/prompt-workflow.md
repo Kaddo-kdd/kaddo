@@ -16,8 +16,12 @@ deterministic and need no LLM.
 | Roadmap | context + capabilities + architecture | `roadmap-agent` | roadmap | `knowledge/delivery/roadmap.md` |
 | Backlog capture | a raw idea / notes / transcript | `backlog-agent` | Work Item draft or roadmap candidate | `knowledge/delivery/work-items/draft/*.md` or a roadmap candidate |
 | Work Item | roadmap | none | work item | `knowledge/delivery/work-items/*.md` |
+| Work Item refinement | context + draft Work Item | `work-item-agent` | ready Work Item (acceptance · how to test · DoD) | updated Work Item |
+| Ownership proposal | context + Work Items + inventory | `ownership-agent` | precise `code:` globs (human confirms) | applied via `kaddo owners suggest` |
 | Ownership | work item + scan | none | front matter ownership | updated Work Item |
+| Implementation | context + ready Work Item | `implementation-agent` | code · tests · suggested branch/commit | repository + updated knowledge |
 | Guard | `git diff` + ownership | none | drift warning | terminal output |
+| Knowledge Capsule | `kaddo capsule export` draft | `capsule-agent` | refined capsule (no secrets/source) | `.kaddo/exports/<system>.capsule.md` |
 | Explain | Kaddo artifacts | none | project summary | `.kaddo/explain.md` |
 | Module design | `kaddo modules map` | `module-design-agent` | module design | `knowledge/tech/modules/<id>/module-design.md` |
 | Standards / security / stack | `kaddo add <topic>` | `standards-` / `security-` / `stack-agent` | global artifact | `knowledge/tech/<topic>.md` |
@@ -86,6 +90,35 @@ for a draft under knowledge/delivery/work-items/draft/ (or propose a WI-CANDIDAT
 You are the Kaddo legacy agent. Using the context pack, identify high-risk areas of this
 legacy system: code with no clear ownership, fragile boundaries and missing knowledge.
 Recommend what to understand before changing each area. Mark uncertainty explicitly.
+```
+
+### ownership-agent
+
+```txt
+You are the Kaddo ownership agent. Using the context pack, the Work Items under
+knowledge/delivery/work-items/ and the technical inventory, propose precise code: globs for each
+Work Item missing ownership. Prefer narrow globs (src/payments/**) over broad ones (src/**); use
+only real paths; flag unclear ownership instead of guessing. Do not modify files — I will apply
+your proposal with kaddo owners suggest.
+```
+
+### implementation-agent
+
+```txt
+You are the Kaddo implementation agent. Implement Work Item WI-014 from the context pack. First
+suggest a branch name per the project Git strategy (do not run git). Implement with tests, state
+how to test it (exact commands/manual steps), suggest running kaddo scan / owners suggest / guard,
+update affected knowledge, and end with a suggested Conventional Commit message — then wait for my
+confirmation. Never commit, push or merge.
+```
+
+### capsule-agent
+
+```txt
+You are the Kaddo capsule agent. Refine the draft Knowledge Capsule in
+.kaddo/exports/<system>.capsule.md using the context pack, capabilities and current-state. Sharpen
+purpose, public contracts (never invent them), risks, owners and out-of-scope; mark unknowns. Never
+include secrets, credentials, PII or source code. Output Markdown for the capsule file.
 ```
 
 ### adr-agent

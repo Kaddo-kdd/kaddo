@@ -95,7 +95,9 @@ partir del contexto del proyecto.
 ## Cómo funciona
 
 Kaddo no empieza creando tareas. Empieza entendiendo el estado del proyecto, y luego
-construye conocimiento de forma progresiva antes de que evoluciones el código.
+construye conocimiento de forma progresiva antes de que evoluciones el código — a través de
+cuatro [momentos de operación](/es/operating-moments/): **Base → Definición → Proyección →
+Ejecución**.
 
 <CardGrid>
   <Card title="1 · Inicializa y escanea" icon="pencil">
@@ -190,6 +192,11 @@ kaddo add standards|security|stack|git-strategy   # artefactos globales del sist
     transversal una sola vez para todo el sistema.
   </Card>
 </CardGrid>
+
+Para repos que no puedes (o no quieres) mapear, intercambia
+[**Knowledge Capsules**](/es/knowledge-capsules/) — `kaddo capsule export` comparte un resumen
+mínimo de un sistema; `kaddo capsule add` lo importa como *External Knowledge* en el context
+pack. Sin mapeo multirepo, sin acceso al código.
 
 Mira la guía de [Módulos multirepo](/es/modules/multirepo/) y la
 [Guía visual](/es/visual-guide/) para el mapa completo del sistema.

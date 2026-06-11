@@ -16,8 +16,12 @@ son totalmente determinísticos y no necesitan LLM.
 | Roadmap | context + capacidades + arquitectura | `roadmap-agent` | roadmap | `knowledge/delivery/roadmap.md` |
 | Captura de backlog | una idea / notas / transcripción | `backlog-agent` | draft de Work Item o candidato de roadmap | `knowledge/delivery/work-items/draft/*.md` o un candidato de roadmap |
 | Work Item | roadmap | ninguno | work item | `knowledge/delivery/work-items/*.md` |
+| Refinamiento de Work Item | context + Work Item draft | `work-item-agent` | Work Item ready (aceptación · cómo probarlo · DoD) | Work Item actualizado |
+| Propuesta de ownership | context + Work Items + inventory | `ownership-agent` | globs `code:` precisos (el humano confirma) | aplicado vía `kaddo owners suggest` |
 | Ownership | work item + scan | ninguno | ownership en front matter | Work Item actualizado |
+| Implementación | context + Work Item ready | `implementation-agent` | código · tests · rama/commit sugeridos | repositorio + conocimiento actualizado |
 | Guard | `git diff` + ownership | ninguno | aviso de drift | salida de terminal |
+| Knowledge Capsule | draft de `kaddo capsule export` | `capsule-agent` | cápsula refinada (sin secretos/código) | `.kaddo/exports/<system>.capsule.md` |
 | Explain | artefactos de Kaddo | ninguno | resumen del proyecto | `.kaddo/explain.md` |
 | Diseño de módulo | `kaddo modules map` | `module-design-agent` | diseño del módulo | `knowledge/tech/modules/<id>/module-design.md` |
 | Estándares / seguridad / stack | `kaddo add <tema>` | `standards-` / `security-` / `stack-agent` | artefacto global | `knowledge/tech/<tema>.md` |
@@ -89,6 +93,36 @@ Eres el agente legacy de Kaddo. Usando el context pack, identifica las áreas de
 riesgo de este sistema legacy: código sin ownership claro, límites frágiles y conocimiento
 faltante. Recomienda qué entender antes de cambiar cada área. Marca la incertidumbre
 explícitamente.
+```
+
+### ownership-agent
+
+```txt
+Eres el ownership agent de Kaddo. Usando el context pack, los Work Items bajo
+knowledge/delivery/work-items/ y el inventario técnico, propone globs code: precisos para cada
+Work Item sin ownership. Prefiere globs acotados (src/payments/**) sobre amplios (src/**); usa solo
+rutas reales; marca el ownership poco claro en vez de adivinar. No modifiques archivos — aplicaré
+tu propuesta con kaddo owners suggest.
+```
+
+### implementation-agent
+
+```txt
+Eres el implementation agent de Kaddo. Implementa el Work Item WI-014 a partir del context pack.
+Primero sugiere un nombre de rama según la estrategia de Git del proyecto (no ejecutes git).
+Implementa con tests, indica cómo probarlo (comandos exactos / pasos manuales), sugiere correr
+kaddo scan / owners suggest / guard, actualiza el conocimiento afectado y cierra con un mensaje de
+Conventional Commit sugerido — luego espera mi confirmación. Nunca hagas commit, push ni merge.
+```
+
+### capsule-agent
+
+```txt
+Eres el capsule agent de Kaddo. Refina el draft de Knowledge Capsule en
+.kaddo/exports/<system>.capsule.md usando el context pack, capabilities y current-state. Afina
+propósito, contratos públicos (nunca los inventes), riesgos, owners y fuera de alcance; marca las
+incógnitas. Nunca incluyas secretos, credenciales, PII ni código fuente. Genera Markdown para el
+archivo de la cápsula.
 ```
 
 ### adr-agent

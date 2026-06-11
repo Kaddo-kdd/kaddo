@@ -39,6 +39,14 @@ export const COMMAND_HELP: Record<string, CommandHelp> = {
     next: 'Update the affected knowledge, then commit',
   },
   'add agents': { question: 'Which agents are available?', next: 'kaddo understand' },
+  'capsule export': {
+    question: 'How do I share this project as external context?',
+    next: 'Refine with the capsule-agent, then share the capsule file',
+  },
+  'capsule add': {
+    question: 'How do I consume another system as external context?',
+    next: 'kaddo context (the pack now includes External Knowledge)',
+  },
 }
 
 /** Lines for the contextual footer, or [] if the command has no entry. */
@@ -66,6 +74,8 @@ export function renderCommandMatrixMarkdown(): string {
     'owners suggest',
     'guard',
     'add agents',
+    'capsule export',
+    'capsule add',
   ]
   const lines = ['| Command | Question answered | Suggested next |', '|---|---|---|']
   for (const name of order) {

@@ -160,7 +160,8 @@ always answers *"What should I do now?"* from the real state of your project.
 so the next step is always one glance away.
 
 Supporting commands: `kaddo status`, `kaddo learn`, `kaddo classify`, `kaddo history`,
-`kaddo module`, `kaddo modules map|list`, `kaddo add <module>`.
+`kaddo module`, `kaddo modules map|list`, `kaddo capsule export|add`, `kaddo ignore`,
+`kaddo add <module>`.
 
 ## Multirepo modules & global artifacts
 
@@ -175,6 +176,11 @@ This records the module in `.kaddo/modules.yml` and generates a per-module knowl
 structure under `knowledge/tech/modules/<id>/` (`module-design.md`, `stack.md`,
 `security.md`, `standards.md`, `diagrams/`, `adrs/`). Existing files are never
 overwritten.
+
+For repos you can't (or don't want to) map — other teams, restricted access, integration-only
+context — exchange **[Knowledge Capsules](https://kaddo.trycatch.tv/knowledge-capsules/)**
+instead: `kaddo capsule export` shares a minimal summary of this project,
+`kaddo capsule add` imports an external one into the context pack's *External Knowledge*.
 
 Install **global** artifacts for the whole system on demand:
 

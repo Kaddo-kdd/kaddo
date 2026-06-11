@@ -140,6 +140,7 @@ Algunos comandos se repiten en varios momentos — ejecútalos cuando aplique la
 | `work-item-agent` | un Work Item pasa de draft a ready |
 | `implementation-agent` | se ejecuta un Work Item |
 | `backlog-agent` | surge una idea fuera del roadmap |
+| `capsule-agent` | el conocimiento de este proyecto debe compartirse con otro ([Knowledge Capsules](/es/knowledge-capsules/)) |
 
 ---
 

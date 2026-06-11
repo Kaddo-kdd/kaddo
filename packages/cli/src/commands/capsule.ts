@@ -1,6 +1,7 @@
 import { cwd, exists, writeFile, join } from '../utils/fs.js'
 import { intro, outro, log } from '../utils/ui.js'
 import { requireConfig } from '../core/config.js'
+import { printCommandFooter } from '../core/command-help.js'
 import {
   buildCapsule,
   renderCapsuleMarkdown,
@@ -29,6 +30,7 @@ export function runCapsuleExport(): void {
   log.success(`Wrote ${mdPath}`)
   log.success(`Wrote ${jsonPath}`)
   log.info('Refine it with the capsule-agent before sharing — and never include secrets or source code.')
+  printCommandFooter('capsule export')
   outro('Knowledge Capsule exported.')
 }
 
@@ -56,5 +58,6 @@ export function runCapsuleAdd(srcPath: string): void {
   log.success(`Imported capsule "${result.id}" → ${result.destRel}`)
   log.success('Registered in .kaddo/external.yml')
   log.info('Run `kaddo context` — the pack now includes an "External Knowledge" section.')
+  printCommandFooter('capsule add')
   outro('External capsule registered.')
 }

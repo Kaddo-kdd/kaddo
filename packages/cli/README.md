@@ -71,6 +71,10 @@ knowledge/
   config.yml               ← project config
 ```
 
+Asks for the project state (`new | pre-ai | legacy`), team size, repo structure and the
+**project knowledge language** (`en | es`) — the language your knowledge artifacts are
+written in; the CLI itself stays English.
+
 ---
 
 ### `kaddo scan`
@@ -265,11 +269,16 @@ concrete step (`kaddo scan` or `kaddo add agents`).
 Create a Work Item with the minimum context for its Knowledge Level.
 
 ```bash
-kaddo create feature   # K2: 4 questions
-kaddo create bugfix    # K2: 4 questions
-kaddo create hotfix    # K1: 2 questions
-kaddo create spike     # K3: 4 questions
+kaddo create feature   # K2: delivers a user-facing capability
+kaddo create bugfix    # K2: fixes a known defect
+kaddo create hotfix    # K1: urgent fix on a released version
+kaddo create spike     # K3: exploratory / reduce uncertainty
+kaddo create chore     # K1: maintenance, tooling, config, infra
 ```
+
+New Work Items land in `knowledge/delivery/work-items/draft/` with `status: draft`
+(lifecycle: `draft → ready → in-progress → blocked → completed → archived`). Aliases like
+`setup`, `tooling`, `maintenance`, `infrastructure` or `refactor` resolve to `chore`.
 
 **From a roadmap candidate:**
 
@@ -409,6 +418,25 @@ architecture baseline, roadmap, agents), work items, **ownership coverage**, the
 `kaddo explain` summarizes what Kaddo already knows. The focused flags
 (`--scope`, `--type`, `--since`) still explain a subset of artifacts.
 
+---
+
+### `kaddo capsule`
+
+Share or consume minimal, portable knowledge about a system — a **Knowledge Capsule** —
+without mapping it as multirepo or reading its source.
+
+```bash
+kaddo capsule export        # → .kaddo/exports/<project>.capsule.md / .json
+kaddo capsule add <path>    # import an external capsule → external/<id>.capsule.md
+```
+
+`export` builds a deterministic draft from `knowledge/` (purpose, capabilities, public
+contracts, risks, ADRs, owners — never source code or secrets); refine it with the
+`capsule-agent` before sharing. `add` registers the capsule in `.kaddo/external.yml`;
+`kaddo context` then includes an **External Knowledge** section and `kaddo explain` lists
+the capsules (warning when one looks stale). See the
+[Knowledge Capsules guide](https://kaddo.trycatch.tv/knowledge-capsules/).
+
 ## Roadmap
 
 The full knowledge loop ships today: `scan → context → agents → understand → roadmap →
@@ -441,6 +469,15 @@ create --from roadmap → owners → guard → explain`.
 | v3.6 | Flexible roadmap parsing and roadmap candidate/materialized Work Item reporting |
 | v3.7 | Work Item lifecycle active workspace (`draft`, `ready`, `in-progress`, `blocked`, `completed`, `archived`) |
 | v3.7.1 | Context Efficiency positioning: Repository Exploration Tax and structured-knowledge narrative |
+| v3.8 | Agent Trace & responsibility boundaries: every prompt declares Agent/Produced/Next; new `implementation-agent` (the only agent that may suggest a branch) |
+| v3.9 | New `chore` Work Item type (+ aliases setup/tooling/maintenance/infra); explain Work Items by Type; context Delivery Mix |
+| v3.9.1 | Unified knowledge artifact discovery: one service behind explain/context/owners/guard (fixes owners missing lifecycle subfolders) |
+| v3.10 | State-aware recommendations: real phase model (Discovery → Planning → Delivery Preparation → Active Delivery → Maintenance) drives understand/context/explain |
+| v3.11 | Command workflow clarity: official command matrix + "Question answered / Suggested next" footer on scan/context/explain/understand; `chore/` branch prefix |
+| v3.13 | New `backlog-agent`: capture raw ideas into a Work Item draft or roadmap candidate (human decides the next step) |
+| v3.14 | Project knowledge language (`project.language: en\|es`): knowledge in your language, CLI stays English; all agents respect it |
+| v3.15 | Delivery context consistency: phase-based handoff + per-phase LLM instructions; assisted `owners suggest` (normalize/validate globs); new `ownership-agent`; guard untracked-files warning; duplicate Work Item detection |
+| v3.16 | Knowledge Capsules: `kaddo capsule export/add`, External Knowledge in context/explain, new `capsule-agent` |
 
 **Optional modules (installed with `kaddo add`):**
 

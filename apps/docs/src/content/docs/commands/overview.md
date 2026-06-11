@@ -22,6 +22,8 @@ Each command answers one question and has a clear next step:
 | `kaddo owners suggest` | Who owns this code? | `kaddo guard` |
 | `kaddo guard` | Is knowledge drifting from code? | Update the affected knowledge |
 | `kaddo add agents` | Which agents are available? | `kaddo understand` |
+| `kaddo capsule export` | How do I share this project as external context? | refine with the capsule-agent, then share |
+| `kaddo capsule add <path>` | How do I consume another system as external context? | `kaddo context` (External Knowledge) |
 
 > `scan`, `context`, `explain` and `understand` also print this — a **Question answered /
 > Suggested next** footer — at the end of their output, so the next step is always one glance away.

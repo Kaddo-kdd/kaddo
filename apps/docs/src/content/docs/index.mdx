@@ -93,7 +93,8 @@ reconstruct architecture, identify risks and propose a roadmap from the project 
 ## How it works
 
 Kaddo does not start by creating tasks. It starts by understanding the state of the
-project, then builds knowledge progressively before you evolve the code.
+project, then builds knowledge progressively before you evolve the code — through four
+[operating moments](/operating-moments/): **Base → Definition → Projection → Execution**.
 
 <CardGrid>
   <Card title="1 · Initialize & scan" icon="pencil">
@@ -187,6 +188,11 @@ kaddo add standards|security|stack|git-strategy   # global, system-wide artifact
     concerns once for the whole system.
   </Card>
 </CardGrid>
+
+For repos you can't (or don't want to) map, exchange
+[**Knowledge Capsules**](/knowledge-capsules/) instead — `kaddo capsule export` shares a
+minimal summary of a system; `kaddo capsule add` imports it as *External Knowledge* in the
+context pack. No multirepo mapping, no source access.
 
 See the [Multirepo modules](/modules/multirepo/) guide and the
 [Visual Guide](/visual-guide/) for the full system map.

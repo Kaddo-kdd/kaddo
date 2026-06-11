@@ -23,7 +23,7 @@ Each agent intervenes in one of Kaddo's [operating moments](/operating-moments/)
 | **Base** | bootstrap-agent · business-agent · codebase-agent |
 | **Definition** | business-agent · product-agent · capability-agent · codebase-agent · architecture-agent · adr-agent/decision-agent |
 | **Projection** | roadmap-agent · backlog-agent · work-item-agent · ownership-agent |
-| **Execution** | implementation-agent · ownership-agent · architecture-agent · capability-agent · adr-agent · guard-agent |
+| **Execution** | implementation-agent · ownership-agent · architecture-agent · capability-agent · adr-agent · guard-agent · capsule-agent |
 
 ## Installing
 
@@ -158,6 +158,7 @@ This answers, for any response: **who produced it, what it produced, and what ru
 | `work-item-agent` | Work Item refinement | `work-items/` | implementation-agent | **commits, PRs, branches** |
 | `implementation-agent` | Implementation | code, tests, migrations | **a branch** (per Git strategy), **a commit message**, scan, owners suggest, guard | running git, committing/pushing/merging without confirmation |
 | `ownership-agent` | Precise `code:` ownership | proposed globs | `kaddo owners suggest`, `kaddo guard` | code, git, modifying files without confirmation |
+| `capsule-agent` | Knowledge Capsule for sharing | refined capsule | `kaddo capsule export` | secrets, source code, invented contracts, git |
 | `guard-agent` | Knowledge drift | findings, warnings | update knowledge, update ownership | branches, commits, code |
 
 ### Git responsibility model

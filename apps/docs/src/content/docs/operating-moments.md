@@ -140,6 +140,7 @@ Some commands recur across moments — run them whenever the question applies:
 | `work-item-agent` | a Work Item moves from draft to ready |
 | `implementation-agent` | a Work Item is executed |
 | `backlog-agent` | an idea appears outside the roadmap |
+| `capsule-agent` | this project's knowledge must be shared with another project ([Knowledge Capsules](/knowledge-capsules/)) |
 
 ---
 

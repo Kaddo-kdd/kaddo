@@ -23,7 +23,7 @@ Cada agente interviene en uno de los [momentos de operación](/es/operating-mome
 | **Base** | bootstrap-agent · business-agent · codebase-agent |
 | **Definición** | business-agent · product-agent · capability-agent · codebase-agent · architecture-agent · adr-agent/decision-agent |
 | **Proyección** | roadmap-agent · backlog-agent · work-item-agent · ownership-agent |
-| **Ejecución** | implementation-agent · ownership-agent · architecture-agent · capability-agent · adr-agent · guard-agent |
+| **Ejecución** | implementation-agent · ownership-agent · architecture-agent · capability-agent · adr-agent · guard-agent · capsule-agent |
 
 ## Instalación
 
@@ -159,6 +159,7 @@ Responde, para cualquier respuesta: **quién la produjo, qué produjo y qué sig
 | `work-item-agent` | Refinamiento de Work Items | `work-items/` | implementation-agent | **commits, PRs, ramas** |
 | `implementation-agent` | Implementación | código, tests, migraciones | **una rama** (según estrategia de Git), **un mensaje de commit**, scan, owners suggest, guard | ejecutar git, commitear/pushear/mergear sin confirmación |
 | `ownership-agent` | Ownership `code:` preciso | globs propuestos | `kaddo owners suggest`, `kaddo guard` | código, git, modificar archivos sin confirmación |
+| `capsule-agent` | Knowledge Capsule para compartir | cápsula refinada | `kaddo capsule export` | secretos, código fuente, contratos inventados, git |
 | `guard-agent` | Knowledge drift | hallazgos, advertencias | actualizar conocimiento, actualizar ownership | ramas, commits, código |
 
 ### Modelo de responsabilidad de Git
