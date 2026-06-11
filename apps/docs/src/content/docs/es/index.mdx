@@ -30,7 +30,7 @@ Kaddo reduce la exploración del repositorio convirtiendo el conocimiento del pr
 estructurado. El ahorro de tokens es una consecuencia, no el objetivo.
 </p>
 
-<p class="kaddo-badge">Proyectos nuevos · Bases de código pre-IA · Sistemas legacy</p>
+<p class="kaddo-badge">Proyectos nuevos · Bases de código pre-IA · Sistemas legacy · Soporte bilingüe (EN/ES)</p>
 
 <div class="kaddo-terminal">
   <div class="kaddo-terminal__bar"><span></span><span></span><span></span><small>kaddo</small></div>
@@ -81,7 +81,7 @@ reparto CLI/LLM y Guard como diagramas. ¿No sabes qué hace y qué no hace Kadd
 
 Kaddo trabaja en dos capas.
 
-El **CLI** se encarga de lo determinístico: inicializar el repositorio de conocimiento,
+El **CLI** se encarga de lo determinístico: inicializar el repositorio de conocimiento (con soporte bilingüe en/es),
 escanear el código, crear work items y detectar posibles desviaciones entre código y
 conocimiento.
 
@@ -101,7 +101,7 @@ Ejecución**.
 
 <CardGrid>
   <Card title="1 · Inicializa y escanea" icon="pencil">
-    `kaddo init` y luego `kaddo scan` — dile a Kaddo el estado del proyecto y detecta stack, estructura y señales técnicas de forma determinística.
+    `kaddo init` y luego `kaddo scan` — dile a Kaddo el estado del proyecto, estructura e idioma (inglés/español), y detecta stack y señales técnicas de forma determinística.
   </Card>
   <Card title="2 · Prepara el contexto" icon="list-format">
     `kaddo context` arma un context pack para el LLM y `kaddo add agents` instala los prompts de agentes.
@@ -120,7 +120,7 @@ Ejecución**.
 ### El flujo completo
 
 ```bash
-kaddo init          # estado: new | pre-ai | legacy, tamaño de equipo, estructura
+kaddo init          # estado: new | pre-ai | legacy, tamaño de equipo, estructura, idioma (en/es)
 kaddo bootstrap     # proyectos nuevos: base de conocimiento inicial (Business → Product → Tech → Delivery)
 kaddo scan          # inventario técnico determinístico
 kaddo context       # context pack para el handoff al LLM

@@ -30,7 +30,7 @@ Kaddo reduces repository exploration by turning project knowledge into structure
 Token savings are a consequence, not the goal.
 </p>
 
-<p class="kaddo-badge">New projects · Pre-AI codebases · Legacy systems</p>
+<p class="kaddo-badge">New projects · Pre-AI codebases · Legacy systems · Bilingual (EN/ES) support</p>
 
 <div class="kaddo-terminal">
   <div class="kaddo-terminal__bar"><span></span><span></span><span></span><small>kaddo</small></div>
@@ -81,7 +81,7 @@ CLI/LLM split and Guard as diagrams. Not sure what Kaddo does and does not do? R
 
 Kaddo works in two layers.
 
-The **CLI** handles deterministic work: initializing the knowledge repository, scanning
+The **CLI** handles deterministic work: initializing the knowledge repository (with bilingual en/es support), scanning
 the codebase, creating work items and detecting possible knowledge drift.
 
 Your **LLM** handles interpretation: using Kaddo agents to extract capabilities,
@@ -98,7 +98,7 @@ project, then builds knowledge progressively before you evolve the code — thro
 
 <CardGrid>
   <Card title="1 · Initialize & scan" icon="pencil">
-    `kaddo init` then `kaddo scan` — tell Kaddo your project state and detect stack, structure and technical signals deterministically.
+    `kaddo init` then `kaddo scan` — configure project state, structure, and language (English/Spanish), then detect stack and technical signals.
   </Card>
   <Card title="2 · Prepare context" icon="list-format">
     `kaddo context` builds an LLM context pack and `kaddo add agents` installs agent prompts.
@@ -117,7 +117,7 @@ project, then builds knowledge progressively before you evolve the code — thro
 ### The full workflow
 
 ```bash
-kaddo init          # state: new | pre-ai | legacy, team size, structure
+kaddo init          # state: new | pre-ai | legacy, team size, structure, language (en/es)
 kaddo bootstrap     # new projects: initial knowledge base (Business → Product → Tech → Delivery)
 kaddo scan          # deterministic technical inventory
 kaddo context       # LLM context pack for agent handoff
