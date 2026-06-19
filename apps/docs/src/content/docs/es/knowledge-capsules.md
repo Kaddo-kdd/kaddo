@@ -114,3 +114,8 @@ exportarlos.
 
 Sin escaneo remoto, GitHub API, sincronización automática, permisos, portal, MCP, RAG ni bases de
 datos vectoriales. Las cápsulas son Markdown/JSON versionable — se copian como cualquier archivo.
+
+## Ver también
+
+- [Exportar el grafo de conocimiento](/es/knowledge-graph-export/) — las cápsulas importadas
+  aparecen en el grafo como relaciones `provides_external_context` hacia tu proyecto.

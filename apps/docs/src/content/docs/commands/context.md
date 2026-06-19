@@ -56,6 +56,13 @@ module's type, repo path, owner, capabilities and which `knowledge/tech/modules/
 artifacts exist. Kaddo reads `.kaddo/modules.yml` and the module artifacts only — it
 **never scans the secondary repositories**.
 
+## Knowledge graph summary
+
+If you have run [`kaddo graph export`](/knowledge-graph-export/), the pack adds a small
+`## Knowledge Graph` summary (available, node/edge counts, active Work Items connected to code).
+It is only a summary — the full graph stays in `.kaddo/graph.json` / `.kaddo/graph.mmd`. `context`
+**never generates the graph** and never inlines it.
+
 ## Deterministic, no LLM
 
 `kaddo context` does **not** call an LLM, require an API key, or interpret your system. It

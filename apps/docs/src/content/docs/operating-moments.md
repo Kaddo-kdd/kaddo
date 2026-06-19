@@ -128,6 +128,7 @@ Some commands recur across moments — run them whenever the question applies:
 | `kaddo scan` | after technical changes | What technical signals exist? |
 | `kaddo owners suggest` | to record/fix ownership | Which artifact owns which code? |
 | `kaddo guard` | before closing a change | What knowledge might be outdated? |
+| `kaddo graph export` | onboarding, impact analysis, review | How is the knowledge connected? |
 
 ## Cyclic agents
 

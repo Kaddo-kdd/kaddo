@@ -9,6 +9,7 @@ import { roadmapStats, type RoadmapStats } from './roadmap.js'
 import { lifecycleStateOf, isActiveState, lifecycleCounts, type LifecycleState } from './lifecycle.js'
 import { assessPhase, type PhaseAssessment } from './delivery-phase.js'
 import { loadExternalCapsules, type ConsumedCapsule } from './capsule.js'
+import { loadGraphSummary, type GraphSummary } from './graph.js'
 
 export const CONTEXT_PACK_VERSION = '1'
 
@@ -66,6 +67,8 @@ export type ContextPack = {
   deliveryMix: Record<string, number>
   /** External Knowledge Capsules imported as context (VS-054). */
   external: ConsumedCapsule[]
+  /** Summary of the exported knowledge graph (VS-055); null if not exported yet. */
+  graph: GraphSummary | null
   mappedModules: MappedModuleWithCoverage[]
   missing: string[]
   handoff: {
@@ -324,6 +327,7 @@ export function buildContextPack(
     phase,
     deliveryMix,
     external: loadExternalCapsules(dir),
+    graph: loadGraphSummary(dir),
     mappedModules,
     missing,
     // VS-052: the handoff is driven by the REAL phase, not project.state, so the pack never

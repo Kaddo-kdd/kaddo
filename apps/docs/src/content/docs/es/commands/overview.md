@@ -24,6 +24,7 @@ Cada comando responde una pregunta y tiene un siguiente paso claro:
 | `kaddo add agents` | ¿Qué agentes hay disponibles? | `kaddo understand` |
 | `kaddo capsule export` | ¿Cómo comparto este proyecto como contexto externo? | refinar con el capsule-agent y compartir |
 | `kaddo capsule add <path>` | ¿Cómo consumo otro sistema como contexto externo? | `kaddo context` (External Knowledge) |
+| `kaddo graph export` | ¿Cómo está conectado el conocimiento del proyecto? | abre `.kaddo/graph.mmd` o corre `kaddo explain` |
 
 > `scan`, `context`, `explain` y `understand` también imprimen esto — un pie **Question answered /
 > Suggested next** — al final de su salida, para que el siguiente paso esté siempre a la vista.

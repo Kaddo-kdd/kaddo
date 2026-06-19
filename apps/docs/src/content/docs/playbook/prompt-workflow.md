@@ -23,6 +23,7 @@ deterministic and need no LLM.
 | Guard | `git diff` + ownership | none | drift warning | terminal output |
 | Knowledge Capsule | `kaddo capsule export` draft | `capsule-agent` | refined capsule (no secrets/source) | `.kaddo/exports/<system>.capsule.md` |
 | Explain | Kaddo artifacts | none | project summary | `.kaddo/explain.md` |
+| Knowledge graph | front matter + capsules | none | lightweight knowledge graph | `.kaddo/graph.json`, `.kaddo/graph.mmd` |
 | Module design | `kaddo modules map` | `module-design-agent` | module design | `knowledge/tech/modules/<id>/module-design.md` |
 | Standards / security / stack | `kaddo add <topic>` | `standards-` / `security-` / `stack-agent` | global artifact | `knowledge/tech/<topic>.md` |
 | Git strategy | `kaddo add git-strategy` | `git-strategy-agent` | git strategy | `knowledge/tech/git-strategy.md` |

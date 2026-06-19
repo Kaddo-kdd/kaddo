@@ -57,6 +57,13 @@ del repo, owner, capacidades y qué artefactos de `knowledge/tech/modules/<id>/`
 Kaddo lee `.kaddo/modules.yml` y los artefactos del módulo solamente — **nunca escanea
 los repositorios secundarios**.
 
+## Resumen del grafo de conocimiento
+
+Si corriste [`kaddo graph export`](/es/knowledge-graph-export/), el pack agrega un pequeño resumen
+`## Knowledge Graph` (disponible, conteo de nodos/relaciones, Work Items activos conectados a
+código). Es solo un resumen — el grafo completo queda en `.kaddo/graph.json` / `.kaddo/graph.mmd`.
+`context` **nunca genera el grafo** ni lo incrusta.
+
 ## Determinista, sin LLM
 
 `kaddo context` **no** llama a un LLM, no requiere API key y no interpreta tu sistema.

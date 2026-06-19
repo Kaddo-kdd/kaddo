@@ -16,6 +16,8 @@ export type Artifact = {
   initiative: string
   source: string
   sourceId: string
+  /** ADR/decision IDs this artifact depends on (front matter `decisions`). */
+  decisions: string[]
 }
 
 function parseArtifact(filePath: string, raw: string): Artifact | null {
@@ -38,6 +40,7 @@ function parseArtifact(filePath: string, raw: string): Artifact | null {
       initiative: String(data.initiative ?? data.source_initiative ?? ''),
       source: data.source ? String(data.source) : '',
       sourceId: String(data.source_id ?? ''),
+      decisions: Array.isArray(data.decisions) ? data.decisions.map(String).filter(Boolean) : [],
     }
   } catch {
     return null

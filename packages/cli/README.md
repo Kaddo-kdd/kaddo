@@ -437,6 +437,26 @@ contracts, risks, ADRs, owners — never source code or secrets); refine it with
 the capsules (warning when one looks stale). See the
 [Knowledge Capsules guide](https://kaddo.trycatch.tv/knowledge-capsules/).
 
+---
+
+### `kaddo graph export`
+
+Export the connections that already exist between your knowledge artifacts as a **lightweight,
+file-based knowledge graph** — for onboarding, impact analysis and context selection.
+
+```bash
+kaddo graph export                  # → .kaddo/graph.json + .kaddo/graph.mmd
+kaddo graph export --scope all      # include every artifact (default: active)
+kaddo graph export --format mermaid # mermaid only (or --format json)
+```
+
+Nodes come from knowledge layers, Work Items, code globs, capabilities, ADRs and Knowledge
+Capsules; edges come from front matter (`code`, `capabilities`, `decisions`, `source_id`,
+`source_initiative`) and the external registry. It never reads `src/`, never reads source code
+and never calls an LLM. `kaddo explain` and `kaddo context` show a graph **summary** once it has
+been exported (they never generate it). See the
+[Knowledge Graph Export guide](https://kaddo.trycatch.tv/knowledge-graph-export/).
+
 ## Roadmap
 
 The full knowledge loop ships today: `scan → context → agents → understand → roadmap →
@@ -478,6 +498,7 @@ create --from roadmap → owners → guard → explain`.
 | v3.14 | Project knowledge language (`project.language: en\|es`): knowledge in your language, CLI stays English; all agents respect it |
 | v3.15 | Delivery context consistency: phase-based handoff + per-phase LLM instructions; assisted `owners suggest` (normalize/validate globs); new `ownership-agent`; guard untracked-files warning; duplicate Work Item detection |
 | v3.16 | Knowledge Capsules: `kaddo capsule export/add`, External Knowledge in context/explain, new `capsule-agent` |
+| v3.17 | Knowledge Graph Export: `kaddo graph export` (`.kaddo/graph.json` + `.mmd`, `--scope`/`--format`); graph summary in context/explain |
 
 **Optional modules (installed with `kaddo add`):**
 

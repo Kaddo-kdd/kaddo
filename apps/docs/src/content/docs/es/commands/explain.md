@@ -85,6 +85,12 @@ cualquier [formato de roadmap soportado](/es/commands/create/#formatos-de-roadma
 iniciativa siguen siendo metadata para planificacion y trazabilidad funcional; las carpetas
 representan solamente el estado del lifecycle.
 
+## Resumen del grafo de conocimiento
+
+Si corriste [`kaddo graph export`](/es/knowledge-graph-export/), `explain` agrega un bloque
+`## Knowledge Graph` con el conteo de nodos/relaciones y la última exportación (también en el JSON
+de agente bajo `graph`). `explain` reporta el grafo — nunca lo genera.
+
 ## `context` vs `explain`
 
 - `kaddo context` **prepara la entrada para un agente LLM** (interpretación externa).

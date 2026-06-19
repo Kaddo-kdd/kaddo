@@ -9,6 +9,7 @@ import { loadConfig, languageLabel, projectLanguage } from './config.js'
 import { discoverWorkItems } from '../services/knowledge-artifacts.js'
 import { assessPhase } from './delivery-phase.js'
 import { loadExternalCapsules, type ConsumedCapsule } from './capsule.js'
+import { loadGraphSummary, type GraphSummary } from './graph.js'
 import {
   loadMappedModules,
   presentArtifacts,
@@ -83,6 +84,8 @@ export type ProjectExplanation = {
   duplicateWorkItems: { reason: string; items: { id: string; title: string }[] }[]
   /** External Knowledge Capsules imported as context (VS-054). */
   externalCapsules: ConsumedCapsule[]
+  /** Summary of the exported knowledge graph (VS-055); null if not exported yet. */
+  graph: GraphSummary | null
   layers: LayerStatus[]
   roadmap: RoadmapStats
   mappedModules: MappedModuleWithCoverage[]
@@ -346,6 +349,7 @@ export function buildProjectExplanation(dir: string): ProjectExplanation {
     domains,
     duplicateWorkItems,
     externalCapsules: loadExternalCapsules(dir),
+    graph: loadGraphSummary(dir),
     layers,
     roadmap,
     mappedModules,
@@ -502,6 +506,15 @@ export function renderExplanationHuman(exp: ProjectExplanation): string {
         lines.push(`  ⚠ capsule last updated ${cap.ageDays} days ago — it may be stale.`)
       }
     }
+    lines.push('')
+  }
+
+  // Knowledge Graph summary (VS-055) — shown only if `kaddo graph export` has been run.
+  if (exp.graph) {
+    lines.push('## Knowledge Graph')
+    lines.push(`- Nodes: ${exp.graph.nodes}`)
+    lines.push(`- Edges: ${exp.graph.edges}`)
+    if (exp.graph.generatedAt) lines.push(`- Last exported: ${exp.graph.generatedAt}`)
     lines.push('')
   }
 

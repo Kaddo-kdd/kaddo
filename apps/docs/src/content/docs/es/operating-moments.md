@@ -128,6 +128,7 @@ Algunos comandos se repiten en varios momentos — ejecútalos cuando aplique la
 | `kaddo scan` | después de cambios técnicos | ¿Qué señales técnicas existen? |
 | `kaddo owners suggest` | para registrar/corregir ownership | ¿Qué artefacto posee qué código? |
 | `kaddo guard` | antes de cerrar un cambio | ¿Qué conocimiento podría estar desactualizado? |
+| `kaddo graph export` | onboarding, análisis de impacto, revisión | ¿Cómo está conectado el conocimiento? |
 
 ## Agentes cíclicos
 

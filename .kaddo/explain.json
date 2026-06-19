@@ -1,0 +1,92 @@
+{
+  "project": {
+    "name": "Kaddo",
+    "state": "pre-ai",
+    "teamSize": "small",
+    "structure": "monorepo",
+    "language": "English"
+  },
+  "stack": null,
+  "knowledge": {
+    "hasScan": false,
+    "hasInventory": false,
+    "hasContextPack": false,
+    "hasUnderstand": false,
+    "hasCapabilities": false,
+    "hasArchitecture": true,
+    "hasRoadmap": true,
+    "hasAgents": false
+  },
+  "workItems": {
+    "total": 0,
+    "inProgress": 0,
+    "done": 0,
+    "cancelled": 0,
+    "byState": {
+      "draft": 0,
+      "ready": 0,
+      "in-progress": 0,
+      "blocked": 0,
+      "completed": 0,
+      "archived": 0
+    },
+    "byType": {},
+    "initiatives": [],
+    "items": []
+  },
+  "ownership": {
+    "workItemsTotal": 0,
+    "workItemsWithOwnership": 0,
+    "workItemsMissingOwnership": 0
+  },
+  "domains": [],
+  "duplicateWorkItems": [],
+  "externalCapsules": [],
+  "layers": [
+    {
+      "layer": "Business",
+      "status": "Missing",
+      "detected": []
+    },
+    {
+      "layer": "Product",
+      "status": "Missing",
+      "detected": []
+    },
+    {
+      "layer": "Tech",
+      "status": "Structured",
+      "detected": [
+        "knowledge.md"
+      ]
+    },
+    {
+      "layer": "Delivery",
+      "status": "Partial",
+      "detected": [
+        "roadmap.md"
+      ]
+    }
+  ],
+  "roadmap": {
+    "present": false,
+    "candidates": 0,
+    "materialized": 0,
+    "remaining": 0
+  },
+  "missingKnowledge": [
+    "Scan baseline (.kaddo/scan.json)",
+    "Context pack (.kaddo/context-pack.md)",
+    "Inventory (knowledge/inventory.md)",
+    "Product knowledge (knowledge/product/)",
+    "Agents (knowledge/agents/)",
+    "Work items (knowledge/delivery/work-items/)"
+  ],
+  "suggestedNextSteps": [
+    "Run `kaddo scan` to detect the technical stack.",
+    "Run `kaddo add agents` to install knowledge agents.",
+    "Use capability-agent to generate knowledge/product/capabilities.md.",
+    "Create your first Work Item with `kaddo create`."
+  ],
+  "mapped_modules": []
+}

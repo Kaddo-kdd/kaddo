@@ -84,6 +84,12 @@ checklist, mixed initiatives, or the strict Kaddo Roadmap Agent format).
 `explain` also groups Work Items virtually by `initiative` front matter. Phase and initiative
 remain metadata for planning and functional traceability; folders represent lifecycle state only.
 
+## Knowledge graph summary
+
+If you have run [`kaddo graph export`](/knowledge-graph-export/), `explain` adds a
+`## Knowledge Graph` block with node/edge counts and the last export time (also in the agent JSON
+under `graph`). `explain` reports the graph — it never generates it.
+
 ## `context` vs `explain`
 
 - `kaddo context` **prepares input for an LLM agent** (external interpretation).

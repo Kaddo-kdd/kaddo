@@ -177,6 +177,20 @@ export function renderContextPack(pack: ContextPack): string {
     }
   }
 
+  // 6d. Knowledge Graph — a summary only (the full graph lives in .kaddo/graph.json/.mmd). VS-055.
+  if (pack.graph) {
+    parts.push('## Knowledge Graph\n')
+    parts.push(
+      [
+        '- Available: yes',
+        `- Nodes: ${pack.graph.nodes}`,
+        `- Edges: ${pack.graph.edges}`,
+        `- Active Work Items connected to code: ${pack.graph.activeWorkItemsConnectedToCode}`,
+      ].join('\n') + '\n'
+    )
+    parts.push('Full graph: `.kaddo/graph.json` / `.kaddo/graph.mmd` (run `kaddo graph export` to refresh).\n')
+  }
+
   // 7. Missing Context
   parts.push('## Missing Context\n')
   if (missing.length > 0) {

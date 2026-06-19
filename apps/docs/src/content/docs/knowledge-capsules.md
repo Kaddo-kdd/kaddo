@@ -113,3 +113,8 @@ source code. Review it before sharing. The `capsule-agent` is instructed to neve
 
 No remote scanning, GitHub API, automatic sync, permissions, portal, MCP, RAG or vector databases.
 Capsules are plain, versionable Markdown/JSON — copy them like any other file.
+
+## See also
+
+- [Knowledge Graph Export](/knowledge-graph-export/) — imported capsules appear in the graph as
+  `provides_external_context` edges into your project.

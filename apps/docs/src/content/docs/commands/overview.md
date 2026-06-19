@@ -24,6 +24,7 @@ Each command answers one question and has a clear next step:
 | `kaddo add agents` | Which agents are available? | `kaddo understand` |
 | `kaddo capsule export` | How do I share this project as external context? | refine with the capsule-agent, then share |
 | `kaddo capsule add <path>` | How do I consume another system as external context? | `kaddo context` (External Knowledge) |
+| `kaddo graph export` | How is my project knowledge connected? | open `.kaddo/graph.mmd` or run `kaddo explain` |
 
 > `scan`, `context`, `explain` and `understand` also print this — a **Question answered /
 > Suggested next** footer — at the end of their output, so the next step is always one glance away.

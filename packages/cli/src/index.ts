@@ -18,6 +18,7 @@ import { runModuleDescriptor } from './commands/module-descriptor.js'
 import { runModulesMap, runModulesList } from './commands/modules-map.js'
 import { runBootstrap } from './commands/bootstrap.js'
 import { runCapsuleExport, runCapsuleAdd } from './commands/capsule.js'
+import { runGraphExport } from './commands/graph.js'
 
 // Single source of truth for the version: read it from package.json at runtime so the CLI
 // `--version` can never drift from the published package version. `../package.json` resolves
@@ -78,6 +79,19 @@ capsuleCmd
   .description('Register an external Knowledge Capsule as project context (.kaddo/external.yml)')
   .action((path: string) => {
     runCapsuleAdd(path)
+  })
+
+const graphCmd = program
+  .command('graph')
+  .description('Export the lightweight, file-based knowledge graph of the project')
+
+graphCmd
+  .command('export')
+  .description('Write the knowledge graph to .kaddo/graph.json and .kaddo/graph.mmd')
+  .option('--scope <scope>', 'Graph scope: active (default) or all')
+  .option('--format <format>', 'Output format: json, mermaid (default: both)')
+  .action((opts: { scope?: string; format?: string }) => {
+    runGraphExport(opts)
   })
 
 program

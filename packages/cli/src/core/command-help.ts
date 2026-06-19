@@ -47,6 +47,10 @@ export const COMMAND_HELP: Record<string, CommandHelp> = {
     question: 'How do I consume another system as external context?',
     next: 'kaddo context (the pack now includes External Knowledge)',
   },
+  'graph export': {
+    question: 'How is my project knowledge connected?',
+    next: 'Open .kaddo/graph.mmd, or run kaddo explain for a summary',
+  },
 }
 
 /** Lines for the contextual footer, or [] if the command has no entry. */
@@ -76,6 +80,7 @@ export function renderCommandMatrixMarkdown(): string {
     'add agents',
     'capsule export',
     'capsule add',
+    'graph export',
   ]
   const lines = ['| Command | Question answered | Suggested next |', '|---|---|---|']
   for (const name of order) {

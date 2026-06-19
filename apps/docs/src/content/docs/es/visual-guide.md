@@ -374,6 +374,19 @@ flowchart LR
     CTX --> L[Agente LLM]
 ```
 
+## Exportar el grafo de conocimiento
+
+`kaddo graph export` convierte las relaciones ya declaradas en tu conocimiento en un
+[grafo de conocimiento](/es/knowledge-graph-export/) liviano basado en archivos — para onboarding,
+análisis de impacto y selección de contexto. Sin base de grafos, sin leer código fuente.
+
+```mermaid
+flowchart LR
+    M["Markdown + front matter"] --> GX[kaddo graph export]
+    GX --> J["graph.json + graph.mmd"]
+    J --> U["Onboarding / Análisis de impacto / Selección de contexto"]
+```
+
 ## Ownership asistido por agente
 
 El ownership-agent propone globs `code:` precisos; tú confirmas y los aplicas. `owners suggest` es
