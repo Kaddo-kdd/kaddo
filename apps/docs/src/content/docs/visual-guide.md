@@ -398,6 +398,18 @@ flowchart LR
     FM --> GX
 ```
 
+## MCP server (read-only)
+
+Agents and IDEs can read curated Kaddo knowledge directly through the read-only
+[`@kaddo/mcp`](/mcp-server/) server — no manual copy/paste, no source scanning.
+
+```mermaid
+flowchart LR
+    A["MCP client / IDE / agent"] --> M["@kaddo/mcp (read-only)"]
+    M --> K[".kaddo/ + knowledge/ + external/"]
+    K --> O["context · explain · understand · graph · work items · capsules · prompts"]
+```
+
 ## Ownership: agent-assisted
 
 The ownership-agent proposes precise `code:` globs; you confirm and apply them. `owners suggest`

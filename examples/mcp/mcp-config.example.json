@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "kaddo": {
+      "command": "npx",
+      "args": ["@kaddo/mcp"],
+      "cwd": "/absolute/path/to/your/project"
+    }
+  }
+}

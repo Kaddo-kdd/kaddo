@@ -98,4 +98,8 @@ Comandos de apoyo:
 | `kaddo module` | Muestra o inicializa el descriptor de módulo multirepo |
 | `kaddo capsule export` | Exporta una [Knowledge Capsule](/es/knowledge-capsules/) de este proyecto |
 | `kaddo capsule add <path>` | Importa una Knowledge Capsule externa como contexto |
+| `kaddo graph export` | Exporta el [grafo de conocimiento](/es/knowledge-graph-export/) + hints |
 | `kaddo add <module>` | Instala un módulo opcional |
+
+Los agentes e IDEs también pueden leer este conocimiento directamente mediante el
+[servidor MCP](/es/mcp-server/) de solo lectura (`@kaddo/mcp`) — sin copiar y pegar a mano.

@@ -400,6 +400,18 @@ flowchart LR
     FM --> GX
 ```
 
+## Servidor MCP (solo lectura)
+
+Los agentes e IDEs pueden leer el conocimiento curado de Kaddo directamente mediante el servidor
+de solo lectura [`@kaddo/mcp`](/es/mcp-server/) — sin copiar y pegar, sin escanear código.
+
+```mermaid
+flowchart LR
+    A["Cliente MCP / IDE / agente"] --> M["@kaddo/mcp (solo lectura)"]
+    M --> K[".kaddo/ + knowledge/ + external/"]
+    K --> O["context · explain · understand · grafo · work items · capsules · prompts"]
+```
+
 ## Ownership asistido por agente
 
 El ownership-agent propone globs `code:` precisos; tú confirmas y los aplicas. `owners suggest` es

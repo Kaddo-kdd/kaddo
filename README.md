@@ -197,6 +197,21 @@ via `.kaddo/git.yml` — Kaddo recommends, it does not enforce. Six **operationa
 `kaddo add agents` to refine these artifacts in your LLM. Kaddo never scans repos, calls a
 Git/GitHub API, or runs a security scan.
 
+## MCP server (read-only)
+
+The companion package **[`@kaddo/mcp`](packages/mcp/README.md)** is a read-only
+[Model Context Protocol](https://modelcontextprotocol.io) server that exposes a project's curated
+Kaddo knowledge — context pack, explain, understand, graph, hints, Work Items, roadmap, capsules and
+agent prompts — to MCP-compatible agents and IDEs, so they get structured context instead of
+scanning the whole repo.
+
+```json
+{ "mcpServers": { "kaddo": { "command": "npx", "args": ["@kaddo/mcp"], "cwd": "/path/to/project" } } }
+```
+
+It never writes files, runs git, calls an LLM or reads source code. See the
+[MCP Server docs](https://kaddo.trycatch.tv/mcp-server/) and [`examples/mcp/`](examples/mcp/).
+
 ## Templates
 
 Kaddo ships templates for its main artifacts — Work Items, roadmaps, capabilities,

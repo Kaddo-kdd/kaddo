@@ -98,4 +98,8 @@ Supporting commands:
 | `kaddo module` | Show or init the multirepo module descriptor |
 | `kaddo capsule export` | Export a [Knowledge Capsule](/knowledge-capsules/) about this project |
 | `kaddo capsule add <path>` | Import an external Knowledge Capsule as context |
+| `kaddo graph export` | Export the [knowledge graph](/knowledge-graph-export/) + hints |
 | `kaddo add <module>` | Install an optional module |
+
+Agents and IDEs can also read this knowledge directly through the read-only
+[MCP server](/mcp-server/) (`@kaddo/mcp`) — no manual copy/paste.

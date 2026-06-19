@@ -1,12 +1,12 @@
 {
-  "name": "@kaddo/cli",
+  "name": "@kaddo/mcp",
   "version": "3.19.0",
-  "description": "Knowledge Driven Development toolkit",
+  "description": "Read-only MCP server for Kaddo project knowledge.",
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Kaddo-kdd/kaddo.git",
-    "directory": "packages/cli"
+    "directory": "packages/mcp"
   },
   "homepage": "https://kaddo.trycatch.tv",
   "bugs": {
@@ -15,18 +15,18 @@
   "keywords": [
     "kdd",
     "knowledge",
-    "cli",
-    "development"
+    "mcp",
+    "model-context-protocol",
+    "kaddo"
   ],
   "type": "module",
   "main": "./dist/index.js",
   "bin": {
-    "kaddo": "./dist/index.js"
+    "kaddo-mcp": "./dist/index.js"
   },
   "files": [
     "dist",
-    "README.md",
-    "LICENSE"
+    "README.md"
   ],
   "publishConfig": {
     "access": "public"
@@ -38,12 +38,8 @@
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
-    "@clack/prompts": "^0.7.0",
-    "commander": "^12.1.0",
-    "execa": "^9.2.0",
-    "fast-glob": "^3.3.2",
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "gray-matter": "^4.0.3",
-    "minimatch": "^10.2.5",
     "yaml": "^2.4.2",
     "zod": "^3.23.8"
   },

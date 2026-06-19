@@ -26,5 +26,5 @@ jobs:
       - name: Build
         run: pnpm -r build
 
-      - name: Test (CLI)
-        run: pnpm --filter "@kaddo/cli" test
+      - name: Test (all packages)
+        run: pnpm test

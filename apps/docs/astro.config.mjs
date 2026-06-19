@@ -161,6 +161,7 @@ export default defineConfig({
             { label: 'Multirepo modules', translations: { es: 'Módulos multirepo' }, slug: 'modules/multirepo' },
             { label: 'Knowledge Capsules', translations: { es: 'Knowledge Capsules' }, slug: 'knowledge-capsules' },
             { label: 'Knowledge Graph Export', translations: { es: 'Exportar el grafo de conocimiento' }, slug: 'knowledge-graph-export' },
+            { label: 'MCP Server', translations: { es: 'Servidor MCP' }, slug: 'mcp-server' },
             { label: 'Standards, security & stack', translations: { es: 'Estándares, seguridad y stack' }, slug: 'modules/global-docs' },
             { label: 'Git strategy', translations: { es: 'Estrategia de Git' }, slug: 'modules/git-strategy' },
           ],
