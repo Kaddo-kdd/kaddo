@@ -88,8 +88,9 @@ representan solamente el estado del lifecycle.
 ## Resumen del grafo de conocimiento
 
 Si corriste [`kaddo graph export`](/es/knowledge-graph-export/), `explain` agrega un bloque
-`## Knowledge Graph` con el conteo de nodos/relaciones y la última exportación (también en el JSON
-de agente bajo `graph`). `explain` reporta el grafo — nunca lo genera.
+`## Knowledge Graph` con el conteo de nodos/relaciones, la **calidad de relaciones**, el **conteo
+de hints** y la última exportación (también en el JSON de agente bajo `graph`). `explain` reporta el
+grafo — nunca lo genera.
 
 ## `context` vs `explain`
 

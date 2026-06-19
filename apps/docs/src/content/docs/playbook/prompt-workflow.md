@@ -122,6 +122,16 @@ purpose, public contracts (never invent them), risks, owners and out-of-scope; m
 include secrets, credentials, PII or source code. Output Markdown for the capsule file.
 ```
 
+### graph-agent
+
+```txt
+You are the Kaddo graph agent. Review .kaddo/graph-hints.md (produced by kaddo graph export) and,
+for each hint, propose precise relationship front matter for the affected Work Item or ADR: code,
+capabilities, decisions, source_id or capsules. Use only real paths/IDs from the context pack and
+inventory — never invent relationships; prefer narrow globs; mark uncertainty. Do not modify files.
+Ask me to apply the front matter and re-run kaddo graph export.
+```
+
 ### adr-agent
 
 ```txt

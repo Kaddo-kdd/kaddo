@@ -23,7 +23,7 @@ Cada agente interviene en uno de los [momentos de operación](/es/operating-mome
 | **Base** | bootstrap-agent · business-agent · codebase-agent |
 | **Definición** | business-agent · product-agent · capability-agent · codebase-agent · architecture-agent · adr-agent/decision-agent |
 | **Proyección** | roadmap-agent · backlog-agent · work-item-agent · ownership-agent |
-| **Ejecución** | implementation-agent · ownership-agent · architecture-agent · capability-agent · adr-agent · guard-agent · capsule-agent |
+| **Ejecución** | implementation-agent · ownership-agent · architecture-agent · capability-agent · adr-agent · guard-agent · capsule-agent · graph-agent |
 
 ## Instalación
 
@@ -37,7 +37,7 @@ knowledge/agents/
   business/   business-agent.md
   product/    bootstrap-agent.md · capability-agent.md
   tech/       architecture-agent.md · codebase-agent.md · stack-agent.md ·
-              security-agent.md · standards-agent.md · module-design-agent.md · adr-agent.md · capsule-agent.md
+              security-agent.md · standards-agent.md · module-design-agent.md · adr-agent.md · capsule-agent.md · graph-agent.md
   delivery/   backlog-agent.md · roadmap-agent.md · work-item-agent.md · implementation-agent.md · ownership-agent.md · git-strategy-agent.md
   utilities/  legacy-agent.md
 ```
@@ -62,7 +62,7 @@ Los agentes se organizan en **grupos** por capa:
 |---|---|
 | `business` | business-agent |
 | `product` | bootstrap-agent · capability-agent |
-| `tech` | architecture-agent · codebase-agent · stack-agent · security-agent · standards-agent · module-design-agent · adr-agent · capsule-agent |
+| `tech` | architecture-agent · codebase-agent · stack-agent · security-agent · standards-agent · module-design-agent · adr-agent · capsule-agent · graph-agent |
 | `delivery` | backlog-agent · roadmap-agent · work-item-agent · implementation-agent · ownership-agent · git-strategy-agent |
 | `utilities` | legacy-agent |
 
@@ -108,6 +108,7 @@ Apoyan la ejecución diaria y los artefactos multirepo / globales (VS-017).
 | `implementation-agent` | Implementar un Work Item refinado; sugerir branch/scan/owners/guard | código · tests · conocimiento actualizado |
 | `ownership-agent` | Proponer globs `code:` precisos para Work Items/artefactos | globs `code:` propuestos (los aplica el humano) |
 | `capsule-agent` | Refinar/validar una Knowledge Capsule para compartir externamente (sin secretos/código) | `.kaddo/exports/<system>.capsule.md` |
+| `graph-agent` | Revisar los hints del grafo y proponer front matter de relaciones preciso | `code`/`capabilities`/`decisions`/`capsules` propuestos (los aplica el humano) |
 | `git-strategy-agent` | Refinar la estrategia de Git | `knowledge/tech/git-strategy.md` |
 | `security-agent` | Documentar consideraciones de seguridad (sin escaneo) | `knowledge/tech/security.md` |
 | `standards-agent` | Definir estándares ligeros | `knowledge/tech/standards.md` |
@@ -160,6 +161,7 @@ Responde, para cualquier respuesta: **quién la produjo, qué produjo y qué sig
 | `implementation-agent` | Implementación | código, tests, migraciones | **una rama** (según estrategia de Git), **un mensaje de commit**, scan, owners suggest, guard | ejecutar git, commitear/pushear/mergear sin confirmación |
 | `ownership-agent` | Ownership `code:` preciso | globs propuestos | `kaddo owners suggest`, `kaddo guard` | código, git, modificar archivos sin confirmación |
 | `capsule-agent` | Knowledge Capsule para compartir | cápsula refinada | `kaddo capsule export` | secretos, código fuente, contratos inventados, git |
+| `graph-agent` | Calidad de relaciones del grafo | front matter propuesto | `kaddo graph export`, `kaddo owners suggest` | código, git, modificar archivos sin confirmación, inventar relaciones |
 | `guard-agent` | Knowledge drift | hallazgos, advertencias | actualizar conocimiento, actualizar ownership | ramas, commits, código |
 
 ### Modelo de responsabilidad de Git

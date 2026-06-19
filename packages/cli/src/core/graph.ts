@@ -40,6 +40,7 @@ export type GraphEdgeType =
   | 'depends_on'
   | 'governs'
   | 'provides_external_context'
+  | 'uses_external_knowledge'
 
 export type GraphNode = {
   id: string
@@ -191,6 +192,12 @@ export function buildGraph(
       const capId = `capsule:${cap.id}`
       addNode({ id: capId, type: 'knowledge-capsule', label: cap.id, path: cap.path })
       addEdge(capId, projId, 'provides_external_context')
+      // Work Items that declare `capsules: [<id>]` use this external knowledge.
+      for (const wi of selectedWIs) {
+        if (wi.capsules.includes(cap.id)) {
+          addEdge(`wi:${wi.id || wi.title}`, capId, 'uses_external_knowledge')
+        }
+      }
     }
   }
 
@@ -215,6 +222,7 @@ const RELATIONSHIP_EDGES = new Set<GraphEdgeType>([
   'depends_on',
   'governs',
   'provides_external_context',
+  'uses_external_knowledge',
 ])
 
 /** True when the graph has nodes but no real relationship edges (only the layer chain / isolated). */

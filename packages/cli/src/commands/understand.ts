@@ -8,6 +8,7 @@ import { renderUnderstand, renderUnderstandTerminal } from '../templates/underst
 import { activeWorkItems, renderDeliveryLifecycle } from '../core/delivery.js'
 import { buildProjectExplanation } from '../core/project-explain.js'
 import { assessPhase } from '../core/delivery-phase.js'
+import { loadGraphHints } from '../core/graph-hints.js'
 import { printCommandFooter } from '../core/command-help.js'
 
 export function runUnderstand(): void {
@@ -81,6 +82,18 @@ export function runUnderstand(): void {
       console.log(`  - ${cap.system}${cap.owner ? ` (owner: ${cap.owner})` : ''}`)
     }
     console.log('  → Review the relevant capsule before changing integration behavior with it.')
+  }
+
+  // 5b-graph. Graph hints (VS-056): only nudge during Active Delivery and only when hints affect
+  // active Work Items, so the recommendation stays relevant to current work.
+  const graphHints = loadGraphHints(dir)
+  if (assessment.phase === 'Active Delivery' && graphHints && graphHints.activeWorkItemHints > 0) {
+    console.log('')
+    console.log(
+      `Graph hints: ${graphHints.activeWorkItemHints} active Work Item(s) have limited graph relationships (quality: ${graphHints.quality}).`
+    )
+    console.log('  → Review graph hints before continuing with implementation.')
+    console.log('  Suggested agent: graph-agent (see .kaddo/graph-hints.md)')
   }
 
   // 5c. If a Work Item is active, show the official delivery lifecycle.

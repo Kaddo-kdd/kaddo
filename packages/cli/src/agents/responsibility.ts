@@ -186,6 +186,19 @@ export const RESPONSIBILITY_MATRIX: Record<string, AgentResponsibility> = {
     ],
     next: ['kaddo capsule export'],
   },
+  'graph-agent': {
+    agent: 'graph-agent',
+    responsibleFor: ['Reviewing graph hints', 'Proposing precise relationship front matter'],
+    produces: ['proposed front matter (code/capabilities/decisions/source/capsules)'],
+    canSuggest: ['kaddo graph export', 'kaddo owners suggest'],
+    cannotSuggest: [
+      'code',
+      'git',
+      'modifying files without confirmation',
+      'inventing relationships',
+    ],
+    next: ['kaddo graph export'],
+  },
   'ownership-agent': {
     agent: 'ownership-agent',
     responsibleFor: ['Precise code: ownership for Work Items and artifacts'],

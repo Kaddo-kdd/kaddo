@@ -10,6 +10,7 @@ import { lifecycleStateOf, isActiveState, lifecycleCounts, type LifecycleState }
 import { assessPhase, type PhaseAssessment } from './delivery-phase.js'
 import { loadExternalCapsules, type ConsumedCapsule } from './capsule.js'
 import { loadGraphSummary, type GraphSummary } from './graph.js'
+import { loadGraphHints, type GraphHintsSummary } from './graph-hints.js'
 
 export const CONTEXT_PACK_VERSION = '1'
 
@@ -69,6 +70,8 @@ export type ContextPack = {
   external: ConsumedCapsule[]
   /** Summary of the exported knowledge graph (VS-055); null if not exported yet. */
   graph: GraphSummary | null
+  /** Summary of graph relationship-quality hints (VS-056); null if not exported yet. */
+  graphHints: GraphHintsSummary | null
   mappedModules: MappedModuleWithCoverage[]
   missing: string[]
   handoff: {
@@ -328,6 +331,7 @@ export function buildContextPack(
     deliveryMix,
     external: loadExternalCapsules(dir),
     graph: loadGraphSummary(dir),
+    graphHints: loadGraphHints(dir),
     mappedModules,
     missing,
     // VS-052: the handoff is driven by the REAL phase, not project.state, so the pack never

@@ -114,8 +114,47 @@ Each arrow is a declared relationship — follow them to see what depends on wha
 
 ## Improving graph quality
 
-If the export reports **limited relationships**, the graph only has the layer chain or isolated
-nodes. Enrich your front matter so Kaddo can connect more:
+Every `kaddo graph export` also evaluates **relationship quality** and writes metadata hints —
+non-blocking suggestions that help you connect more of the graph without heavy documentation.
+
+```text
+Knowledge graph exported.
+
+Nodes: 21
+Edges: 18
+Relationship quality: partial
+
+Hints:
+- WI-002 has no code ownership, linked capability.
+- ADR-001 has no governed code paths.
+```
+
+Two extra files are written:
+
+| File | Format | Use it for |
+|---|---|---|
+| `.kaddo/graph-hints.md` | Markdown | human review — per-artifact missing metadata + suggested front matter |
+| `.kaddo/graph-hints.json` | JSON | tooling, tests, the `graph-agent` |
+
+### Quality levels
+
+| Quality | Meaning |
+|---|---|
+| `good` | Most active artifacts have meaningful relationships. |
+| `partial` | Some active artifacts have missing relationship metadata. |
+| `sparse` | The graph has many nodes but few meaningful edges. |
+| `empty` | The graph has almost no relationships. |
+
+### What the hints detect
+
+- Active Work Items without `code`, `capabilities`, `decisions` or a roadmap `source`.
+- ADRs without governed `code` paths.
+- Capabilities declared in `capabilities.md` that no Work Item references.
+- Knowledge Capsules registered but not referenced by any Work Item (`capsules:`).
+
+The hints are **suggestions, not auto-fixes** — Kaddo never edits your artifacts. Enrich the front
+matter yourself, or let the [`graph-agent`](/modules/agents/) propose precise values that you
+confirm and apply, then re-run `kaddo graph export`:
 
 ```yaml
 ---
@@ -129,7 +168,14 @@ code:
   - src/cli/**
 source: roadmap
 source_id: WI-CANDIDATE-001
+capsules:
+  - orders-service
 ---
+```
+
+```text
+kaddo graph export → graph-hints.md → graph-agent → human confirmation
+                  → better front matter → better graph
 ```
 
 ## How it improves context

@@ -101,6 +101,14 @@ boundary explicit so nothing is silently treated as in-flight work.
 starting a ready item, refining a draft, or resolving blockers. `completed` and `archived`
 remain historical knowledge.
 
+## Graph hints during Active Delivery
+
+If the project is in the **Active Delivery** phase and
+[`kaddo graph export`](/knowledge-graph-export/) has reported hints that affect **active** Work
+Items, `understand` recommends reviewing them before continuing implementation and suggests the
+`graph-agent`. The nudge only appears when hints touch active work — it stays out of the way
+otherwise.
+
 ## Works even when context is incomplete
 
 If the scan baseline or some agents are missing, the command still produces a plan and

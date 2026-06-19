@@ -23,7 +23,7 @@ Each agent intervenes in one of Kaddo's [operating moments](/operating-moments/)
 | **Base** | bootstrap-agent · business-agent · codebase-agent |
 | **Definition** | business-agent · product-agent · capability-agent · codebase-agent · architecture-agent · adr-agent/decision-agent |
 | **Projection** | roadmap-agent · backlog-agent · work-item-agent · ownership-agent |
-| **Execution** | implementation-agent · ownership-agent · architecture-agent · capability-agent · adr-agent · guard-agent · capsule-agent |
+| **Execution** | implementation-agent · ownership-agent · architecture-agent · capability-agent · adr-agent · guard-agent · capsule-agent · graph-agent |
 
 ## Installing
 
@@ -37,7 +37,7 @@ knowledge/agents/
   business/   business-agent.md
   product/    bootstrap-agent.md · capability-agent.md
   tech/       architecture-agent.md · codebase-agent.md · stack-agent.md ·
-              security-agent.md · standards-agent.md · module-design-agent.md · adr-agent.md · capsule-agent.md
+              security-agent.md · standards-agent.md · module-design-agent.md · adr-agent.md · capsule-agent.md · graph-agent.md
   delivery/   backlog-agent.md · roadmap-agent.md · work-item-agent.md · implementation-agent.md · ownership-agent.md · git-strategy-agent.md
   utilities/  legacy-agent.md
 ```
@@ -62,7 +62,7 @@ Agents are organized into **groups** by layer:
 |---|---|
 | `business` | business-agent |
 | `product` | bootstrap-agent · capability-agent |
-| `tech` | architecture-agent · codebase-agent · stack-agent · security-agent · standards-agent · module-design-agent · adr-agent · capsule-agent |
+| `tech` | architecture-agent · codebase-agent · stack-agent · security-agent · standards-agent · module-design-agent · adr-agent · capsule-agent · graph-agent |
 | `delivery` | backlog-agent · roadmap-agent · work-item-agent · implementation-agent · ownership-agent · git-strategy-agent |
 | `utilities` | legacy-agent |
 
@@ -108,6 +108,7 @@ These support day-to-day execution and the multirepo / global artifacts (VS-017)
 | `implementation-agent` | Implement a refined Work Item; suggest branch/scan/owners/guard | code · tests · updated knowledge |
 | `ownership-agent` | Propose precise `code:` ownership globs for Work Items/artifacts | proposed `code:` globs (human applies) |
 | `capsule-agent` | Refine/validate a Knowledge Capsule for external sharing (no secrets/source) | `.kaddo/exports/<system>.capsule.md` |
+| `graph-agent` | Review graph hints and propose precise relationship front matter | proposed `code`/`capabilities`/`decisions`/`capsules` (human applies) |
 | `git-strategy-agent` | Refine the Git strategy | `knowledge/tech/git-strategy.md` |
 | `security-agent` | Document security considerations (no scanning) | `knowledge/tech/security.md` |
 | `standards-agent` | Define lightweight standards | `knowledge/tech/standards.md` |
@@ -159,6 +160,7 @@ This answers, for any response: **who produced it, what it produced, and what ru
 | `implementation-agent` | Implementation | code, tests, migrations | **a branch** (per Git strategy), **a commit message**, scan, owners suggest, guard | running git, committing/pushing/merging without confirmation |
 | `ownership-agent` | Precise `code:` ownership | proposed globs | `kaddo owners suggest`, `kaddo guard` | code, git, modifying files without confirmation |
 | `capsule-agent` | Knowledge Capsule for sharing | refined capsule | `kaddo capsule export` | secrets, source code, invented contracts, git |
+| `graph-agent` | Graph relationship quality | proposed front matter | `kaddo graph export`, `kaddo owners suggest` | code, git, modifying files without confirmation, invented relationships |
 | `guard-agent` | Knowledge drift | findings, warnings | update knowledge, update ownership | branches, commits, code |
 
 ### Git responsibility model

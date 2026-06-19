@@ -21,6 +21,7 @@ export const AGENT_GROUPS: Record<AgentGroup, string[]> = {
     'module-design-agent.md',
     'adr-agent.md',
     'capsule-agent.md',
+    'graph-agent.md',
   ],
   delivery: [
     'backlog-agent.md',

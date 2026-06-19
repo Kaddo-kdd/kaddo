@@ -385,6 +385,19 @@ flowchart LR
     J --> U["Onboarding / Impact analysis / Context selection"]
 ```
 
+Each export also rates **relationship quality** and writes `graph-hints.md` — non-blocking
+suggestions to enrich front matter. The `graph-agent` turns hints into precise metadata you
+confirm and apply:
+
+```mermaid
+flowchart LR
+    GX[kaddo graph export] --> H["graph-hints.md"]
+    H --> GA[graph-agent]
+    GA --> C{Human confirms}
+    C --> FM["Better front matter"]
+    FM --> GX
+```
+
 ## Ownership: agent-assisted
 
 The ownership-agent proposes precise `code:` globs; you confirm and apply them. `owners suggest`

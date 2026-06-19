@@ -454,7 +454,12 @@ Nodes come from knowledge layers, Work Items, code globs, capabilities, ADRs and
 Capsules; edges come from front matter (`code`, `capabilities`, `decisions`, `source_id`,
 `source_initiative`) and the external registry. It never reads `src/`, never reads source code
 and never calls an LLM. `kaddo explain` and `kaddo context` show a graph **summary** once it has
-been exported (they never generate it). See the
+been exported (they never generate it).
+
+Every export also rates **relationship quality** and writes non-blocking metadata hints
+(`.kaddo/graph-hints.md` + `.json`) — detecting active Work Items without `code`/`capabilities`,
+ADRs without governed `code`, capabilities/capsules with no Work Item link, and more. The
+`graph-agent` turns those hints into precise front matter you confirm and apply. See the
 [Knowledge Graph Export guide](https://kaddo.trycatch.tv/knowledge-graph-export/).
 
 ## Roadmap
@@ -499,6 +504,7 @@ create --from roadmap → owners → guard → explain`.
 | v3.15 | Delivery context consistency: phase-based handoff + per-phase LLM instructions; assisted `owners suggest` (normalize/validate globs); new `ownership-agent`; guard untracked-files warning; duplicate Work Item detection |
 | v3.16 | Knowledge Capsules: `kaddo capsule export/add`, External Knowledge in context/explain, new `capsule-agent` |
 | v3.17 | Knowledge Graph Export: `kaddo graph export` (`.kaddo/graph.json` + `.mmd`, `--scope`/`--format`); graph summary in context/explain |
+| v3.18 | Graph relationship quality & metadata hints: `graph-hints.md`/`.json`, quality levels, `graph-agent`; hints in context/explain/understand |
 
 **Optional modules (installed with `kaddo add`):**
 

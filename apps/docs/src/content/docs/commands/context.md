@@ -63,6 +63,10 @@ If you have run [`kaddo graph export`](/knowledge-graph-export/), the pack adds 
 It is only a summary — the full graph stays in `.kaddo/graph.json` / `.kaddo/graph.mmd`. `context`
 **never generates the graph** and never inlines it.
 
+If `kaddo graph export` produced metadata hints, the pack also adds a short `## Graph Hints` block
+(relationship quality, active hint count, the suggested `graph-agent` and a few hint lines) — not
+the whole `graph-hints.md` file.
+
 ## Deterministic, no LLM
 
 `kaddo context` does **not** call an LLM, require an API key, or interpret your system. It

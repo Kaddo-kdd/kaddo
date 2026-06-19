@@ -142,6 +142,7 @@ Some commands recur across moments — run them whenever the question applies:
 | `implementation-agent` | a Work Item is executed |
 | `backlog-agent` | an idea appears outside the roadmap |
 | `capsule-agent` | this project's knowledge must be shared with another project ([Knowledge Capsules](/knowledge-capsules/)) |
+| `graph-agent` | `kaddo graph export` reports limited relationships ([Knowledge Graph Export](/knowledge-graph-export/)) |
 
 ---
 

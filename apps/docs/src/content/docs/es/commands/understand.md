@@ -102,6 +102,13 @@ límite explícito para que nada se trate silenciosamente como trabajo en curso.
 empezar uno ready, refinar un draft o resolver bloqueos. `completed` y `archived` quedan como
 conocimiento historico.
 
+## Hints del grafo durante Active Delivery
+
+Si el proyecto está en la fase **Active Delivery** y
+[`kaddo graph export`](/es/knowledge-graph-export/) reportó hints que afectan Work Items
+**activos**, `understand` recomienda revisarlos antes de seguir con la implementación y sugiere el
+`graph-agent`. El aviso solo aparece cuando los hints tocan trabajo activo — si no, no estorba.
+
 ## Funciona aunque falte contexto
 
 Si falta el baseline de scan o algunos agentes, el comando igual produce un plan y te indica

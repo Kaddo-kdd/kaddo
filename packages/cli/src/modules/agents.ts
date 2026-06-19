@@ -68,6 +68,7 @@ const agentReadme: ModuleFile = {
     '- `stack-agent.md` — document technologies and stack decisions.',
     '- `module-design-agent.md` — document the design of a mapped module.',
     '- `capsule-agent.md` — refine a Knowledge Capsule for external sharing (no secrets/source).',
+    '- `graph-agent.md` — review `kaddo graph export` hints and propose precise relationship front matter.',
   ].join('\n'),
 }
 

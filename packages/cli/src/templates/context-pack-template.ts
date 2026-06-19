@@ -191,6 +191,24 @@ export function renderContextPack(pack: ContextPack): string {
     parts.push('Full graph: `.kaddo/graph.json` / `.kaddo/graph.mmd` (run `kaddo graph export` to refresh).\n')
   }
 
+  // 6e. Graph Hints — relationship-quality summary (VS-056). Short by design: a few messages
+  // only, not the whole graph-hints.md file.
+  if (pack.graphHints && pack.graphHints.totalHints > 0) {
+    parts.push('## Graph Hints\n')
+    parts.push(
+      [
+        `Graph relationship quality: ${pack.graphHints.quality}`,
+        `Active hints: ${pack.graphHints.activeWorkItemHints}`,
+        'Suggested agent: graph-agent',
+      ].join('\n') + '\n'
+    )
+    const shown = pack.graphHints.messages.slice(0, 3)
+    parts.push(shown.map((m) => `- ${m}`).join('\n') + '\n')
+    if (pack.graphHints.totalHints > shown.length) {
+      parts.push(`(+${pack.graphHints.totalHints - shown.length} more in \`.kaddo/graph-hints.md\`)\n`)
+    }
+  }
+
   // 7. Missing Context
   parts.push('## Missing Context\n')
   if (missing.length > 0) {

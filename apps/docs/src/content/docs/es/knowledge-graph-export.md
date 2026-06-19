@@ -116,8 +116,48 @@ Cada flecha es una relación declarada — síguelas para ver qué depende de qu
 
 ## Mejorar la calidad del grafo
 
-Si la exportación reporta **relaciones limitadas**, el grafo solo tiene la cadena de capas o nodos
-aislados. Enriquece tu front matter para que Kaddo pueda conectar más:
+Cada `kaddo graph export` también evalúa la **calidad de las relaciones** y escribe hints de
+metadata — sugerencias no bloqueantes que te ayudan a conectar más el grafo sin documentación
+pesada.
+
+```text
+Knowledge graph exported.
+
+Nodes: 21
+Edges: 18
+Relationship quality: partial
+
+Hints:
+- WI-002 has no code ownership, linked capability.
+- ADR-001 has no governed code paths.
+```
+
+Se escriben dos archivos extra:
+
+| Archivo | Formato | Para qué |
+|---|---|---|
+| `.kaddo/graph-hints.md` | Markdown | revisión humana — metadata faltante por artefacto + front matter sugerido |
+| `.kaddo/graph-hints.json` | JSON | tooling, tests, el `graph-agent` |
+
+### Niveles de calidad
+
+| Calidad | Significado |
+|---|---|
+| `good` | La mayoría de los artefactos activos tiene relaciones significativas. |
+| `partial` | Algunos artefactos activos tienen metadata de relación faltante. |
+| `sparse` | El grafo tiene muchos nodos pero pocas relaciones significativas. |
+| `empty` | El grafo casi no tiene relaciones. |
+
+### Qué detectan los hints
+
+- Work Items activos sin `code`, `capabilities`, `decisions` o un `source` de roadmap.
+- ADRs sin rutas de `code` gobernadas.
+- Capabilities declaradas en `capabilities.md` que ningún Work Item referencia.
+- Knowledge Capsules registradas pero no referenciadas por ningún Work Item (`capsules:`).
+
+Los hints son **sugerencias, no correcciones automáticas** — Kaddo nunca edita tus artefactos.
+Enriquece el front matter tú mismo, o deja que el [`graph-agent`](/es/modules/agents/) proponga
+valores precisos que tú confirmas y aplicas, y luego vuelve a correr `kaddo graph export`:
 
 ```yaml
 ---
@@ -131,7 +171,14 @@ code:
   - src/cli/**
 source: roadmap
 source_id: WI-CANDIDATE-001
+capsules:
+  - orders-service
 ---
+```
+
+```text
+kaddo graph export → graph-hints.md → graph-agent → confirmación humana
+                  → mejor front matter → mejor grafo
 ```
 
 ## Cómo mejora el contexto

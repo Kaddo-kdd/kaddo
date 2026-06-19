@@ -6,9 +6,13 @@ import {
   buildGraph,
   serializeGraphJson,
   renderGraphMermaid,
-  graphIsSparse,
   type GraphScope,
 } from '../core/graph.js'
+import {
+  buildGraphHints,
+  renderGraphHintsMarkdown,
+  serializeGraphHintsJson,
+} from '../core/graph-hints.js'
 
 type GraphFormat = 'json' | 'mermaid'
 type GraphOpts = { scope?: string; format?: string }
@@ -25,6 +29,8 @@ export function runGraphExport(opts: GraphOpts = {}): void {
   const writeMermaid = format !== 'json'
 
   const graph = buildGraph(dir, config, { scope })
+  // Relationship-quality hints (VS-056) — non-blocking; always written alongside the graph.
+  const hints = buildGraphHints(dir, graph)
 
   const written: string[] = []
   if (writeJson) {
@@ -37,14 +43,23 @@ export function runGraphExport(opts: GraphOpts = {}): void {
     writeFile(join(dir, rel), renderGraphMermaid(graph))
     written.push(rel.replace(/\\/g, '/'))
   }
+  writeFile(join(dir, '.kaddo', 'graph-hints.md'), renderGraphHintsMarkdown(hints))
+  writeFile(join(dir, '.kaddo', 'graph-hints.json'), serializeGraphHintsJson(hints))
+  written.push('.kaddo/graph-hints.md', '.kaddo/graph-hints.json')
 
-  if (graphIsSparse(graph)) {
-    log.warn('Knowledge graph exported with limited relationships.')
-    log.info('Tip: add `code`, `capabilities`, `decisions` or `source_id` front matter to improve graph quality.')
-  } else {
-    log.success('Knowledge graph exported.')
-  }
+  log.success('Knowledge graph exported.')
   log.info(`Scope: ${scope} · Nodes: ${graph.nodes.length} · Edges: ${graph.edges.length}`)
+  log.info(`Relationship quality: ${hints.quality}`)
+
+  if (hints.hints.length > 0) {
+    const shown = hints.hints.slice(0, 5)
+    log.warn(`${hints.hints.length} metadata hint(s) available:`)
+    for (const h of shown) log.info(`- ${h.message}`)
+    if (hints.hints.length > shown.length) {
+      log.info(`…and ${hints.hints.length - shown.length} more — see .kaddo/graph-hints.md`)
+    }
+  }
+
   for (const f of written) log.info(`- ${f}`)
 
   printCommandFooter('graph export')

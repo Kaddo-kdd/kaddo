@@ -10,6 +10,7 @@ import { discoverWorkItems } from '../services/knowledge-artifacts.js'
 import { assessPhase } from './delivery-phase.js'
 import { loadExternalCapsules, type ConsumedCapsule } from './capsule.js'
 import { loadGraphSummary, type GraphSummary } from './graph.js'
+import { loadGraphHints, type GraphHintsSummary } from './graph-hints.js'
 import {
   loadMappedModules,
   presentArtifacts,
@@ -86,6 +87,8 @@ export type ProjectExplanation = {
   externalCapsules: ConsumedCapsule[]
   /** Summary of the exported knowledge graph (VS-055); null if not exported yet. */
   graph: GraphSummary | null
+  /** Summary of graph relationship-quality hints (VS-056); null if not exported yet. */
+  graphHints: GraphHintsSummary | null
   layers: LayerStatus[]
   roadmap: RoadmapStats
   mappedModules: MappedModuleWithCoverage[]
@@ -350,6 +353,7 @@ export function buildProjectExplanation(dir: string): ProjectExplanation {
     duplicateWorkItems,
     externalCapsules: loadExternalCapsules(dir),
     graph: loadGraphSummary(dir),
+    graphHints: loadGraphHints(dir),
     layers,
     roadmap,
     mappedModules,
@@ -514,6 +518,10 @@ export function renderExplanationHuman(exp: ProjectExplanation): string {
     lines.push('## Knowledge Graph')
     lines.push(`- Nodes: ${exp.graph.nodes}`)
     lines.push(`- Edges: ${exp.graph.edges}`)
+    if (exp.graphHints) {
+      lines.push(`- Quality: ${exp.graphHints.quality}`)
+      lines.push(`- Hints: ${exp.graphHints.totalHints}`)
+    }
     if (exp.graph.generatedAt) lines.push(`- Last exported: ${exp.graph.generatedAt}`)
     lines.push('')
   }
