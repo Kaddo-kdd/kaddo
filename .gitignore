@@ -2,3 +2,6 @@ node_modules/
 dist/
 .DS_Store
 *.log
+
+# Kaddo-generated artifacts (this repo is the Kaddo source, not a managed project)
+.kaddo/
