@@ -1,6 +1,7 @@
 // MCP server wiring (VS-057). The only module that depends on the MCP SDK. It binds the SDK-free
 // resource/tool/prompt builders to an McpServer. Everything stays read-only.
 
+import { createRequire } from 'node:module'
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { z } from 'zod'
 import { RESOURCES } from './resources.js'
@@ -16,10 +17,20 @@ import {
   listGraphHints,
   type ToolResult,
 } from './tools.js'
+import {
+  generateContext,
+  generateExplain,
+  generateUnderstand,
+  generateGraph,
+  generateCapsuleDraft,
+  type GenerateResult,
+} from './generate.js'
 import { assertKaddoProject, KaddoMcpError } from './project.js'
 
 export const SERVER_NAME = 'kaddo'
-export const SERVER_VERSION = '3.19.0'
+// Read the version from package.json at runtime so it never drifts from the published version.
+const require = createRequire(import.meta.url)
+export const SERVER_VERSION = (require('../package.json') as { version: string }).version
 
 function toolText(result: ToolResult) {
   if (!result.ok) {
@@ -39,6 +50,21 @@ function guarded(root: string, fn: () => ToolResult): ToolResult {
     throw err
   }
 }
+
+/** Run a derived-generation tool under the project guard; map errors to MCP tool content. */
+function generated(root: string, label: string, fn: () => GenerateResult) {
+  try {
+    assertKaddoProject(root)
+    const result = fn()
+    return { content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }] }
+  } catch (err) {
+    const message = err instanceof KaddoMcpError ? err.message : `Could not ${label}. ${String(err)}`
+    return { content: [{ type: 'text' as const, text: message }], isError: true }
+  }
+}
+
+const DERIVED_NOTE =
+  'Writes only derived files under .kaddo/. Does not modify knowledge, source code, external context or git.'
 
 export function createServer(root: string): McpServer {
   const server = new McpServer({ name: SERVER_NAME, version: SERVER_VERSION })
@@ -125,6 +151,33 @@ export function createServer(root: string): McpServer {
       },
     },
     async (args) => toolText(guarded(root, () => listGraphHints(root, args)))
+  )
+
+  // --- Derived tools (write only under .kaddo/) — VS-058 ---
+  server.registerTool(
+    'kaddo_generate_context',
+    { title: 'Generate context pack', description: `Regenerate .kaddo/context-pack.md + .json. ${DERIVED_NOTE}`, inputSchema: {} },
+    async () => generated(root, 'generate context pack', () => generateContext(root))
+  )
+  server.registerTool(
+    'kaddo_generate_explain',
+    { title: 'Generate explain', description: `Regenerate .kaddo/explain.md + .json. ${DERIVED_NOTE}`, inputSchema: {} },
+    async () => generated(root, 'generate explain', () => generateExplain(root))
+  )
+  server.registerTool(
+    'kaddo_generate_understand',
+    { title: 'Generate understand', description: `Regenerate .kaddo/understand.md. ${DERIVED_NOTE}`, inputSchema: {} },
+    async () => generated(root, 'generate understand', () => generateUnderstand(root))
+  )
+  server.registerTool(
+    'kaddo_generate_graph',
+    { title: 'Generate knowledge graph', description: `Regenerate .kaddo/graph.json/.mmd + graph-hints.md/.json. ${DERIVED_NOTE}`, inputSchema: {} },
+    async () => generated(root, 'generate knowledge graph', () => generateGraph(root))
+  )
+  server.registerTool(
+    'kaddo_generate_capsule_draft',
+    { title: 'Generate capsule draft', description: `Write a capsule DRAFT under .kaddo/exports/ (never registers it). ${DERIVED_NOTE}`, inputSchema: {} },
+    async () => generated(root, 'generate capsule draft', () => generateCapsuleDraft(root))
   )
 
   // --- Prompts (installed agent prompts) ---

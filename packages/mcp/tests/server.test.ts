@@ -38,6 +38,11 @@ describe('MCP server integration (VS-057 AC4/AC5/AC6/AC7/AC8)', () => {
         'kaddo_list_agents',
         'kaddo_get_agent_prompt',
         'kaddo_list_graph_hints',
+        'kaddo_generate_context',
+        'kaddo_generate_explain',
+        'kaddo_generate_understand',
+        'kaddo_generate_graph',
+        'kaddo_generate_capsule_draft',
       ])
     )
 
@@ -59,6 +64,29 @@ describe('MCP server integration (VS-057 AC4/AC5/AC6/AC7/AC8)', () => {
 
     const read = await client.readResource({ uri: 'kaddo://context-pack' })
     expect((read.contents[0].text as string)).toMatch(/Run `kaddo context`/)
+
+    await client.close()
+  })
+
+  it('AC18: a derived tool regenerates a file the resource then reads', async () => {
+    root = makeProject()
+    config(root, 'demo')
+    write(root, 'knowledge/knowledge.md', '# Knowledge\n\nProduct summary.')
+    workItem(root, 'WI-001', { status: 'in-progress' })
+    const client = await connect(root)
+
+    // Before: resource reports the missing-file instruction.
+    const missing = await client.readResource({ uri: 'kaddo://context-pack' })
+    expect(missing.contents[0].text as string).toMatch(/Run `kaddo context`/)
+
+    // Derived tool regenerates it.
+    const gen = await client.callTool({ name: 'kaddo_generate_context', arguments: {} })
+    const genText = (gen.content as { type: string; text: string }[])[0].text
+    expect(genText).toContain('.kaddo/context-pack.md')
+
+    // After: the resource reads the regenerated pack.
+    const present = await client.readResource({ uri: 'kaddo://context-pack' })
+    expect(present.contents[0].text as string).toContain('Kaddo Context Pack')
 
     await client.close()
   })

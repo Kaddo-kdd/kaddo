@@ -74,15 +74,56 @@ A ready-to-copy example lives in [`examples/mcp/`](https://github.com/Kaddo-kdd/
 - `kaddo_list_agents` / `kaddo_get_agent_prompt` — installed agent prompts.
 - `kaddo_list_graph_hints` — graph hints, filter by `artifact_type` / `severity` / `active_only`.
 
+## Derived tools (write only under `.kaddo/`)
+
+When a derived artifact is missing or stale, these tools regenerate it in place — using the same
+core logic as the CLI — so the agent never has to drop to a terminal. They are deterministic (no
+LLM, no git) and **write only under `.kaddo/`**; they never modify `knowledge/`, `src/`,
+`external/` or `.kaddo/external.yml`.
+
+| Tool | Writes | CLI equivalent |
+|---|---|---|
+| `kaddo_generate_context` | `.kaddo/context-pack.md` + `.json` | `kaddo context` |
+| `kaddo_generate_explain` | `.kaddo/explain.md` + `.json` | `kaddo explain` |
+| `kaddo_generate_understand` | `.kaddo/understand.md` | `kaddo understand` |
+| `kaddo_generate_graph` | `.kaddo/graph.json` + `.mmd` + `graph-hints.md` + `.json` | `kaddo graph export` |
+| `kaddo_generate_capsule_draft` | `.kaddo/exports/<project>.capsule.md` + `.json` | `kaddo capsule export` |
+
+Each returns `{ status, files_written, summary, warnings, next_suggested_resources }`. Every write
+passes through a central allowlist (`assertMcpDerivedWritePath`); any path outside the derived
+`.kaddo/` set is rejected with `Blocked unsafe MCP derived write path.`
+
+`kaddo_generate_capsule_draft` writes a **draft only** under `.kaddo/exports/` — it never registers
+or imports a capsule (use the CLI `kaddo capsule add` for that).
+
+### Typical flow
+
+```text
+agent queries MCP → derived resource missing or stale
+        ↓
+derived tool regenerates it under .kaddo/
+        ↓
+agent reads the refreshed resource and continues
+```
+
+For example: *"refresh the context pack and summarize the current phase"* →
+`kaddo_generate_context` → `kaddo://context-pack` → `kaddo_project_status`. Or: *"regenerate the
+graph and review hints"* → `kaddo_generate_graph` → `kaddo://graph-hints` → the `graph-agent`
+prompt.
+
+Whether a tool runs automatically or needs confirmation is decided by your MCP client — the prompts
+may suggest a derived tool when a resource is missing, but never force it.
+
 ## Prompts
 
 Every installed agent prompt (`knowledge/agents/**`) is exposed as an MCP prompt — `business-agent`,
 `work-item-agent`, `implementation-agent`, `graph-agent`, `capsule-agent`, and so on — with its full
 content and recommended inputs. Install them with [`kaddo add agents`](/modules/agents/).
 
-## No automatic generation
+## Resources never auto-generate
 
-The server never generates files. If a derived file is missing it returns a clear instruction:
+**Resources** are pure reads — they never generate files. If a derived file is missing, the resource
+returns a clear instruction (and you can then call the matching [derived tool](#derived-tools-write-only-under-kaddo)):
 
 | Missing | Response |
 |---|---|
@@ -99,9 +140,10 @@ tokens, env values, source code or PII.
 
 ## What it does NOT do
 
-No writes, no Work Item creation, no `kaddo scan`/`context`/`graph export`/`learn`/`owners suggest`,
-no git, no remote sync, no GitHub API, no HTTP server, no auth, no RAG, no vector database. The
-heavy KDD logic stays in the CLI; the MCP server only reads what the CLI produced.
+No writes outside `.kaddo/`, no knowledge/source edits, no Work Item creation, no `kaddo scan`/
+`learn`/`owners suggest`/`capsule add`, no `kaddo add`, no git, no remote sync, no GitHub API, no
+HTTP server, no auth, no RAG, no vector database, no LLM calls. The derived tools regenerate
+artifacts **only under `.kaddo/`**; everything else is read-only.
 
 ## See also
 

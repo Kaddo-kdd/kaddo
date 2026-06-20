@@ -95,6 +95,53 @@ export function readYaml<T = unknown>(root: string, relPath: string): T | null {
   }
 }
 
+// --- Derived writes (VS-058) ---------------------------------------------
+//
+// Derived tools may ONLY write generated artifacts under `.kaddo/`. They can never write to
+// knowledge/, src/, external/, .kaddo/external.yml or any VCS/build directory.
+
+const DERIVED_WRITE_FILES = new Set([
+  '.kaddo/context-pack.md',
+  '.kaddo/context-pack.json',
+  '.kaddo/explain.md',
+  '.kaddo/explain.json',
+  '.kaddo/understand.md',
+  '.kaddo/understand.json',
+  '.kaddo/graph.json',
+  '.kaddo/graph.mmd',
+  '.kaddo/graph-hints.md',
+  '.kaddo/graph-hints.json',
+])
+
+const DERIVED_EXPORTS_RE = /^\.kaddo\/exports\/[^/]+\.capsule\.(md|json)$/
+
+/**
+ * Assert a path is an allowed derived-write target. Returns the normalized POSIX path or throws.
+ * Allowed: the fixed `.kaddo/*` derived files and `.kaddo/exports/<name>.capsule.{md,json}`.
+ */
+export function assertMcpDerivedWritePath(relPath: string): string {
+  const p = toPosix(relPath).replace(/^\/+/, '')
+  if (path.isAbsolute(relPath) || p.split('/').some((seg) => seg === '..')) {
+    throw new KaddoMcpError('Blocked unsafe MCP derived write path.')
+  }
+  if (!DERIVED_WRITE_FILES.has(p) && !DERIVED_EXPORTS_RE.test(p)) {
+    throw new KaddoMcpError('Blocked unsafe MCP derived write path.')
+  }
+  return p
+}
+
+/** Write a derived artifact under the project, validated by `assertMcpDerivedWritePath`. */
+export function writeDerived(root: string, relPath: string, content: string): void {
+  const p = assertMcpDerivedWritePath(relPath)
+  const abs = path.resolve(root, p)
+  const base = toPosix(root).replace(/\/+$/, '')
+  if (toPosix(abs) !== base && !toPosix(abs).startsWith(base + '/')) {
+    throw new KaddoMcpError('Blocked unsafe MCP derived write path.')
+  }
+  fs.mkdirSync(path.dirname(abs), { recursive: true })
+  fs.writeFileSync(abs, content, 'utf-8')
+}
+
 /** List files under a project-relative directory (recursively), returning project-relative paths. */
 export function listFiles(root: string, relDir: string, filterExt?: string): string[] {
   let absDir: string

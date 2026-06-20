@@ -60,6 +60,32 @@ directory set via the `KADDO_PROJECT_DIR` environment variable).
 - `kaddo_list_agents` / `kaddo_get_agent_prompt` — installed agent prompts.
 - `kaddo_list_graph_hints` — graph hints, filter by `artifact_type` / `severity` / `active_only`.
 
+## Derived tools (write only under `.kaddo/`)
+
+When a derived artifact is missing or stale, these tools regenerate it in place using the same core
+logic as the CLI — so the agent never has to leave the flow. They are deterministic (no LLM) and
+**only write under `.kaddo/`**; they never touch `knowledge/`, `src/`, `external/`,
+`.kaddo/external.yml` or git.
+
+| Tool | Writes | CLI equivalent |
+|---|---|---|
+| `kaddo_generate_context` | `.kaddo/context-pack.md` + `.json` | `kaddo context` |
+| `kaddo_generate_explain` | `.kaddo/explain.md` + `.json` | `kaddo explain` |
+| `kaddo_generate_understand` | `.kaddo/understand.md` | `kaddo understand` |
+| `kaddo_generate_graph` | `.kaddo/graph.json` + `.mmd` + `graph-hints.md` + `.json` | `kaddo graph export` |
+| `kaddo_generate_capsule_draft` | `.kaddo/exports/<project>.capsule.md` + `.json` | `kaddo capsule export` |
+
+`kaddo_generate_capsule_draft` writes a **draft only** — it never registers/imports a capsule
+(`external/`, `.kaddo/external.yml` stay untouched; use the CLI `kaddo capsule add` for that).
+
+Each tool returns `{ status, files_written, summary, warnings, next_suggested_resources }`. All
+writes pass through a central allowlist (`assertMcpDerivedWritePath`) that blocks any path outside
+the derived `.kaddo/` set — attempts return `Blocked unsafe MCP derived write path.`
+
+**When to use:** after a resource reports a missing file (e.g. `Run kaddo context first`), call the
+matching derived tool, then read the resource again. Whether a tool runs automatically or needs
+confirmation is up to your MCP client.
+
 ## Prompts
 
 Every installed agent prompt (`knowledge/agents/**`) is exposed as an MCP prompt
@@ -68,10 +94,10 @@ content and recommended inputs.
 
 ## What it does NOT do
 
-No writes, no Work Item creation, no `kaddo scan`/`context`/`graph export`/`learn`/`owners suggest`,
-no git, no remote sync, no GitHub API, no HTTP server, no auth, no RAG, no vector database. If a
-derived file is missing, the server returns a clear instruction to run the matching CLI command —
-it never generates files.
+No writes outside `.kaddo/`, no knowledge/source edits, no Work Item creation, no `kaddo scan`/
+`learn`/`owners suggest`/`capsule add`, no `kaddo add`, no git, no remote sync, no GitHub API, no
+HTTP server, no auth, no RAG, no vector database, no LLM calls. The derived tools above may
+regenerate artifacts **only under `.kaddo/`**; everything else is read-only.
 
 ## Security
 
