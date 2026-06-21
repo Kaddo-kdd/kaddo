@@ -38,6 +38,36 @@ kaddo report impact --json --output .kaddo/reports/impact-report.json
 It is fully **deterministic**: built from existing artifacts, **no LLM**. It reads `explain`,
 the Work Items, roadmap, the knowledge graph and hints, skills and agents.
 
+## Actionable Gaps
+
+Metrics close with action. Beyond *"Work Items with source: 3/4"*, the report adds an
+**Actionable Gaps** section that names exactly which Work Item explains each gap and how to fix it:
+
+```md
+## Actionable Gaps
+
+### Work Items missing initiative
+
+- WI-001 — Initialize TypeScript CLI project
+  - Path: knowledge/delivery/work-items/completed/WI-001-...md
+  - Suggested action: add `initiative` to connect this Work Item to a delivery initiative.
+```
+
+It detects, per Work Item: missing `source`/`source_id`, `initiative`, `code:` ownership,
+`knowledge_level`, an `## Acceptance Criteria` section, a `## Definition of Done` section and a
+validation (`## How to test it`) section — plus **broad ownership globs** (e.g. `src/**`,
+`src/cli/**`) and **ownership overlaps** (a glob owned by more than one Work Item, shown with the
+involved Work Items). Section variants in English and Spanish are recognized. When there are no
+gaps it prints *"No actionable knowledge gaps detected."*
+
+**Suggested Actions** then name specific Work Items (grouping when there are many), e.g.
+*"Add an `initiative` to WI-001, WI-005, WI-006."* — and a **Score Breakdown** shows how each bucket
+contributed to the score. In `--json`, all of this is under a stable `actionable_gaps` object (one
+array per gap type) plus `score_breakdown`.
+
+The report still **never edits Work Items, never runs agents and never calls an LLM** — it points,
+you fix.
+
 ## What it does NOT measure
 
 No money, no ROI, no individual productivity, no commits-per-person, no benchmarking against other

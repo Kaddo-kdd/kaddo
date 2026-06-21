@@ -29,16 +29,18 @@ describe('MCP impact report (VS-061)', () => {
     expect(out).toContain('## Impact Signals')
   })
 
-  it('AC24/AC25: kaddo_generate_impact_report writes only under .kaddo/reports/', () => {
+  it('AC15/AC24/AC25: kaddo_generate_impact_report writes only under .kaddo/reports/ and includes actionable gaps', () => {
     project()
     const r = generateImpactReport(root, { format: 'markdown' })
     expect(r.status).toBe('ok')
     expect(r.files_written[0]).toBe('.kaddo/reports/impact-report.md')
-    expect(fs.existsSync(path.join(root, '.kaddo/reports/impact-report.md'))).toBe(true)
+    expect(fs.readFileSync(path.join(root, '.kaddo/reports/impact-report.md'), 'utf-8')).toContain('## Actionable Gaps')
 
     const j = generateImpactReport(root, { format: 'json' })
     expect(j.files_written[0]).toBe('.kaddo/reports/impact-report.json')
-    expect(JSON.parse(fs.readFileSync(path.join(root, '.kaddo/reports/impact-report.json'), 'utf-8'))).toHaveProperty('knowledge_health')
+    const json = JSON.parse(fs.readFileSync(path.join(root, '.kaddo/reports/impact-report.json'), 'utf-8'))
+    expect(json).toHaveProperty('knowledge_health')
+    expect(json).toHaveProperty('actionable_gaps.missing_initiative')
   })
 
   it('AC25: the reports allowlist blocks writes outside .kaddo/reports/', () => {

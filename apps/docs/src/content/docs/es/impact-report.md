@@ -39,6 +39,37 @@ kaddo report impact --json --output .kaddo/reports/impact-report.json
 Es totalmente **determinista**: se arma a partir de los artefactos existentes, **sin LLM**. Lee
 `explain`, los Work Items, el roadmap, el grafo de conocimiento y sus hints, las skills y los agentes.
 
+## Actionable Gaps
+
+Las métricas cierran con acción. Más allá de *"Work Items with source: 3/4"*, el reporte agrega una
+sección **Actionable Gaps** que nombra exactamente qué Work Item explica cada brecha y cómo
+resolverla:
+
+```md
+## Actionable Gaps
+
+### Work Items missing initiative
+
+- WI-001 — Inicializar proyecto TypeScript CLI
+  - Path: knowledge/delivery/work-items/completed/WI-001-...md
+  - Suggested action: add `initiative` to connect this Work Item to a delivery initiative.
+```
+
+Detecta, por Work Item: `source`/`source_id` faltante, `initiative`, ownership `code:`,
+`knowledge_level`, una sección `## Acceptance Criteria`, una `## Definition of Done` y una de
+validación (`## How to test it`) — más **globs de ownership amplios** (p. ej. `src/**`,
+`src/cli/**`) y **superposiciones de ownership** (un glob con más de un Work Item, mostrado con los
+Work Items involucrados). Reconoce variantes de sección en inglés y español. Cuando no hay brechas
+imprime *"No actionable knowledge gaps detected."*
+
+Las **Suggested Actions** nombran Work Items específicos (agrupando cuando son muchos), p. ej.
+*"Add an `initiative` to WI-001, WI-005, WI-006."* — y un **Score Breakdown** muestra cuánto aportó
+cada bucket al score. En `--json`, todo esto va bajo un objeto estable `actionable_gaps` (un arreglo
+por tipo de brecha) más `score_breakdown`.
+
+El reporte sigue **sin editar Work Items, sin ejecutar agentes y sin llamar a un LLM** — señala, tú
+corriges.
+
 ## Qué **no** mide
 
 Sin dinero, sin ROI, sin productividad individual, sin commits por persona, sin benchmarking contra

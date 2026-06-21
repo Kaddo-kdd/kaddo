@@ -16,6 +16,39 @@ import { buildGraphHints } from './graph-hints.js'
 
 export type Level = 'Low' | 'Medium' | 'High' | 'Very High'
 
+/** A single Work Item gap (VS-061.1). */
+export type GapItem = {
+  id: string
+  title: string
+  status: string
+  path: string
+  suggested_action: string
+}
+
+export type BroadGlobGap = { id: string; title: string; glob: string; suggested_action: string }
+export type OwnershipOverlap = { code_path: string; work_items: string[]; suggested_action: string }
+
+export type ActionableGaps = {
+  missing_source: GapItem[]
+  missing_initiative: GapItem[]
+  missing_code_ownership: GapItem[]
+  missing_knowledge_level: GapItem[]
+  missing_acceptance_criteria: GapItem[]
+  missing_definition_of_done: GapItem[]
+  missing_validation: GapItem[]
+  broad_ownership_globs: BroadGlobGap[]
+  ownership_overlaps: OwnershipOverlap[]
+}
+
+export type ScoreBreakdown = {
+  knowledge_health: { points: number; max: number }
+  knowledge_coverage: { points: number; max: number }
+  ownership_coverage: { points: number; max: number }
+  traceability: { points: number; max: number }
+  graph_quality: { points: number; max: number }
+  context_readiness: { points: number; max: number }
+}
+
 export type ImpactReport = {
   generated_at: string
   project: string
@@ -63,11 +96,18 @@ export type ImpactReport = {
     ai_context_readiness: Level
     maintenance_readiness: Level
   }
+  actionable_gaps: ActionableGaps
   score: number | null
+  score_breakdown: ScoreBreakdown | null
   suggested_actions: string[]
 }
 
-const BROAD_GLOB = /^[^/*]+\/\*\*$/ // e.g. src/** — broad, low-signal ownership
+/** Broad = ends with `/**` and has at most two path segments (e.g. src/**, src/cli/**). */
+function isBroadGlob(glob: string): boolean {
+  if (!glob.endsWith('/**')) return false
+  const prefix = glob.slice(0, -3)
+  return prefix.length > 0 && prefix.split('/').length <= 2
+}
 
 function levelFromRatio(r: number): Level {
   if (r >= 0.9) return 'Very High'
@@ -87,34 +127,81 @@ export function buildImpactReport(dir: string, opts: { scope?: GraphScope } = {}
   const wis = discoverWorkItems(dir)
   const total = wis.length
 
-  // --- Per-Work-Item coverage (front matter + body sections) ---
+  // --- Per-Work-Item coverage + actionable gaps (front matter + body sections) ---
   let withOwnership = 0
   let withSource = 0
   let withInitiative = 0
   let withLevel = 0
   let withAcceptance = 0
   let withDoD = 0
+  let withValidation = 0
   let connectedRoadmap = 0
   const globCounts = new Map<string, number>()
+  const globOwners = new Map<string, string[]>()
+  const gaps: ActionableGaps = {
+    missing_source: [],
+    missing_initiative: [],
+    missing_code_ownership: [],
+    missing_knowledge_level: [],
+    missing_acceptance_criteria: [],
+    missing_definition_of_done: [],
+    missing_validation: [],
+    broad_ownership_globs: [],
+    ownership_overlaps: [],
+  }
+  const gapItem = (wi: (typeof wis)[number], action: string): GapItem => ({
+    id: wi.id || wi.title,
+    title: wi.title,
+    status: wi.lifecycle ?? wi.status,
+    path: wi.relPath,
+    suggested_action: action,
+  })
+
   for (const wi of wis) {
+    const id = wi.id || wi.title
     if (wi.codeGlobs.length > 0) withOwnership++
+    else gaps.missing_code_ownership.push(gapItem(wi, 'Add `code:` globs to connect this Work Item to source paths (`kaddo owners suggest`).'))
+
     const hasSource = Boolean(wi.sourceId) || wi.source === 'roadmap'
     if (hasSource) withSource++
+    else gaps.missing_source.push(gapItem(wi, 'Add `source` or `source_id` if this Work Item came from the roadmap.'))
     if (hasSource || wi.initiative) connectedRoadmap++
+
     if (wi.initiative) withInitiative++
+    else gaps.missing_initiative.push(gapItem(wi, 'Add `initiative` to connect this Work Item to a delivery initiative.'))
+
     if (wi.knowledgeLevel) withLevel++
-    for (const g of wi.codeGlobs) globCounts.set(g, (globCounts.get(g) ?? 0) + 1)
+    else gaps.missing_knowledge_level.push(gapItem(wi, 'Add `knowledge_level` (K0–K4) to the front matter.'))
+
+    for (const g of wi.codeGlobs) {
+      globCounts.set(g, (globCounts.get(g) ?? 0) + 1)
+      globOwners.set(g, [...(globOwners.get(g) ?? []), id])
+      if (isBroadGlob(g)) {
+        gaps.broad_ownership_globs.push({ id, title: wi.title, glob: g, suggested_action: 'Replace with specific files or narrower module paths.' })
+      }
+    }
+
     try {
       const body = matter(readFile(wi.filePath)).content
-      if (hasSection(body, /acceptance/i)) withAcceptance++
-      if (hasSection(body, /definition of done|^#{1,6}\s*done\b/i)) withDoD++
+      if (hasSection(body, /acceptance|criterios de aceptaci/i)) withAcceptance++
+      else gaps.missing_acceptance_criteria.push(gapItem(wi, 'Add an `## Acceptance Criteria` section.'))
+      if (hasSection(body, /definition of done|^#{1,6}\s*dod\b|definici[oó]n de (terminado|hecho)/i)) withDoD++
+      else gaps.missing_definition_of_done.push(gapItem(wi, 'Add a `## Definition of Done` section.'))
+      if (hasSection(body, /how to test|validation|validaci|c[oó]mo probarlo/i)) withValidation++
+      else gaps.missing_validation.push(gapItem(wi, 'Add a `## How to test it` (validation) section.'))
     } catch {
       // unreadable body — skip section detection
     }
   }
   const ownedCodePaths = [...globCounts.values()].reduce((a, b) => a + b, 0)
-  const broadGlobs = [...globCounts.keys()].filter((g) => BROAD_GLOB.test(g)).length
-  const ownershipOverlaps = [...globCounts.values()].filter((n) => n > 1).length
+  const broadGlobs = [...globCounts.keys()].filter((g) => isBroadGlob(g)).length
+  // Overlaps: a declared glob owned by more than one Work Item.
+  for (const [glob, owners] of globOwners) {
+    if (owners.length > 1) {
+      gaps.ownership_overlaps.push({ code_path: glob, work_items: [...new Set(owners)], suggested_action: 'Review whether the overlap is expected or should be narrowed.' })
+    }
+  }
+  const ownershipOverlaps = gaps.ownership_overlaps.length
 
   // --- Graph section (fresh at requested scope, or last exported) ---
   type G = { available: boolean; scope: string; scopeReason: string; nodes: number; edges: number; quality: string; hints: number; generatedAt: string }
@@ -197,8 +284,9 @@ export function buildImpactReport(dir: string, opts: { scope?: GraphScope } = {}
     maintenance_readiness: levelFromRatio((coverageRatio(withOwnership) + (deliveryTraceable ? 1 : 0)) / 2),
   }
 
-  // --- Score (transparent, optional) ---
+  // --- Score (transparent, optional) + breakdown ---
   let score: number | null = null
+  let score_breakdown: ScoreBreakdown | null = null
   if (total > 0) {
     const healthPts = ([layerStatus('Business'), layerStatus('Product'), layerStatus('Tech'), layerStatus('Delivery')].filter((s) => s !== 'Missing').length / 4) * 20
     const covAvg = knowledge_coverage.reduce((a, c) => a + coverageRatio(c.have), 0) / knowledge_coverage.length
@@ -210,15 +298,38 @@ export function buildImpactReport(dir: string, opts: { scope?: GraphScope } = {}
     const graphPts = (g.available ? (qualityMap[g.quality] ?? 0) : 0) * 15
     const ctxPts = ({ Low: 0.25, Medium: 0.5, High: 0.8, 'Very High': 1 }[ctxLevel]) * 10
     score = Math.round(healthPts + coveragePts + ownPts + tracePts + graphPts + ctxPts)
+    score_breakdown = {
+      knowledge_health: { points: Math.round(healthPts), max: 20 },
+      knowledge_coverage: { points: Math.round(coveragePts), max: 20 },
+      ownership_coverage: { points: Math.round(ownPts), max: 15 },
+      traceability: { points: Math.round(tracePts), max: 20 },
+      graph_quality: { points: Math.round(graphPts), max: 15 },
+      context_readiness: { points: Math.round(ctxPts), max: 10 },
+    }
   }
 
-  // --- Suggested actions (depend on the metrics) ---
+  // --- Suggested actions (derived from real gaps — name specific Work Items) ---
+  const idsOf = (items: GapItem[]) => items.map((i) => i.id)
+  const groupedAction = (items: GapItem[], verb: string): string | null => {
+    if (items.length === 0) return null
+    const ids = idsOf(items)
+    return ids.length <= 3
+      ? `${verb} ${ids.join(', ')}.`
+      : `${verb} ${ids.length} Work Items: ${ids.slice(0, 3).join(', ')}, …`
+  }
   const actions: string[] = []
   if (!g.available) actions.push('Run `kaddo graph export --scope all` to inspect full traceability.')
   else if (g.scope === 'active' && g.quality === 'empty') actions.push('Run `kaddo graph export --scope all` to include completed Work Items.')
   if (exp.roadmap.remaining > 0) actions.push(`Materialize the ${exp.roadmap.remaining} remaining roadmap candidate(s) with \`kaddo create --from roadmap\`.`)
-  if (total > 0 && withOwnership < total) actions.push('Add code ownership to Work Items without `code:` globs (`kaddo owners suggest`).')
-  if (total > 0 && withInitiative < total) actions.push('Add an initiative to Work Items missing one.')
+  for (const a of [
+    groupedAction(gaps.missing_code_ownership, 'Add `code:` ownership to'),
+    groupedAction(gaps.missing_source, 'Add `source`/`source_id` to'),
+    groupedAction(gaps.missing_initiative, 'Add an `initiative` to'),
+    groupedAction(gaps.missing_acceptance_criteria, 'Add Acceptance Criteria to'),
+    groupedAction(gaps.missing_definition_of_done, 'Add a Definition of Done to'),
+    groupedAction(gaps.missing_validation, 'Add a validation (How to test it) section to'),
+  ]) if (a) actions.push(a)
+  if (gaps.broad_ownership_globs.length > 0) actions.push(`Narrow ${gaps.broad_ownership_globs.length} broad ownership glob(s) into specific paths.`)
   if (g.available && g.hints > 0) actions.push('Review graph hints (`kaddo://graph-hints` or `.kaddo/graph-hints.md`).')
   if (skills.length === 0) actions.push('Install reusable skills with `kaddo add skills`.')
   actions.push('Run `kaddo guard` before committing to catch knowledge drift.')
@@ -275,7 +386,9 @@ export function buildImpactReport(dir: string, opts: { scope?: GraphScope } = {}
       note: 'Guard history is not persisted. Run `kaddo guard` to check drift; future versions may store runs for trend analysis.',
     },
     impact_signals,
+    actionable_gaps: gaps,
     score,
+    score_breakdown,
     suggested_actions: actions,
   }
 }
@@ -377,6 +490,66 @@ export function renderImpactMarkdown(r: ImpactReport): string {
   L.push(`- AI context readiness: ${s.ai_context_readiness}`)
   L.push(`- Maintenance readiness: ${s.maintenance_readiness}`)
   L.push('')
+
+  // --- Actionable Gaps ---
+  L.push('## Actionable Gaps', '')
+  const gp = r.actionable_gaps
+  const gapSection = (title: string, items: GapItem[]) => {
+    if (items.length === 0) return
+    L.push(`### ${title}`, '')
+    for (const it of items) {
+      L.push(`- ${it.id} — ${it.title}`)
+      L.push(`  - Path: ${it.path}`)
+      L.push(`  - Suggested action: ${it.suggested_action}`)
+    }
+    L.push('')
+  }
+  gapSection('Work Items missing source', gp.missing_source)
+  gapSection('Work Items missing initiative', gp.missing_initiative)
+  gapSection('Work Items missing code ownership', gp.missing_code_ownership)
+  gapSection('Work Items missing knowledge level', gp.missing_knowledge_level)
+  gapSection('Work Items missing acceptance criteria', gp.missing_acceptance_criteria)
+  gapSection('Work Items missing Definition of Done', gp.missing_definition_of_done)
+  gapSection('Work Items missing validation', gp.missing_validation)
+  if (gp.broad_ownership_globs.length > 0) {
+    L.push('### Broad ownership globs', '')
+    for (const b of gp.broad_ownership_globs) {
+      L.push(`- ${b.id} — ${b.title}`)
+      L.push(`  - Glob: \`${b.glob}\``)
+      L.push(`  - Suggested action: ${b.suggested_action}`)
+    }
+    L.push('')
+  }
+  if (gp.ownership_overlaps.length > 0) {
+    L.push('### Ownership overlaps', '')
+    for (const o of gp.ownership_overlaps) {
+      L.push(`- \`${o.code_path}\``)
+      L.push(`  - Owned by: ${o.work_items.join(', ')}`)
+      L.push(`  - Suggested action: ${o.suggested_action}`)
+    }
+    L.push('')
+  }
+  const anyGaps =
+    gp.missing_source.length + gp.missing_initiative.length + gp.missing_code_ownership.length +
+    gp.missing_knowledge_level.length + gp.missing_acceptance_criteria.length +
+    gp.missing_definition_of_done.length + gp.missing_validation.length +
+    gp.broad_ownership_globs.length + gp.ownership_overlaps.length
+  if (anyGaps === 0) {
+    L.push('No actionable knowledge gaps detected. 🎉', '')
+  }
+
+  // --- Score Breakdown ---
+  if (r.score_breakdown) {
+    L.push('## Score Breakdown', '')
+    const b = r.score_breakdown
+    L.push(`- Knowledge Health: ${b.knowledge_health.points}/${b.knowledge_health.max}`)
+    L.push(`- Knowledge Coverage: ${b.knowledge_coverage.points}/${b.knowledge_coverage.max}`)
+    L.push(`- Ownership Coverage: ${b.ownership_coverage.points}/${b.ownership_coverage.max}`)
+    L.push(`- Traceability: ${b.traceability.points}/${b.traceability.max}`)
+    L.push(`- Graph Quality: ${b.graph_quality.points}/${b.graph_quality.max}`)
+    L.push(`- Context Readiness: ${b.context_readiness.points}/${b.context_readiness.max}`)
+    L.push('')
+  }
 
   L.push('## Suggested Actions', '')
   r.suggested_actions.forEach((a, i) => L.push(`${i + 1}. ${a}`))
