@@ -15,8 +15,11 @@ import {
   listAgentsTool,
   getAgentPromptTool,
   listGraphHints,
+  listSkillsTool,
+  getSkillTool,
   type ToolResult,
 } from './tools.js'
+import { listSkills, getSkill } from './skills.js'
 import {
   generateContext,
   generateExplain,
@@ -153,6 +156,41 @@ export function createServer(root: string): McpServer {
     async (args) => toolText(guarded(root, () => listGraphHints(root, args)))
   )
 
+  server.registerTool(
+    'kaddo_list_skills',
+    { title: 'List skills', description: 'List installed reusable skills.', inputSchema: {} },
+    async () => toolText(guarded(root, () => listSkillsTool(root)))
+  )
+  server.registerTool(
+    'kaddo_get_skill',
+    { title: 'Get skill', description: 'Get an installed reusable skill by id.', inputSchema: { id: z.string() } },
+    async (args) => toolText(guarded(root, () => getSkillTool(root, args.id)))
+  )
+
+  // --- Per-skill resources (kaddo://skills/<id>) — VS-059 ---
+  let installedSkills: ReturnType<typeof listSkills> = []
+  try {
+    assertKaddoProject(root)
+    installedSkills = listSkills(root)
+  } catch {
+    installedSkills = []
+  }
+  for (const s of installedSkills) {
+    server.registerResource(
+      `skill: ${s.id}`,
+      `kaddo://skills/${s.id}`,
+      { title: s.title, description: `Reusable skill "${s.id}" (${s.group}).`, mimeType: 'text/markdown' },
+      async (uri) => {
+        const full = getSkill(root, s.id)
+        return {
+          contents: [
+            { uri: uri.href, text: full?.content ?? `Skill "${s.id}" not found.`, mimeType: 'text/markdown' },
+          ],
+        }
+      }
+    )
+  }
+
   // --- Derived tools (write only under .kaddo/) — VS-058 ---
   server.registerTool(
     'kaddo_generate_context',
@@ -195,6 +233,19 @@ export function createServer(root: string): McpServer {
       async () => {
         const full = getPrompt(root, p.name)
         const content = full?.content ?? `Agent "${p.name}" is not installed.`
+        return { messages: [{ role: 'user' as const, content: { type: 'text' as const, text: content } }] }
+      }
+    )
+  }
+
+  // Installed skills are also exposed as reusable prompts (VS-059).
+  for (const s of installedSkills) {
+    server.registerPrompt(
+      `skill-${s.id}`,
+      { title: s.title, description: `Reusable skill "${s.id}" (${s.group}).` },
+      async () => {
+        const full = getSkill(root, s.id)
+        const content = full?.content ?? `Skill "${s.id}" is not installed.`
         return { messages: [{ role: 'user' as const, content: { type: 'text' as const, text: content } }] }
       }
     )

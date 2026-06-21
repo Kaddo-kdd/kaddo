@@ -101,5 +101,6 @@ Supporting commands:
 | `kaddo graph export` | Export the [knowledge graph](/knowledge-graph-export/) + hints |
 | `kaddo add <module>` | Install an optional module |
 
-Agents and IDEs can also read this knowledge directly through the read-only
-[MCP server](/mcp-server/) (`@kaddo/mcp`) — no manual copy/paste.
+Reusable [**skills**](/skills/) standardize how agents do common things well — install them with
+`kaddo add skills`. Agents and IDEs can also read all of this knowledge (including skills) directly
+through the read-only [MCP server](/mcp-server/) (`@kaddo/mcp`) — no manual copy/paste.

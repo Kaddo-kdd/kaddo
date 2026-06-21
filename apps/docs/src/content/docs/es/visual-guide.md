@@ -400,6 +400,19 @@ flowchart LR
     FM --> GX
 ```
 
+## Habilidades (capacidades reutilizables)
+
+Los agentes orquestan el flujo; las [habilidades](/es/skills/) estandarizan *cómo* hacer bien lo
+común. Un agente aplica una o más skills para producir salidas consistentes.
+
+```mermaid
+flowchart LR
+    K[Knowledge] --> C[Context Pack]
+    C --> A[Agente]
+    A --> S[Skill]
+    S --> O[Salida estructurada]
+```
+
 ## Servidor MCP (solo lectura)
 
 Los agentes e IDEs pueden leer el conocimiento curado de Kaddo directamente mediante el servidor

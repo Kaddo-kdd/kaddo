@@ -1,71 +1,40 @@
-import type { KaddoModule } from './types.js'
+import type { KaddoModule, ModuleFile } from './types.js'
+import { SKILLS, SKILL_GROUPS, skillInstallPath } from '../skills/skills.js'
+
+const skillsReadme: ModuleFile = {
+  path: 'knowledge/skills/README.md',
+  content: [
+    '# Skills',
+    '',
+    'Reusable **skill** definitions — capabilities shared across agents. A skill does not decide',
+    'WHAT to do (that is the agent); it defines HOW to do one thing well. Agents orchestrate;',
+    'skills standardize; knowledge grounds; MCP exposes.',
+    '',
+    'Skills never execute anything — they are reusable instructions, not tools. They never run',
+    'git, never call an LLM and never modify files.',
+    '',
+    '## Installed skills',
+    '',
+    ...SKILLS.map((s) => `- \`${s.id}\` (${s.group}) — ${s.title}. Applies to: ${s.appliesTo.join(', ')}.`),
+    '',
+    '## Groups',
+    '',
+    ...Object.entries(SKILL_GROUPS).map(([g, ids]) => `- **${g}**: ${ids.join(', ')}`),
+    '',
+    'Install: `kaddo add skills` (recommended), `--all`, or `--group <delivery|tech|integration>`.',
+  ].join('\n'),
+}
+
+const skillFiles: ModuleFile[] = SKILLS.map((s) => ({
+  path: skillInstallPath(s.id),
+  content: s.content,
+}))
 
 export const skillsModule: KaddoModule = {
   name: 'skills',
-  description: 'Reusable skills — capabilities shared across agents, teams, or projects',
+  description: 'Reusable skills — capabilities shared across agents (adr-writing, work-item-refinement, …)',
   configKey: 'module_skills',
   dirs: ['knowledge/skills'],
-  files: [
-    {
-      path: 'knowledge/skills/.gitkeep',
-      content: '',
-    },
-    {
-      path: 'knowledge/skills/README.md',
-      content: [
-        '# Skills',
-        '',
-        'This directory contains skill definitions — reusable capabilities that agents',
-        'or team members can invoke.',
-        '',
-        'A skill is a well-defined, repeatable capability with:',
-        '- Clear inputs and outputs',
-        '- A defined trigger (when to use it)',
-        '- Known preconditions',
-        '',
-        'Skills differ from agents: a skill is a single capability,',
-        'an agent is an orchestrator that uses skills.',
-      ].join('\n'),
-    },
-  ],
-  workItemTypes: [
-    {
-      name: 'skill',
-      knowledgeLevel: 'K3',
-      description: 'Skill — a reusable capability shared across agents, teams, or projects.',
-      questions: [
-        {
-          id: 'what_it_does',
-          prompt: 'What does this skill do?',
-          placeholder: 'e.g. Reads the artifact front matters and returns ownership gaps',
-          frontMatterField: 'what_it_does',
-          required: true,
-        },
-        {
-          id: 'trigger',
-          prompt: 'When should this skill be invoked?',
-          placeholder: 'e.g. When a guard FYI has no matching artifact with code globs',
-          frontMatterField: 'trigger',
-          required: true,
-        },
-        {
-          id: 'inputs_outputs',
-          prompt: 'What are the inputs and outputs?',
-          placeholder: 'e.g. Input: list of touched files. Output: suggested artifact IDs to update',
-          frontMatterField: 'inputs_outputs',
-          required: true,
-        },
-      ],
-      qualityGate: [
-        'Skill is scoped to a single, reusable capability.',
-        'Trigger condition is explicit.',
-        'Inputs and outputs are defined.',
-      ],
-      extraFrontMatter: {
-        skill_type: 'analysis',
-        reusable_by: [],
-        code: [],
-      },
-    },
-  ],
+  files: [skillsReadme, ...skillFiles],
+  workItemTypes: [],
 }

@@ -398,6 +398,19 @@ flowchart LR
     FM --> GX
 ```
 
+## Skills (reusable capabilities)
+
+Agents orchestrate the flow; [skills](/skills/) standardize *how* to do common things well. An agent
+applies one or more skills to produce consistent output.
+
+```mermaid
+flowchart LR
+    K[Knowledge] --> C[Context Pack]
+    C --> A[Agent]
+    A --> S[Skill]
+    S --> O[Structured output]
+```
+
 ## MCP server (read-only)
 
 Agents and IDEs can read curated Kaddo knowledge directly through the read-only

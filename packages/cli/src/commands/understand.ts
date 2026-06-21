@@ -9,6 +9,7 @@ import { activeWorkItems, renderDeliveryLifecycle } from '../core/delivery.js'
 import { buildProjectExplanation } from '../core/project-explain.js'
 import { assessPhase } from '../core/delivery-phase.js'
 import { loadGraphHints } from '../core/graph-hints.js'
+import { discoverInstalledSkills, skillsForAgents } from '../services/installed-skills.js'
 import { printCommandFooter } from '../core/command-help.js'
 
 export function runUnderstand(): void {
@@ -72,6 +73,16 @@ export function runUnderstand(): void {
   }
   if (assessment.nextStep) {
     console.log(`Next step: ${assessment.nextStep}`)
+  }
+
+  // Recommended reusable skills (VS-059) for the recommended agents, if any are installed.
+  const installedSkills = discoverInstalledSkills(dir)
+  if (installedSkills.length > 0 && assessment.recommendedAgents.length > 0) {
+    const recSkills = skillsForAgents(installedSkills, assessment.recommendedAgents)
+    if (recSkills.length > 0) {
+      console.log('Recommended skills:')
+      for (const s of recSkills) console.log(`  - ${s}`)
+    }
   }
 
   // 5b-ext. External Knowledge Capsules (VS-054) — remind the agent of external dependencies.

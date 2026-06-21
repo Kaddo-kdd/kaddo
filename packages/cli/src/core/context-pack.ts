@@ -11,6 +11,7 @@ import { assessPhase, type PhaseAssessment } from './delivery-phase.js'
 import { loadExternalCapsules, type ConsumedCapsule } from './capsule.js'
 import { loadGraphSummary, type GraphSummary } from './graph.js'
 import { loadGraphHints, type GraphHintsSummary } from './graph-hints.js'
+import { discoverInstalledSkills } from '../services/installed-skills.js'
 
 export const CONTEXT_PACK_VERSION = '1'
 
@@ -72,6 +73,8 @@ export type ContextPack = {
   graph: GraphSummary | null
   /** Summary of graph relationship-quality hints (VS-056); null if not exported yet. */
   graphHints: GraphHintsSummary | null
+  /** Installed reusable skill ids (VS-059) — summary only, content lives in knowledge/skills/. */
+  skills: string[]
   mappedModules: MappedModuleWithCoverage[]
   missing: string[]
   handoff: {
@@ -332,6 +335,7 @@ export function buildContextPack(
     external: loadExternalCapsules(dir),
     graph: loadGraphSummary(dir),
     graphHints: loadGraphHints(dir),
+    skills: discoverInstalledSkills(dir).map((s) => s.id),
     mappedModules,
     missing,
     // VS-052: the handoff is driven by the REAL phase, not project.state, so the pack never

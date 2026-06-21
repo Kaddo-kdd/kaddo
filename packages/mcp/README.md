@@ -49,7 +49,8 @@ directory set via the `KADDO_PROJECT_DIR` environment variable).
 | `kaddo://roadmap` | `knowledge/delivery/roadmap.md` | delivery roadmap |
 | `kaddo://capsules` | `.kaddo/external.yml` + `external/` | external Knowledge Capsules |
 | `kaddo://agents` | `knowledge/agents/` | installed agent prompts |
-| `kaddo://skills` | `knowledge/skills/` | installed skills (empty if none) |
+| `kaddo://skills` | `knowledge/skills/` | installed reusable skills (empty if none) |
+| `kaddo://skills/<id>` | `knowledge/skills/<id>/skill.md` | one reusable skill |
 
 ## Tools (read-only)
 
@@ -58,6 +59,7 @@ directory set via the `KADDO_PROJECT_DIR` environment variable).
 - `kaddo_get_work_item` — a Work Item by `id` (summary + full markdown).
 - `kaddo_list_capsules` / `kaddo_get_capsule` — external Knowledge Capsules.
 - `kaddo_list_agents` / `kaddo_get_agent_prompt` — installed agent prompts.
+- `kaddo_list_skills` / `kaddo_get_skill` — installed reusable skills.
 - `kaddo_list_graph_hints` — graph hints, filter by `artifact_type` / `severity` / `active_only`.
 
 ## Derived tools (write only under `.kaddo/`)

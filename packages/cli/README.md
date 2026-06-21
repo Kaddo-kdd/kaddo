@@ -505,6 +505,9 @@ create --from roadmap → owners → guard → explain`.
 | v3.16 | Knowledge Capsules: `kaddo capsule export/add`, External Knowledge in context/explain, new `capsule-agent` |
 | v3.17 | Knowledge Graph Export: `kaddo graph export` (`.kaddo/graph.json` + `.mmd`, `--scope`/`--format`); graph summary in context/explain |
 | v3.18 | Graph relationship quality & metadata hints: `graph-hints.md`/`.json`, quality levels, `graph-agent`; hints in context/explain/understand |
+| v3.19 | Read-only MCP server `@kaddo/mcp` (resources, tools, prompts over stdio) |
+| v3.20 | MCP derived tools: safe regeneration of context/explain/understand/graph/capsule-draft under `.kaddo/` |
+| v3.21 | Reusable Skills layer (`kaddo add skills`); skills in context/explain/understand, agent prompts and MCP |
 
 **Optional modules (installed with `kaddo add`):**
 

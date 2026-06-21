@@ -3,6 +3,7 @@ import { exists, writeFile, ensureDir, join, cwd, readFile } from '../utils/fs.j
 import { log, intro, outro } from '../utils/ui.js'
 import { parse as parseYaml, stringify as stringifyYaml } from 'yaml'
 import { selectAgentFiles } from '../agents/groups.js'
+import { selectSkills, skillInstallPath } from '../skills/skills.js'
 import type { ModuleFile } from '../modules/types.js'
 
 const CONFIG_PATH = '.kaddo/config.yml'
@@ -35,6 +36,20 @@ function selectAgentModuleFiles(
   const selected = files.filter(
     (f) => f.path.endsWith('README.md') || names.some((n) => f.path.endsWith(n)) || wanted.has(f.path)
   )
+  return { files: selected, label }
+}
+
+/**
+ * For `kaddo add skills`, select which skill files to write (progressive install): the README plus
+ * the recommended set, or `--all` / `--group <delivery|tech|integration>`.
+ */
+function selectSkillModuleFiles(
+  files: ModuleFile[],
+  opts: AddOptions
+): { files: ModuleFile[]; label: string } {
+  const { ids, label } = selectSkills({ all: opts.all, group: opts.group })
+  const wanted = new Set(ids.map((id) => skillInstallPath(id)))
+  const selected = files.filter((f) => f.path.endsWith('README.md') || wanted.has(f.path))
   return { files: selected, label }
 }
 
@@ -111,6 +126,15 @@ export function runAdd(moduleName: string, opts: AddOptions = {}, dir: string = 
       console.error(err instanceof Error ? err.message : String(err))
       process.exit(1)
     }
+  } else if (mod.name === 'skills') {
+    try {
+      const sel = selectSkillModuleFiles(mod.files, opts)
+      filesToInstall = sel.files
+      log.info(`Installing skills (${sel.label}).`)
+    } catch (err) {
+      console.error(err instanceof Error ? err.message : String(err))
+      process.exit(1)
+    }
   }
 
   // Write only files that do not exist — never overwrite user-edited files silently.
@@ -147,6 +171,15 @@ export function runAdd(moduleName: string, opts: AddOptions = {}, dir: string = 
     console.log('    4. Use the recommended agent for your project state')
     log.info('More agents: `kaddo add agents --all` or `--group <business|product|tech|delivery|utilities>`.')
     outro('Agents installed. Kaddo prepares context — your LLM does the interpretation.')
+    return
+  }
+
+  // Skills are reusable instructions, not work items — show a tailored handoff.
+  if (mod.name === 'skills') {
+    log.info('Skills are reusable capabilities agents apply — they never run anything.')
+    log.info('More skills: `kaddo add skills --all` or `--group <delivery|tech|integration>`.')
+    log.info('Read them in `knowledge/skills/` or via the Kaddo MCP server (`kaddo://skills`).')
+    outro('Skills installed. Agents orchestrate; skills standardize.')
     return
   }
 

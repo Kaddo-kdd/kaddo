@@ -4,8 +4,9 @@
 // when one is missing the resource returns a clear instruction to run the matching CLI command.
 
 import { listCapsules, listAgents } from './catalog.js'
+import { listSkills } from './skills.js'
 import { listWorkItems } from './workitems.js'
-import { hasKnowledge, readText, listFiles } from './project.js'
+import { hasKnowledge, readText } from './project.js'
 
 export type ResourcePart = { uri: string; text: string; mimeType: string }
 
@@ -160,17 +161,14 @@ export const RESOURCES: ResourceDescriptor[] = [
   {
     uri: 'kaddo://skills',
     name: 'Kaddo skills',
-    description: 'Installed skills from knowledge/skills/ (empty if none).',
+    description: 'Installed reusable skills from knowledge/skills/ (empty if none).',
     mimeType: 'application/json',
-    read: (root) => {
-      const files = listFiles(root, 'knowledge/skills', '.md')
-      return [
-        {
-          uri: 'kaddo://skills',
-          text: JSON.stringify({ skills: files }, null, 2),
-          mimeType: 'application/json',
-        },
-      ]
-    },
+    read: (root) => [
+      {
+        uri: 'kaddo://skills',
+        text: JSON.stringify({ skills: listSkills(root) }, null, 2),
+        mimeType: 'application/json',
+      },
+    ],
   },
 ]

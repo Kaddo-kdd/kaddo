@@ -110,8 +110,8 @@ describe('module registry', () => {
 
 describe('module structure', () => {
   it('each module has required fields', () => {
-    // Doc-only modules (VS-017 global artifacts) ship templates, not work item types.
-    const docOnly = new Set(['standards', 'security', 'stack', 'git-strategy'])
+    // Modules that ship files (templates/agents/skills), not work item types.
+    const docOnly = new Set(['standards', 'security', 'stack', 'git-strategy', 'skills'])
     for (const mod of listModules()) {
       expect(mod.name).toBeTruthy()
       expect(mod.configKey).toBeTruthy()
@@ -184,11 +184,9 @@ describe('module structure', () => {
     expect(t!.questions.length).toBe(3)
   })
 
-  it('findWorkItemType finds skill type', () => {
-    const t = findWorkItemType('skill')
-    expect(t).toBeDefined()
-    expect(t!.knowledgeLevel).toBe('K3')
-    expect(t!.questions.length).toBe(3)
+  it('skills are reusable instructions, not a work item type (VS-059)', () => {
+    // Skills moved from a work-item type to installable reusable skill files.
+    expect(findWorkItemType('skill')).toBeUndefined()
   })
 })
 

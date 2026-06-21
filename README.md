@@ -212,6 +212,24 @@ scanning the whole repo.
 It never writes files, runs git, calls an LLM or reads source code. See the
 [MCP Server docs](https://kaddo.trycatch.tv/mcp-server/) and [`examples/mcp/`](examples/mcp/).
 
+## Skills
+
+**[Skills](https://kaddo.trycatch.tv/skills/)** are reusable capability definitions that standardize
+*how* agents do common things well (writing an ADR, refining a Work Item, proposing ownership) —
+reducing duplicated instructions across prompts. **Agents orchestrate; skills standardize.** A skill
+never executes anything: no git, no LLM, no file changes.
+
+```bash
+kaddo add skills                  # recommended (delivery + tech)
+kaddo add skills --all            # every skill
+kaddo add skills --group tech     # one group: delivery | tech | integration
+```
+
+Skills install into `knowledge/skills/<id>/skill.md`; `kaddo context`/`explain`/`understand`
+summarize them, installed agent prompts reference the skills they should apply, and the
+[`@kaddo/mcp`](packages/mcp/README.md) server exposes them (`kaddo://skills`,
+`kaddo_list_skills`/`kaddo_get_skill`).
+
 ## Templates
 
 Kaddo ships templates for its main artifacts — Work Items, roadmaps, capabilities,

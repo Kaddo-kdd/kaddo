@@ -223,9 +223,9 @@ modulesCmd
 
 program
   .command('add [module]')
-  .description('Install an optional Kaddo module (adr, incident, rfc, migration, legacy, agents, standards, security, stack, git-strategy)')
-  .option('--all', 'For `add agents`: install every agent (not just the recommended set)')
-  .option('--group <name>', 'For `add agents`: install one layer group (business, product, tech, delivery, utilities)')
+  .description('Install an optional Kaddo module (adr, incident, rfc, migration, legacy, agents, skills, standards, security, stack, git-strategy)')
+  .option('--all', 'For `add agents` / `add skills`: install every item (not just the recommended set)')
+  .option('--group <name>', 'For `add agents`: business|product|tech|delivery|utilities. For `add skills`: delivery|tech|integration')
   .action((moduleName: string | undefined, opts: { all?: boolean; group?: string }) => {
     runAdd(moduleName ?? '', { all: opts.all, group: opts.group })
   })

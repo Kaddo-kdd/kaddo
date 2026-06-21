@@ -6,6 +6,8 @@
 // agent allowed to suggest branches is the implementation-agent (and only by respecting the
 // project Git strategy; it still never executes git).
 
+import { SKILLS } from '../skills/skills.js'
+
 export type AgentResponsibility = {
   /** Agent key, e.g. "roadmap-agent" (matches the prompt file name without .md). */
   agent: string
@@ -318,11 +320,31 @@ export function renderLanguageRule(): string {
   ].join('\n')
 }
 
-/** Append language rule + boundaries + trace sections to an agent prompt (no-op if no entry). */
+/**
+ * Reusable skills (VS-059) section: which standardized skills this agent should apply. Skills are
+ * reusable capabilities — the agent orchestrates, the skill standardizes how to do one thing well.
+ */
+export function renderSkillsSection(agent: string): string {
+  const applicable = SKILLS.filter((s) => s.appliesTo.includes(agent))
+  if (applicable.length === 0) return ''
+  return [
+    '## Reusable Skills',
+    '',
+    'Apply these reusable skills when relevant (install with `kaddo add skills`; read them in',
+    '`knowledge/skills/` or via the Kaddo MCP server):',
+    '',
+    ...applicable.map((s) => `- **${s.id}** — ${s.title}.`),
+    '',
+  ].join('\n')
+}
+
+/** Append language rule + boundaries + skills + trace sections to a prompt (no-op if no entry). */
 export function withResponsibilityTrace(fileName: string, content: string): string {
   const agent = fileName.replace(/\.md$/, '')
   if (!RESPONSIBILITY_MATRIX[agent]) return content
-  return `${content.trimEnd()}\n\n${renderLanguageRule()}\n${renderAgentBoundaries(agent)}\n${renderAgentTrace(agent)}`
+  const skills = renderSkillsSection(agent)
+  const skillsBlock = skills ? `${skills}\n` : ''
+  return `${content.trimEnd()}\n\n${renderLanguageRule()}\n${renderAgentBoundaries(agent)}\n${skillsBlock}${renderAgentTrace(agent)}`
 }
 
 /** Render the full responsibility matrix as Markdown (docs + reference). */

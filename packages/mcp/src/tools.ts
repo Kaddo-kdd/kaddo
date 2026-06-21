@@ -5,6 +5,7 @@
 
 import { listWorkItems, type WorkItemSummary } from './workitems.js'
 import { listCapsules, getCapsule, listAgents, getAgentPrompt } from './catalog.js'
+import { listSkills, getSkill } from './skills.js'
 import { readJson, readText } from './project.js'
 
 export type ToolResult = { ok: true; data: unknown } | { ok: false; message: string }
@@ -95,6 +96,18 @@ export function getAgentPromptTool(root: string, name: string): ToolResult {
   const agent = getAgentPrompt(root, name)
   if (!agent) return fail(`Agent "${name}" is not installed. Run \`kaddo add agents\` first.`)
   return ok(agent)
+}
+
+// --- Skills ---------------------------------------------------------------
+
+export function listSkillsTool(root: string): ToolResult {
+  return ok(listSkills(root))
+}
+
+export function getSkillTool(root: string, id: string): ToolResult {
+  const skill = getSkill(root, id)
+  if (!skill) return fail(`Skill "${id}" is not installed. Run \`kaddo add skills\` first.`)
+  return ok(skill)
 }
 
 // --- Graph hints ----------------------------------------------------------

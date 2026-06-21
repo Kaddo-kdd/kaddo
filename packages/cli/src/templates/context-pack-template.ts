@@ -209,6 +209,14 @@ export function renderContextPack(pack: ContextPack): string {
     }
   }
 
+  // 6f. Skills — reusable capabilities (VS-059). Summary only: list ids, not full content.
+  if (pack.skills.length > 0) {
+    parts.push('## Skills\n')
+    parts.push('Available reusable skills (agents apply these; content is not inlined):\n')
+    parts.push(pack.skills.map((s) => `- ${s}`).join('\n') + '\n')
+    parts.push('Read full skill definitions in `knowledge/skills/` or via the Kaddo MCP server (`kaddo://skills`).\n')
+  }
+
   // 7. Missing Context
   parts.push('## Missing Context\n')
   if (missing.length > 0) {

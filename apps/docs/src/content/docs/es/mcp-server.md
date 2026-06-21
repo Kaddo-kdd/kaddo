@@ -67,6 +67,7 @@ Hay un ejemplo listo para copiar en
 | `kaddo://capsules` | `.kaddo/external.yml` + `external/` | Knowledge Capsules externas |
 | `kaddo://agents` | `knowledge/agents/` | prompts de agentes instalados |
 | `kaddo://skills` | `knowledge/skills/` | skills instaladas (vacío si no hay) |
+| `kaddo://skills/<id>` | `knowledge/skills/<id>/skill.md` | una skill reutilizable |
 
 ## Tools (solo lectura)
 
@@ -75,6 +76,7 @@ Hay un ejemplo listo para copiar en
 - `kaddo_get_work_item` — un Work Item por `id` (resumen + markdown completo).
 - `kaddo_list_capsules` / `kaddo_get_capsule` — Knowledge Capsules externas.
 - `kaddo_list_agents` / `kaddo_get_agent_prompt` — prompts de agentes instalados.
+- `kaddo_list_skills` / `kaddo_get_skill` — [skills](/es/skills/) reutilizables instaladas.
 - `kaddo_list_graph_hints` — hints del grafo, filtra por `artifact_type` / `severity` / `active_only`.
 
 ## Derived tools (escriben solo bajo `.kaddo/`)

@@ -101,5 +101,7 @@ Comandos de apoyo:
 | `kaddo graph export` | Exporta el [grafo de conocimiento](/es/knowledge-graph-export/) + hints |
 | `kaddo add <module>` | Instala un módulo opcional |
 
-Los agentes e IDEs también pueden leer este conocimiento directamente mediante el
-[servidor MCP](/es/mcp-server/) de solo lectura (`@kaddo/mcp`) — sin copiar y pegar a mano.
+Las [**habilidades**](/es/skills/) reutilizables estandarizan cómo los agentes hacen bien lo común
+— instálalas con `kaddo add skills`. Los agentes e IDEs también pueden leer todo este conocimiento
+(incluidas las skills) directamente mediante el [servidor MCP](/es/mcp-server/) de solo lectura
+(`@kaddo/mcp`) — sin copiar y pegar a mano.

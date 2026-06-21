@@ -157,6 +157,7 @@ export default defineConfig({
           items: [
             { label: 'Overview', translations: { es: 'Resumen' }, slug: 'modules/overview' },
             { label: 'Agent Prompt Packs', translations: { es: 'Agentes (Prompt Packs)' }, slug: 'modules/agents' },
+            { label: 'Skills', translations: { es: 'Habilidades' }, slug: 'skills' },
             { label: 'Domain Owners', translations: { es: 'Domain Owners' }, slug: 'modules/owners' },
             { label: 'Multirepo modules', translations: { es: 'Módulos multirepo' }, slug: 'modules/multirepo' },
             { label: 'Knowledge Capsules', translations: { es: 'Knowledge Capsules' }, slug: 'knowledge-capsules' },

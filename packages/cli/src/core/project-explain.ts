@@ -11,6 +11,7 @@ import { assessPhase } from './delivery-phase.js'
 import { loadExternalCapsules, type ConsumedCapsule } from './capsule.js'
 import { loadGraphSummary, type GraphSummary } from './graph.js'
 import { loadGraphHints, type GraphHintsSummary } from './graph-hints.js'
+import { discoverInstalledSkills, skillGroupCounts } from '../services/installed-skills.js'
 import {
   loadMappedModules,
   presentArtifacts,
@@ -89,6 +90,8 @@ export type ProjectExplanation = {
   graph: GraphSummary | null
   /** Summary of graph relationship-quality hints (VS-056); null if not exported yet. */
   graphHints: GraphHintsSummary | null
+  /** Installed reusable skills (VS-059): total + per-group counts. */
+  skills: { total: number; byGroup: Record<string, number> }
   layers: LayerStatus[]
   roadmap: RoadmapStats
   mappedModules: MappedModuleWithCoverage[]
@@ -354,6 +357,10 @@ export function buildProjectExplanation(dir: string): ProjectExplanation {
     externalCapsules: loadExternalCapsules(dir),
     graph: loadGraphSummary(dir),
     graphHints: loadGraphHints(dir),
+    skills: (() => {
+      const installed = discoverInstalledSkills(dir)
+      return { total: installed.length, byGroup: skillGroupCounts(installed) }
+    })(),
     layers,
     roadmap,
     mappedModules,
@@ -523,6 +530,17 @@ export function renderExplanationHuman(exp: ProjectExplanation): string {
       lines.push(`- Hints: ${exp.graphHints.totalHints}`)
     }
     if (exp.graph.generatedAt) lines.push(`- Last exported: ${exp.graph.generatedAt}`)
+    lines.push('')
+  }
+
+  // Installed reusable skills (VS-059).
+  if (exp.skills.total > 0) {
+    lines.push(`## Skills installed: ${exp.skills.total}`)
+    const groups = Object.entries(exp.skills.byGroup).sort((a, b) => a[0].localeCompare(b[0]))
+    if (groups.length > 0) {
+      lines.push('Groups:')
+      for (const [g, n] of groups) lines.push(`- ${g}: ${n}`)
+    }
     lines.push('')
   }
 
