@@ -42,6 +42,9 @@ export type GraphMetrics = {
 
 export type GraphHintsReport = {
   generated_at: string
+  /** Scope of the graph these hints were computed from (VS-060). */
+  scope: string
+  scope_reason: string
   quality: GraphQuality
   summary: { nodes: number; edges: number; hints: number }
   metrics: GraphMetrics
@@ -224,6 +227,8 @@ export function buildGraphHints(
 
   return {
     generated_at: now.toISOString(),
+    scope: graph.scope,
+    scope_reason: graph.scope_reason,
     quality,
     summary: { nodes, edges: graph.edges.length, hints: hints.length },
     metrics,
@@ -264,6 +269,7 @@ export function renderGraphHintsMarkdown(report: GraphHintsReport): string {
   lines.push('')
   lines.push('## Summary')
   lines.push('')
+  lines.push(`- Scope: ${report.scope} — ${report.scope_reason}`)
   lines.push(`- Relationship quality: ${report.quality} — ${QUALITY_NOTE[report.quality]}`)
   lines.push(`- Nodes: ${report.summary.nodes}`)
   lines.push(`- Edges: ${report.summary.edges}`)
@@ -271,7 +277,16 @@ export function renderGraphHintsMarkdown(report: GraphHintsReport): string {
   lines.push('')
 
   if (report.hints.length === 0) {
-    lines.push('No hints — the declared relationships look healthy. 🎉')
+    if (report.quality === 'empty') {
+      lines.push('No active relationship hints were generated.')
+      lines.push('')
+      lines.push(`The graph is ${report.quality} for the **${report.scope}** scope — ${report.scope_reason}`)
+      if (report.scope !== 'all') {
+        lines.push('Run `kaddo graph export --scope all` to inspect completed Work Items and historical relationships.')
+      }
+    } else {
+      lines.push('No hints — the declared relationships look healthy. 🎉')
+    }
     lines.push('')
     return lines.join('\n')
   }
@@ -308,6 +323,8 @@ export function serializeGraphHintsJson(report: GraphHintsReport): string {
 // ---------------------------------------------------------------------------
 
 export type GraphHintsSummary = {
+  scope: string
+  scopeReason: string
   quality: GraphQuality
   totalHints: number
   /** Hints affecting active Work Items (drives the understand recommendation). */
@@ -324,6 +341,8 @@ export function loadGraphHints(dir: string): GraphHintsSummary | null {
     const report = JSON.parse(readFile(p)) as GraphHintsReport
     const hints = Array.isArray(report.hints) ? report.hints : []
     return {
+      scope: String(report.scope ?? 'active'),
+      scopeReason: String(report.scope_reason ?? ''),
       quality: report.quality ?? 'empty',
       totalHints: hints.length,
       activeWorkItemHints: hints.filter((h) => h.artifact_type === 'work-item').length,

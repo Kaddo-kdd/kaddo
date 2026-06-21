@@ -96,11 +96,11 @@ export function generateUnderstand(root: string): GenerateResult {
   }
 }
 
-/** kaddo_generate_graph — regenerate the knowledge graph + hints (scope: active). */
-export function generateGraph(root: string): GenerateResult {
+/** kaddo_generate_graph — regenerate the knowledge graph + hints (scope: active|all, default active). */
+export function generateGraph(root: string, scope: 'active' | 'all' = 'active'): GenerateResult {
   const config = requireConfig(root)
   requireKnowledge(root)
-  const graph = buildGraph(root, config, { scope: 'active' })
+  const graph = buildGraph(root, config, { scope })
   const hints = buildGraphHints(root, graph)
   writeDerived(root, '.kaddo/graph.json', serializeGraphJson(graph))
   writeDerived(root, '.kaddo/graph.mmd', renderGraphMermaid(graph))
@@ -118,7 +118,7 @@ export function generateGraph(root: string): GenerateResult {
       '.kaddo/graph-hints.md',
       '.kaddo/graph-hints.json',
     ],
-    summary: 'Knowledge graph and hints generated successfully.',
+    summary: `Knowledge graph and hints generated successfully (${scope} scope).`,
     warnings,
     next_suggested_resources: ['kaddo://graph', 'kaddo://graph-hints'],
   }

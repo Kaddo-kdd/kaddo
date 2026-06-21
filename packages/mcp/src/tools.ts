@@ -23,7 +23,7 @@ type ExplainJson = {
   layers?: { layer: string; status: string }[]
 }
 
-type GraphHintsJson = { quality?: string; summary?: { hints?: number } }
+type GraphHintsJson = { quality?: string; scope?: string; scope_reason?: string; summary?: { hints?: number } }
 
 export function projectStatus(root: string): ToolResult {
   const explain = readJson<ExplainJson>(root, '.kaddo/explain.json')
@@ -48,8 +48,12 @@ export function projectStatus(root: string): ToolResult {
       withOwnership: explain.ownership?.workItemsWithOwnership ?? 0,
       total: explain.ownership?.workItemsTotal ?? 0,
     },
-    graphQuality: hints?.quality ?? 'unknown (run `kaddo graph export`)',
-    graphHints: hints?.summary?.hints ?? 0,
+    graph: {
+      scope: hints?.scope ?? 'unknown (run `kaddo graph export`)',
+      scope_reason: hints?.scope_reason ?? '',
+      quality: hints?.quality ?? 'unknown (run `kaddo graph export`)',
+      hints: hints?.summary?.hints ?? 0,
+    },
     capsules: capsules.length,
   })
 }
@@ -119,7 +123,7 @@ type GraphHint = {
   missing: string[]
   message: string
 }
-type GraphHintsReport = { quality?: string; summary?: unknown; hints?: GraphHint[] }
+type GraphHintsReport = { quality?: string; scope?: string; scope_reason?: string; summary?: unknown; hints?: GraphHint[] }
 
 export function listGraphHints(
   root: string,
@@ -131,5 +135,11 @@ export function listGraphHints(
   if (filter.artifact_type) hints = hints.filter((h) => h.artifact_type === filter.artifact_type)
   if (filter.severity) hints = hints.filter((h) => h.severity === filter.severity)
   if (filter.active_only) hints = hints.filter((h) => h.artifact_type === 'work-item')
-  return ok({ quality: report.quality ?? 'unknown', count: hints.length, hints })
+  return ok({
+    scope: report.scope ?? 'active',
+    scope_reason: report.scope_reason ?? '',
+    quality: report.quality ?? 'unknown',
+    count: hints.length,
+    hints,
+  })
 }

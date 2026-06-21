@@ -183,9 +183,12 @@ export function renderContextPack(pack: ContextPack): string {
     parts.push(
       [
         '- Available: yes',
+        `- Scope: ${pack.graph.scope}`,
         `- Nodes: ${pack.graph.nodes}`,
         `- Edges: ${pack.graph.edges}`,
+        ...(pack.graphHints ? [`- Quality: ${pack.graphHints.quality}`] : []),
         `- Active Work Items connected to code: ${pack.graph.activeWorkItemsConnectedToCode}`,
+        ...(pack.graph.scopeReason ? [`- Reason: ${pack.graph.scopeReason}`] : []),
       ].join('\n') + '\n'
     )
     parts.push('Full graph: `.kaddo/graph.json` / `.kaddo/graph.mmd` (run `kaddo graph export` to refresh).\n')

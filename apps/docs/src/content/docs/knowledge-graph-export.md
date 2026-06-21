@@ -64,13 +64,31 @@ kaddo graph export --scope active   # default — active Work Items + nearby rel
 kaddo graph export --scope all      # every supported artifact (can get large)
 ```
 
-- **active** (default): only active Work Items (`draft`, `ready`, `in-progress`, `blocked`) and
-  their directly related nodes (code globs, capabilities, ADRs they depend on, initiative,
-  roadmap candidate). The knowledge-layer chain and Knowledge Capsules are always included.
-- **all**: the full graph, including completed/archived Work Items and every ADR in
-  `knowledge/tech/decisions/` (even unreferenced ones).
+### Graph scopes
 
-`active` is the default to keep diagrams readable.
+| Scope | Included statuses | Excluded | Use |
+|---|---|---|---|
+| **active** (default) | `draft`, `ready`, `in-progress`, `blocked` | `completed`, `archived` | current delivery context, immediate work |
+| **all** | `draft`, `ready`, `in-progress`, `blocked`, `completed` | `archived` | onboarding, historical analysis, full map, demos |
+
+- **active** also includes the knowledge-layer chain and Knowledge Capsules, plus each active Work
+  Item's related nodes (code globs, capabilities, ADRs, initiative, roadmap candidate).
+- **all** adds completed Work Items and every ADR in `knowledge/tech/decisions/` (even unreferenced
+  ones). Archived Work Items are excluded by default in both scopes.
+
+`active` is the default to keep diagrams focused on current work. **If a project's Work Items are all
+completed, the active graph only shows the knowledge layers** — that is expected, not a bug. The
+export says so and points you to `--scope all`:
+
+```text
+Knowledge graph exported with active scope.
+No active Work Items found.
+The active graph only includes knowledge layers.
+Run `kaddo graph export --scope all` to include completed Work Items.
+```
+
+Both `graph.json` and `graph-hints.json` carry `scope`, `scope_reason`, `included_statuses` and
+`excluded_statuses`, so `explain`, `context` and MCP can explain *why* a graph looks the way it does.
 
 ## Nodes and edges
 

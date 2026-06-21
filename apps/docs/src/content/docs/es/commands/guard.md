@@ -52,6 +52,31 @@ exactamente los mismos artefactos. Los Work Items se descubren recursivamente en
 del lifecycle (`draft/`, `ready/`, `in-progress/`, …) y se reconocen por su front matter, no por su
 ruta ni su nombre de archivo.
 
+## Alcance de ownership de Guard
+
+Guard matchea ownership desde Work Items **activos y completados** — el trabajo completado sigue
+siendo dueño de su código, así que tocarlo debe seguir mostrando el conocimiento relacionado. Los
+Work Items **archived** se **excluyen por defecto** (agrega `--include-archived` para incluirlos).
+Otros artefactos (ADRs, etc.) siempre se consideran. Guard imprime el scope usado:
+
+```text
+Ownership scope:
+- Active and completed Work Items
+- Archived Work Items excluded
+```
+
+Cuando no hay matches, Guard explica dónde buscó:
+
+```text
+No artifact ownership matches found.
+
+Note:
+Guard checks ownership from active and completed Work Items.
+Run `kaddo explain` to inspect ownership coverage.
+```
+
+En modo `--ci` / `--json` el scope se emite como `ownership_scope { included, excluded }`.
+
 ## Declarar propiedad
 
 Guard solo actúa sobre la **propiedad declarada**: nunca adivina qué artefacto posee un

@@ -138,6 +138,45 @@ describe('kaddo guard — end-to-end with real artifacts (VS-012)', () => {
     expect(output()).toContain('Possible knowledge drift')
   })
 
+  it('VS-060 AC1/AC3/AC4: matches ownership from completed Work Items and shows the ownership scope', async () => {
+    writeArtifact(
+      'knowledge/delivery/work-items/completed/WI-004.md',
+      'type: feature\nid: WI-004\ntitle: Tasks\nknowledge_level: K2\nstatus: completed\ncode:\n  - src/cli/**'
+    )
+    gitMock.getModifiedFiles.mockResolvedValue(['src/cli/program.ts'])
+
+    await runGuard({ interactive: false })
+    const out = output()
+    expect(out).toContain('Ownership scope:')
+    expect(out).toContain('Active and completed Work Items')
+    expect(out).toContain('Archived Work Items excluded')
+    expect(out).toContain('WI-004')
+  })
+
+  it('VS-060 AC2: archived Work Items excluded by default, included with --include-archived', async () => {
+    // A non-archived owned artifact keeps guard non-silent; the archived one owns the touched file.
+    writeArtifact(
+      'knowledge/delivery/work-items/WI-100.md',
+      'type: feature\nid: WI-100\ntitle: Active\nknowledge_level: K2\nstatus: in-progress\ncode:\n  - src/other/**'
+    )
+    writeArtifact(
+      'knowledge/delivery/work-items/archived/WI-009.md',
+      'type: feature\nid: WI-009\ntitle: Old\nknowledge_level: K2\nstatus: archived\ncode:\n  - src/legacy/**'
+    )
+    gitMock.getModifiedFiles.mockResolvedValue(['src/legacy/old.ts'])
+
+    await runGuard({ interactive: false })
+    const out1 = output()
+    expect(out1).toContain('No artifact ownership matches found.') // archived excluded → no match
+    expect(out1).not.toContain('WI-009')
+
+    logSpy.mockClear()
+    await runGuard({ interactive: false, includeArchived: true })
+    const out2 = output()
+    expect(out2).toContain('Archived Work Items included')
+    expect(out2).toContain('WI-009')
+  })
+
   it('stays non-blocking (does not call process.exit) on drift', async () => {
     const exitSpy = vi.spyOn(process, 'exit').mockImplementation((() => {}) as never)
     writeArtifact(

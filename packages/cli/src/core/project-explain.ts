@@ -523,13 +523,19 @@ export function renderExplanationHuman(exp: ProjectExplanation): string {
   // Knowledge Graph summary (VS-055) — shown only if `kaddo graph export` has been run.
   if (exp.graph) {
     lines.push('## Knowledge Graph')
+    lines.push(`- Scope: ${exp.graph.scope}`)
     lines.push(`- Nodes: ${exp.graph.nodes}`)
     lines.push(`- Edges: ${exp.graph.edges}`)
     if (exp.graphHints) {
       lines.push(`- Quality: ${exp.graphHints.quality}`)
       lines.push(`- Hints: ${exp.graphHints.totalHints}`)
     }
+    if (exp.graph.scopeReason) lines.push(`- Reason: ${exp.graph.scopeReason}`)
     if (exp.graph.generatedAt) lines.push(`- Last exported: ${exp.graph.generatedAt}`)
+    // Tip when the active graph is empty because there are no active Work Items (VS-060).
+    if (exp.graph.scope === 'active' && exp.graphHints?.quality === 'empty') {
+      lines.push('- Tip: Run `kaddo graph export --scope all` to include completed Work Items')
+    }
     lines.push('')
   }
 

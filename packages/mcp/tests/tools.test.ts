@@ -50,10 +50,12 @@ describe('MCP tools (VS-057 AC7)', () => {
         layers: [{ layer: 'Business', status: 'Complete' }],
       })
     )
-    write(root, '.kaddo/graph-hints.json', JSON.stringify({ quality: 'partial', summary: { hints: 3 } }))
+    write(root, '.kaddo/graph-hints.json', JSON.stringify({ quality: 'partial', scope: 'active', scope_reason: 'r', summary: { hints: 3 } }))
     const status = projectStatus(root)
     expect(status.ok).toBe(true)
-    expect((status as { data: { graphQuality: string } }).data.graphQuality).toBe('partial')
+    const data = (status as { data: { graph: { quality: string; scope: string } } }).data
+    expect(data.graph.quality).toBe('partial')
+    expect(data.graph.scope).toBe('active')
   })
 
   it('kaddo_list_capsules / get_capsule', () => {

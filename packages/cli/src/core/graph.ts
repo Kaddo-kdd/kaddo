@@ -56,8 +56,24 @@ export type GraphEdge = { from: string; to: string; type: GraphEdgeType }
 export type KnowledgeGraph = {
   generated_at: string
   project: { name: string; state: string; structure: string }
+  /** Which Work Item statuses this graph includes (VS-060). */
+  scope: GraphScope
+  /** Human explanation of why this scope produced what it did. */
+  scope_reason: string
+  included_statuses: string[]
+  excluded_statuses: string[]
   nodes: GraphNode[]
   edges: GraphEdge[]
+}
+
+/** Work Item statuses each scope includes/excludes (VS-060). Archived is excluded by default. */
+export const ACTIVE_STATUSES = ['draft', 'ready', 'in-progress', 'blocked']
+export const ALL_STATUSES = ['draft', 'ready', 'in-progress', 'blocked', 'completed']
+
+export function scopeStatuses(scope: GraphScope): { included: string[]; excluded: string[] } {
+  return scope === 'all'
+    ? { included: ALL_STATUSES, excluded: ['archived'] }
+    : { included: ACTIVE_STATUSES, excluded: ['completed', 'archived'] }
 }
 
 function toPosix(p: string): string {
@@ -119,9 +135,11 @@ export function buildGraph(
   // --- Work Items (+ code, capabilities, decisions, initiative, candidate) ---
   const all = discoverKnowledge(dir)
   const workItems = all.filter((a) => a.isWorkItem)
-  const selectedWIs = scope === 'active'
-    ? workItems.filter((a) => a.lifecycle && isActiveState(a.lifecycle))
-    : workItems
+  const { included, excluded } = scopeStatuses(scope)
+  const includedSet = new Set(included)
+  const activeWICount = workItems.filter((a) => a.lifecycle && isActiveState(a.lifecycle)).length
+  // Active scope: only active statuses. All scope: every status except archived.
+  const selectedWIs = workItems.filter((a) => a.lifecycle && includedSet.has(a.lifecycle))
 
   for (const wi of selectedWIs) {
     const id = wi.id || wi.title
@@ -201,6 +219,13 @@ export function buildGraph(
     }
   }
 
+  const scopeReason =
+    scope === 'all'
+      ? 'All supported Work Item statuses are included.'
+      : activeWICount === 0
+        ? 'No active Work Items found. Completed Work Items are excluded from active scope.'
+        : 'Active Work Items only; completed and archived are excluded.'
+
   return {
     generated_at: now.toISOString(),
     project: {
@@ -208,6 +233,10 @@ export function buildGraph(
       state: config.project.state,
       structure: config.project.structure,
     },
+    scope,
+    scope_reason: scopeReason,
+    included_statuses: included,
+    excluded_statuses: excluded,
     nodes: [...nodes.values()],
     edges,
   }
@@ -269,6 +298,10 @@ export function renderGraphMermaid(graph: KnowledgeGraph): string {
 
 export type GraphSummary = {
   generatedAt: string
+  scope: GraphScope
+  scopeReason: string
+  includedStatuses: string[]
+  excludedStatuses: string[]
   nodes: number
   edges: number
   /** Active Work Items that own at least one code glob. */
@@ -293,8 +326,13 @@ export function loadGraphSummary(dir: string): GraphSummary | null {
     const connected = new Set(
       edges.filter((e) => e.type === 'owns' && activeWiIds.has(e.from)).map((e) => e.from)
     )
+    const scope: GraphScope = graph.scope === 'all' ? 'all' : 'active'
     return {
       generatedAt: String(graph.generated_at ?? ''),
+      scope,
+      scopeReason: String(graph.scope_reason ?? ''),
+      includedStatuses: Array.isArray(graph.included_statuses) ? graph.included_statuses : [],
+      excludedStatuses: Array.isArray(graph.excluded_statuses) ? graph.excluded_statuses : [],
       nodes: nodes.length,
       edges: edges.length,
       activeWorkItemsConnectedToCode: connected.size,

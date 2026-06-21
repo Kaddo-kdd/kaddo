@@ -66,6 +66,27 @@ describe('Derived generation tools (VS-058)', () => {
     expect(r.next_suggested_resources).toEqual(['kaddo://graph', 'kaddo://graph-hints'])
   })
 
+  it('VS-060 AC16/AC17: kaddo_generate_graph accepts scope and writes scope metadata', () => {
+    project()
+    write(
+      root,
+      'knowledge/delivery/work-items/completed/WI-009.md',
+      '---\nid: WI-009\ntype: feature\ntitle: Done\nstatus: completed\ncode:\n  - src/cli/**\n---\n# x\n'
+    )
+    const active = generateGraph(root, 'active')
+    expect(active.summary).toContain('active scope')
+    const activeJson = JSON.parse(fs.readFileSync(path.join(root, '.kaddo/graph.json'), 'utf-8'))
+    expect(activeJson.scope).toBe('active')
+    expect(activeJson.included_statuses).toEqual(['draft', 'ready', 'in-progress', 'blocked'])
+
+    const all = generateGraph(root, 'all')
+    expect(all.summary).toContain('all scope')
+    const allJson = JSON.parse(fs.readFileSync(path.join(root, '.kaddo/graph.json'), 'utf-8'))
+    expect(allJson.scope).toBe('all')
+    const hintsJson = JSON.parse(fs.readFileSync(path.join(root, '.kaddo/graph-hints.json'), 'utf-8'))
+    expect(hintsJson.scope).toBe('all')
+  })
+
   it('AC9/AC10: kaddo_generate_capsule_draft writes only under .kaddo/exports/ and does not register', () => {
     project()
     const r = generateCapsuleDraft(root)

@@ -102,7 +102,8 @@ program
   .option('--ci', 'CI mode: output JSON, no prompts, non-blocking')
   .option('--json', 'Output JSON (alias for --ci)')
   .option('--workspace', 'Also check local mapped module repos from .kaddo/modules.yml (opt-in)')
-  .action(async (opts: { staged?: boolean; interactive?: boolean; ci?: boolean; json?: boolean; workspace?: boolean }) => {
+  .option('--include-archived', 'Include archived Work Items in ownership matching (excluded by default)')
+  .action(async (opts: { staged?: boolean; interactive?: boolean; ci?: boolean; json?: boolean; workspace?: boolean; includeArchived?: boolean }) => {
     await runGuard(opts)
   })
 

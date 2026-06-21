@@ -51,6 +51,31 @@ Guard discovers knowledge artifacts through the same shared service as `explain`
 are found recursively across lifecycle subfolders (`draft/`, `ready/`, `in-progress/`, …) and are
 recognized by their front matter, not their path or file name.
 
+## Guard ownership scope
+
+Guard matches ownership from **active and completed** Work Items — completed work still owns its
+code, so touching it should still surface the related knowledge. **Archived** Work Items are
+**excluded by default** (add `--include-archived` to include them). Other artifacts (ADRs, etc.) are
+always considered. Guard prints the scope it used:
+
+```text
+Ownership scope:
+- Active and completed Work Items
+- Archived Work Items excluded
+```
+
+When nothing matches, Guard explains where it looked:
+
+```text
+No artifact ownership matches found.
+
+Note:
+Guard checks ownership from active and completed Work Items.
+Run `kaddo explain` to inspect ownership coverage.
+```
+
+In `--ci` / `--json` mode the scope is emitted as `ownership_scope { included, excluded }`.
+
 ## Declaring ownership
 
 Guard only acts on **declared ownership** — it never guesses which artifact owns a file.

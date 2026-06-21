@@ -209,8 +209,12 @@ export function createServer(root: string): McpServer {
   )
   server.registerTool(
     'kaddo_generate_graph',
-    { title: 'Generate knowledge graph', description: `Regenerate .kaddo/graph.json/.mmd + graph-hints.md/.json. ${DERIVED_NOTE}`, inputSchema: {} },
-    async () => generated(root, 'generate knowledge graph', () => generateGraph(root))
+    {
+      title: 'Generate knowledge graph',
+      description: `Regenerate .kaddo/graph.json/.mmd + graph-hints.md/.json. scope: active (default) or all. ${DERIVED_NOTE}`,
+      inputSchema: { scope: z.enum(['active', 'all']).optional() },
+    },
+    async (args) => generated(root, 'generate knowledge graph', () => generateGraph(root, args.scope ?? 'active'))
   )
   server.registerTool(
     'kaddo_generate_capsule_draft',

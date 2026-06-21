@@ -385,6 +385,14 @@ flowchart LR
     J --> U["Onboarding / Impact analysis / Context selection"]
 ```
 
+Scopes differ by intent:
+
+```text
+Active graph: current delivery context (draft, ready, in-progress, blocked)
+All graph:    full knowledge map (+ completed; archived excluded by default)
+Guard:        active + completed ownership (archived excluded by default)
+```
+
 Each export also rates **relationship quality** and writes `graph-hints.md` — non-blocking
 suggestions to enrich front matter. The `graph-agent` turns hints into precise metadata you
 confirm and apply:

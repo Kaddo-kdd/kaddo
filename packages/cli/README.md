@@ -508,6 +508,7 @@ create --from roadmap → owners → guard → explain`.
 | v3.19 | Read-only MCP server `@kaddo/mcp` (resources, tools, prompts over stdio) |
 | v3.20 | MCP derived tools: safe regeneration of context/explain/understand/graph/capsule-draft under `.kaddo/` |
 | v3.21 | Reusable Skills layer (`kaddo add skills`); skills in context/explain/understand, agent prompts and MCP |
+| v3.22 | Guard & graph scope semantics: graph scope metadata, contextual-empty messaging, Guard ownership scope (active + completed; `--include-archived`) |
 
 **Optional modules (installed with `kaddo add`):**
 

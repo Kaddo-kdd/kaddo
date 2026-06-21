@@ -47,9 +47,17 @@ export function runGraphExport(opts: GraphOpts = {}): void {
   writeFile(join(dir, '.kaddo', 'graph-hints.json'), serializeGraphHintsJson(hints))
   written.push('.kaddo/graph-hints.md', '.kaddo/graph-hints.json')
 
-  log.success('Knowledge graph exported.')
+  log.success(`Knowledge graph exported with ${scope} scope.`)
   log.info(`Scope: ${scope} · Nodes: ${graph.nodes.length} · Edges: ${graph.edges.length}`)
   log.info(`Relationship quality: ${hints.quality}`)
+
+  // Contextual empty: active scope with no active Work Items only has the knowledge layers (VS-060).
+  const hasWorkItemNodes = graph.nodes.some((n) => n.type === 'work-item')
+  if (scope === 'active' && !hasWorkItemNodes) {
+    log.warn('No active Work Items found.')
+    log.info('The active graph only includes knowledge layers.')
+    log.info('Run `kaddo graph export --scope all` to include completed Work Items.')
+  }
 
   if (hints.hints.length > 0) {
     const shown = hints.hints.slice(0, 5)

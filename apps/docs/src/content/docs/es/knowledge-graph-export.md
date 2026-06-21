@@ -65,14 +65,31 @@ kaddo graph export --scope active   # por defecto — Work Items activos + relac
 kaddo graph export --scope all      # todos los artefactos soportados (puede ser grande)
 ```
 
-- **active** (por defecto): solo Work Items activos (`draft`, `ready`, `in-progress`, `blocked`) y
-  sus nodos directamente relacionados (code globs, capabilities, ADRs de los que dependen,
-  initiative, candidato de roadmap). La cadena de capas de conocimiento y las Knowledge Capsules
-  siempre se incluyen.
-- **all**: el grafo completo, incluyendo Work Items completados/archivados y todos los ADRs en
-  `knowledge/tech/decisions/` (incluso los no referenciados).
+### Alcances del grafo
 
-`active` es el valor por defecto para mantener los diagramas legibles.
+| Scope | Estados incluidos | Excluidos | Uso |
+|---|---|---|---|
+| **active** (por defecto) | `draft`, `ready`, `in-progress`, `blocked` | `completed`, `archived` | contexto de delivery actual, trabajo inmediato |
+| **all** | `draft`, `ready`, `in-progress`, `blocked`, `completed` | `archived` | onboarding, análisis histórico, mapa completo, demos |
+
+- **active** también incluye la cadena de capas y las Knowledge Capsules, más los nodos relacionados
+  de cada Work Item activo (code globs, capabilities, ADRs, initiative, candidato de roadmap).
+- **all** agrega Work Items completados y todos los ADRs en `knowledge/tech/decisions/` (incluso los
+  no referenciados). Los Work Items archived se excluyen por defecto en ambos scopes.
+
+`active` es el valor por defecto para enfocar el trabajo actual. **Si todos los Work Items de un
+proyecto están completados, el grafo activo solo muestra las capas de conocimiento** — eso es
+esperado, no un bug. La exportación lo dice y te apunta a `--scope all`:
+
+```text
+Knowledge graph exported with active scope.
+No active Work Items found.
+The active graph only includes knowledge layers.
+Run `kaddo graph export --scope all` to include completed Work Items.
+```
+
+Tanto `graph.json` como `graph-hints.json` llevan `scope`, `scope_reason`, `included_statuses` y
+`excluded_statuses`, para que `explain`, `context` y MCP puedan explicar *por qué* el grafo se ve así.
 
 ## Nodos y relaciones
 

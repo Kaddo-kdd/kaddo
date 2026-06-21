@@ -122,11 +122,18 @@ function printCIJson(
   ignoredCount: number,
   pluginSignals: PluginSignal[],
   affectedOwners: Array<{ domain: string; owners: string[] }>,
-  workspace: WorkspaceScan | null
+  workspace: WorkspaceScan | null,
+  includeArchived: boolean
 ): void {
   const output: Record<string, unknown> = {
     kaddo_guard: true,
     ci: true,
+    ownership_scope: {
+      included: includeArchived
+        ? ['draft', 'ready', 'in-progress', 'blocked', 'completed', 'archived']
+        : ['draft', 'ready', 'in-progress', 'blocked', 'completed'],
+      excluded: includeArchived ? [] : ['archived'],
+    },
     touched_files: touchedFiles.length,
     fyi_count: activeMatches.length,
     ignored_count: ignoredCount,
@@ -156,7 +163,15 @@ function printCIJson(
   console.log(JSON.stringify(output, null, 2))
 }
 
-export async function runGuard(opts: { staged?: boolean; interactive?: boolean; ci?: boolean; json?: boolean; workspace?: boolean } = {}): Promise<void> {
+/** Ownership scope lines (VS-060): Guard reads active + completed Work Items; archived excluded by default. */
+function printOwnershipScope(includeArchived: boolean): void {
+  console.log('Ownership scope:')
+  console.log('- Active and completed Work Items')
+  console.log(includeArchived ? '- Archived Work Items included (--include-archived)' : '- Archived Work Items excluded')
+  console.log('')
+}
+
+export async function runGuard(opts: { staged?: boolean; interactive?: boolean; ci?: boolean; json?: boolean; workspace?: boolean; includeArchived?: boolean } = {}): Promise<void> {
   const dir = cwd()
   const interactive = opts.interactive !== false && !opts.ci && !opts.json
   const jsonMode = opts.json || opts.ci
@@ -213,7 +228,12 @@ export async function runGuard(opts: { staged?: boolean; interactive?: boolean; 
   }
 
   // Unified discovery (VS-046): guard analyzes exactly the artifacts explain/owners/context see.
-  const artifacts = discoverKnowledge(dir)
+  // Ownership scope (VS-060): active + completed Work Items; archived excluded unless requested.
+  // Non-Work-Item artifacts (ADRs, etc.) are always considered.
+  const includeArchived = opts.includeArchived === true
+  const artifacts = discoverKnowledge(dir).filter(
+    (a) => !(a.isWorkItem && a.lifecycle === 'archived' && !includeArchived)
+  )
   const result = analyzeGuard(touchedFiles, artifacts, silentWithoutOwnership)
 
   // Run plugins on current-repo files only — workspace mode never reads sibling source.
@@ -235,7 +255,7 @@ export async function runGuard(opts: { staged?: boolean; interactive?: boolean; 
     const ownerMapCI = loadOwners(dir)
     const matchedDomainsCI = collectMatchedDomains(activeMatches.map((m) => m.artifact.domains))
     const affectedOwnersCI = resolveAffectedOwners(matchedDomainsCI, ownerMapCI)
-    printCIJson(dir, touchedFiles, activeMatches, alreadyIgnoredMatches.length, pluginSignals, affectedOwnersCI, workspaceScan)
+    printCIJson(dir, touchedFiles, activeMatches, alreadyIgnoredMatches.length, pluginSignals, affectedOwnersCI, workspaceScan, includeArchived)
     return
   }
 
@@ -247,13 +267,19 @@ export async function runGuard(opts: { staged?: boolean; interactive?: boolean; 
   if (result.matches.length === 0 && pluginSignals.length === 0) {
     if (workspaceScan) printWorkspaceHeader(workspaceScan)
     printHeader(touchedFiles)
+    printOwnershipScope(includeArchived)
     console.log('  No artifact ownership matches found.')
+    console.log('')
+    console.log('Note:')
+    console.log('Guard checks ownership from active and completed Work Items.')
+    console.log('Run `kaddo explain` to inspect ownership coverage.')
     printUntracked()
     return
   }
 
   if (workspaceScan) printWorkspaceHeader(workspaceScan)
   printHeader(touchedFiles)
+  printOwnershipScope(includeArchived)
   printUntracked()
 
   // Show active FYIs

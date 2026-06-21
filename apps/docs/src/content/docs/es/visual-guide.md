@@ -387,6 +387,14 @@ flowchart LR
     J --> U["Onboarding / Análisis de impacto / Selección de contexto"]
 ```
 
+Los scopes difieren por intención:
+
+```text
+Grafo active: contexto de delivery actual (draft, ready, in-progress, blocked)
+Grafo all:    mapa completo (+ completed; archived excluido por defecto)
+Guard:        ownership active + completed (archived excluido por defecto)
+```
+
 Cada exportación también califica la **calidad de las relaciones** y escribe `graph-hints.md` —
 sugerencias no bloqueantes para enriquecer el front matter. El `graph-agent` convierte los hints
 en metadata precisa que tú confirmas y aplicas:

@@ -10,6 +10,7 @@ import {
   graphIsSparse,
   loadGraphSummary,
 } from '../src/core/graph.js'
+import { buildGraphHints, renderGraphHintsMarkdown } from '../src/core/graph-hints.js'
 import { buildContextPack } from '../src/core/context-pack.js'
 import { renderContextPack } from '../src/templates/context-pack-template.js'
 import { buildProjectExplanation, renderExplanationHuman } from '../src/core/project-explain.js'
@@ -121,6 +122,46 @@ describe('Knowledge Graph — build (VS-055)', () => {
     const allIds = all.nodes.map((n) => n.id)
     expect(allIds).toContain('wi:WI-001')
     expect(allIds).toContain('adr:ADR-009')
+  })
+
+  it('VS-060 AC6/AC8: active scope with no active Work Items reports contextual-empty metadata', () => {
+    config('todoApp')
+    write(
+      'knowledge/delivery/work-items/completed/WI-001.md',
+      '---\nid: WI-001\ntype: feature\ntitle: Done\nstatus: completed\ncode:\n  - src/cli/**\n---\n# x\n'
+    )
+    const graph = buildGraph(tmp, loadConfig(tmp)!, { scope: 'active' })
+    expect(graph.scope).toBe('active')
+    expect(graph.scope_reason).toContain('No active Work Items found')
+    expect(graph.included_statuses).toEqual(['draft', 'ready', 'in-progress', 'blocked'])
+    expect(graph.excluded_statuses).toContain('completed')
+    expect(graph.nodes.some((n) => n.type === 'work-item')).toBe(false)
+
+    const hints = buildGraphHints(tmp, graph)
+    expect(hints.scope).toBe('active')
+    expect(hints.quality).toBe('empty')
+    const md = renderGraphHintsMarkdown(hints)
+    expect(md).not.toContain('look healthy')
+    expect(md).toContain('No active relationship hints were generated')
+    expect(md).toContain('--scope all')
+  })
+
+  it('VS-060 AC7/AC10: all scope includes completed and excludes archived by default', () => {
+    config('todoApp')
+    write(
+      'knowledge/delivery/work-items/completed/WI-001.md',
+      '---\nid: WI-001\ntype: feature\ntitle: Done\nstatus: completed\ncode:\n  - src/cli/**\n---\n# x\n'
+    )
+    write(
+      'knowledge/delivery/work-items/archived/WI-000.md',
+      '---\nid: WI-000\ntype: feature\ntitle: Old\nstatus: archived\ncode:\n  - src/old/**\n---\n# x\n'
+    )
+    const all = buildGraph(tmp, loadConfig(tmp)!, { scope: 'all' })
+    const ids = all.nodes.map((n) => n.id)
+    expect(all.scope).toBe('all')
+    expect(all.excluded_statuses).toEqual(['archived'])
+    expect(ids).toContain('wi:WI-001') // completed included
+    expect(ids).not.toContain('wi:WI-000') // archived excluded by default
   })
 
   it('AC2/AC12: JSON + Mermaid serialization (sanitized ids, edge labels)', () => {
