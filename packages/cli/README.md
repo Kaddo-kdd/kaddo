@@ -510,6 +510,7 @@ create --from roadmap → owners → guard → explain`.
 | v3.21 | Reusable Skills layer (`kaddo add skills`); skills in context/explain/understand, agent prompts and MCP |
 | v3.22 | Guard & graph scope semantics: graph scope metadata, contextual-empty messaging, Guard ownership scope (active + completed; `--include-archived`) |
 | v3.22.1 | Guard project-root path normalization: matches `code:` globs when the project is a subfolder of the Git root |
+| v3.23 | Knowledge Impact Report: `kaddo report impact` (Markdown/JSON, `--output`); evidence-first health/coverage/traceability/readiness/signals; MCP resource + tool |
 
 **Optional modules (installed with `kaddo add`):**
 

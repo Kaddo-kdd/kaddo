@@ -26,6 +26,7 @@ import {
   generateUnderstand,
   generateGraph,
   generateCapsuleDraft,
+  generateImpactReport,
   type GenerateResult,
 } from './generate.js'
 import { assertKaddoProject, KaddoMcpError } from './project.js'
@@ -216,6 +217,23 @@ export function createServer(root: string): McpServer {
     },
     async (args) => generated(root, 'generate knowledge graph', () => generateGraph(root, args.scope ?? 'active'))
   )
+  server.registerTool(
+    'kaddo_generate_impact_report',
+    {
+      title: 'Generate impact report',
+      description: `Write the Knowledge Impact Report under .kaddo/reports/. format: markdown (default) or json; scope: active or all (default all). ${DERIVED_NOTE}`,
+      inputSchema: {
+        format: z.enum(['markdown', 'json']).optional(),
+        scope: z.enum(['active', 'all']).optional(),
+        output: z.string().optional(),
+      },
+    },
+    async (args) =>
+      generated(root, 'generate impact report', () =>
+        generateImpactReport(root, { format: args.format, scope: args.scope, output: args.output })
+      )
+  )
+
   server.registerTool(
     'kaddo_generate_capsule_draft',
     { title: 'Generate capsule draft', description: `Write a capsule DRAFT under .kaddo/exports/ (never registers it). ${DERIVED_NOTE}`, inputSchema: {} },

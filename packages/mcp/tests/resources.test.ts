@@ -10,7 +10,7 @@ function res(uri: string) {
 }
 
 describe('MCP resources (VS-057 AC6/AC14)', () => {
-  it('exposes all ten resource URIs', () => {
+  it('exposes the expected resource URIs', () => {
     const uris = RESOURCES.map((r) => r.uri).sort()
     expect(uris).toEqual(
       [
@@ -20,6 +20,7 @@ describe('MCP resources (VS-057 AC6/AC14)', () => {
         'kaddo://explain',
         'kaddo://graph',
         'kaddo://graph-hints',
+        'kaddo://impact-report',
         'kaddo://roadmap',
         'kaddo://skills',
         'kaddo://understand',

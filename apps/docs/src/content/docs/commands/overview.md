@@ -99,6 +99,7 @@ Supporting commands:
 | `kaddo capsule export` | Export a [Knowledge Capsule](/knowledge-capsules/) about this project |
 | `kaddo capsule add <path>` | Import an external Knowledge Capsule as context |
 | `kaddo graph export` | Export the [knowledge graph](/knowledge-graph-export/) + hints |
+| `kaddo report impact` | [Knowledge Impact Report](/impact-report/): health, coverage, traceability, readiness |
 | `kaddo add <module>` | Install an optional module |
 
 Reusable [**skills**](/skills/) standardize how agents do common things well — install them with

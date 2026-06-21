@@ -23,6 +23,7 @@ import {
   serializeGraphHintsJson,
 } from '../../cli/src/core/graph-hints.js'
 import { buildCapsule, renderCapsuleMarkdown, serializeCapsuleJson } from '../../cli/src/core/capsule.js'
+import { buildImpactReport, renderImpactMarkdown, serializeImpactJson } from '../../cli/src/core/impact-report.js'
 import { writeDerived, hasKnowledge, KaddoMcpError } from './project.js'
 
 export type GenerateResult = {
@@ -121,6 +122,27 @@ export function generateGraph(root: string, scope: 'active' | 'all' = 'active'):
     summary: `Knowledge graph and hints generated successfully (${scope} scope).`,
     warnings,
     next_suggested_resources: ['kaddo://graph', 'kaddo://graph-hints'],
+  }
+}
+
+/** kaddo_generate_impact_report — write the impact report under .kaddo/reports/ (VS-061). */
+export function generateImpactReport(
+  root: string,
+  opts: { format?: 'markdown' | 'json'; scope?: 'active' | 'all'; output?: string } = {}
+): GenerateResult {
+  requireConfig(root)
+  requireKnowledge(root)
+  const format = opts.format ?? 'markdown'
+  const report = buildImpactReport(root, { scope: opts.scope ?? 'all' })
+  const content = format === 'json' ? serializeImpactJson(report) : renderImpactMarkdown(report)
+  const out = opts.output ?? `.kaddo/reports/impact-report.${format === 'json' ? 'json' : 'md'}`
+  writeDerived(root, out, content) // allowlist enforces .kaddo/reports/
+  return {
+    status: 'ok',
+    files_written: [out.replace(/\\/g, '/')],
+    summary: `Impact report generated (${format}, ${report.scope} scope).`,
+    warnings: report.score === null ? ['Impact score not available — add Work Items to compute it.'] : [],
+    next_suggested_resources: ['kaddo://impact-report'],
   }
 }
 

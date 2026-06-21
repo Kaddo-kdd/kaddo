@@ -51,6 +51,10 @@ export const COMMAND_HELP: Record<string, CommandHelp> = {
     question: 'How is my project knowledge connected?',
     next: 'Open .kaddo/graph.mmd, or run kaddo explain for a summary',
   },
+  'report impact': {
+    question: 'What impact is Kaddo having on this project?',
+    next: 'Act on the Suggested Actions section',
+  },
 }
 
 /** Lines for the contextual footer, or [] if the command has no entry. */

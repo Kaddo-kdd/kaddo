@@ -1,0 +1,55 @@
+import { describe, it, expect, afterEach } from 'vitest'
+import fs from 'node:fs'
+import path from 'node:path'
+import { generateImpactReport } from '../src/generate.js'
+import { RESOURCES } from '../src/resources.js'
+import { assertMcpDerivedWritePath, KaddoMcpError } from '../src/project.js'
+import { makeProject, write, config, cleanup } from './helpers.js'
+
+let root: string
+afterEach(() => root && cleanup(root))
+
+function project() {
+  root = makeProject()
+  config(root, 'todoApp')
+  write(root, 'knowledge/business/business.md', '---\ntype: business\n---\n# B\n\nManages tasks.')
+  write(
+    root,
+    'knowledge/delivery/work-items/completed/WI-1.md',
+    '---\nid: WI-1\ntype: feature\ntitle: A\nstatus: completed\ncode:\n  - src/cli/**\n---\n# x'
+  )
+}
+
+describe('MCP impact report (VS-061)', () => {
+  it('AC23: kaddo://impact-report builds the report in memory when none is saved', () => {
+    project()
+    const res = RESOURCES.find((r) => r.uri === 'kaddo://impact-report')!
+    const out = res.read(root)[0].text
+    expect(out).toContain('# Kaddo Knowledge Impact Report')
+    expect(out).toContain('## Impact Signals')
+  })
+
+  it('AC24/AC25: kaddo_generate_impact_report writes only under .kaddo/reports/', () => {
+    project()
+    const r = generateImpactReport(root, { format: 'markdown' })
+    expect(r.status).toBe('ok')
+    expect(r.files_written[0]).toBe('.kaddo/reports/impact-report.md')
+    expect(fs.existsSync(path.join(root, '.kaddo/reports/impact-report.md'))).toBe(true)
+
+    const j = generateImpactReport(root, { format: 'json' })
+    expect(j.files_written[0]).toBe('.kaddo/reports/impact-report.json')
+    expect(JSON.parse(fs.readFileSync(path.join(root, '.kaddo/reports/impact-report.json'), 'utf-8'))).toHaveProperty('knowledge_health')
+  })
+
+  it('AC25: the reports allowlist blocks writes outside .kaddo/reports/', () => {
+    expect(assertMcpDerivedWritePath('.kaddo/reports/impact-report.md')).toBe('.kaddo/reports/impact-report.md')
+    expect(() => assertMcpDerivedWritePath('knowledge/reports/x.md')).toThrow(KaddoMcpError)
+  })
+
+  it('AC23: a saved report is returned as-is by the resource', () => {
+    project()
+    write(root, '.kaddo/reports/impact-report.md', '# Saved report\n\nstatic content')
+    const res = RESOURCES.find((r) => r.uri === 'kaddo://impact-report')!
+    expect(res.read(root)[0].text).toContain('# Saved report')
+  })
+})

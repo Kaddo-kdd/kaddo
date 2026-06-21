@@ -5,6 +5,7 @@
 
 import { listCapsules, listAgents } from './catalog.js'
 import { listSkills } from './skills.js'
+import { buildImpactReport, renderImpactMarkdown } from '../../cli/src/core/impact-report.js'
 import { listWorkItems } from './workitems.js'
 import { hasKnowledge, readText } from './project.js'
 
@@ -170,5 +171,20 @@ export const RESOURCES: ResourceDescriptor[] = [
         mimeType: 'application/json',
       },
     ],
+  },
+  {
+    uri: 'kaddo://impact-report',
+    name: 'Kaddo impact report',
+    description: 'Knowledge Impact Report — the last written report, or generated in memory (read-only).',
+    mimeType: 'text/markdown',
+    read: (root) => {
+      // Prefer a previously written report; otherwise build it in memory (no writes).
+      const saved = readText(root, '.kaddo/reports/impact-report.md')
+      if (saved) return [{ uri: 'kaddo://impact-report', text: saved, mimeType: 'text/markdown' }]
+      if (!hasKnowledge(root)) {
+        return text('kaddo://impact-report', 'Knowledge repository not found. Run `kaddo bootstrap` first.', 'text/plain')
+      }
+      return [{ uri: 'kaddo://impact-report', text: renderImpactMarkdown(buildImpactReport(root, { scope: 'all' })), mimeType: 'text/markdown' }]
+    },
   },
 ]

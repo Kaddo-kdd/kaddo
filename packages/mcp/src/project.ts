@@ -114,6 +114,7 @@ const DERIVED_WRITE_FILES = new Set([
 ])
 
 const DERIVED_EXPORTS_RE = /^\.kaddo\/exports\/[^/]+\.capsule\.(md|json)$/
+const DERIVED_REPORTS_RE = /^\.kaddo\/reports\/[^/]+\.(md|json)$/
 
 /**
  * Assert a path is an allowed derived-write target. Returns the normalized POSIX path or throws.
@@ -124,7 +125,7 @@ export function assertMcpDerivedWritePath(relPath: string): string {
   if (path.isAbsolute(relPath) || p.split('/').some((seg) => seg === '..')) {
     throw new KaddoMcpError('Blocked unsafe MCP derived write path.')
   }
-  if (!DERIVED_WRITE_FILES.has(p) && !DERIVED_EXPORTS_RE.test(p)) {
+  if (!DERIVED_WRITE_FILES.has(p) && !DERIVED_EXPORTS_RE.test(p) && !DERIVED_REPORTS_RE.test(p)) {
     throw new KaddoMcpError('Blocked unsafe MCP derived write path.')
   }
   return p

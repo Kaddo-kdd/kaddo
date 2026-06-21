@@ -99,6 +99,7 @@ Comandos de apoyo:
 | `kaddo capsule export` | Exporta una [Knowledge Capsule](/es/knowledge-capsules/) de este proyecto |
 | `kaddo capsule add <path>` | Importa una Knowledge Capsule externa como contexto |
 | `kaddo graph export` | Exporta el [grafo de conocimiento](/es/knowledge-graph-export/) + hints |
+| `kaddo report impact` | [Reporte de impacto](/es/impact-report/): salud, cobertura, trazabilidad, readiness |
 | `kaddo add <module>` | Instala un módulo opcional |
 
 Las [**habilidades**](/es/skills/) reutilizables estandarizan cómo los agentes hacen bien lo común

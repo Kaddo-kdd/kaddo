@@ -19,6 +19,7 @@ import { runModulesMap, runModulesList } from './commands/modules-map.js'
 import { runBootstrap } from './commands/bootstrap.js'
 import { runCapsuleExport, runCapsuleAdd } from './commands/capsule.js'
 import { runGraphExport } from './commands/graph.js'
+import { runReportImpact } from './commands/report.js'
 
 // Single source of truth for the version: read it from package.json at runtime so the CLI
 // `--version` can never drift from the published package version. `../package.json` resolves
@@ -92,6 +93,29 @@ graphCmd
   .option('--format <format>', 'Output format: json, mermaid (default: both)')
   .action((opts: { scope?: string; format?: string }) => {
     runGraphExport(opts)
+  })
+
+const reportCmd = program
+  .command('report')
+  .description('Generate Kaddo reports')
+
+reportCmd
+  .command('impact')
+  .description('Knowledge Impact Report: knowledge health, coverage, traceability, readiness (deterministic, no LLM)')
+  .option('--json', 'Output JSON instead of Markdown')
+  .option('--output <path>', 'Write the report to a file (e.g. .kaddo/reports/impact-report.md)')
+  .action((opts: { json?: boolean; output?: string }) => {
+    runReportImpact(opts)
+  })
+
+// Convenience alias: `kaddo impact`.
+program
+  .command('impact')
+  .description('Alias for `kaddo report impact`')
+  .option('--json', 'Output JSON instead of Markdown')
+  .option('--output <path>', 'Write the report to a file')
+  .action((opts: { json?: boolean; output?: string }) => {
+    runReportImpact(opts)
   })
 
 program
