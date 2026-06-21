@@ -77,6 +77,15 @@ Run `kaddo explain` to inspect ownership coverage.
 
 En modo `--ci` / `--json` el scope se emite como `ownership_scope { included, excluded }`.
 
+### Normalización de paths al root del proyecto
+
+Los globs `code:` siempre son relativos al **root del proyecto Kaddo**, pero Git reporta paths
+relativos al **root de Git**. Cuando el proyecto es una subcarpeta del repo, Guard normaliza cada
+archivo tocado antes de comparar — así `todoApp/src/cli/program.ts` (Git) matchea
+`src/cli/program.ts` (ownership). Los archivos fuera del proyecto se ignoran (sin matches falsos).
+`\` y `/` se tratan igual, en Windows y Unix. La salida `--json` incluye un mapeo `normalized_files`
+(`raw_path` → `project_path`) y `files_outside_project`.
+
 ## Declarar propiedad
 
 Guard solo actúa sobre la **propiedad declarada**: nunca adivina qué artefacto posee un

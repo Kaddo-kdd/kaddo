@@ -62,6 +62,19 @@ export async function isGitRepo(dir: string): Promise<boolean> {
   }
 }
 
+/**
+ * Absolute path of the Git working-tree root, or null if not in a repo. Used to normalize
+ * git-root-relative diff paths to the Kaddo project root when the project is a subfolder (VS-060.1).
+ */
+export async function getGitRoot(dir: string): Promise<string | null> {
+  try {
+    const result = await execa('git', ['rev-parse', '--show-toplevel'], { cwd: dir })
+    return result.stdout.trim() || null
+  } catch {
+    return null
+  }
+}
+
 /** Untracked files not ignored by .gitignore (read-only — never mutates git). VS-052. */
 export async function getUntrackedFiles(): Promise<string[]> {
   try {

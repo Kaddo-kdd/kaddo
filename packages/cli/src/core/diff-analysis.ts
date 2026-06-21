@@ -1,5 +1,35 @@
 import { minimatch } from 'minimatch'
+import path from 'path'
 import type { Artifact } from '../services/artifact-reader.js'
+
+function toPosix(p: string): string {
+  return p.replace(/\\/g, '/')
+}
+
+/**
+ * Normalize a Git-reported path (relative to the Git root) to a Kaddo-project-root-relative path,
+ * so it can be matched against `code:` globs which are always project-root relative (VS-060.1).
+ *
+ * - Git root == project root → returned unchanged.
+ * - Git root above the project (project is a subfolder) → strips the project prefix.
+ * - File outside the Kaddo project → returns null (no false matches).
+ */
+export function normalizeTouchedPathForProject(
+  touchedPath: string,
+  gitRoot: string | null,
+  projectRoot: string
+): string | null {
+  const t = toPosix(touchedPath).replace(/^\.\//, '').replace(/^\/+/, '')
+  if (!gitRoot) return t // no git root info: assume already project-relative
+
+  const prefix = toPosix(path.relative(gitRoot, projectRoot)).replace(/^\.\//, '').replace(/\/+$/, '')
+  if (prefix === '' || prefix === '.') return t // project root == git root
+  if (prefix.startsWith('..')) return t // project is above git root — paths already project-relative
+
+  if (t === prefix) return null // the project folder itself, not a file
+  if (t.startsWith(prefix + '/')) return t.slice(prefix.length + 1)
+  return null // outside this Kaddo project
+}
 
 export type EvidenceScore = {
   matched: number

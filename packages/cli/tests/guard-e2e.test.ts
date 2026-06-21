@@ -9,6 +9,7 @@ const gitMock = vi.hoisted(() => ({
   getModifiedFiles: vi.fn(async () => [] as string[]),
   getModifiedFilesIn: vi.fn(async () => [] as string[]),
   getUntrackedFiles: vi.fn(async () => [] as string[]),
+  getGitRoot: vi.fn(async () => null),
 }))
 
 vi.mock('../src/services/git.js', () => gitMock)
@@ -175,6 +176,55 @@ describe('kaddo guard — end-to-end with real artifacts (VS-012)', () => {
     const out2 = output()
     expect(out2).toContain('Archived Work Items included')
     expect(out2).toContain('WI-009')
+  })
+
+  it('VS-060.1 AC1/AC2/AC3: normalizes git-root-relative paths when the project is a subfolder', async () => {
+    writeArtifact(
+      'knowledge/delivery/work-items/completed/WI-004.md',
+      'type: feature\nid: WI-004\ntitle: Tasks\nknowledge_level: K2\nstatus: completed\ncode:\n  - src/cli/**\n  - src/modules/tasks/**'
+    )
+    // Git root is one level above the Kaddo project (tmpDir is "<repo>/todoApp").
+    gitMock.getGitRoot.mockResolvedValue(path.dirname(tmpDir))
+    gitMock.getModifiedFiles.mockResolvedValue([
+      `${path.basename(tmpDir)}/src/cli/program.ts`,
+      `${path.basename(tmpDir)}/src/modules/tasks/task.repository.ts`,
+    ])
+
+    await runGuard({ interactive: false })
+    const out = output()
+    expect(out).toContain('WI-004') // matched via normalized project path
+    expect(out).toContain('src/cli/program.ts')
+  })
+
+  it('VS-060.1 AC5: files outside the Kaddo project do not produce matches', async () => {
+    writeArtifact(
+      'knowledge/delivery/work-items/WI-100.md',
+      'type: feature\nid: WI-100\ntitle: Active\nknowledge_level: K2\nstatus: in-progress\ncode:\n  - src/cli/**'
+    )
+    gitMock.getGitRoot.mockResolvedValue(path.dirname(tmpDir))
+    // A sibling project's file (different top folder) + an in-project file. Only the in-project
+    // one is considered; the sibling file must not create a false match against this project.
+    gitMock.getModifiedFiles.mockResolvedValue([
+      'otherApp/src/cli/program.ts',
+      `${path.basename(tmpDir)}/src/cli/program.ts`,
+    ])
+
+    await runGuard({ interactive: false })
+    const out = output()
+    expect(out).toContain('WI-100') // in-project file matched
+    expect(out).not.toContain('otherApp/src/cli/program.ts') // sibling ignored, not in matched output
+  })
+
+  it('VS-060.1 AC6/AC7: normalizes Windows-style git-root-relative paths', async () => {
+    writeArtifact(
+      'knowledge/delivery/work-items/completed/WI-004.md',
+      'type: feature\nid: WI-004\ntitle: Tasks\nknowledge_level: K2\nstatus: completed\ncode:\n  - src/cli/**'
+    )
+    gitMock.getGitRoot.mockResolvedValue(path.dirname(tmpDir))
+    gitMock.getModifiedFiles.mockResolvedValue([`${path.basename(tmpDir)}\\src\\cli\\program.ts`])
+
+    await runGuard({ interactive: false })
+    expect(output()).toContain('WI-004')
   })
 
   it('stays non-blocking (does not call process.exit) on drift', async () => {

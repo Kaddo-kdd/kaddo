@@ -9,6 +9,7 @@ const gitMock = vi.hoisted(() => ({
   getModifiedFiles: vi.fn(async () => [] as string[]),
   getModifiedFilesIn: vi.fn(async () => [] as string[]),
   getUntrackedFiles: vi.fn(async () => [] as string[]),
+  getGitRoot: vi.fn(async () => null),
 }))
 vi.mock('../src/services/git.js', () => gitMock)
 

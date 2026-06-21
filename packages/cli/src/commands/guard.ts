@@ -1,6 +1,6 @@
-import { getModifiedFiles, getUntrackedFiles, isGitRepo } from '../services/git.js'
+import { getModifiedFiles, getUntrackedFiles, getGitRoot, isGitRepo } from '../services/git.js'
 import { discoverKnowledge } from '../services/knowledge-artifacts.js'
-import { analyzeGuard, type ArtifactMatch } from '../core/diff-analysis.js'
+import { analyzeGuard, normalizeTouchedPathForProject, type ArtifactMatch } from '../core/diff-analysis.js'
 import { loadIgnores, saveIgnore, isIgnored } from '../services/ignore-store.js'
 import { collectWorkspaceChanges, type WorkspaceScan } from '../services/workspace-guard.js'
 import { exists, join, cwd, readFile } from '../utils/fs.js'
@@ -123,7 +123,9 @@ function printCIJson(
   pluginSignals: PluginSignal[],
   affectedOwners: Array<{ domain: string; owners: string[] }>,
   workspace: WorkspaceScan | null,
-  includeArchived: boolean
+  includeArchived: boolean,
+  normalizedFiles: { raw_path: string; project_path: string }[],
+  outsideProjectFiles: string[]
 ): void {
   const output: Record<string, unknown> = {
     kaddo_guard: true,
@@ -134,6 +136,9 @@ function printCIJson(
         : ['draft', 'ready', 'in-progress', 'blocked', 'completed'],
       excluded: includeArchived ? [] : ['archived'],
     },
+    // Git-root-relative → project-root-relative mapping used for matching (VS-060.1).
+    normalized_files: normalizedFiles,
+    files_outside_project: outsideProjectFiles,
     touched_files: touchedFiles.length,
     fyi_count: activeMatches.length,
     ignored_count: ignoredCount,
@@ -188,10 +193,26 @@ export async function runGuard(opts: { staged?: boolean; interactive?: boolean; 
   const plugins = resolvePlugins(config.plugins ?? [])
 
   const mode = opts.staged ? 'staged' : 'head'
-  const currentFiles = await getModifiedFiles(mode)
+  const currentFilesRaw = await getModifiedFiles(mode)
+
+  // Git reports paths relative to the GIT root, but `code:` globs are relative to the Kaddo
+  // PROJECT root. When the project is a subfolder of the repo, normalize so they match (VS-060.1).
+  const gitRoot = await getGitRoot(dir)
+  const currentPairs = currentFilesRaw.map((raw) => ({
+    raw,
+    project: normalizeTouchedPathForProject(raw, gitRoot, dir),
+  }))
+  // In-project current files (raw kept for display, project path used for matching).
+  const inProjectPairs = currentPairs.filter((p) => p.project !== null) as { raw: string; project: string }[]
+  const currentFiles = inProjectPairs.map((p) => p.project)
+  const outsideProjectFiles = currentPairs.filter((p) => p.project === null).map((p) => p.raw)
 
   // Untracked-file awareness (VS-052): new files git does not see yet. FYI only, never blocks.
-  const untrackedFiles = opts.staged ? [] : await getUntrackedFiles()
+  const untrackedFiles = opts.staged
+    ? []
+    : (await getUntrackedFiles())
+        .map((f) => normalizeTouchedPathForProject(f, gitRoot, dir))
+        .filter((f): f is string => f !== null)
   const printUntracked = (): void => {
     if (untrackedFiles.length === 0 || jsonMode) return
     console.log('')
@@ -210,9 +231,10 @@ export async function runGuard(opts: { staged?: boolean; interactive?: boolean; 
     ? workspaceScan.changedFiles.map((c) => c.normalizedPath)
     : []
 
-  // Merged set drives artifact matching; plugins still run on current-repo files only
-  // (workspace mode never reads sibling repo source contents).
+  // Project-relative paths drive artifact matching; raw paths are shown in the header so users
+  // recognize what Git reported. Plugins still run on current-repo files only.
   const touchedFiles = [...new Set([...currentFiles, ...workspaceFiles])]
+  const displayTouched = [...new Set([...inProjectPairs.map((p) => p.raw), ...workspaceFiles])]
 
   if (touchedFiles.length === 0) {
     if (workspaceScan) printWorkspaceHeader(workspaceScan)
@@ -255,7 +277,7 @@ export async function runGuard(opts: { staged?: boolean; interactive?: boolean; 
     const ownerMapCI = loadOwners(dir)
     const matchedDomainsCI = collectMatchedDomains(activeMatches.map((m) => m.artifact.domains))
     const affectedOwnersCI = resolveAffectedOwners(matchedDomainsCI, ownerMapCI)
-    printCIJson(dir, touchedFiles, activeMatches, alreadyIgnoredMatches.length, pluginSignals, affectedOwnersCI, workspaceScan, includeArchived)
+    printCIJson(dir, touchedFiles, activeMatches, alreadyIgnoredMatches.length, pluginSignals, affectedOwnersCI, workspaceScan, includeArchived, inProjectPairs.map((p) => ({ raw_path: p.raw, project_path: p.project })), outsideProjectFiles)
     return
   }
 
@@ -266,7 +288,7 @@ export async function runGuard(opts: { staged?: boolean; interactive?: boolean; 
 
   if (result.matches.length === 0 && pluginSignals.length === 0) {
     if (workspaceScan) printWorkspaceHeader(workspaceScan)
-    printHeader(touchedFiles)
+    printHeader(displayTouched)
     printOwnershipScope(includeArchived)
     console.log('  No artifact ownership matches found.')
     console.log('')
@@ -278,7 +300,7 @@ export async function runGuard(opts: { staged?: boolean; interactive?: boolean; 
   }
 
   if (workspaceScan) printWorkspaceHeader(workspaceScan)
-  printHeader(touchedFiles)
+  printHeader(displayTouched)
   printOwnershipScope(includeArchived)
   printUntracked()
 
