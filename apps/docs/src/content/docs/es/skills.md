@@ -58,6 +58,70 @@ Cada `skill.md` tiene front matter estándar (`type: skill`, `id`, `title`, `ver
 `applies_to`) y secciones: Purpose · When to use · Inputs · Output · Rules · Quality checklist ·
 Example output.
 
+## Crear una skill personalizada
+
+Las skills son Markdown plano — crea la tuya con `knowledge/skills/<id>/skill.md`. Usa esta
+plantilla (Kaddo nunca sobrescribe archivos de skill existentes):
+
+````markdown
+---
+type: skill
+id: <id-en-kebab-case>       # ej. api-contract-review
+title: <Título> Skill
+version: 1
+group: delivery             # delivery | tech | integration (o el tuyo)
+applies_to:                 # agentes que deberían aplicar esta skill
+  - work-item-agent
+  - implementation-agent
+---
+
+# <Título> Skill
+
+## Purpose
+
+Una o dos frases: qué capacidad estandariza y por qué.
+
+## When to use
+
+El disparador — la situación en la que un agente debería aplicar esta skill.
+
+## Inputs
+
+Qué necesita el agente (context pack, artefactos específicos, el Work Item, …).
+
+## Output
+
+Exactamente qué debe producir la skill (forma, secciones, archivo).
+
+## Rules
+
+- Haz esto; prefiere aquello.
+- Nunca hagas X (p. ej. inventar relaciones, ejecutar git, editar archivos sin confirmación).
+
+## Quality checklist
+
+- Una lista breve y verificable que la salida debe cumplir.
+
+## Example output
+
+```txt
+Un ejemplo concreto y pequeño de un buen resultado.
+```
+````
+
+Convenciones:
+
+- **`id`** en kebab-case y debe coincidir con el nombre de la carpeta (`knowledge/skills/<id>/skill.md`).
+- **`applies_to`** lista ids de agentes — los prompts de esos agentes mostrarán esta skill en su
+  sección **Reusable Skills** automáticamente.
+- **`group`** es libre; los grupos integrados son `delivery`, `tech` e `integration`. Las skills
+  personalizadas no entran en `kaddo add skills --group`, pero se descubren en todos lados donde se
+  ven las skills instaladas (`kaddo context` / `explain` / `understand` y los recursos MCP
+  `kaddo://skills`).
+- Mantén las secciones estándar para que la salida sea consistente con las skills integradas.
+
+Tip: copia una skill instalada (p. ej. `knowledge/skills/adr-writing/skill.md`) como punto de partida.
+
 ## Cómo los agentes referencian skills
 
 Los prompts de agentes instalados incluyen una sección **Reusable Skills** con las skills que deben

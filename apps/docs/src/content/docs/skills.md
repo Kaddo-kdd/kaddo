@@ -57,6 +57,69 @@ Each `skill.md` has standard front matter (`type: skill`, `id`, `title`, `versio
 `applies_to`) and sections: Purpose · When to use · Inputs · Output · Rules · Quality checklist ·
 Example output.
 
+## Creating a custom skill
+
+Skills are plain Markdown — add your own by creating `knowledge/skills/<id>/skill.md`. Use this
+template (Kaddo never overwrites existing skill files):
+
+````markdown
+---
+type: skill
+id: <kebab-case-id>          # e.g. api-contract-review
+title: <Human Title> Skill
+version: 1
+group: delivery             # delivery | tech | integration (or your own)
+applies_to:                 # agents that should apply this skill
+  - work-item-agent
+  - implementation-agent
+---
+
+# <Human Title> Skill
+
+## Purpose
+
+One or two sentences: what capability this standardizes and why.
+
+## When to use
+
+The trigger — the situation in which an agent should apply this skill.
+
+## Inputs
+
+What the agent needs (context pack, specific artifacts, the Work Item, …).
+
+## Output
+
+Exactly what the skill should produce (shape, sections, file).
+
+## Rules
+
+- Do this; prefer that.
+- Never do X (e.g. invent relationships, run git, edit files without confirmation).
+
+## Quality checklist
+
+- A short, checkable list the output must satisfy.
+
+## Example output
+
+```txt
+A small, concrete example of a good result.
+```
+````
+
+Conventions:
+
+- **`id`** is kebab-case and must match the folder name (`knowledge/skills/<id>/skill.md`).
+- **`applies_to`** lists agent ids — those agents' prompts will surface this skill in their
+  **Reusable Skills** section automatically.
+- **`group`** is free-form; the built-in groups are `delivery`, `tech` and `integration`. Custom
+  skills are not part of `kaddo add skills --group`, but they are discovered everywhere installed
+  skills are (`kaddo context` / `explain` / `understand` and the MCP `kaddo://skills` resources).
+- Keep the standard sections so output stays consistent with the built-in skills.
+
+Tip: copy an installed skill (e.g. `knowledge/skills/adr-writing/skill.md`) as a starting point.
+
 ## How agents reference skills
 
 Installed agent prompts include a **Reusable Skills** section listing the skills they should apply.
