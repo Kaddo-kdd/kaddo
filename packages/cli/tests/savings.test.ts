@@ -76,6 +76,39 @@ describe('Estimated Savings Model (VS-062)', () => {
     expect(r.estimated_savings.drift_prevention.available).toBe(false)
   })
 
+  it('VS-063.1 AC2/AC3/AC4/AC9: history with 0 resolved → drift available at 0 h, distinct from "not available"', () => {
+    setup()
+    const warn = (p: string, rel: string[]): GuardWarning => ({ type: 'possible-knowledge-drift', code_path: p, related_artifacts: rel, updated_artifacts: [], status: 'open' })
+    recordGuardRun(tmp, { project: 'todoApp', scope: 's', touched_files: ['src/cli/program.ts'], matched_artifacts: ['WI-1'], updated_artifacts: [], warnings: [warn('src/cli/program.ts', ['WI-1'])] })
+
+    const r = buildSavingsReport(tmp)
+    expect(r.evidence.guard_history_available).toBe(true)
+    expect(r.evidence.guard_runs_recorded).toBe(1)
+    expect(r.evidence.resolved_drift_warnings).toBe(0)
+    const dp = r.estimated_savings.drift_prevention
+    expect(dp.available).toBe(true) // AC3: available, not "not available"
+    if (dp.available) {
+      expect(dp.hours).toBe(0)
+      expect(dp.reason).toContain('no resolved drift warnings have been recorded yet')
+    }
+    // AC1: markdown evidence says available, not "not available".
+    const md = renderSavingsMarkdown(r)
+    expect(md).toContain('Guard history: available')
+    expect(md).not.toContain('Guard history: not available')
+    // AC10/AC11: no "persist Guard history"; recommends continuing to record.
+    expect(r.suggested_actions.some((a) => a.includes('persist Guard history'))).toBe(false)
+    expect(r.suggested_actions.some((a) => a.includes('Continue running `kaddo guard --record`'))).toBe(true)
+  })
+
+  it('VS-063.1 AC1: no history → drift not available + "persist Guard history" action', () => {
+    setup()
+    const r = buildSavingsReport(tmp)
+    expect(r.evidence.guard_history_available).toBe(false)
+    expect(r.estimated_savings.drift_prevention.available).toBe(false)
+    expect(renderSavingsMarkdown(r)).toContain('Guard history: not available')
+    expect(r.suggested_actions.some((a) => a.includes('persist Guard history'))).toBe(true)
+  })
+
   it('VS-063 AC26/AC28/AC46: resolved drift activates Drift Prevention savings', () => {
     setup()
     const warn = (p: string, rel: string[], up: string[]): GuardWarning => ({ type: 'possible-knowledge-drift', code_path: p, related_artifacts: rel, updated_artifacts: up, status: 'open' })

@@ -50,25 +50,38 @@ Sin el archivo, Kaddo usa defaults conservadores y lo indica.
 | **Clarification reduction** | Work Items con criterios de aceptación × minutos ahorrados | evidencia de impacto |
 | **Onboarding** | nuevos contribuidores × horas × multiplicador de Context Readiness (Low .25 → Very High 1.0) | evidencia de impacto |
 | **Architecture discovery** | horas × multiplicador de calidad del grafo (empty 0 → good 1.0) | evidencia de impacto |
-| **Drift prevention** | *no disponible* — el historial de Guard aún no se persiste | — |
+| **Drift prevention** | drift warnings resueltos × `rework_hours_avoided_per_resolved_drift` | [historial de guard](/es/drift-report/) |
 
 Valor estimado = `horas estimadas ahorradas × hourly_cost`, mostrado como **Estimated value** (nunca
 "ROI", "profit" ni "ahorro real"). Por defecto **`scope: all`** como `kaddo impact`; `--scope active`
 mide solo el contexto activo.
 
+### Historial de guard y drift prevention
+
+Drift prevention refleja el [historial de guard registrado](/es/drift-report/)
+(`kaddo guard --record`), con tres estados distintos:
+
+| Estado | Evidencia | Drift prevention |
+|---|---|---|
+| Sin historial | `Guard history: not available` | *no disponible* |
+| Historial, 0 warnings resueltos | `Guard history: available` · `Resolved drift warnings: 0` | disponible, **0 h** ("aún sin warnings resueltos") |
+| Historial, warnings resueltos | `Resolved drift warnings: N` | `N × rework_hours_avoided_per_resolved_drift` |
+
+> Un historial de guard disponible con cero warnings resueltos igual cuenta como evidencia
+> disponible, pero el ahorro de drift prevention sigue en 0 hasta que se resuelva al menos un warning.
+
 ## Qué **no** estima
 
 Sin ROI exacto, sin productividad individual, sin atribución por persona, sin benchmarking entre
-equipos, sin historial de Guard persistido ni tendencias, sin integración con Jira/Linear/GitHub,
-sin LLM, sin dashboard. Nunca modifica código ni conocimiento, y no escribe nada salvo con
-`--output`.
+equipos, sin tendencias en el tiempo, sin integración con Jira/Linear/GitHub, sin LLM, sin
+dashboard. Nunca modifica código ni conocimiento, y no escribe nada salvo con `--output`.
 
 ## Confianza
 
 Cada reporte incluye un nivel de confianza: **Low** (impact score &lt; 60 o grafo vacío), **Medium**
-(buena evidencia pero supuestos default y/o sin historial de Guard), **High** (evidencia fuerte +
-supuestos calibrados + historial de Guard). Como el historial de Guard aún no se persiste, la
-confianza está **limitada a Medium** por ahora — por diseño.
+(buena evidencia pero supuestos default y/o sin historial de drift resuelto), **High** (evidencia
+fuerte + supuestos calibrados en `.kaddo/savings.yml` + warnings de drift resueltos registrados).
+Llegar a **High** requiere evidencia real de resolución de drift vía `kaddo guard --record`.
 
 ## Por MCP
 

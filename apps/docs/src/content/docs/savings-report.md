@@ -49,24 +49,38 @@ Without the file, Kaddo uses conservative defaults and says so.
 | **Clarification reduction** | Work Items with acceptance criteria × minutes saved | impact evidence |
 | **Onboarding** | new contributors × hours × Context-Readiness multiplier (Low .25 → Very High 1.0) | impact evidence |
 | **Architecture discovery** | hours × graph-quality multiplier (empty 0 → good 1.0) | impact evidence |
-| **Drift prevention** | *not available* — Guard history isn't persisted yet | — |
+| **Drift prevention** | resolved drift warnings × `rework_hours_avoided_per_resolved_drift` | [guard history](/drift-report/) |
 
 Estimated value = `estimated hours saved × hourly_cost`, shown as **Estimated value** (never "ROI",
 "profit" or "real savings"). Defaults to **`scope: all`** like `kaddo impact`; `--scope active`
 measures only the active context.
 
+### Guard history and drift prevention
+
+Drift prevention reflects [recorded guard history](/drift-report/) (`kaddo guard --record`), with
+three distinct states:
+
+| State | Evidence | Drift prevention |
+|---|---|---|
+| No history recorded | `Guard history: not available` | *not available* |
+| History, 0 resolved warnings | `Guard history: available` · `Resolved drift warnings: 0` | available, **0 h** ("no resolved drift warnings recorded yet") |
+| History, resolved warnings | `Resolved drift warnings: N` | `N × rework_hours_avoided_per_resolved_drift` |
+
+> Guard history available with zero resolved warnings still counts as available evidence, but
+> drift-prevention savings remain 0 until at least one warning is resolved.
+
 ## What it does NOT estimate
 
-No exact ROI, no individual productivity, no per-person attribution, no team benchmarking, no
-persisted Guard history or time trends, no Jira/Linear/GitHub integration, no LLM, no dashboard. It
-never modifies code or knowledge, and writes nothing unless you pass `--output`.
+No exact ROI, no individual productivity, no per-person attribution, no team benchmarking, no time
+trends, no Jira/Linear/GitHub integration, no LLM, no dashboard. It never modifies code or
+knowledge, and writes nothing unless you pass `--output`.
 
 ## Confidence
 
 Each report carries a confidence level: **Low** (impact score &lt; 60 or empty graph), **Medium**
-(solid evidence but default assumptions and/or no Guard history), **High** (strong evidence +
-calibrated assumptions + Guard history). Because Guard history isn't persisted yet, confidence is
-**capped at Medium** for now — by design.
+(solid evidence but default assumptions and/or no resolved drift history), **High** (strong evidence
++ calibrated assumptions in `.kaddo/savings.yml` + recorded resolved drift warnings). Reaching
+**High** requires real drift-resolution evidence from `kaddo guard --record`.
 
 ## Over MCP
 
