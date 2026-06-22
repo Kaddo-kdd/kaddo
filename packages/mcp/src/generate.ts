@@ -26,6 +26,7 @@ import { buildCapsule, renderCapsuleMarkdown, serializeCapsuleJson } from '../..
 import { buildImpactReport, renderImpactMarkdown, serializeImpactJson } from '../../cli/src/core/impact-report.js'
 import { buildSavingsReport, renderSavingsMarkdown, serializeSavingsJson } from '../../cli/src/core/savings.js'
 import { buildDriftReport, renderDriftMarkdown, serializeDriftJson } from '../../cli/src/core/drift-report.js'
+import { buildOpenQuestionsReport, renderOpenQuestionsMarkdown, serializeOpenQuestionsJson } from '../../cli/src/core/open-questions.js'
 import { writeDerived, hasKnowledge, KaddoMcpError } from './project.js'
 
 export type GenerateResult = {
@@ -188,6 +189,26 @@ export function generateDriftReport(
       : 'Drift report generated (no guard history yet — run `kaddo guard --record`).',
     warnings: report.guard_history.available ? [] : ['No guard history recorded yet.'],
     next_suggested_resources: ['kaddo://drift-report'],
+  }
+}
+
+/** kaddo_generate_questions_report — write the open-questions readiness report under .kaddo/reports/ (VS-064). */
+export function generateQuestionsReport(
+  root: string,
+  opts: { format?: 'markdown' | 'json'; output?: string } = {}
+): GenerateResult {
+  requireConfig(root)
+  const format = opts.format ?? 'markdown'
+  const report = buildOpenQuestionsReport(root)
+  const content = format === 'json' ? serializeOpenQuestionsJson(report) : renderOpenQuestionsMarkdown(report)
+  const out = opts.output ?? `.kaddo/reports/questions-report.${format === 'json' ? 'json' : 'md'}`
+  writeDerived(root, out, content) // allowlist enforces .kaddo/reports/
+  return {
+    status: 'ok',
+    files_written: [out.replace(/\\/g, '/')],
+    summary: `Open questions report generated (readiness: ${report.summary.roadmap_readiness}, ${report.summary.blocking} blocking).`,
+    warnings: report.summary.blocking > 0 ? [`${report.summary.blocking} blocking question(s) before the roadmap.`] : [],
+    next_suggested_resources: ['kaddo://open-questions', 'kaddo://roadmap-readiness'],
   }
 }
 

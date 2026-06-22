@@ -22,6 +22,7 @@ import { runGraphExport } from './commands/graph.js'
 import { runReportImpact } from './commands/report.js'
 import { runSavings, runSavingsInit } from './commands/savings.js'
 import { runDrift } from './commands/drift.js'
+import { runQuestions } from './commands/questions.js'
 
 // Single source of truth for the version: read it from package.json at runtime so the CLI
 // `--version` can never drift from the published package version. `../package.json` resolves
@@ -167,6 +168,21 @@ program
   .action((opts: { json?: boolean; output?: string }) => {
     runDrift(opts)
   })
+
+const questionsAction = (opts: { json?: boolean; output?: string }) => runQuestions(opts)
+program
+  .command('questions')
+  .description('Open-questions readiness gate: blocking/important/deferred decisions before the roadmap')
+  .option('--json', 'Output JSON instead of a summary')
+  .option('--output <path>', 'Write the report to a file (e.g. .kaddo/reports/questions-report.md)')
+  .action(questionsAction)
+
+program
+  .command('readiness')
+  .description('Alias for `kaddo questions`')
+  .option('--json', 'Output JSON instead of a summary')
+  .option('--output <path>', 'Write the report to a file')
+  .action(questionsAction)
 
 program
   .command('guard')

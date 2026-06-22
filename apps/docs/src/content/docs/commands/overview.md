@@ -103,6 +103,7 @@ Supporting commands:
 | `kaddo savings` | [Estimated Savings Report](/savings-report/): evidence-based time/value estimates |
 | `kaddo guard --record` | Record a guard run to `.kaddo/history/` for drift trends |
 | `kaddo drift` | [Drift Trend Report](/drift-report/): warnings detected/resolved over time |
+| `kaddo questions` | [Open Questions Gate](/open-questions/): blocking decisions before the roadmap |
 | `kaddo add <module>` | Install an optional module |
 
 Reusable [**skills**](/skills/) standardize how agents do common things well — install them with

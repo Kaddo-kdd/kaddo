@@ -8,6 +8,7 @@ import { listSkills } from './skills.js'
 import { buildImpactReport, renderImpactMarkdown } from '../../cli/src/core/impact-report.js'
 import { buildSavingsReport, renderSavingsMarkdown } from '../../cli/src/core/savings.js'
 import { buildDriftReport, renderDriftMarkdown } from '../../cli/src/core/drift-report.js'
+import { buildOpenQuestionsReport, roadmapReadinessSummary } from '../../cli/src/core/open-questions.js'
 import { listWorkItems } from './workitems.js'
 import { hasKnowledge, readText } from './project.js'
 
@@ -225,6 +226,31 @@ export const RESOURCES: ResourceDescriptor[] = [
         return text('kaddo://guard-history', 'No guard history recorded yet. Run `kaddo guard --record`.', 'text/plain')
       }
       return [{ uri: 'kaddo://guard-history', text: runs, mimeType: 'application/jsonl' }]
+    },
+  },
+  {
+    uri: 'kaddo://open-questions',
+    name: 'Kaddo open questions',
+    description: 'Open questions from business/product/codebase/roadmap, classified for the readiness gate.',
+    mimeType: 'application/json',
+    read: (root) => {
+      if (!hasKnowledge(root)) {
+        return text('kaddo://open-questions', 'Knowledge repository not found. Run `kaddo bootstrap` first.', 'text/plain')
+      }
+      const r = buildOpenQuestionsReport(root)
+      return [{ uri: 'kaddo://open-questions', text: JSON.stringify({ questions: r.questions }, null, 2), mimeType: 'application/json' }]
+    },
+  },
+  {
+    uri: 'kaddo://roadmap-readiness',
+    name: 'Kaddo roadmap readiness',
+    description: 'Decision-oriented roadmap readiness summary (blocking/important/deferred + suggested assumptions).',
+    mimeType: 'application/json',
+    read: (root) => {
+      if (!hasKnowledge(root)) {
+        return text('kaddo://roadmap-readiness', 'Knowledge repository not found. Run `kaddo bootstrap` first.', 'text/plain')
+      }
+      return [{ uri: 'kaddo://roadmap-readiness', text: JSON.stringify(roadmapReadinessSummary(root), null, 2), mimeType: 'application/json' }]
     },
   },
 ]

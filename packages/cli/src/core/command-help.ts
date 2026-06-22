@@ -63,6 +63,10 @@ export const COMMAND_HELP: Record<string, CommandHelp> = {
     question: 'Are code and knowledge drifting apart over time?',
     next: 'Review open warnings; `kaddo guard --record` before commits',
   },
+  questions: {
+    question: 'Are there open questions to decide before the roadmap?',
+    next: 'Resolve, assume or defer blocking questions, then generate the roadmap',
+  },
 }
 
 /** Lines for the contextual footer, or [] if the command has no entry. */

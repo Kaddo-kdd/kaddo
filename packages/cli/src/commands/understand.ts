@@ -9,6 +9,7 @@ import { activeWorkItems, renderDeliveryLifecycle } from '../core/delivery.js'
 import { buildProjectExplanation } from '../core/project-explain.js'
 import { assessPhase } from '../core/delivery-phase.js'
 import { loadGraphHints } from '../core/graph-hints.js'
+import { buildOpenQuestionsReport } from '../core/open-questions.js'
 import { discoverInstalledSkills, skillsForAgents } from '../services/installed-skills.js'
 import { printCommandFooter } from '../core/command-help.js'
 
@@ -105,6 +106,15 @@ export function runUnderstand(): void {
     )
     console.log('  → Review graph hints before continuing with implementation.')
     console.log('  Suggested agent: graph-agent (see .kaddo/graph-hints.md)')
+  }
+
+  // 5b-questions. Readiness gate (VS-064): if blocking open questions exist, nudge to resolve them
+  // before generating a roadmap. Non-blocking — never stops the flow.
+  const oq = buildOpenQuestionsReport(dir)
+  if (oq.summary.blocking > 0) {
+    console.log('')
+    console.log(`Open questions: ${oq.summary.blocking} blocking decision(s) before the roadmap (roadmap readiness: ${oq.summary.roadmap_readiness}).`)
+    console.log('  → Run `kaddo questions` to review them, then resolve, assume or defer before `kaddo create --from roadmap`.')
   }
 
   // 5c. If a Work Item is active, show the official delivery lifecycle.

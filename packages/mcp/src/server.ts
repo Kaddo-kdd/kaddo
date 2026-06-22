@@ -29,6 +29,7 @@ import {
   generateImpactReport,
   generateSavingsReport,
   generateDriftReport,
+  generateQuestionsReport,
   type GenerateResult,
 } from './generate.js'
 import { assertKaddoProject, KaddoMcpError } from './project.js'
@@ -266,6 +267,22 @@ export function createServer(root: string): McpServer {
     async (args) =>
       generated(root, 'generate drift report', () =>
         generateDriftReport(root, { format: args.format, output: args.output })
+      )
+  )
+
+  server.registerTool(
+    'kaddo_generate_questions_report',
+    {
+      title: 'Generate open-questions report',
+      description: `Write the Open Questions readiness report under .kaddo/reports/ (classifies blocking/important/deferred). Does NOT resolve questions. ${DERIVED_NOTE}`,
+      inputSchema: {
+        format: z.enum(['markdown', 'json']).optional(),
+        output: z.string().optional(),
+      },
+    },
+    async (args) =>
+      generated(root, 'generate open-questions report', () =>
+        generateQuestionsReport(root, { format: args.format, output: args.output })
       )
   )
 

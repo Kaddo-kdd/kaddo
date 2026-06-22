@@ -24,6 +24,8 @@ describe('MCP resources (VS-057 AC6/AC14)', () => {
         'kaddo://savings-report',
         'kaddo://drift-report',
         'kaddo://guard-history',
+        'kaddo://open-questions',
+        'kaddo://roadmap-readiness',
         'kaddo://roadmap',
         'kaddo://skills',
         'kaddo://understand',

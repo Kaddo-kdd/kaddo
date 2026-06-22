@@ -166,6 +166,7 @@ export default defineConfig({
             { label: 'Impact Report', translations: { es: 'Reporte de impacto' }, slug: 'impact-report' },
             { label: 'Savings Report', translations: { es: 'Reporte de ahorro' }, slug: 'savings-report' },
             { label: 'Drift Report', translations: { es: 'Reporte de drift' }, slug: 'drift-report' },
+            { label: 'Open Questions Gate', translations: { es: 'Preguntas abiertas' }, slug: 'open-questions' },
             { label: 'Standards, security & stack', translations: { es: 'Estándares, seguridad y stack' }, slug: 'modules/global-docs' },
             { label: 'Git strategy', translations: { es: 'Estrategia de Git' }, slug: 'modules/git-strategy' },
           ],
