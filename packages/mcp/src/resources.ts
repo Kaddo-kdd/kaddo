@@ -6,6 +6,7 @@
 import { listCapsules, listAgents } from './catalog.js'
 import { listSkills } from './skills.js'
 import { buildImpactReport, renderImpactMarkdown } from '../../cli/src/core/impact-report.js'
+import { buildSavingsReport, renderSavingsMarkdown } from '../../cli/src/core/savings.js'
 import { listWorkItems } from './workitems.js'
 import { hasKnowledge, readText } from './project.js'
 
@@ -185,6 +186,20 @@ export const RESOURCES: ResourceDescriptor[] = [
         return text('kaddo://impact-report', 'Knowledge repository not found. Run `kaddo bootstrap` first.', 'text/plain')
       }
       return [{ uri: 'kaddo://impact-report', text: renderImpactMarkdown(buildImpactReport(root, { scope: 'all', scopeSource: 'default' })), mimeType: 'text/markdown' }]
+    },
+  },
+  {
+    uri: 'kaddo://savings-report',
+    name: 'Kaddo savings report',
+    description: 'Estimated Savings Report — the last written report, or generated in memory (read-only).',
+    mimeType: 'text/markdown',
+    read: (root) => {
+      const saved = readText(root, '.kaddo/reports/savings-report.md')
+      if (saved) return [{ uri: 'kaddo://savings-report', text: saved, mimeType: 'text/markdown' }]
+      if (!hasKnowledge(root)) {
+        return text('kaddo://savings-report', 'Knowledge repository not found. Run `kaddo bootstrap` first.', 'text/plain')
+      }
+      return [{ uri: 'kaddo://savings-report', text: renderSavingsMarkdown(buildSavingsReport(root, { scope: 'all', scopeSource: 'default' })), mimeType: 'text/markdown' }]
     },
   },
 ]

@@ -66,6 +66,7 @@ A ready-to-copy example lives in [`examples/mcp/`](https://github.com/Kaddo-kdd/
 | `kaddo://skills` | `knowledge/skills/` | installed [skills](/skills/) (empty if none) |
 | `kaddo://skills/<id>` | `knowledge/skills/<id>/skill.md` | one reusable skill |
 | `kaddo://impact-report` | `.kaddo/reports/` (or in memory) | [Knowledge Impact Report](/impact-report/) |
+| `kaddo://savings-report` | `.kaddo/reports/` (or in memory) | [Estimated Savings Report](/savings-report/) |
 
 ## Tools (read-only)
 
@@ -92,6 +93,7 @@ LLM, no git) and **write only under `.kaddo/`**; they never modify `knowledge/`,
 | `kaddo_generate_graph` | `.kaddo/graph.json` + `.mmd` + `graph-hints.md` + `.json` | `kaddo graph export` |
 | `kaddo_generate_capsule_draft` | `.kaddo/exports/<project>.capsule.md` + `.json` | `kaddo capsule export` |
 | `kaddo_generate_impact_report` | `.kaddo/reports/impact-report.md` / `.json` | `kaddo report impact` |
+| `kaddo_generate_savings_report` | `.kaddo/reports/savings-report.md` / `.json` | `kaddo savings` |
 
 Each returns `{ status, files_written, summary, warnings, next_suggested_resources }`. Every write
 passes through a central allowlist (`assertMcpDerivedWritePath`); any path outside the derived

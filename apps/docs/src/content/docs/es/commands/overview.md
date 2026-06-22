@@ -100,6 +100,7 @@ Comandos de apoyo:
 | `kaddo capsule add <path>` | Importa una Knowledge Capsule externa como contexto |
 | `kaddo graph export` | Exporta el [grafo de conocimiento](/es/knowledge-graph-export/) + hints |
 | `kaddo report impact` | [Reporte de impacto](/es/impact-report/): salud, cobertura, trazabilidad, readiness |
+| `kaddo savings` | [Reporte de ahorro](/es/savings-report/): estimaciones de tiempo/valor basadas en evidencia |
 | `kaddo add <module>` | Instala un módulo opcional |
 
 Las [**habilidades**](/es/skills/) reutilizables estandarizan cómo los agentes hacen bien lo común

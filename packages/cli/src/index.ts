@@ -20,6 +20,7 @@ import { runBootstrap } from './commands/bootstrap.js'
 import { runCapsuleExport, runCapsuleAdd } from './commands/capsule.js'
 import { runGraphExport } from './commands/graph.js'
 import { runReportImpact } from './commands/report.js'
+import { runSavings, runSavingsInit } from './commands/savings.js'
 
 // Single source of truth for the version: read it from package.json at runtime so the CLI
 // `--version` can never drift from the published package version. `../package.json` resolves
@@ -118,6 +119,34 @@ program
   .option('--output <path>', 'Write the report to a file')
   .action((opts: { json?: boolean; output?: string; scope?: string }) => {
     runReportImpact(opts)
+  })
+
+reportCmd
+  .command('savings')
+  .description('Estimated Savings Report: evidence-based time/effort/value estimates (deterministic, no LLM)')
+  .option('--json', 'Output JSON instead of Markdown')
+  .option('--scope <scope>', 'Scope: all (default) or active')
+  .option('--output <path>', 'Write the report to a file (e.g. .kaddo/reports/savings-report.md)')
+  .action((opts: { json?: boolean; output?: string; scope?: string }) => {
+    runSavings(opts)
+  })
+
+const savingsCmd = program
+  .command('savings')
+  .description('Estimated Savings Report from impact evidence + configurable assumptions')
+  .option('--json', 'Output JSON instead of Markdown')
+  .option('--scope <scope>', 'Scope: all (default) or active')
+  .option('--output <path>', 'Write the report to a file')
+  .action((opts: { json?: boolean; output?: string; scope?: string }) => {
+    runSavings(opts)
+  })
+
+savingsCmd
+  .command('init')
+  .description('Create an editable `.kaddo/savings.yml` with savings assumptions')
+  .option('--force', 'Overwrite an existing .kaddo/savings.yml')
+  .action((opts: { force?: boolean }) => {
+    runSavingsInit(opts)
   })
 
 program

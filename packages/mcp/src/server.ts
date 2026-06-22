@@ -27,6 +27,7 @@ import {
   generateGraph,
   generateCapsuleDraft,
   generateImpactReport,
+  generateSavingsReport,
   type GenerateResult,
 } from './generate.js'
 import { assertKaddoProject, KaddoMcpError } from './project.js'
@@ -231,6 +232,23 @@ export function createServer(root: string): McpServer {
     async (args) =>
       generated(root, 'generate impact report', () =>
         generateImpactReport(root, { format: args.format, scope: args.scope, output: args.output })
+      )
+  )
+
+  server.registerTool(
+    'kaddo_generate_savings_report',
+    {
+      title: 'Generate savings report',
+      description: `Write the Estimated Savings Report under .kaddo/reports/. format: markdown (default) or json; scope: active or all (default all). Evidence-based estimates, not exact ROI. ${DERIVED_NOTE}`,
+      inputSchema: {
+        format: z.enum(['markdown', 'json']).optional(),
+        scope: z.enum(['active', 'all']).optional(),
+        output: z.string().optional(),
+      },
+    },
+    async (args) =>
+      generated(root, 'generate savings report', () =>
+        generateSavingsReport(root, { format: args.format, scope: args.scope, output: args.output })
       )
   )
 

@@ -24,6 +24,7 @@ import {
 } from '../../cli/src/core/graph-hints.js'
 import { buildCapsule, renderCapsuleMarkdown, serializeCapsuleJson } from '../../cli/src/core/capsule.js'
 import { buildImpactReport, renderImpactMarkdown, serializeImpactJson } from '../../cli/src/core/impact-report.js'
+import { buildSavingsReport, renderSavingsMarkdown, serializeSavingsJson } from '../../cli/src/core/savings.js'
 import { writeDerived, hasKnowledge, KaddoMcpError } from './project.js'
 
 export type GenerateResult = {
@@ -143,6 +144,27 @@ export function generateImpactReport(
     summary: `Impact report generated (${format}, ${report.scope} scope).`,
     warnings: report.score === null ? ['Impact score not available — add Work Items to compute it.'] : [],
     next_suggested_resources: ['kaddo://impact-report'],
+  }
+}
+
+/** kaddo_generate_savings_report — write the estimated savings report under .kaddo/reports/ (VS-062). */
+export function generateSavingsReport(
+  root: string,
+  opts: { format?: 'markdown' | 'json'; scope?: 'active' | 'all'; output?: string } = {}
+): GenerateResult {
+  requireConfig(root)
+  requireKnowledge(root)
+  const format = opts.format ?? 'markdown'
+  const report = buildSavingsReport(root, { scope: opts.scope ?? 'all', scopeSource: opts.scope ? 'explicit' : 'default' })
+  const content = format === 'json' ? serializeSavingsJson(report) : renderSavingsMarkdown(report)
+  const out = opts.output ?? `.kaddo/reports/savings-report.${format === 'json' ? 'json' : 'md'}`
+  writeDerived(root, out, content) // allowlist enforces .kaddo/reports/
+  return {
+    status: 'ok',
+    files_written: [out.replace(/\\/g, '/')],
+    summary: `Savings report generated (${format}, ${report.scope} scope, ~${report.total.estimated_hours_saved}h).`,
+    warnings: report.assumptions_source === 'default' ? ['Using default assumptions — run `kaddo savings init` to calibrate.'] : [],
+    next_suggested_resources: ['kaddo://savings-report'],
   }
 }
 

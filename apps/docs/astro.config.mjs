@@ -164,6 +164,7 @@ export default defineConfig({
             { label: 'Knowledge Graph Export', translations: { es: 'Exportar el grafo de conocimiento' }, slug: 'knowledge-graph-export' },
             { label: 'MCP Server', translations: { es: 'Servidor MCP' }, slug: 'mcp-server' },
             { label: 'Impact Report', translations: { es: 'Reporte de impacto' }, slug: 'impact-report' },
+            { label: 'Savings Report', translations: { es: 'Reporte de ahorro' }, slug: 'savings-report' },
             { label: 'Standards, security & stack', translations: { es: 'Estándares, seguridad y stack' }, slug: 'modules/global-docs' },
             { label: 'Git strategy', translations: { es: 'Estrategia de Git' }, slug: 'modules/git-strategy' },
           ],

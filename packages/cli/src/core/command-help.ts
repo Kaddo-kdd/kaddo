@@ -55,6 +55,10 @@ export const COMMAND_HELP: Record<string, CommandHelp> = {
     question: 'What impact is Kaddo having on this project?',
     next: 'Act on the Suggested Actions section',
   },
+  savings: {
+    question: 'How much time/value might Kaddo be saving (estimate)?',
+    next: 'Run `kaddo savings init` to calibrate assumptions',
+  },
 }
 
 /** Lines for the contextual footer, or [] if the command has no entry. */
