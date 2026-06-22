@@ -39,12 +39,23 @@ describe('kaddo report impact command (VS-061)', () => {
     expect(fs.existsSync(path.join(tmp, '.kaddo/reports'))).toBe(false)
   })
 
-  it('AC13: --json prints JSON', () => {
+  it('AC13/AC3/AC16: --json prints JSON with default scope all', () => {
     setup()
     runReportImpact({ json: true })
     const parsed = JSON.parse(output())
     expect(parsed.project).toBe('todoApp')
+    expect(parsed.scope).toBe('all')
+    expect(parsed.default_scope).toBe('all')
+    expect(parsed.scope_source).toBe('default')
     expect(parsed).toHaveProperty('impact_signals')
+  })
+
+  it('VS-061.2 AC4: --scope active is honored and marked explicit', () => {
+    setup()
+    runReportImpact({ json: true, scope: 'active' })
+    const parsed = JSON.parse(output())
+    expect(parsed.scope).toBe('active')
+    expect(parsed.scope_source).toBe('explicit')
   })
 
   it('AC15/AC31: --output writes a Markdown file', () => {

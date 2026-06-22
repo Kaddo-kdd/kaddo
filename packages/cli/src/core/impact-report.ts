@@ -53,6 +53,9 @@ export type ImpactReport = {
   generated_at: string
   project: string
   scope: string
+  /** Impact reports default to `all` to measure accumulated knowledge impact (VS-061.2). */
+  default_scope: 'all'
+  scope_source: 'default' | 'explicit'
   executive_summary: string[]
   knowledge_health: Record<string, string>
   knowledge_coverage: { label: string; have: number; total: number }[]
@@ -120,9 +123,19 @@ function hasSection(body: string, re: RegExp): boolean {
   return body.split(/\r?\n/).some((l) => /^#{1,6}\s+/.test(l) && re.test(l))
 }
 
-/** Build the deterministic impact report. When `scope` is given, the graph section is computed
- *  fresh at that scope; otherwise it reflects the last exported graph (if any). */
-export function buildImpactReport(dir: string, opts: { scope?: GraphScope } = {}, now: Date = new Date()): ImpactReport {
+/**
+ * Build the deterministic impact report. The graph section is always computed FRESH in memory at the
+ * resolved scope (default `all`, to measure accumulated knowledge impact — VS-061.2), so the report
+ * never depends on whatever scope `graph.json` was last exported with. Pass `scope` to override and
+ * `scopeSource: 'explicit'` when the user asked for it.
+ */
+export function buildImpactReport(
+  dir: string,
+  opts: { scope?: GraphScope; scopeSource?: 'default' | 'explicit' } = {},
+  now: Date = new Date()
+): ImpactReport {
+  const resolvedScope: GraphScope = opts.scope ?? 'all'
+  const scopeSource: 'default' | 'explicit' = opts.scopeSource ?? (opts.scope ? 'explicit' : 'default')
   const exp = buildProjectExplanation(dir)
   const wis = discoverWorkItems(dir)
   const total = wis.length
@@ -203,22 +216,17 @@ export function buildImpactReport(dir: string, opts: { scope?: GraphScope } = {}
   }
   const ownershipOverlaps = gaps.ownership_overlaps.length
 
-  // --- Graph section (fresh at requested scope, or last exported) ---
+  // --- Graph section: always computed fresh at the resolved scope (VS-061.2), so the impact
+  //     report never inherits an empty `active` graph.json from a previous export. ---
   type G = { available: boolean; scope: string; scopeReason: string; nodes: number; edges: number; quality: string; hints: number; generatedAt: string }
   let g: G
-  if (opts.scope) {
-    const config = loadConfig(dir)
-    if (config) {
-      const graph = buildGraph(dir, config, { scope: opts.scope }, now)
-      const hints = buildGraphHints(dir, graph, now)
-      g = { available: true, scope: graph.scope, scopeReason: graph.scope_reason, nodes: graph.nodes.length, edges: graph.edges.length, quality: hints.quality, hints: hints.summary.hints, generatedAt: graph.generated_at }
-    } else {
-      g = { available: false, scope: opts.scope, scopeReason: '', nodes: 0, edges: 0, quality: 'unknown', hints: 0, generatedAt: '' }
-    }
-  } else if (exp.graph) {
-    g = { available: true, scope: exp.graph.scope, scopeReason: exp.graph.scopeReason, nodes: exp.graph.nodes, edges: exp.graph.edges, quality: exp.graphHints?.quality ?? 'unknown', hints: exp.graphHints?.totalHints ?? 0, generatedAt: exp.graph.generatedAt }
+  const config = loadConfig(dir)
+  if (config) {
+    const graph = buildGraph(dir, config, { scope: resolvedScope }, now)
+    const hints = buildGraphHints(dir, graph, now)
+    g = { available: true, scope: graph.scope, scopeReason: graph.scope_reason, nodes: graph.nodes.length, edges: graph.edges.length, quality: hints.quality, hints: hints.summary.hints, generatedAt: graph.generated_at }
   } else {
-    g = { available: false, scope: 'n/a', scopeReason: '', nodes: 0, edges: 0, quality: 'unknown', hints: 0, generatedAt: '' }
+    g = { available: false, scope: resolvedScope, scopeReason: '', nodes: 0, edges: 0, quality: 'unknown', hints: 0, generatedAt: '' }
   }
 
   const layerStatus = (name: string) => exp.layers.find((l) => l.layer === name)?.status ?? 'Missing'
@@ -319,7 +327,7 @@ export function buildImpactReport(dir: string, opts: { scope?: GraphScope } = {}
   }
   const actions: string[] = []
   if (!g.available) actions.push('Run `kaddo graph export --scope all` to inspect full traceability.')
-  else if (g.scope === 'active' && g.quality === 'empty') actions.push('Run `kaddo graph export --scope all` to include completed Work Items.')
+  else if (g.scope === 'active' && g.quality === 'empty') actions.push('Run `kaddo impact --scope all` to measure accumulated knowledge impact.')
   if (exp.roadmap.remaining > 0) actions.push(`Materialize the ${exp.roadmap.remaining} remaining roadmap candidate(s) with \`kaddo create --from roadmap\`.`)
   for (const a of [
     groupedAction(gaps.missing_code_ownership, 'Add `code:` ownership to'),
@@ -347,6 +355,8 @@ export function buildImpactReport(dir: string, opts: { scope?: GraphScope } = {}
     generated_at: now.toISOString(),
     project: exp.project.name,
     scope: g.scope,
+    default_scope: 'all',
+    scope_source: scopeSource,
     executive_summary: summary,
     knowledge_health,
     knowledge_coverage,
@@ -406,6 +416,11 @@ export function renderImpactMarkdown(r: ImpactReport): string {
   L.push(`Scope: ${r.scope}`)
   if (r.score !== null) L.push(`Knowledge Impact Score: ${r.score}/100`)
   else L.push('Knowledge Impact Score: not available')
+  if (r.scope_source === 'default') {
+    L.push('Scope note: Impact reports use `all` by default to measure accumulated knowledge impact.')
+  } else if (r.scope === 'active' && r.graph_quality.available === false) {
+    L.push('Tip: Run `kaddo impact --scope all` to inspect accumulated knowledge impact.')
+  }
   L.push('')
 
   L.push('## Executive Summary', '')
@@ -470,6 +485,9 @@ export function renderImpactMarkdown(r: ImpactReport): string {
     L.push(`- Hints: ${gq.hints}`)
     if (gq.reason) L.push(`- Reason: ${gq.reason}`)
     if (gq.last_exported) L.push(`- Last exported: ${gq.last_exported}`)
+    if (gq.scope === 'active' && gq.quality === 'empty') {
+      L.push('- Tip: Run `kaddo impact --scope all` to inspect accumulated knowledge impact.')
+    }
   } else {
     L.push('- Graph data not available.')
     L.push(`- Tip: ${r.graph_quality.suggestion}`)

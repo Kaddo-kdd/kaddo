@@ -9,9 +9,10 @@ complete is the knowledge? how connected is the roadmap to the code? how ready i
 understood by humans and AI? how active is Guard as a drift-prevention mechanism?
 
 ```bash
-kaddo report impact                  # Markdown to stdout (writes nothing)
+kaddo report impact                  # Markdown to stdout (writes nothing) — scope: all
 kaddo impact                         # alias
 kaddo report impact --json           # structured JSON
+kaddo report impact --scope active   # measure only the active context
 kaddo report impact --output .kaddo/reports/impact-report.md
 kaddo report impact --json --output .kaddo/reports/impact-report.json
 ```
@@ -19,6 +20,21 @@ kaddo report impact --json --output .kaddo/reports/impact-report.json
 > **Evidence first, estimation later.** This report shows evidence — it does **not** compute money
 > or ROI. Turning these metrics into time/effort/savings estimates is a later step
 > (VS-062 — Estimated Savings Model).
+
+## Scope: `all` by default
+
+`kaddo graph export` defaults to `active` (current delivery context); **`kaddo impact` defaults to
+`all`** (accumulated knowledge impact) — they have different purposes. The report **builds the graph
+fresh in memory** at the resolved scope, so it never inherits an empty `active` graph.json from a
+previous export: a well-documented project whose Work Items are all completed still scores fairly.
+
+- `kaddo impact` / `kaddo impact --scope all` → `all` (draft/ready/in-progress/blocked/completed;
+  archived excluded).
+- `kaddo impact --scope active` → only the active context. If there are no active Work Items it
+  reports an empty active graph and a tip: *Run `kaddo impact --scope all` to inspect accumulated
+  knowledge impact.*
+
+The JSON carries `scope`, `default_scope` (`all`) and `scope_source` (`default` | `explicit`).
 
 ## What it measures
 
@@ -86,10 +102,10 @@ graph quality is not `empty`, skills are installed and delivery is traceable.
 
 ## Graceful degradation
 
-The report never fails on missing derived files. If the graph hasn't been exported, the Graph
-Quality section reads *"Graph data not available"* and a Suggested Action points to
-`kaddo graph export --scope all`. If a project's Work Items are all completed, the active graph is
-empty by design — the report says so and suggests `--scope all`
+The report never fails on missing derived files — it builds the graph in memory, so it works even
+if `kaddo graph export` was never run. Under the default `all` scope a project whose Work Items are
+all completed still shows a full, healthy graph. Only `--scope active` shows an empty active graph
+when there is no active work — and then it tips you toward `kaddo impact --scope all`
 (see [Graph scopes](/knowledge-graph-export/#graph-scopes)).
 
 ## Persistence

@@ -133,7 +133,7 @@ export function generateImpactReport(
   requireConfig(root)
   requireKnowledge(root)
   const format = opts.format ?? 'markdown'
-  const report = buildImpactReport(root, { scope: opts.scope ?? 'all' })
+  const report = buildImpactReport(root, { scope: opts.scope ?? 'all', scopeSource: opts.scope ? 'explicit' : 'default' })
   const content = format === 'json' ? serializeImpactJson(report) : renderImpactMarkdown(report)
   const out = opts.output ?? `.kaddo/reports/impact-report.${format === 'json' ? 'json' : 'md'}`
   writeDerived(root, out, content) // allowlist enforces .kaddo/reports/

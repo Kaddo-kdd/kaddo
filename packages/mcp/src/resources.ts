@@ -184,7 +184,7 @@ export const RESOURCES: ResourceDescriptor[] = [
       if (!hasKnowledge(root)) {
         return text('kaddo://impact-report', 'Knowledge repository not found. Run `kaddo bootstrap` first.', 'text/plain')
       }
-      return [{ uri: 'kaddo://impact-report', text: renderImpactMarkdown(buildImpactReport(root, { scope: 'all' })), mimeType: 'text/markdown' }]
+      return [{ uri: 'kaddo://impact-report', text: renderImpactMarkdown(buildImpactReport(root, { scope: 'all', scopeSource: 'default' })), mimeType: 'text/markdown' }]
     },
   },
 ]

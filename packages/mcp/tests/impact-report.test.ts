@@ -43,6 +43,19 @@ describe('MCP impact report (VS-061)', () => {
     expect(json).toHaveProperty('actionable_gaps.missing_initiative')
   })
 
+  it('VS-061.2 AC12/AC13/AC14: tool defaults to scope all and accepts active', () => {
+    project()
+    generateImpactReport(root, { format: 'json' }) // default
+    const def = JSON.parse(fs.readFileSync(path.join(root, '.kaddo/reports/impact-report.json'), 'utf-8'))
+    expect(def.scope).toBe('all')
+    expect(def.scope_source).toBe('default')
+
+    generateImpactReport(root, { format: 'json', scope: 'active' })
+    const act = JSON.parse(fs.readFileSync(path.join(root, '.kaddo/reports/impact-report.json'), 'utf-8'))
+    expect(act.scope).toBe('active')
+    expect(act.scope_source).toBe('explicit')
+  })
+
   it('AC25: the reports allowlist blocks writes outside .kaddo/reports/', () => {
     expect(assertMcpDerivedWritePath('.kaddo/reports/impact-report.md')).toBe('.kaddo/reports/impact-report.md')
     expect(() => assertMcpDerivedWritePath('knowledge/reports/x.md')).toThrow(KaddoMcpError)

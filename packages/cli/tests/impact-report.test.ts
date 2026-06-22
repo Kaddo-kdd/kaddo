@@ -63,15 +63,15 @@ describe('Knowledge Impact Report (VS-061)', () => {
     expect(md).toContain('Guard history: not available')
   })
 
-  it('AC18/AC19: degrades gracefully when the graph has not been exported', () => {
+  it('AC18 (VS-061.2): builds the graph in memory even when graph.json was never exported', () => {
     config()
     baseKnowledge()
-    const r = buildImpactReport(tmp) // no graph.json
-    expect(r.graph_quality.available).toBe(false)
+    const r = buildImpactReport(tmp) // no graph.json on disk
+    // The report no longer depends on a persisted graph — it computes it fresh at scope all.
+    expect(r.graph_quality.available).toBe(true)
+    if (r.graph_quality.available) expect(r.graph_quality.scope).toBe('all')
     const md = renderImpactMarkdown(r)
-    expect(md).toContain('Graph data not available.')
-    expect(md).toContain('kaddo graph export --scope all')
-    expect(r.suggested_actions.some((a) => a.includes('graph export'))).toBe(true)
+    expect(md).toContain('## Graph Quality')
   })
 
   it('AC28: active scope with no active Work Items reports empty graph quality', () => {
@@ -83,6 +83,30 @@ describe('Knowledge Impact Report (VS-061)', () => {
       expect(r.graph_quality.scope).toBe('active')
       expect(r.graph_quality.quality).toBe('empty')
     }
+  })
+
+  it('VS-061.2 AC1/AC8/AC16: default scope is all, even when graph.json was exported active', () => {
+    config()
+    baseKnowledge() // only a completed Work Item
+    exportGraph('active') // persist an EMPTY active graph.json
+    const r = buildImpactReport(tmp) // no scope → default all, built in memory
+    expect(r.scope).toBe('all')
+    expect(r.default_scope).toBe('all')
+    expect(r.scope_source).toBe('default')
+    expect(r.graph_quality.available).toBe(true)
+    if (r.graph_quality.available) {
+      expect(r.graph_quality.scope).toBe('all')
+      expect(r.graph_quality.quality).not.toBe('empty') // completed WI is included under `all`
+    }
+  })
+
+  it('VS-061.2 AC4/AC9/AC10: --scope active is explicit and suggests `kaddo impact --scope all`', () => {
+    config()
+    baseKnowledge()
+    const r = buildImpactReport(tmp, { scope: 'active' })
+    expect(r.scope).toBe('active')
+    expect(r.scope_source).toBe('explicit')
+    expect(r.suggested_actions.some((a) => a.includes('kaddo impact --scope all'))).toBe(true)
   })
 
   it('AC14/AC30: stable JSON shape', () => {

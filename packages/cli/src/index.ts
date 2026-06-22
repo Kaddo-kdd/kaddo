@@ -103,8 +103,9 @@ reportCmd
   .command('impact')
   .description('Knowledge Impact Report: knowledge health, coverage, traceability, readiness (deterministic, no LLM)')
   .option('--json', 'Output JSON instead of Markdown')
+  .option('--scope <scope>', 'Scope: all (default — accumulated impact) or active')
   .option('--output <path>', 'Write the report to a file (e.g. .kaddo/reports/impact-report.md)')
-  .action((opts: { json?: boolean; output?: string }) => {
+  .action((opts: { json?: boolean; output?: string; scope?: string }) => {
     runReportImpact(opts)
   })
 
@@ -113,8 +114,9 @@ program
   .command('impact')
   .description('Alias for `kaddo report impact`')
   .option('--json', 'Output JSON instead of Markdown')
+  .option('--scope <scope>', 'Scope: all (default — accumulated impact) or active')
   .option('--output <path>', 'Write the report to a file')
-  .action((opts: { json?: boolean; output?: string }) => {
+  .action((opts: { json?: boolean; output?: string; scope?: string }) => {
     runReportImpact(opts)
   })
 

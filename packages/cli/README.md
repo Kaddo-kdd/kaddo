@@ -512,6 +512,7 @@ create --from roadmap → owners → guard → explain`.
 | v3.22.1 | Guard project-root path normalization: matches `code:` globs when the project is a subfolder of the Git root |
 | v3.23 | Knowledge Impact Report: `kaddo report impact` (Markdown/JSON, `--output`); evidence-first health/coverage/traceability/readiness/signals; MCP resource + tool |
 | v3.23.1 | Impact report Actionable Gaps: per-Work-Item missing source/initiative/ownership/level/acceptance/DoD/validation, broad globs, overlaps; Work-Item-specific Suggested Actions + Score Breakdown |
+| v3.23.2 | Impact report defaults to `all` scope (accumulated impact), graph built in memory; `--scope active`; `scope_source`/`default_scope` in JSON |
 
 **Optional modules (installed with `kaddo add`):**
 

@@ -10,9 +10,10 @@ listo está el proyecto para ser entendido por humanos e IA? ¿qué tan activo e
 mecanismo de prevención de drift?
 
 ```bash
-kaddo report impact                  # Markdown a stdout (no escribe nada)
+kaddo report impact                  # Markdown a stdout (no escribe nada) — scope: all
 kaddo impact                         # alias
 kaddo report impact --json           # JSON estructurado
+kaddo report impact --scope active   # medir solo el contexto activo
 kaddo report impact --output .kaddo/reports/impact-report.md
 kaddo report impact --json --output .kaddo/reports/impact-report.json
 ```
@@ -20,6 +21,22 @@ kaddo report impact --json --output .kaddo/reports/impact-report.json
 > **Primero evidencia, estimación después.** Este reporte muestra evidencia — **no** calcula dinero
 > ni ROI. Convertir estas métricas en estimaciones de tiempo/esfuerzo/ahorro es un paso posterior
 > (VS-062 — Estimated Savings Model).
+
+## Scope: `all` por defecto
+
+`kaddo graph export` usa `active` por defecto (contexto de delivery actual); **`kaddo impact` usa
+`all`** (impacto acumulado del conocimiento) — tienen propósitos distintos. El reporte **construye el
+grafo en memoria** al scope resuelto, así que nunca hereda un graph.json `active` vacío de una
+exportación previa: un proyecto bien documentado cuyos Work Items están todos completados igual
+obtiene un score justo.
+
+- `kaddo impact` / `kaddo impact --scope all` → `all` (draft/ready/in-progress/blocked/completed;
+  archived excluido).
+- `kaddo impact --scope active` → solo el contexto activo. Si no hay Work Items activos reporta un
+  grafo activo vacío y un tip: *Run `kaddo impact --scope all` to inspect accumulated knowledge
+  impact.*
+
+El JSON incluye `scope`, `default_scope` (`all`) y `scope_source` (`default` | `explicit`).
 
 ## Qué mide
 
@@ -88,11 +105,11 @@ context pack, la calidad del grafo no es `empty`, hay skills instaladas y el del
 
 ## Degradación elegante
 
-El reporte nunca falla por archivos derivados faltantes. Si el grafo no se ha exportado, la sección
-Graph Quality muestra *"Graph data not available"* y una Suggested Action apunta a
-`kaddo graph export --scope all`. Si todos los Work Items de un proyecto están completados, el grafo
-activo está vacío por diseño — el reporte lo dice y sugiere `--scope all`
-(ver [Alcances del grafo](/es/knowledge-graph-export/#alcances-del-grafo)).
+El reporte nunca falla por archivos derivados faltantes — construye el grafo en memoria, así que
+funciona aunque nunca hayas corrido `kaddo graph export`. Bajo el scope `all` por defecto, un
+proyecto cuyos Work Items están todos completados igual muestra un grafo completo y saludable. Solo
+`--scope active` muestra un grafo activo vacío cuando no hay trabajo activo — y entonces te sugiere
+`kaddo impact --scope all` (ver [Alcances del grafo](/es/knowledge-graph-export/#alcances-del-grafo)).
 
 ## Persistencia
 
