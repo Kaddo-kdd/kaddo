@@ -101,6 +101,8 @@ Comandos de apoyo:
 | `kaddo graph export` | Exporta el [grafo de conocimiento](/es/knowledge-graph-export/) + hints |
 | `kaddo report impact` | [Reporte de impacto](/es/impact-report/): salud, cobertura, trazabilidad, readiness |
 | `kaddo savings` | [Reporte de ahorro](/es/savings-report/): estimaciones de tiempo/valor basadas en evidencia |
+| `kaddo guard --record` | Registra una ejecución de guard en `.kaddo/history/` para tendencias de drift |
+| `kaddo drift` | [Reporte de drift](/es/drift-report/): warnings detectados/resueltos con el tiempo |
 | `kaddo add <module>` | Instala un módulo opcional |
 
 Las [**habilidades**](/es/skills/) reutilizables estandarizan cómo los agentes hacen bien lo común

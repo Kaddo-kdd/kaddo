@@ -161,7 +161,8 @@ so the next step is always one glance away.
 
 Supporting commands: `kaddo status`, `kaddo learn`, `kaddo classify`, `kaddo history`,
 `kaddo module`, `kaddo modules map|list`, `kaddo capsule export|add`, `kaddo graph export`,
-`kaddo report impact`, `kaddo savings`, `kaddo ignore`, `kaddo add <module>`.
+`kaddo report impact`, `kaddo savings`, `kaddo guard --record`, `kaddo drift`, `kaddo ignore`,
+`kaddo add <module>`.
 
 ## Multirepo modules & global artifacts
 

@@ -52,6 +52,14 @@ exactamente los mismos artefactos. Los Work Items se descubren recursivamente en
 del lifecycle (`draft/`, `ready/`, `in-progress/`, …) y se reconocen por su front matter, no por su
 ruta ni su nombre de archivo.
 
+## Registrar historial (`--record`)
+
+Por defecto Guard no escribe nada. `kaddo guard --record` persiste la ejecución en
+`.kaddo/history/guard-runs.jsonl` (+ un resumen) para que [`kaddo drift`](/es/drift-report/) reporte
+tendencias de drift con el tiempo y alimente `kaddo impact` / `kaddo savings`. Registra solo rutas,
+ids de artefactos y warnings — nunca autores de git ni datos personales — y nunca bloquea, edita
+código/conocimiento ni ejecuta git.
+
 ## Alcance de ownership de Guard
 
 Guard matchea ownership desde Work Items **activos y completados** — el trabajo completado sigue

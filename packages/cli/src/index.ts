@@ -21,6 +21,7 @@ import { runCapsuleExport, runCapsuleAdd } from './commands/capsule.js'
 import { runGraphExport } from './commands/graph.js'
 import { runReportImpact } from './commands/report.js'
 import { runSavings, runSavingsInit } from './commands/savings.js'
+import { runDrift } from './commands/drift.js'
 
 // Single source of truth for the version: read it from package.json at runtime so the CLI
 // `--version` can never drift from the published package version. `../package.json` resolves
@@ -149,6 +150,24 @@ savingsCmd
     runSavingsInit(opts)
   })
 
+reportCmd
+  .command('drift')
+  .description('Drift Trend Report from recorded guard history (deterministic, no LLM)')
+  .option('--json', 'Output JSON instead of Markdown')
+  .option('--output <path>', 'Write the report to a file (e.g. .kaddo/reports/drift-report.md)')
+  .action((opts: { json?: boolean; output?: string }) => {
+    runDrift(opts)
+  })
+
+program
+  .command('drift')
+  .description('Drift Trend Report from recorded `kaddo guard --record` history')
+  .option('--json', 'Output JSON instead of Markdown')
+  .option('--output <path>', 'Write the report to a file')
+  .action((opts: { json?: boolean; output?: string }) => {
+    runDrift(opts)
+  })
+
 program
   .command('guard')
   .description('Check if modified code has related artifacts that were not updated')
@@ -158,7 +177,8 @@ program
   .option('--json', 'Output JSON (alias for --ci)')
   .option('--workspace', 'Also check local mapped module repos from .kaddo/modules.yml (opt-in)')
   .option('--include-archived', 'Include archived Work Items in ownership matching (excluded by default)')
-  .action(async (opts: { staged?: boolean; interactive?: boolean; ci?: boolean; json?: boolean; workspace?: boolean; includeArchived?: boolean }) => {
+  .option('--record', 'Record this run to .kaddo/history/ for drift trend reporting')
+  .action(async (opts: { staged?: boolean; interactive?: boolean; ci?: boolean; json?: boolean; workspace?: boolean; includeArchived?: boolean; record?: boolean }) => {
     await runGuard(opts)
   })
 

@@ -9,6 +9,8 @@ import { parse as parseYaml } from 'yaml'
 import { confirm, text, log } from '../utils/ui.js'
 import { resolvePlugins, runPlugins, type PluginSignal } from '../plugins/registry.js'
 import { loadOwners, resolveAffectedOwners, collectMatchedDomains } from '../services/owners.js'
+import { loadConfig as loadKaddoConfig } from '../core/config.js'
+import { recordGuardRun, type GuardWarning } from '../core/guard-history.js'
 
 const ARCH_DIR = 'knowledge'
 const CONFIG_PATH = '.kaddo/config.yml'
@@ -176,7 +178,7 @@ function printOwnershipScope(includeArchived: boolean): void {
   console.log('')
 }
 
-export async function runGuard(opts: { staged?: boolean; interactive?: boolean; ci?: boolean; json?: boolean; workspace?: boolean; includeArchived?: boolean } = {}): Promise<void> {
+export async function runGuard(opts: { staged?: boolean; interactive?: boolean; ci?: boolean; json?: boolean; workspace?: boolean; includeArchived?: boolean; record?: boolean } = {}): Promise<void> {
   const dir = cwd()
   const interactive = opts.interactive !== false && !opts.ci && !opts.json
   const jsonMode = opts.json || opts.ci
@@ -271,6 +273,51 @@ export async function runGuard(opts: { staged?: boolean; interactive?: boolean; 
   const activeMatches = fyiMatches.filter(
     (m) => !isIgnored(ignores, m.artifact.id || m.artifact.title)
   )
+
+  // Optional deterministic history (VS-063): `--record` persists this run to .kaddo/history/.
+  // Never blocks, never touches src/ or knowledge/, never runs git.
+  if (opts.record) {
+    const idOf = (m: ArtifactMatch) => m.artifact.id || m.artifact.title
+    const matchedArtifacts = [...new Set(result.matches.map(idOf))]
+    const updatedArtifacts = [...new Set(result.matches.filter((m) => m.artifactWasModified).map(idOf))]
+    // One warning per touched code path that matches artifacts not all updated.
+    const byPath = new Map<string, { related: Set<string>; updated: Set<string> }>()
+    for (const m of result.matches) {
+      for (const f of m.matchedFiles) {
+        const e = byPath.get(f) ?? { related: new Set(), updated: new Set() }
+        e.related.add(idOf(m))
+        if (m.artifactWasModified) e.updated.add(idOf(m))
+        byPath.set(f, e)
+      }
+    }
+    const warnings: GuardWarning[] = []
+    for (const [code_path, e] of byPath) {
+      if ([...e.related].some((a) => !e.updated.has(a))) {
+        warnings.push({
+          type: 'possible-knowledge-drift',
+          code_path,
+          related_artifacts: [...e.related],
+          updated_artifacts: [...e.updated],
+          status: 'open',
+        })
+      }
+    }
+    const project = loadKaddoConfig(dir)?.project.name ?? 'unknown'
+    const rec = recordGuardRun(dir, {
+      project,
+      scope: includeArchived ? 'active-completed-archived' : 'active-and-completed',
+      touched_files: touchedFiles,
+      matched_artifacts: matchedArtifacts,
+      updated_artifacts: updatedArtifacts,
+      warnings,
+    })
+    if (!jsonMode) {
+      console.log('')
+      console.log('Guard run recorded:')
+      console.log(`- ${rec.runsPath}`)
+      console.log(`- ${rec.summaryPath}`)
+    }
+  }
 
   // JSON / CI mode — emit clean JSON early (no human headers), always when requested.
   if (jsonMode) {

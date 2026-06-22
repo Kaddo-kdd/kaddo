@@ -6,6 +6,7 @@ import { loadConfig } from '../src/core/config.js'
 import { buildGraph, serializeGraphJson } from '../src/core/graph.js'
 import { buildGraphHints, serializeGraphHintsJson } from '../src/core/graph-hints.js'
 import { buildImpactReport, renderImpactMarkdown, serializeImpactJson } from '../src/core/impact-report.js'
+import { recordGuardRun } from '../src/core/guard-history.js'
 
 let tmp: string
 function write(rel: string, content: string) {
@@ -167,6 +168,22 @@ describe('Knowledge Impact Report (VS-061)', () => {
     expect(md).toContain('No actionable knowledge gaps detected.')
     expect(md).toContain('## Score Breakdown')
     expect(r.score_breakdown).not.toBeNull()
+  })
+
+  it('VS-063 AC24/AC25/AC45: guard_activity reflects recorded history', () => {
+    config()
+    baseKnowledge()
+    // No history yet → not available.
+    expect(buildImpactReport(tmp).guard_activity.available).toBe(false)
+    recordGuardRun(tmp, {
+      project: 'todoApp', scope: 's', touched_files: ['src/cli/program.ts'],
+      matched_artifacts: ['WI-1'], updated_artifacts: [],
+      warnings: [{ type: 'possible-knowledge-drift', code_path: 'src/cli/program.ts', related_artifacts: ['WI-1'], updated_artifacts: [], status: 'open' }],
+    })
+    const ga = buildImpactReport(tmp).guard_activity
+    expect(ga.available).toBe(true)
+    if (ga.available) expect(ga.detected).toBe(1)
+    expect(renderImpactMarkdown(buildImpactReport(tmp))).toContain('Guard history: available')
   })
 
   it('coverage and ownership reflect the Work Item front matter + body', () => {

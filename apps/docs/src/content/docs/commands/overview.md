@@ -101,6 +101,8 @@ Supporting commands:
 | `kaddo graph export` | Export the [knowledge graph](/knowledge-graph-export/) + hints |
 | `kaddo report impact` | [Knowledge Impact Report](/impact-report/): health, coverage, traceability, readiness |
 | `kaddo savings` | [Estimated Savings Report](/savings-report/): evidence-based time/value estimates |
+| `kaddo guard --record` | Record a guard run to `.kaddo/history/` for drift trends |
+| `kaddo drift` | [Drift Trend Report](/drift-report/): warnings detected/resolved over time |
 | `kaddo add <module>` | Install an optional module |
 
 Reusable [**skills**](/skills/) standardize how agents do common things well — install them with

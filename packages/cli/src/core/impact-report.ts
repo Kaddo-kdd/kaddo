@@ -13,6 +13,7 @@ import { discoverWorkItems } from '../services/knowledge-artifacts.js'
 import { discoverInstalledSkills } from '../services/installed-skills.js'
 import { buildGraph, type GraphScope } from './graph.js'
 import { buildGraphHints } from './graph-hints.js'
+import { buildGuardHistory } from './guard-history.js'
 
 export type Level = 'Low' | 'Medium' | 'High' | 'Very High'
 
@@ -90,7 +91,9 @@ export type ImpactReport = {
   graph_quality:
     | { available: true; scope: string; quality: string; nodes: number; edges: number; hints: number; reason: string; last_exported: string }
     | { available: false; suggestion: string }
-  guard_activity: { available: false; note: string }
+  guard_activity:
+    | { available: false; note: string }
+    | { available: true; runs_recorded: number; detected: number; open: number; resolved: number; resolution_rate: number }
   impact_signals: {
     ambiguity_reduction: Level
     drift_prevention: 'Active' | 'Limited'
@@ -391,10 +394,12 @@ export function buildImpactReport(
     graph_quality: g.available
       ? { available: true, scope: g.scope, quality: g.quality, nodes: g.nodes, edges: g.edges, hints: g.hints, reason: g.scopeReason, last_exported: g.generatedAt }
       : { available: false, suggestion: 'Run `kaddo graph export --scope all`.' },
-    guard_activity: {
-      available: false,
-      note: 'Guard history is not persisted. Run `kaddo guard` to check drift; future versions may store runs for trend analysis.',
-    },
+    guard_activity: (() => {
+      const gh = buildGuardHistory(dir)
+      return gh.available
+        ? { available: true as const, runs_recorded: gh.total_runs, detected: gh.detected, open: gh.open, resolved: gh.resolved, resolution_rate: gh.resolution_rate }
+        : { available: false as const, note: 'Guard history is not persisted. Run `kaddo guard --record` to record runs for trend analysis.' }
+    })(),
     impact_signals,
     actionable_gaps: gaps,
     score,
@@ -495,8 +500,18 @@ export function renderImpactMarkdown(r: ImpactReport): string {
   L.push('')
 
   L.push('## Guard Activity', '')
-  L.push('- Guard history: not available')
-  L.push(`- Note: ${r.guard_activity.note}`)
+  if (r.guard_activity.available) {
+    const ga = r.guard_activity
+    L.push('- Guard history: available')
+    L.push(`- Guard runs recorded: ${ga.runs_recorded}`)
+    L.push(`- Drift warnings detected: ${ga.detected}`)
+    L.push(`- Open warnings: ${ga.open}`)
+    L.push(`- Resolved warnings: ${ga.resolved}`)
+    L.push(`- Resolution rate: ${ga.resolution_rate}%`)
+  } else {
+    L.push('- Guard history: not available')
+    L.push(`- Note: ${r.guard_activity.note}`)
+  }
   L.push('')
 
   L.push('## Impact Signals', '')

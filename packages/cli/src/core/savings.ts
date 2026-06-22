@@ -8,6 +8,7 @@
 import { readFile, exists, join } from '../utils/fs.js'
 import { parse as parseYaml } from 'yaml'
 import { buildImpactReport } from './impact-report.js'
+import { buildGuardHistory } from './guard-history.js'
 import type { GraphScope } from './graph.js'
 
 export type SavingsAssumptions = {
@@ -97,7 +98,9 @@ export function savingsTemplate(): string {
 }
 
 export type SavingsLine = { hours: number; formula: string }
-export type DriftSavings = { available: false; hours: 0; reason: string }
+export type DriftSavings =
+  | { available: false; hours: 0; reason: string }
+  | { available: true; hours: number; formula: string }
 
 export type SavingsReport = {
   generated_at: string
@@ -116,7 +119,7 @@ export type SavingsReport = {
     graph_nodes: number | null
     graph_edges: number | null
     context_readiness: string
-    guard_history_available: false
+    guard_history_available: boolean
   }
   estimated_savings: {
     context_preparation: SavingsLine
@@ -167,20 +170,41 @@ export function buildSavingsReport(
   const graphMult = GRAPH_MULT[graphQuality] ?? 0
   const archH = round2(a.architecture_discovery_hours_saved_when_graph_good * graphMult)
 
-  const totalHours = round2(ctxPrepH + reviewH + clarH + onboardH + archH)
+  // Drift prevention (VS-063): only when guard history exists and has resolved warnings.
+  const guard = buildGuardHistory(dir)
+  const driftSavings: DriftSavings =
+    guard.available && guard.resolved > 0
+      ? {
+          available: true,
+          hours: round2(guard.resolved * a.rework_hours_avoided_per_resolved_drift),
+          formula: `${guard.resolved} resolved drift warnings × ${a.rework_hours_avoided_per_resolved_drift} h`,
+        }
+      : { available: false, hours: 0, reason: 'Guard history is not persisted yet.' }
+
+  const totalHours = round2(ctxPrepH + reviewH + clarH + onboardH + archH + driftSavings.hours)
   const totalValue = Math.round(totalHours * a.hourly_cost)
 
-  // Confidence — capped at Medium while Guard history is not persisted (no real drift evidence).
+  // Confidence — High needs guard history with resolved drift + custom assumptions; else Medium/Low.
   const reasons: string[] = []
   let level: 'Low' | 'Medium' | 'High'
   if (impact.score === null || impact.score < 60 || graphQuality === 'empty') {
     level = 'Low'
     reasons.push('Impact score is low or the knowledge graph is empty.')
+  } else if (
+    impact.score >= 85 &&
+    graphQuality === 'good' &&
+    source === 'file' &&
+    guard.available &&
+    guard.resolved > 0
+  ) {
+    level = 'High'
+    reasons.push('Strong evidence, custom assumptions and recorded drift resolution.')
   } else {
     level = 'Medium'
     reasons.push('Strong knowledge and graph evidence.')
   }
-  reasons.push('Guard history is not persisted yet — avoided rework is not estimated.')
+  if (!guard.available) reasons.push('Guard history is not persisted yet — avoided rework is not estimated.')
+  else reasons.push(`Guard history available (${guard.resolved} resolved drift warning(s)).`)
   reasons.push(source === 'file' ? 'Assumptions come from `.kaddo/savings.yml`.' : 'Savings assumptions are defaults and should be calibrated.')
 
   const actions: string[] = []
@@ -215,7 +239,7 @@ export function buildSavingsReport(
       graph_nodes: impact.graph_quality.available ? impact.graph_quality.nodes : null,
       graph_edges: impact.graph_quality.available ? impact.graph_quality.edges : null,
       context_readiness: readiness,
-      guard_history_available: false,
+      guard_history_available: guard.available,
     },
     estimated_savings: {
       context_preparation: { hours: ctxPrepH, formula: `${completed} Work Items × ${a.context_preparation_minutes_saved_per_work_item} min` },
@@ -223,7 +247,7 @@ export function buildSavingsReport(
       clarification_reduction: { hours: clarH, formula: `${wiWithAcceptance} Work Items with Acceptance Criteria × ${a.clarification_minutes_saved_per_ready_work_item} min` },
       onboarding: { hours: onboardH, formula: `${a.expected_new_contributors_per_month} contributor × ${a.onboarding_hours_saved_per_new_contributor} h × ${readinessMult.toFixed(2)} readiness multiplier` },
       architecture_discovery: { hours: archH, formula: `${a.architecture_discovery_hours_saved_when_graph_good} h × ${graphMult.toFixed(2)} graph multiplier` },
-      drift_prevention: { available: false, hours: 0, reason: 'Guard history is not persisted yet.' },
+      drift_prevention: driftSavings,
     },
     total: { estimated_hours_saved: totalHours, estimated_value: totalValue, currency: a.currency },
     confidence: { level, reasons },
@@ -287,8 +311,13 @@ export function renderSavingsMarkdown(r: SavingsReport): string {
   line('Onboarding', s.onboarding)
   line('Architecture Discovery', s.architecture_discovery)
   L.push('### Drift Prevention', '')
-  L.push('- Not available yet.')
-  L.push(`- Reason: ${s.drift_prevention.reason}`, '')
+  if (s.drift_prevention.available) {
+    L.push(`- Formula: ${s.drift_prevention.formula}`)
+    L.push(`- Estimated: ${s.drift_prevention.hours} h`, '')
+  } else {
+    L.push('- Not available yet.')
+    L.push(`- Reason: ${s.drift_prevention.reason}`, '')
+  }
 
   L.push('## Total', '')
   L.push(`- Estimated time saved: ${r.total.estimated_hours_saved} h`)

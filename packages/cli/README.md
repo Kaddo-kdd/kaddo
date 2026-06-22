@@ -514,6 +514,7 @@ create --from roadmap → owners → guard → explain`.
 | v3.23.1 | Impact report Actionable Gaps: per-Work-Item missing source/initiative/ownership/level/acceptance/DoD/validation, broad globs, overlaps; Work-Item-specific Suggested Actions + Score Breakdown |
 | v3.23.2 | Impact report defaults to `all` scope (accumulated impact), graph built in memory; `--scope active`; `scope_source`/`default_scope` in JSON |
 | v3.24 | Estimated Savings Model: `kaddo savings` (+ `savings init`, `.kaddo/savings.yml`); evidence-based time/value estimates, confidence; MCP resource + tool |
+| v3.25 | Guard history & drift trend: `kaddo guard --record`, `kaddo drift`; feeds impact Guard Activity + savings Drift Prevention; MCP drift/guard-history resources + tool |
 
 **Optional modules (installed with `kaddo add`):**
 

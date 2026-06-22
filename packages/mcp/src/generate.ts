@@ -25,6 +25,7 @@ import {
 import { buildCapsule, renderCapsuleMarkdown, serializeCapsuleJson } from '../../cli/src/core/capsule.js'
 import { buildImpactReport, renderImpactMarkdown, serializeImpactJson } from '../../cli/src/core/impact-report.js'
 import { buildSavingsReport, renderSavingsMarkdown, serializeSavingsJson } from '../../cli/src/core/savings.js'
+import { buildDriftReport, renderDriftMarkdown, serializeDriftJson } from '../../cli/src/core/drift-report.js'
 import { writeDerived, hasKnowledge, KaddoMcpError } from './project.js'
 
 export type GenerateResult = {
@@ -165,6 +166,28 @@ export function generateSavingsReport(
     summary: `Savings report generated (${format}, ${report.scope} scope, ~${report.total.estimated_hours_saved}h).`,
     warnings: report.assumptions_source === 'default' ? ['Using default assumptions — run `kaddo savings init` to calibrate.'] : [],
     next_suggested_resources: ['kaddo://savings-report'],
+  }
+}
+
+/** kaddo_generate_drift_report — write the drift trend report under .kaddo/reports/ (VS-063). */
+export function generateDriftReport(
+  root: string,
+  opts: { format?: 'markdown' | 'json'; output?: string } = {}
+): GenerateResult {
+  requireConfig(root)
+  const format = opts.format ?? 'markdown'
+  const report = buildDriftReport(root)
+  const content = format === 'json' ? serializeDriftJson(report) : renderDriftMarkdown(report)
+  const out = opts.output ?? `.kaddo/reports/drift-report.${format === 'json' ? 'json' : 'md'}`
+  writeDerived(root, out, content) // allowlist enforces .kaddo/reports/
+  return {
+    status: 'ok',
+    files_written: [out.replace(/\\/g, '/')],
+    summary: report.guard_history.available
+      ? `Drift report generated (${report.drift_warnings.open} open, ${report.drift_warnings.resolved} resolved).`
+      : 'Drift report generated (no guard history yet — run `kaddo guard --record`).',
+    warnings: report.guard_history.available ? [] : ['No guard history recorded yet.'],
+    next_suggested_resources: ['kaddo://drift-report'],
   }
 }
 

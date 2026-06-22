@@ -59,6 +59,10 @@ export const COMMAND_HELP: Record<string, CommandHelp> = {
     question: 'How much time/value might Kaddo be saving (estimate)?',
     next: 'Run `kaddo savings init` to calibrate assumptions',
   },
+  drift: {
+    question: 'Are code and knowledge drifting apart over time?',
+    next: 'Review open warnings; `kaddo guard --record` before commits',
+  },
 }
 
 /** Lines for the contextual footer, or [] if the command has no entry. */

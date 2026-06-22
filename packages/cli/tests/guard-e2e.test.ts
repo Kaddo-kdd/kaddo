@@ -227,6 +227,31 @@ describe('kaddo guard — end-to-end with real artifacts (VS-012)', () => {
     expect(output()).toContain('WI-004')
   })
 
+  it('VS-063 AC1: does not write history without --record', async () => {
+    writeArtifact(
+      'knowledge/delivery/work-items/WI-001.md',
+      'type: feature\nid: WI-001\ntitle: A\nknowledge_level: K2\nstatus: in-progress\ncode:\n  - src/payments/**'
+    )
+    gitMock.getModifiedFiles.mockResolvedValue(['src/payments/charge.ts'])
+    await runGuard({ interactive: false })
+    expect(fs.existsSync(path.join(tmpDir, '.kaddo/history'))).toBe(false)
+  })
+
+  it('VS-063 AC2/AC38: --record persists a run to .kaddo/history/', async () => {
+    writeArtifact(
+      'knowledge/delivery/work-items/WI-001.md',
+      'type: feature\nid: WI-001\ntitle: A\nknowledge_level: K2\nstatus: in-progress\ncode:\n  - src/payments/**'
+    )
+    gitMock.getModifiedFiles.mockResolvedValue(['src/payments/charge.ts'])
+    await runGuard({ interactive: false, record: true })
+    const runs = path.join(tmpDir, '.kaddo/history/guard-runs.jsonl')
+    expect(fs.existsSync(runs)).toBe(true)
+    const run = JSON.parse(fs.readFileSync(runs, 'utf-8').trim())
+    expect(run.warnings[0].code_path).toBe('src/payments/charge.ts')
+    expect(run.warnings[0].related_artifacts).toContain('WI-001')
+    expect(output()).toContain('Guard run recorded:')
+  })
+
   it('stays non-blocking (does not call process.exit) on drift', async () => {
     const exitSpy = vi.spyOn(process, 'exit').mockImplementation((() => {}) as never)
     writeArtifact(

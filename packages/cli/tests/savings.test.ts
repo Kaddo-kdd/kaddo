@@ -4,6 +4,7 @@ import os from 'os'
 import path from 'path'
 import { loadAssumptions, buildSavingsReport, renderSavingsMarkdown, serializeSavingsJson, DEFAULT_ASSUMPTIONS } from '../src/core/savings.js'
 import { runSavings, runSavingsInit } from '../src/commands/savings.js'
+import { recordGuardRun, type GuardWarning } from '../src/core/guard-history.js'
 
 let tmp: string
 function write(rel: string, content: string) {
@@ -68,9 +69,28 @@ describe('Estimated Savings Model (VS-062)', () => {
     expect(md).toContain('Not available yet.') // drift
   })
 
-  it('AC22: confidence stays at most Medium without Guard history', () => {
+  it('AC22/AC27: confidence stays at most Medium and drift not-available without Guard history', () => {
     setup()
-    expect(buildSavingsReport(tmp).confidence.level).not.toBe('High')
+    const r = buildSavingsReport(tmp)
+    expect(r.confidence.level).not.toBe('High')
+    expect(r.estimated_savings.drift_prevention.available).toBe(false)
+  })
+
+  it('VS-063 AC26/AC28/AC46: resolved drift activates Drift Prevention savings', () => {
+    setup()
+    const warn = (p: string, rel: string[], up: string[]): GuardWarning => ({ type: 'possible-knowledge-drift', code_path: p, related_artifacts: rel, updated_artifacts: up, status: 'open' })
+    // Run 1 warns; Run 2 resolves (path touched, WI-1 updated, no warning).
+    recordGuardRun(tmp, { project: 'p', scope: 's', touched_files: ['src/cli/program.ts'], matched_artifacts: ['WI-1'], updated_artifacts: [], warnings: [warn('src/cli/program.ts', ['WI-1'], [])] }, new Date('2026-06-21T10:00:00.000Z'))
+    recordGuardRun(tmp, { project: 'p', scope: 's', touched_files: ['src/cli/program.ts'], matched_artifacts: ['WI-1'], updated_artifacts: ['WI-1'], warnings: [] }, new Date('2026-06-22T10:00:00.000Z'))
+
+    const r = buildSavingsReport(tmp)
+    expect(r.estimated_savings.drift_prevention.available).toBe(true)
+    if (r.estimated_savings.drift_prevention.available) {
+      // 1 resolved × 2 h default.
+      expect(r.estimated_savings.drift_prevention.hours).toBe(2)
+    }
+    expect(r.evidence.guard_history_available).toBe(true)
+    expect(renderSavingsMarkdown(r)).toContain('Formula: 1 resolved drift warnings × 2 h')
   })
 
   it('AC40: JSON shape is stable', () => {

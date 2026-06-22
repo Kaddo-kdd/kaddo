@@ -70,6 +70,8 @@ Hay un ejemplo listo para copiar en
 | `kaddo://skills/<id>` | `knowledge/skills/<id>/skill.md` | una skill reutilizable |
 | `kaddo://impact-report` | `.kaddo/reports/` (o en memoria) | [Reporte de impacto](/es/impact-report/) |
 | `kaddo://savings-report` | `.kaddo/reports/` (o en memoria) | [Reporte de ahorro](/es/savings-report/) |
+| `kaddo://drift-report` | `.kaddo/reports/` (o en memoria) | [Reporte de drift](/es/drift-report/) |
+| `kaddo://guard-history` | `.kaddo/history/guard-runs.jsonl` | recorded guard runs |
 
 ## Tools (solo lectura)
 
@@ -97,6 +99,7 @@ deterministas (sin LLM, sin git) y **solo escriben bajo `.kaddo/`**; nunca modif
 | `kaddo_generate_capsule_draft` | `.kaddo/exports/<project>.capsule.md` + `.json` | `kaddo capsule export` |
 | `kaddo_generate_impact_report` | `.kaddo/reports/impact-report.md` / `.json` | `kaddo report impact` |
 | `kaddo_generate_savings_report` | `.kaddo/reports/savings-report.md` / `.json` | `kaddo savings` |
+| `kaddo_generate_drift_report` | `.kaddo/reports/drift-report.md` / `.json` | `kaddo drift` |
 
 Cada una devuelve `{ status, files_written, summary, warnings, next_suggested_resources }`. Toda
 escritura pasa por una validación central (`assertMcpDerivedWritePath`); cualquier ruta fuera del

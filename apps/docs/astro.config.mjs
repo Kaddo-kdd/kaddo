@@ -165,6 +165,7 @@ export default defineConfig({
             { label: 'MCP Server', translations: { es: 'Servidor MCP' }, slug: 'mcp-server' },
             { label: 'Impact Report', translations: { es: 'Reporte de impacto' }, slug: 'impact-report' },
             { label: 'Savings Report', translations: { es: 'Reporte de ahorro' }, slug: 'savings-report' },
+            { label: 'Drift Report', translations: { es: 'Reporte de drift' }, slug: 'drift-report' },
             { label: 'Standards, security & stack', translations: { es: 'Estándares, seguridad y stack' }, slug: 'modules/global-docs' },
             { label: 'Git strategy', translations: { es: 'Estrategia de Git' }, slug: 'modules/git-strategy' },
           ],

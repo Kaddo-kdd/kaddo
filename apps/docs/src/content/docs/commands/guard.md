@@ -51,6 +51,13 @@ Guard discovers knowledge artifacts through the same shared service as `explain`
 are found recursively across lifecycle subfolders (`draft/`, `ready/`, `in-progress/`, …) and are
 recognized by their front matter, not their path or file name.
 
+## Recording history (`--record`)
+
+By default Guard writes nothing. `kaddo guard --record` persists the run to
+`.kaddo/history/guard-runs.jsonl` (+ a summary) so [`kaddo drift`](/drift-report/) can report drift
+trends over time and feed `kaddo impact` / `kaddo savings`. It records only paths, artifact ids and
+warnings — never git authors or personal data — and never blocks, edits source/knowledge or runs git.
+
 ## Guard ownership scope
 
 Guard matches ownership from **active and completed** Work Items — completed work still owns its

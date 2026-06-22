@@ -28,6 +28,7 @@ import {
   generateCapsuleDraft,
   generateImpactReport,
   generateSavingsReport,
+  generateDriftReport,
   type GenerateResult,
 } from './generate.js'
 import { assertKaddoProject, KaddoMcpError } from './project.js'
@@ -249,6 +250,22 @@ export function createServer(root: string): McpServer {
     async (args) =>
       generated(root, 'generate savings report', () =>
         generateSavingsReport(root, { format: args.format, scope: args.scope, output: args.output })
+      )
+  )
+
+  server.registerTool(
+    'kaddo_generate_drift_report',
+    {
+      title: 'Generate drift report',
+      description: `Write the Drift Trend Report under .kaddo/reports/ from recorded guard history. format: markdown (default) or json. Does NOT record guard runs. ${DERIVED_NOTE}`,
+      inputSchema: {
+        format: z.enum(['markdown', 'json']).optional(),
+        output: z.string().optional(),
+      },
+    },
+    async (args) =>
+      generated(root, 'generate drift report', () =>
+        generateDriftReport(root, { format: args.format, output: args.output })
       )
   )
 

@@ -7,6 +7,7 @@ import { listCapsules, listAgents } from './catalog.js'
 import { listSkills } from './skills.js'
 import { buildImpactReport, renderImpactMarkdown } from '../../cli/src/core/impact-report.js'
 import { buildSavingsReport, renderSavingsMarkdown } from '../../cli/src/core/savings.js'
+import { buildDriftReport, renderDriftMarkdown } from '../../cli/src/core/drift-report.js'
 import { listWorkItems } from './workitems.js'
 import { hasKnowledge, readText } from './project.js'
 
@@ -200,6 +201,30 @@ export const RESOURCES: ResourceDescriptor[] = [
         return text('kaddo://savings-report', 'Knowledge repository not found. Run `kaddo bootstrap` first.', 'text/plain')
       }
       return [{ uri: 'kaddo://savings-report', text: renderSavingsMarkdown(buildSavingsReport(root, { scope: 'all', scopeSource: 'default' })), mimeType: 'text/markdown' }]
+    },
+  },
+  {
+    uri: 'kaddo://drift-report',
+    name: 'Kaddo drift report',
+    description: 'Drift Trend Report — the last written report, or generated in memory (read-only).',
+    mimeType: 'text/markdown',
+    read: (root) => {
+      const saved = readText(root, '.kaddo/reports/drift-report.md')
+      if (saved) return [{ uri: 'kaddo://drift-report', text: saved, mimeType: 'text/markdown' }]
+      return [{ uri: 'kaddo://drift-report', text: renderDriftMarkdown(buildDriftReport(root)), mimeType: 'text/markdown' }]
+    },
+  },
+  {
+    uri: 'kaddo://guard-history',
+    name: 'Kaddo guard history',
+    description: 'Recorded guard runs (.kaddo/history/guard-runs.jsonl) — read-only.',
+    mimeType: 'application/jsonl',
+    read: (root) => {
+      const runs = readText(root, '.kaddo/history/guard-runs.jsonl')
+      if (runs === null) {
+        return text('kaddo://guard-history', 'No guard history recorded yet. Run `kaddo guard --record`.', 'text/plain')
+      }
+      return [{ uri: 'kaddo://guard-history', text: runs, mimeType: 'application/jsonl' }]
     },
   },
 ]
