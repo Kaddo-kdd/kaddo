@@ -231,6 +231,20 @@ summarize them, installed agent prompts reference the skills they should apply, 
 [`@kaddo/mcp`](packages/mcp/README.md) server exposes them (`kaddo://skills`,
 `kaddo_list_skills`/`kaddo_get_skill`).
 
+## Codex adapter (AGENTS.md)
+
+Generate an [`AGENTS.md`](https://kaddo.trycatch.tv/codex-adapter/) so Codex (and other
+`AGENTS.md`-aware tools) work natively inside a Kaddo repo — no manual context pasting:
+
+```bash
+kaddo adapters install codex            # write AGENTS.md (alias: kaddo export codex)
+kaddo adapters install codex --dry-run  # preview
+kaddo adapters install codex --force    # overwrite
+```
+
+It's a compact, generated **projection** of the project's knowledge map, operating rules,
+readiness gates, installed agents/skills and useful commands — Kaddo stays the source of truth.
+
 ## Templates
 
 Kaddo ships templates for its main artifacts — Work Items, roadmaps, capabilities,

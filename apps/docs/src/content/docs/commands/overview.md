@@ -104,6 +104,7 @@ Supporting commands:
 | `kaddo guard --record` | Record a guard run to `.kaddo/history/` for drift trends |
 | `kaddo drift` | [Drift Trend Report](/drift-report/): warnings detected/resolved over time |
 | `kaddo questions` | [Open Questions Gate](/open-questions/): blocking decisions before the roadmap |
+| `kaddo adapters install codex` | Generate [`AGENTS.md`](/codex-adapter/) so Codex understands the Kaddo flow |
 | `kaddo add <module>` | Install an optional module |
 
 Reusable [**skills**](/skills/) standardize how agents do common things well — install them with

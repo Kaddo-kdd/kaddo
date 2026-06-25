@@ -67,6 +67,10 @@ export const COMMAND_HELP: Record<string, CommandHelp> = {
     question: 'Are there open questions to decide before the roadmap?',
     next: 'Resolve, assume or defer blocking questions, then generate the roadmap',
   },
+  'adapters install codex': {
+    question: 'How does Codex work with this Kaddo project?',
+    next: 'Open AGENTS.md, or regenerate it after knowledge changes',
+  },
 }
 
 /** Lines for the contextual footer, or [] if the command has no entry. */

@@ -104,6 +104,7 @@ Comandos de apoyo:
 | `kaddo guard --record` | Registra una ejecución de guard en `.kaddo/history/` para tendencias de drift |
 | `kaddo drift` | [Reporte de drift](/es/drift-report/): warnings detectados/resueltos con el tiempo |
 | `kaddo questions` | [Gate de preguntas abiertas](/es/open-questions/): decisiones bloqueantes antes del roadmap |
+| `kaddo adapters install codex` | Genera [`AGENTS.md`](/es/codex-adapter/) para que Codex entienda el flujo Kaddo |
 | `kaddo add <module>` | Instala un módulo opcional |
 
 Las [**habilidades**](/es/skills/) reutilizables estandarizan cómo los agentes hacen bien lo común
