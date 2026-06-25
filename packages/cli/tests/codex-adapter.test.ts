@@ -53,6 +53,17 @@ describe('Codex adapter content (VS-065)', () => {
     expect(md).toContain('`adr-writing`')
   })
 
+  it('VS-065.1 AC1/AC5-AC9: includes a Command fallback section with local runners', () => {
+    config()
+    const md = renderAgentsMd(buildCodexAdapterContext(tmp))
+    expect(md).toContain('## Command fallback')
+    expect(md).toContain('kaddo <command>')
+    expect(md).toContain('corepack pnpm exec kaddo <command>')
+    expect(md).toContain('pnpm exec kaddo <command>')
+    expect(md).toContain('npx kaddo <command>')
+    expect(md).toContain('Do not assume Kaddo is unavailable until these local fallbacks have been attempted')
+  })
+
   it('AC15/AC16: valid without agents or skills (no those sections)', () => {
     config()
     const md = renderAgentsMd(buildCodexAdapterContext(tmp))
@@ -102,11 +113,20 @@ describe('kaddo adapters install codex command (VS-065)', () => {
     expect(fs.readFileSync(path.join(tmp, 'AGENTS.md'), 'utf-8')).toBe('# Mine\nkeep')
   })
 
-  it('AC18: --force overwrites', () => {
+  it('AC18 + VS-065.1 AC4: --force overwrites and includes Command fallback', () => {
     config()
     write('AGENTS.md', '# Mine')
     runAdaptersInstall('codex', { force: true })
-    expect(fs.readFileSync(path.join(tmp, 'AGENTS.md'), 'utf-8')).toContain('Knowledge Driven Development')
+    const out = fs.readFileSync(path.join(tmp, 'AGENTS.md'), 'utf-8')
+    expect(out).toContain('Knowledge Driven Development')
+    expect(out).toContain('## Command fallback')
+    expect(out).toContain('corepack pnpm exec kaddo <command>')
+  })
+
+  it('VS-065.1 AC3: --dry-run preview includes the Command fallback section', () => {
+    config()
+    runAdaptersInstall('codex', { dryRun: true })
+    expect(output()).toContain('## Command fallback')
   })
 
   it('AC19/AC21: --dry-run writes nothing and does not touch knowledge', () => {

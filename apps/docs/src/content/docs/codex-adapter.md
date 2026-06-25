@@ -32,6 +32,24 @@ kaddo adapters install codex --force    # overwrite an existing AGENTS.md
 It is deliberately compact — references and rules, not full documents. It never inlines
 `context-pack.md`, business/product/codebase bodies, or full agent/skill contents.
 
+## Command fallback
+
+The generated `AGENTS.md` includes a **Command fallback** section so Codex can run Kaddo even when
+the global `kaddo` binary isn't on `PATH` (common in sandboxes, Codex Cloud, fresh machines or
+pnpm-local setups). It tells Codex to try, in order, before declaring Kaddo unavailable:
+
+```bash
+kaddo <command>                      # preferred
+corepack pnpm exec kaddo <command>   # local runner
+pnpm exec kaddo <command>
+npx kaddo <command>                  # last resort
+```
+
+The adapter only **documents** these for Codex — it never runs them. To test it, run
+`kaddo adapters install codex --force`, then ask Codex what it would do if `kaddo questions` isn't on
+`PATH`: it should mention trying `corepack pnpm exec kaddo questions`, then `pnpm exec`, then `npx`
+before concluding Kaddo is unavailable.
+
 ## Behavior
 
 | Situation | Result |

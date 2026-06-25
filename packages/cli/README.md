@@ -518,6 +518,7 @@ create --from roadmap → owners → guard → explain`.
 | v3.25.1 | Savings guard-history messaging fix: distinguishes "no history" from "history with 0 resolved warnings" (drift prevention available at 0 h) |
 | v3.26 | Open-questions readiness gate: `kaddo questions`/`readiness`, blocking/important/deferred classification; MCP open-questions + roadmap-readiness resources + tool; roadmap/work-item/implementation/bootstrap agents check it |
 | v3.27 | Codex adapter: `kaddo adapters install codex` (alias `kaddo export codex`) generates a compact `AGENTS.md` projection (`--dry-run`/`--force`) |
+| v3.27.1 | Codex adapter command fallbacks: AGENTS.md tells Codex to try `corepack pnpm exec` / `pnpm exec` / `npx` kaddo when the global binary isn't on PATH |
 
 **Optional modules (installed with `kaddo add`):**
 
