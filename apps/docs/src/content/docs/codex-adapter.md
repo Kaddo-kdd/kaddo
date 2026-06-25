@@ -11,6 +11,7 @@ working in a Kaddo repo — without you pasting the context pack, prompts or rul
 kaddo adapters install codex            # write AGENTS.md
 kaddo export codex                      # alias
 kaddo adapters install codex --dry-run  # preview, writes nothing
+kaddo adapters install codex --inject   # add/update only the Kaddo block, preserve the rest
 kaddo adapters install codex --force    # overwrite an existing AGENTS.md
 ```
 
@@ -50,14 +51,46 @@ The adapter only **documents** these for Codex — it never runs them. To test i
 `PATH`: it should mention trying `corepack pnpm exec kaddo questions`, then `pnpm exec`, then `npx`
 before concluding Kaddo is unavailable.
 
+## Safe merge (`--inject`)
+
+If your repo already has an `AGENTS.md` with the team's own instructions, `--inject` integrates the
+Kaddo guidance **without replacing the file**. It writes a single delimited block:
+
+```md
+<!-- BEGIN KADDO CODEX ADAPTER -->
+## Kaddo guidance
+…
+<!-- END KADDO CODEX ADAPTER -->
+```
+
+Everything outside the markers is preserved exactly. Running `--inject` again **updates that block in
+place** instead of duplicating it, so you can regenerate the Kaddo guidance any time without touching
+the team's content. If the file has a half-open block (a BEGIN without an END, or vice-versa), the
+command fails with a clear message and changes nothing — fix it manually or use `--force`.
+
+```bash
+# Existing AGENTS.md → add the Kaddo block, keep team instructions
+kaddo adapters install codex --inject
+
+# Preview the merged result without writing
+kaddo adapters install codex --inject --dry-run
+```
+
+To test it: create an `AGENTS.md` with a couple of team rules, run
+`kaddo adapters install codex --inject`, confirm your rules are still there with a Kaddo block
+appended, then run it again and confirm the block was updated — not duplicated.
+
 ## Behavior
 
 | Situation | Result |
 |---|---|
-| No `AGENTS.md` | created |
-| `AGENTS.md` exists | skipped (use `--force` or `--dry-run`) |
+| No `AGENTS.md` | created (full projection) |
+| `AGENTS.md` exists, no flag | skipped (suggests `--inject` / `--force` / `--dry-run`) |
 | `--dry-run` | prints the content, writes nothing |
-| `--force` | overwrites the existing file |
+| `--inject` | adds or updates only the Kaddo block, preserving the rest |
+| `--inject --dry-run` | prints the merged result, writes nothing |
+| `--inject` with invalid markers | errors, file untouched |
+| `--force` | overwrites the entire file |
 
 Deterministic: no LLM, no git, no application code. It never modifies `knowledge/` or `.kaddo/`,
 and only writes `AGENTS.md` at the project root. Works for `new`, `pre-ai` and `legacy` projects
@@ -71,5 +104,6 @@ making Kaddo more portable and easier to adopt with Codex.
 
 ## Out of scope
 
-Other adapters (Claude Code, Cursor, Copilot…), `AGENTS.md` per subdirectory, intelligent merge with
-an existing `AGENTS.md`, and auto-sync are not part of this version.
+Other adapters (Claude Code, Cursor, Copilot…), `AGENTS.md` per subdirectory, semantic/intelligent
+merge (conflict resolution, reordering external sections, multiple Kaddo blocks), and auto-sync are
+not part of this version.

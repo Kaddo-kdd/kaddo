@@ -519,6 +519,7 @@ create --from roadmap → owners → guard → explain`.
 | v3.26 | Open-questions readiness gate: `kaddo questions`/`readiness`, blocking/important/deferred classification; MCP open-questions + roadmap-readiness resources + tool; roadmap/work-item/implementation/bootstrap agents check it |
 | v3.27 | Codex adapter: `kaddo adapters install codex` (alias `kaddo export codex`) generates a compact `AGENTS.md` projection (`--dry-run`/`--force`) |
 | v3.27.1 | Codex adapter command fallbacks: AGENTS.md tells Codex to try `corepack pnpm exec` / `pnpm exec` / `npx` kaddo when the global binary isn't on PATH |
+| v3.27.2 | Codex adapter safe merge: `kaddo adapters install codex --inject` adds/updates only a delimited Kaddo block in an existing AGENTS.md, preserving team content |
 
 **Optional modules (installed with `kaddo add`):**
 

@@ -193,8 +193,9 @@ adaptersCmd
   .command('install <adapter>')
   .description('Generate an adapter file (codex → AGENTS.md) from Kaddo knowledge')
   .option('--force', 'Overwrite an existing output file')
+  .option('--inject', 'Add or update only the Kaddo block in an existing file, preserving the rest')
   .option('--dry-run', 'Print the content without writing files')
-  .action((adapter: string, opts: { force?: boolean; dryRun?: boolean }) => {
+  .action((adapter: string, opts: { force?: boolean; inject?: boolean; dryRun?: boolean }) => {
     runAdaptersInstall(adapter, opts)
   })
 
@@ -203,8 +204,9 @@ program
   .command('export <adapter>')
   .description('Alias for `kaddo adapters install <adapter>` (codex → AGENTS.md)')
   .option('--force', 'Overwrite an existing output file')
+  .option('--inject', 'Add or update only the Kaddo block in an existing file, preserving the rest')
   .option('--dry-run', 'Print the content without writing files')
-  .action((adapter: string, opts: { force?: boolean; dryRun?: boolean }) => {
+  .action((adapter: string, opts: { force?: boolean; inject?: boolean; dryRun?: boolean }) => {
     runAdaptersInstall(adapter, opts)
   })
 
