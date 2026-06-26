@@ -520,6 +520,7 @@ create --from roadmap → owners → guard → explain`.
 | v3.27 | Codex adapter: `kaddo adapters install codex` (alias `kaddo export codex`) generates a compact `AGENTS.md` projection (`--dry-run`/`--force`) |
 | v3.27.1 | Codex adapter command fallbacks: AGENTS.md tells Codex to try `corepack pnpm exec` / `pnpm exec` / `npx` kaddo when the global binary isn't on PATH |
 | v3.27.2 | Codex adapter safe merge: `kaddo adapters install codex --inject` adds/updates only a delimited Kaddo block in an existing AGENTS.md, preserving team content |
+| v3.27.3 | Codex adapter reference stabilization: package-manager-aware command fallbacks (lockfile detection) + Adapter Contract & Custom Adapters docs (reference for future adapters) |
 
 **Optional modules (installed with `kaddo add`):**
 

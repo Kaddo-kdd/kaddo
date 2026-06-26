@@ -168,6 +168,7 @@ export default defineConfig({
             { label: 'Drift Report', translations: { es: 'Reporte de drift' }, slug: 'drift-report' },
             { label: 'Open Questions Gate', translations: { es: 'Preguntas abiertas' }, slug: 'open-questions' },
             { label: 'Codex Adapter (AGENTS.md)', translations: { es: 'Adaptador Codex (AGENTS.md)' }, slug: 'codex-adapter' },
+            { label: 'Custom Adapters', translations: { es: 'Adapters custom' }, slug: 'custom-adapters' },
             { label: 'Standards, security & stack', translations: { es: 'Estándares, seguridad y stack' }, slug: 'modules/global-docs' },
             { label: 'Git strategy', translations: { es: 'Estrategia de Git' }, slug: 'modules/git-strategy' },
           ],

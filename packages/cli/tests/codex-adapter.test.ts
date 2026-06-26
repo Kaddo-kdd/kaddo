@@ -7,6 +7,7 @@ import {
   renderAgentsMd,
   renderKaddoBlock,
   detectAgentsState,
+  detectPackageManager,
   injectKaddoBlock,
   KADDO_BEGIN_MARKER,
   KADDO_END_MARKER,
@@ -69,7 +70,47 @@ describe('Codex adapter content (VS-065)', () => {
     expect(md).toContain('corepack pnpm exec kaddo <command>')
     expect(md).toContain('pnpm exec kaddo <command>')
     expect(md).toContain('npx kaddo <command>')
-    expect(md).toContain('Do not assume Kaddo is unavailable until these local fallbacks have been attempted')
+    expect(md).toContain('Do not fail immediately just because the global `kaddo` binary is missing')
+  })
+
+  it('VS-065.1-ref AC4-AC7/AC26-AC28: package-manager-aware fallbacks from lockfiles', () => {
+    // pnpm
+    config()
+    write('pnpm-lock.yaml', 'lockfileVersion: 9\n')
+    expect(detectPackageManager(tmp)).toBe('pnpm')
+    let md = renderAgentsMd(buildCodexAdapterContext(tmp))
+    expect(md).toContain('detected package manager: `pnpm`')
+    expect(md).toContain('corepack pnpm exec kaddo <command>')
+    expect(md).toContain('pnpm exec kaddo <command>')
+
+    // npm
+    fs.rmSync(path.join(tmp, 'pnpm-lock.yaml'))
+    write('package-lock.json', '{}')
+    expect(detectPackageManager(tmp)).toBe('npm')
+    md = renderAgentsMd(buildCodexAdapterContext(tmp))
+    expect(md).toContain('detected package manager: `npm`')
+    expect(md).toContain('npm exec kaddo <command>')
+    expect(md).toContain('npx kaddo <command>')
+
+    // yarn
+    fs.rmSync(path.join(tmp, 'package-lock.json'))
+    write('yarn.lock', '')
+    expect(detectPackageManager(tmp)).toBe('yarn')
+    expect(renderAgentsMd(buildCodexAdapterContext(tmp))).toContain('yarn kaddo <command>')
+
+    // none → generic
+    fs.rmSync(path.join(tmp, 'yarn.lock'))
+    expect(detectPackageManager(tmp)).toBeUndefined()
+    md = renderAgentsMd(buildCodexAdapterContext(tmp))
+    expect(md).toContain('no package manager detected')
+    expect(md).toContain('npx kaddo <command>')
+  })
+
+  it('VS-065.1-ref AC8: fallback tells the agent not to give up before trying locally', () => {
+    config()
+    expect(renderAgentsMd(buildCodexAdapterContext(tmp))).toContain(
+      'Do not fail immediately just because the global `kaddo` binary is missing',
+    )
   })
 
   it('AC15/AC16: valid without agents or skills (no those sections)', () => {

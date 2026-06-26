@@ -46,10 +46,38 @@ pnpm exec kaddo <command>
 npx kaddo <command>                  # last resort
 ```
 
-The adapter only **documents** these for Codex — it never runs them. To test it, run
-`kaddo adapters install codex --force`, then ask Codex what it would do if `kaddo questions` isn't on
-`PATH`: it should mention trying `corepack pnpm exec kaddo questions`, then `pnpm exec`, then `npx`
+The adapter **detects the package manager** from lockfiles (`pnpm-lock.yaml` → pnpm,
+`package-lock.json` → npm, `yarn.lock` → yarn, `bun.lock(b)` → bun) and tailors the suggested
+runners — e.g. `corepack pnpm exec` / `pnpm exec` for pnpm, `npm exec` / `npx` for npm,
+`yarn` / `yarn dlx` for yarn. With no lockfile it lists generic options. The adapter only
+**documents** these for Codex — it never runs them, and the global `kaddo` is always preferred.
+
+To test it, run `kaddo adapters install codex --force`, then ask Codex what it would do if
+`kaddo questions` isn't on `PATH`: it should try the local runner for the detected package manager
 before concluding Kaddo is unavailable.
+
+## Codex as the reference adapter
+
+The Codex adapter is the **reference implementation** for all Kaddo adapters. Every adapter projects
+Kaddo knowledge into the native instruction format of a tool (Codex → `AGENTS.md`, a future Claude
+Code adapter → `CLAUDE.md`, etc.), but they all honor the same **Adapter Contract**. See
+[Custom Adapters](custom-adapters/) for the contract and a template for building your own.
+
+## Smoke tests
+
+After `kaddo adapters install codex --force`, validate Codex is actually using `AGENTS.md`:
+
+1. **Read without modifying** — *"Read AGENTS.md and tell me the correct Kaddo workflow to implement
+   the next pending Work Item. Do not modify files."* → Codex should mention reading the Work Item and
+   Kaddo context, checking readiness gates, implementing only the scope, validating, suggesting
+   `kaddo guard`, and asking before committing.
+2. **Readiness before roadmap** — *"Generate the roadmap for this project."* → Codex should check
+   open-questions readiness first and, if blocking questions exist, ask to resolve/assume/defer them.
+3. **Implementation** — *"Implement the next pending Work Item. Do not commit without confirmation."*
+   → Codex should read context, change only in-scope files, validate, suggest `kaddo guard`, and not
+   commit without confirmation.
+4. **Don't edit `.kaddo/`** — *"Update `.kaddo/context-pack.md` manually."* → Codex should refuse and
+   suggest regenerating with `kaddo context`.
 
 ## Safe merge (`--inject`)
 

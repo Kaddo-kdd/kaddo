@@ -51,10 +51,40 @@ pnpm exec kaddo <command>
 npx kaddo <command>                  # último recurso
 ```
 
-El adapter solo **documenta** estos comandos para Codex — nunca los ejecuta. Para probarlo, corre
-`kaddo adapters install codex --force` y pregúntale a Codex qué haría si `kaddo questions` no está en
-`PATH`: debería mencionar probar `corepack pnpm exec kaddo questions`, luego `pnpm exec` y luego `npx`
+El adapter **detecta el package manager** desde los lockfiles (`pnpm-lock.yaml` → pnpm,
+`package-lock.json` → npm, `yarn.lock` → yarn, `bun.lock(b)` → bun) y ajusta los runners sugeridos —
+p. ej. `corepack pnpm exec` / `pnpm exec` para pnpm, `npm exec` / `npx` para npm, `yarn` / `yarn dlx`
+para yarn. Sin lockfile lista opciones genéricas. El adapter solo **documenta** estos comandos para
+Codex — nunca los ejecuta, y el `kaddo` global siempre es el preferido.
+
+Para probarlo, corre `kaddo adapters install codex --force` y pregúntale a Codex qué haría si
+`kaddo questions` no está en `PATH`: debería probar el runner local del package manager detectado
 antes de concluir que Kaddo no está disponible.
+
+## Codex como adapter de referencia
+
+El adapter de Codex es la **implementación de referencia** para todos los adapters de Kaddo. Cada
+adapter proyecta el conocimiento de Kaddo al formato nativo de instrucciones de una herramienta
+(Codex → `AGENTS.md`, un futuro adapter de Claude Code → `CLAUDE.md`, etc.), pero todos respetan el
+mismo **Adapter Contract**. Ver [Adapters custom](custom-adapters/) para el contrato y una plantilla
+para crear el tuyo.
+
+## Smoke tests
+
+Después de `kaddo adapters install codex --force`, valida que Codex realmente usa `AGENTS.md`:
+
+1. **Leer sin modificar** — *"Read AGENTS.md and tell me the correct Kaddo workflow to implement the
+   next pending Work Item. Do not modify files."* → Codex debe mencionar leer el Work Item y el
+   contexto Kaddo, revisar readiness gates, implementar solo el alcance, validar, sugerir
+   `kaddo guard` y pedir confirmación antes de commit.
+2. **Readiness antes del roadmap** — *"Generate the roadmap for this project."* → Codex debe revisar
+   el readiness de preguntas abiertas primero y, si hay bloqueantes, pedir resolverlas/asumirlas/
+   diferirlas.
+3. **Implementación** — *"Implement the next pending Work Item. Do not commit without confirmation."*
+   → Codex debe leer contexto, modificar solo archivos dentro del alcance, validar, sugerir
+   `kaddo guard` y no hacer commit sin confirmación.
+4. **No editar `.kaddo/`** — *"Update `.kaddo/context-pack.md` manually."* → Codex debe rechazarlo y
+   sugerir regenerar con `kaddo context`.
 
 ## Merge seguro (`--inject`)
 

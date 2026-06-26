@@ -9,10 +9,14 @@ import { exists, readDir, isDir, join } from '../utils/fs.js'
 import { loadConfig } from './config.js'
 import { discoverInstalledSkills } from '../services/installed-skills.js'
 
+export type PackageManager = 'pnpm' | 'npm' | 'yarn' | 'bun'
+
 export type CodexAdapterContext = {
   projectName?: string
   projectType?: string
   language?: string
+  /** Detected from lockfiles; undefined when none is found (generic fallback). */
+  packageManager?: PackageManager
   hasAgents: boolean
   agents: string[]
   hasSkills: boolean
@@ -63,6 +67,7 @@ export function buildCodexAdapterContext(dir: string): CodexAdapterContext {
     projectName: config?.project.name,
     projectType: config?.project.state,
     language: config ? config.project.language : undefined,
+    packageManager: detectPackageManager(dir),
     hasAgents: agents.length > 0,
     agents,
     hasSkills: skills.length > 0,
@@ -71,6 +76,60 @@ export function buildCodexAdapterContext(dir: string): CodexAdapterContext {
     knowledgePaths: KNOWLEDGE_PATHS.filter((p) => exists(join(dir, p))),
     generatedPaths: GENERATED_PATHS,
   }
+}
+
+/** Detect the package manager from lockfiles (deterministic, read-only). pnpm > yarn > bun > npm. */
+export function detectPackageManager(dir: string): PackageManager | undefined {
+  if (exists(join(dir, 'pnpm-lock.yaml'))) return 'pnpm'
+  if (exists(join(dir, 'yarn.lock'))) return 'yarn'
+  if (exists(join(dir, 'bun.lockb')) || exists(join(dir, 'bun.lock'))) return 'bun'
+  if (exists(join(dir, 'package-lock.json'))) return 'npm'
+  return undefined
+}
+
+/**
+ * Ordered local-runner fallbacks for the detected package manager. The global `kaddo` is always the
+ * preferred command; these are tried only if it is not on `PATH`. Generic when no manager detected.
+ */
+export function commandFallbacks(pm: PackageManager | undefined): string[] {
+  switch (pm) {
+    case 'pnpm':
+      return ['corepack pnpm exec kaddo <command>', 'pnpm exec kaddo <command>', 'npx kaddo <command>']
+    case 'yarn':
+      return ['yarn kaddo <command>', 'yarn dlx kaddo <command>', 'npx kaddo <command>']
+    case 'bun':
+      return ['bunx kaddo <command>', 'npx kaddo <command>']
+    case 'npm':
+      return ['npm exec kaddo <command>', 'npx kaddo <command>']
+    default:
+      return ['corepack pnpm exec kaddo <command>', 'pnpm exec kaddo <command>', 'npm exec kaddo <command>', 'npx kaddo <command>']
+  }
+}
+
+/**
+ * Render the "Command fallback" section lines. `heading` is the markdown prefix for the title
+ * (`## ` in the full projection, `### ` inside the injected Kaddo block). Package-manager aware.
+ */
+export function commandFallbackSection(pm: PackageManager | undefined, heading: string): string[] {
+  const L: string[] = []
+  const pmNote = pm ? ` (detected package manager: \`${pm}\`)` : ' (no package manager detected — generic options)'
+  L.push(`${heading}Command fallback`, '')
+  L.push(`Prefer the global \`kaddo\` command when available:`, '')
+  L.push('```bash')
+  L.push('kaddo <command>')
+  L.push('```')
+  L.push('')
+  L.push(`If \`kaddo\` is not available in \`PATH\`, try the local project runner${pmNote} before`)
+  L.push('reporting that Kaddo is unavailable:', '')
+  L.push('```bash')
+  for (const f of commandFallbacks(pm)) L.push(f)
+  L.push('```')
+  L.push('')
+  L.push('Do not fail immediately just because the global `kaddo` binary is missing. When you use a')
+  L.push('fallback, mention it briefly (e.g. "the global `kaddo` was not available, so I used the local')
+  L.push('runner").')
+  L.push('')
+  return L
 }
 
 /** Heuristic, conservative MCP hint: an MCP config file or a package depending on @kaddo/mcp. */
@@ -182,32 +241,7 @@ export function renderAgentsMd(ctx: CodexAdapterContext): string {
     L.push('')
   }
 
-  L.push('## Command fallback', '')
-  L.push('Prefer the direct command when available:', '')
-  L.push('```bash')
-  L.push('kaddo <command>')
-  L.push('```')
-  L.push('')
-  L.push('If the global `kaddo` command is not available in `PATH`, try the local project runner')
-  L.push('before reporting that Kaddo is unavailable:', '')
-  L.push('```bash')
-  L.push('corepack pnpm exec kaddo <command>')
-  L.push('```')
-  L.push('')
-  L.push('If that is not available, try:', '')
-  L.push('```bash')
-  L.push('pnpm exec kaddo <command>')
-  L.push('```')
-  L.push('')
-  L.push('As a last resort (may resolve/download the package):', '')
-  L.push('```bash')
-  L.push('npx kaddo <command>')
-  L.push('```')
-  L.push('')
-  L.push('Do not assume Kaddo is unavailable until these local fallbacks have been attempted. When you')
-  L.push('use a fallback, mention it briefly (e.g. "the global `kaddo` was not available, so I used')
-  L.push('`corepack pnpm exec kaddo`").')
-  L.push('')
+  for (const line of commandFallbackSection(ctx.packageManager, '## ')) L.push(line)
 
   L.push('## Useful Kaddo commands', '')
   L.push('```bash')
@@ -292,16 +326,7 @@ export function renderKaddoBlock(ctx: CodexAdapterContext): string {
   L.push('- Do not commit without user confirmation.')
   L.push('')
 
-  L.push('### Command fallback', '')
-  L.push('Prefer `kaddo <command>`. If the global `kaddo` is not on `PATH`, try the local runner')
-  L.push('before reporting Kaddo is unavailable:')
-  L.push('```bash')
-  L.push('corepack pnpm exec kaddo <command>')
-  L.push('pnpm exec kaddo <command>')
-  L.push('npx kaddo <command>')
-  L.push('```')
-  L.push('Do not assume Kaddo is unavailable until these fallbacks have been attempted.')
-  L.push('')
+  for (const line of commandFallbackSection(ctx.packageManager, '### ')) L.push(line)
 
   L.push('### Before roadmap work', '')
   L.push('Check open-questions readiness first. If blocking open questions exist, ask the user to')
