@@ -85,11 +85,14 @@ If your repo already has an `AGENTS.md` with the team's own instructions, `--inj
 Kaddo guidance **without replacing the file**. It writes a single delimited block:
 
 ```md
-<!-- BEGIN KADDO CODEX ADAPTER -->
+<!-- BEGIN KADDO ADAPTER -->
 ## Kaddo guidance
 …
-<!-- END KADDO CODEX ADAPTER -->
+<!-- END KADDO ADAPTER -->
 ```
+
+> The marker is target-neutral (it works in `AGENTS.md` and `CLAUDE.md`). Older files using the
+> legacy `KADDO CODEX ADAPTER` marker are recognized and migrated automatically on the next inject.
 
 Everything outside the markers is preserved exactly. Running `--inject` again **updates that block in
 place** instead of duplicating it, so you can regenerate the Kaddo guidance any time without touching

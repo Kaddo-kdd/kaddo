@@ -5,7 +5,6 @@ import { printCommandFooter } from '../core/command-help.js'
 import {
   buildCodexAdapterContext,
   renderAdapterMarkdown,
-  renderAgentsMd,
   renderKaddoBlock,
   detectAgentsState,
   injectKaddoBlock,
@@ -17,7 +16,7 @@ type AdapterOpts = { force?: boolean; dryRun?: boolean; inject?: boolean }
 type TargetSpec = { target: AdapterTarget; file: string; label: string; supportsInject: boolean }
 const TARGETS: Record<string, TargetSpec> = {
   codex: { target: 'codex', file: 'AGENTS.md', label: 'Codex', supportsInject: true },
-  claude: { target: 'claude', file: 'CLAUDE.md', label: 'Claude Code', supportsInject: false },
+  claude: { target: 'claude', file: 'CLAUDE.md', label: 'Claude Code', supportsInject: true },
 }
 
 /**
@@ -55,7 +54,7 @@ export function runAdaptersInstall(adapter: string, opts: AdapterOpts = {}): voi
 
     // No file yet: --inject behaves like a normal create (full projection).
     if (existing === null) {
-      const content = renderAgentsMd(ctx)
+      const content = renderAdapterMarkdown(ctx, spec.target)
       if (opts.dryRun) {
         console.log(`# ${rel} preview`, '')
         console.log(content)

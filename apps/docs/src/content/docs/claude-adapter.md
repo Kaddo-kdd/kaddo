@@ -11,6 +11,7 @@ without you pasting the context pack, prompts or rules into the chat.
 kaddo adapters install claude            # write CLAUDE.md
 kaddo export claude                      # alias
 kaddo adapters install claude --dry-run  # preview, writes nothing
+kaddo adapters install claude --inject   # add/update only the Kaddo block, preserve the rest
 kaddo adapters install claude --force    # overwrite an existing CLAUDE.md
 ```
 
@@ -39,12 +40,26 @@ paths, agents, skills, package-manager detection, command fallback). Only the ta
 It never inlines `context-pack.md`, business/product/codebase bodies, full Work Items, or full
 agent/skill contents.
 
+## Safe merge (`--inject`)
+
+If your repo already has a `CLAUDE.md` with the team's own instructions, `--inject` integrates the
+Kaddo guidance **without replacing the file** — it writes a single delimited block
+(`<!-- BEGIN KADDO ADAPTER -->` … `<!-- END KADDO ADAPTER -->`) and preserves everything else.
+Running it again updates that block in place instead of duplicating it. This is the same safe-merge
+behavior as the [Codex adapter](codex-adapter/#safe-merge---inject).
+
+```bash
+kaddo adapters install claude --inject             # add the Kaddo block, keep team instructions
+kaddo adapters install claude --inject --dry-run   # preview the merged result without writing
+```
+
 ## Behavior
 
 | Situation | Result |
 |---|---|
 | No `CLAUDE.md` | created |
-| `CLAUDE.md` exists | skipped (use `--force` or `--dry-run`) |
+| `CLAUDE.md` exists, no flag | skipped (suggests `--inject` / `--force` / `--dry-run`) |
+| `--inject` | adds or updates only the Kaddo block, preserving the rest |
 | `--dry-run` | prints the content, writes nothing |
 | `--force` | overwrites the existing file |
 

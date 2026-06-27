@@ -245,6 +245,21 @@ describe('kaddo adapters install claude command (VS-066)', () => {
     expect(() => runAdaptersInstall('cursor', {})).toThrow('exit')
     expect(errSpy.mock.calls.flat().join(' ')).toContain('codex, claude')
   })
+
+  it('--inject adds/updates only the Kaddo block in an existing CLAUDE.md, preserving team content', () => {
+    config()
+    write('CLAUDE.md', '# Team rules\n\nDo not change public APIs without approval.\n')
+    runAdaptersInstall('claude', { inject: true })
+    let out = fs.readFileSync(path.join(tmp, 'CLAUDE.md'), 'utf-8')
+    expect(out).toContain('# Team rules')
+    expect(out).toContain('Do not change public APIs without approval.')
+    expect(out).toContain(KADDO_BEGIN_MARKER)
+    // Re-inject updates in place, no duplicate block.
+    runAdaptersInstall('claude', { inject: true })
+    out = fs.readFileSync(path.join(tmp, 'CLAUDE.md'), 'utf-8')
+    expect(out.split(KADDO_BEGIN_MARKER).length - 1).toBe(1)
+    expect(out).toContain('# Team rules')
+  })
 })
 
 describe('kaddo adapters install codex command (VS-065)', () => {
@@ -348,6 +363,23 @@ describe('Codex adapter safe merge — block & state (VS-065.2)', () => {
 
   it('AC11: invalid (half-open) block throws', () => {
     expect(() => injectKaddoBlock(`x\n${KADDO_BEGIN_MARKER}\ny`, ctx())).toThrow(/Invalid Kaddo adapter block/)
+  })
+
+  it('uses target-neutral markers (no "CODEX" in a generated block)', () => {
+    expect(KADDO_BEGIN_MARKER).toBe('<!-- BEGIN KADDO ADAPTER -->')
+    expect(renderKaddoBlock(ctx())).not.toContain('CODEX')
+  })
+
+  it('recognizes and migrates the legacy Codex marker on update', () => {
+    const legacy = `# Team\n\n<!-- BEGIN KADDO CODEX ADAPTER -->\nold guidance\n<!-- END KADDO CODEX ADAPTER -->\n\ntail\n`
+    expect(detectAgentsState(legacy)).toBe('existing_with_kaddo_block')
+    const { content, status } = injectKaddoBlock(legacy, ctx())
+    expect(status).toBe('updated')
+    expect(content).not.toContain('KADDO CODEX ADAPTER') // migrated to neutral
+    expect(content).toContain(KADDO_BEGIN_MARKER)
+    expect(content).toContain('# Team')
+    expect(content).toContain('tail')
+    expect(content.split(KADDO_BEGIN_MARKER).length - 1).toBe(1)
   })
 })
 
