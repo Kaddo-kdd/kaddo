@@ -231,19 +231,23 @@ summarize them, installed agent prompts reference the skills they should apply, 
 [`@kaddo/mcp`](packages/mcp/README.md) server exposes them (`kaddo://skills`,
 `kaddo_list_skills`/`kaddo_get_skill`).
 
-## Codex adapter (AGENTS.md)
+## Adapters (AGENTS.md / CLAUDE.md)
 
-Generate an [`AGENTS.md`](https://kaddo.trycatch.tv/codex-adapter/) so Codex (and other
-`AGENTS.md`-aware tools) work natively inside a Kaddo repo — no manual context pasting:
+Generate a native instruction file so an AI coding tool works inside a Kaddo repo without manual
+context pasting — [`AGENTS.md`](https://kaddo.trycatch.tv/codex-adapter/) for Codex,
+[`CLAUDE.md`](https://kaddo.trycatch.tv/claude-adapter/) for Claude Code:
 
 ```bash
 kaddo adapters install codex            # write AGENTS.md (alias: kaddo export codex)
-kaddo adapters install codex --dry-run  # preview
-kaddo adapters install codex --force    # overwrite
+kaddo adapters install claude           # write CLAUDE.md (alias: kaddo export claude)
+kaddo adapters install <adapter> --dry-run  # preview
+kaddo adapters install <adapter> --force    # overwrite
 ```
 
-It's a compact, generated **projection** of the project's knowledge map, operating rules,
-readiness gates, installed agents/skills and useful commands — Kaddo stays the source of truth.
+Both are compact, generated **projections** of the project's knowledge map, operating rules,
+readiness gates, package-manager-aware command fallbacks, installed agents/skills and useful
+commands — Kaddo stays the source of truth. See
+[Custom Adapters](https://kaddo.trycatch.tv/custom-adapters/) for the shared Adapter Contract.
 
 ## Templates
 
