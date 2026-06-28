@@ -73,7 +73,7 @@ describe('Open questions extraction + readiness (VS-064)', () => {
     withQuestions()
     const r = buildOpenQuestionsReport(tmp)
     const md = renderOpenQuestionsMarkdown(r)
-    for (const sec of ['## Summary', '## Blocking Questions', '## Important Questions', '## Deferred Questions', '## Suggested Assumptions', '## Recommended Next Step']) {
+    for (const sec of ['## Summary', '## Blocking Open Questions', '## Important Questions', '## Resolved', '## Assumed (decisions to revisit)', '## Deferred (out of current scope)', '## Recommended Next Step']) {
       expect(md).toContain(sec)
     }
     const json = JSON.parse(serializeOpenQuestionsJson(r))
@@ -89,5 +89,81 @@ describe('Open questions extraction + readiness (VS-064)', () => {
     expect(s.roadmap_readiness).toBe('needs_decisions')
     expect(s.blocking_questions).toBe(2)
     expect(s.recommended_next_step).toContain('before generating roadmap')
+  })
+})
+
+describe('Open questions resolution tracking (VS-071)', () => {
+  const oq = (body: string, lang = 'en') => {
+    config()
+    write(`knowledge/delivery/roadmap.md`, `---\ntype: roadmap\n---\n# R\n\n## ${lang === 'es' ? 'Preguntas abiertas' : 'Open Questions'}\n\n${body}\n`)
+    return buildOpenQuestionsReport(tmp)
+  }
+  const q0 = (r: ReturnType<typeof buildOpenQuestionsReport>) => r.questions[0]
+
+  it('AC1: a question with no token is open', () => {
+    expect(q0(oq('- Should the CLI use a numeric id or a name?')).resolution_status).toBe('open')
+  })
+
+  it('AC2-AC5: EN tokens map to resolution status', () => {
+    expect(q0(oq('- [open] Stack still undecided?')).resolution_status).toBe('open')
+    expect(q0(oq('- [resolved] Stack is Node + SQLite.')).resolution_status).toBe('resolved')
+    expect(q0(oq('- [assumed] Assume SQLite for the MVP persistence.')).resolution_status).toBe('assumed')
+    expect(q0(oq('- [deferred] Remote sync is out of the MVP scope.')).resolution_status).toBe('deferred')
+  })
+
+  it('AC6-AC9: ES tokens map to resolution status', () => {
+    expect(q0(oq('- [abierta] ¿Qué stack usar?', 'es')).resolution_status).toBe('open')
+    expect(q0(oq('- [resuelta] El stack es Node + SQLite.', 'es')).resolution_status).toBe('resolved')
+    expect(q0(oq('- [asumida] Se asume SQLite para el MVP.', 'es')).resolution_status).toBe('assumed')
+    expect(q0(oq('- [diferida] Sync remoto fuera del MVP.', 'es')).resolution_status).toBe('deferred')
+  })
+
+  it('AC10: blocking + open blocks readiness', () => {
+    const r = oq('- Which stack and architecture for the MVP?')
+    expect(r.questions[0].classification).toBe('blocking')
+    expect(r.summary.roadmap_readiness).toBe('needs_decisions')
+    expect(r.summary.blocking_open).toBe(1)
+  })
+
+  it('AC11-AC13: blocking + resolved/assumed/deferred does not block readiness', () => {
+    for (const tok of ['resolved', 'assumed', 'deferred']) {
+      const r = oq(`- [${tok}] The MVP stack and architecture is Node + SQLite.`)
+      expect(r.questions[0].classification).toBe('blocking')
+      expect(r.summary.roadmap_readiness).toBe('ready')
+      expect(r.summary.blocking_open).toBe(0)
+    }
+  })
+
+  it('AC14/AC16: counts by resolution status', () => {
+    const r = oq('- [resolved] A stack decision.\n- [assumed] An assumption about persistence.\n- [deferred] A deferred database integration.\n- An open architecture question?')
+    expect(r.summary.resolution).toEqual({ open: 1, resolved: 1, assumed: 1, deferred: 1 })
+  })
+
+  it('AC15: JSON carries resolution_status and resolution_note', () => {
+    const r = oq('- [assumed] Numeric id for CLI references.\n  - note: name is display-only')
+    const json = JSON.parse(serializeOpenQuestionsJson(r))
+    expect(json.questions[0].resolution_status).toBe('assumed')
+    expect(json.questions[0].resolution_note).toBe('name is display-only')
+  })
+
+  it('AC17: markdown separates resolved / assumed / deferred', () => {
+    const md = renderOpenQuestionsMarkdown(oq('- [resolved] Stack chosen.\n- [assumed] Persistence assumed.\n- [deferred] Sync deferred.'))
+    expect(md).toContain('## Resolved')
+    expect(md).toContain('## Assumed (decisions to revisit)')
+    expect(md).toContain('## Deferred (out of current scope)')
+  })
+
+  it('AC18/AC19: readiness needs_decisions only with blocking open, else ready', () => {
+    expect(oq('- Which architecture for the MVP?').summary.roadmap_readiness).toBe('needs_decisions')
+    expect(oq('- [assumed] MVP architecture assumed as a backend API.').summary.roadmap_readiness).toBe('ready')
+  })
+
+  it('AC28: roadmapReadinessSummary exposes blocking_open and resolution counts', () => {
+    config()
+    write('knowledge/delivery/roadmap.md', '---\ntype: roadmap\n---\n# R\n\n## Open Questions\n\n- [resolved] MVP stack is Node + SQLite.\n')
+    const s = roadmapReadinessSummary(tmp)
+    expect(s.blocking_open).toBe(0)
+    expect(s.resolution.resolved).toBe(1)
+    expect(s.roadmap_readiness).toBe('ready')
   })
 })

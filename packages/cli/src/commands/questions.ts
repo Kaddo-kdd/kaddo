@@ -28,19 +28,22 @@ export function runQuestions(opts: QuestionsOpts = {}): void {
   }
 
   // Concise human summary (not the full Markdown report).
+  const s = report.summary
   console.log('')
-  console.log(`Open questions detected: ${report.summary.open_questions}`)
-  console.log(`Roadmap readiness: ${report.summary.roadmap_readiness === 'needs_decisions' ? 'needs decisions' : report.summary.roadmap_readiness}`)
-  const list = (title: string, qs: { question: string }[]) => {
+  console.log(`Open questions detected: ${s.open_questions}`)
+  console.log(`By resolution — open: ${s.resolution.open}, resolved: ${s.resolution.resolved}, assumed: ${s.resolution.assumed}, deferred: ${s.resolution.deferred}`)
+  console.log(`Roadmap readiness: ${s.roadmap_readiness === 'needs_decisions' ? 'needs decisions' : s.roadmap_readiness} (blocking open: ${s.blocking_open}, important open: ${s.important_open})`)
+  const list = (title: string, qs: { question: string; resolution_note?: string }[]) => {
     if (qs.length === 0) return
     console.log('')
     console.log(`${title}:`)
-    for (const q of qs.slice(0, 8)) console.log(`- ${q.question}`)
+    for (const q of qs.slice(0, 8)) console.log(`- ${q.question}${q.resolution_note ? ` — ${q.resolution_note}` : ''}`)
     if (qs.length > 8) console.log(`  …and ${qs.length - 8} more`)
   }
-  list('Blocking', report.blocking_questions)
-  list('Important', report.important_questions)
-  list('Deferred', report.deferred_questions)
+  list('Blocking (open)', report.blocking_questions.filter((q) => q.resolution_status === 'open'))
+  list('Resolved', report.resolved_questions)
+  list('Assumed', report.assumed_questions)
+  list('Deferred', report.deferred_status_questions)
   console.log('')
   console.log('Suggested next:')
   console.log(report.recommended_next_step)

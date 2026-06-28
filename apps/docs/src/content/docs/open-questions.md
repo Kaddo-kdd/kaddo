@@ -46,9 +46,37 @@ conservative, deterministic keyword heuristics (when in doubt → `important`):
 | **important** | relevant, but a temporary assumption can unblock | sponsors, pagination, roles, validations |
 | **deferred** | can move to a later phase | integrations, analytics, notifications, payments |
 
-Roadmap readiness is **`needs_decisions`** when any blocking question is open, **`ready`** when none
-are, **`unknown`** when no open questions exist. Blocking questions get a neutral **suggested
-assumption** (never invented specifics — "start as a backend API to keep scope small").
+Roadmap readiness is **`needs_decisions`** when any blocking question is **open**, **`ready`** when
+none are, **`unknown`** when no open questions exist. Blocking open questions get a neutral
+**suggested assumption** (never invented specifics — "start as a backend API to keep scope small").
+
+## Resolution tracking
+
+A question isn't only text — it has a **resolution status**. Prefix a bullet with a token so Kaddo can
+tell a genuinely pending question from one already decided, assumed or postponed:
+
+```md
+## Open Questions
+
+- [open] Are projects referenced by numeric id, name, or both in the CLI?
+- [resolved] Projects are referenced by numeric id in the CLI.
+- [assumed] Assume local persistence uses SQLite for the MVP.
+- [deferred] Remote project sync is out of the MVP.
+```
+
+Spanish tokens work too: `[abierta]`, `[resuelta]`, `[asumida]`, `[diferida]`. A bullet **without** a
+token is treated as `open` (fully backward compatible). Optional metadata can follow as an indented
+sub-bullet, e.g. `- note: name is display-only` → `resolution_note`.
+
+**Only `open` questions block readiness.** A `blocking` question that is `resolved`, `assumed` or
+`deferred` no longer blocks — it's surfaced for context (assumptions to revisit, items out of scope)
+but execution continues. `kaddo questions` reports counts by status and `--json` carries
+`resolution_status` (and `resolution_note`) per question plus a `resolution` count summary.
+
+| Classification + status | Blocks readiness? |
+|---|---|
+| blocking + `open` | yes |
+| blocking + `resolved` / `assumed` / `deferred` | no (surfaced as decision / assumption / out-of-scope) |
 
 ## How agents use it
 

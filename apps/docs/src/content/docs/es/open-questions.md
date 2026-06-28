@@ -46,10 +46,38 @@ con heurísticas de keywords conservadoras y deterministas (ante la duda → `im
 | **important** | relevante, pero un supuesto temporal desbloquea | sponsors, paginación, roles, validaciones |
 | **deferred** | puede pasar a una fase posterior | integraciones, analytics, notificaciones, pagos |
 
-El readiness del roadmap es **`needs_decisions`** cuando hay alguna pregunta bloqueante abierta,
-**`ready`** cuando no hay, **`unknown`** cuando no existen preguntas. Las bloqueantes reciben un
-**supuesto sugerido** neutral (nunca inventa especificidades — "empezar como API backend para
+El readiness del roadmap es **`needs_decisions`** cuando hay alguna pregunta bloqueante **abierta**,
+**`ready`** cuando no hay, **`unknown`** cuando no existen preguntas. Las bloqueantes abiertas reciben
+un **supuesto sugerido** neutral (nunca inventa especificidades — "empezar como API backend para
 mantener el alcance pequeño").
+
+## Seguimiento de resolución
+
+Una pregunta no es solo texto — tiene un **estado de resolución**. Prefija un bullet con un token para
+que Kaddo distinga una pregunta realmente pendiente de una ya decidida, asumida o postergada:
+
+```md
+## Preguntas abiertas
+
+- [abierta] ¿Los proyectos se referencian por id numérico, nombre o ambos en la CLI?
+- [resuelta] Los proyectos se referencian por id numérico en la CLI.
+- [asumida] Se asume que la persistencia local usa SQLite para el MVP.
+- [diferida] La sincronización remota queda fuera del MVP.
+```
+
+También funcionan los tokens en inglés: `[open]`, `[resolved]`, `[assumed]`, `[deferred]`. Un bullet
+**sin** token se trata como `open` (totalmente compatible hacia atrás). Metadata opcional puede seguir
+como sub-bullet indentado, p. ej. `- note: el nombre es solo para visualización` → `resolution_note`.
+
+**Solo las preguntas `open` bloquean el readiness.** Una pregunta `blocking` que esté `resolved`,
+`assumed` o `deferred` ya no bloquea — se muestra como contexto (supuestos a revisar, items fuera de
+alcance) pero la ejecución continúa. `kaddo questions` reporta conteos por estado y `--json` incluye
+`resolution_status` (y `resolution_note`) por pregunta más un resumen `resolution`.
+
+| Clasificación + estado | ¿Bloquea readiness? |
+|---|---|
+| blocking + `open` | sí |
+| blocking + `resolved` / `assumed` / `deferred` | no (se muestra como decisión / supuesto / fuera de alcance) |
 
 ## Cómo lo usan los agentes
 

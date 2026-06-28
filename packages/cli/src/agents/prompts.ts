@@ -244,9 +244,13 @@ open question):
 Before generating the roadmap, check **roadmap readiness** for open questions that affect scope,
 architecture or the MVP. Read \`kaddo://roadmap-readiness\` (MCP) or run \`kaddo questions\`.
 
-If readiness is \`needs_decisions\` (there are **blocking** open questions), do **not** generate the
-roadmap yet. Instead, list the blocking questions, propose reasonable assumptions for each, and ask
-the user to confirm, e.g.:
+Only questions with \`resolution_status = open\` block readiness. Questions marked \`[resolved]\`,
+\`[assumed]\` or \`[deferred]\` (EN) / \`[resuelta]\` \`[asumida]\` \`[diferida]\` (ES) do **not** block —
+surface assumed ones as assumptions and deferred ones as out-of-scope, then continue.
+
+If readiness is \`needs_decisions\` (there are **blocking open** questions), do **not** generate the
+roadmap yet. Instead, list the blocking open questions, propose reasonable assumptions for each, and
+ask the user to confirm, e.g.:
 
 > Before generating the roadmap I found blocking open questions that affect the MVP scope.
 > I can proceed with these assumptions: … Confirm and continue?
@@ -572,9 +576,11 @@ Work Item actionable for a human.
 ## Readiness Gate (check first)
 
 For high-impact Work Items, check \`kaddo://roadmap-readiness\` (or \`kaddo questions\`) for
-**blocking** open questions related to this Work Item's scope. If any are unresolved, surface them
-and propose assumptions for the user to confirm before refining — don't bake in invisible
-assumptions.
+**blocking open** questions (\`resolution_status = open\`) related to this Work Item's scope. If any are
+open, surface them and propose assumptions for the user to confirm before refining — don't bake in
+invisible assumptions. Convert each open question into an explicit decision (\`[resolved]\`), an
+explicit assumption (\`[assumed]\`), or move it out of scope (\`[deferred]\`). Questions already marked
+resolved/assumed/deferred do not block.
 
 ## When to Use
 
@@ -1088,8 +1094,10 @@ new project. You propose; the human decides.
 
 Bootstrap surfaces \`## Open Questions\` in the knowledge files. Before moving to the roadmap,
 explicitly recommend reviewing them (\`kaddo questions\` / \`kaddo://roadmap-readiness\`) and turning
-**blocking** ones into resolved decisions or confirmed assumptions — so the roadmap isn't built on
-invisible assumptions.
+**blocking open** ones into resolved decisions or confirmed assumptions — so the roadmap isn't built
+on invisible assumptions. When you find unresolved questions, suggest marking each with a resolution
+token so Kaddo can track them: \`[open]\`, \`[resolved]\`, \`[assumed]\` or \`[deferred]\` (ES: \`[abierta]\`,
+\`[resuelta]\`, \`[asumida]\`, \`[diferida]\`). Only \`open\` questions block readiness.
 
 ## When to Use
 
@@ -1207,9 +1215,11 @@ human's, and commits/pushes/merges happen only with explicit human confirmation.
 ## Readiness Gate (check first)
 
 Before implementing a high-impact Work Item, check \`kaddo://roadmap-readiness\` (or
-\`kaddo questions\`) for **blocking** open questions about stack, architecture, persistence,
-authentication or the Work Item's scope. If any are unresolved, pause and ask the user to confirm
-assumptions or resolve them before writing code.
+\`kaddo questions\`) for **blocking open** questions (\`resolution_status = open\`) about stack,
+architecture, persistence, authentication or the Work Item's scope. Block only on questions still
+\`open\`; if a related question is already \`[assumed]\`, \`[resolved]\` or \`[deferred]\`, proceed and
+mention the relevant assumptions instead of pausing. If any blocking question is still open, pause and
+ask the user to confirm assumptions or resolve them before writing code.
 
 ## When to Use
 

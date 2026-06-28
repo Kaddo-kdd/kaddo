@@ -202,9 +202,9 @@ export function renderAdapterMarkdown(ctx: CodexAdapterContext, target: AdapterT
   L.push('Read `knowledge/business/business.md`, `knowledge/product/product.md`,')
   L.push('`knowledge/tech/codebase.md`, and `.kaddo/reports/questions-report.md` if available.')
   L.push('')
-  L.push('Check open-questions readiness first. **If blocking open questions exist, ask the user to')
-  L.push('resolve, assume or defer them before generating the roadmap** — never build the roadmap on')
-  L.push('invisible assumptions.')
+  L.push('Check open-questions readiness first. **If blocking questions with resolution_status = open')
+  L.push('exist, ask the user to resolve, assume or defer them before generating the roadmap.** Assumed,')
+  L.push('resolved or deferred questions should be surfaced for context, but should not block execution.')
   L.push('')
 
   L.push('## Before implementation', '')
@@ -371,8 +371,9 @@ export function renderKaddoBlock(ctx: CodexAdapterContext): string {
   for (const line of commandFallbackSection(ctx.packageManager, '### ')) L.push(line)
 
   L.push('### Before roadmap work', '')
-  L.push('Check open-questions readiness first. If blocking open questions exist, ask the user to')
-  L.push('resolve, assume or defer them before generating the roadmap.')
+  L.push('Check open-questions readiness first. If blocking questions with resolution_status = open')
+  L.push('exist, ask the user to resolve, assume or defer them. Assumed/resolved/deferred questions')
+  L.push('should be surfaced, but should not block execution.')
   L.push('')
 
   L.push('### Before implementation', '')

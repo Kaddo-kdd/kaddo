@@ -528,6 +528,7 @@ create --from roadmap → owners → guard → explain`.
 | v3.30 | Antigravity adapter: `kaddo adapters install antigravity` (alias `kaddo export antigravity`) generates an `AGENTS.md` projection reusing the shared adapter common core (`--dry-run`/`--force`/`--inject` + inject guard) |
 | v3.31 | Kiro adapter: `kaddo adapters install kiro` (alias `kaddo export kiro`) generates an `AGENTS.md` projection reusing the shared adapter common core (`--dry-run`/`--force`/`--inject` + inject guard) |
 | v3.32 | Adapter discovery & status: `kaddo adapters list` (alias `ls`) and `kaddo adapters status` (alias `check`) — read-only catalog + per-adapter install state (missing/team-owned/injected/legacy-injected/full-generated/broken-markers), shared-`AGENTS.md` origin detection, `--json` |
+| v3.33 | Open questions resolution tracking: mark questions `[open]`/`[resolved]`/`[assumed]`/`[deferred]` (EN+ES); only `open` blocks readiness, so assumed/resolved/deferred decisions stop false blocks. `kaddo questions` shows status counts + `resolution_status` in JSON |
 
 **Optional modules (installed with `kaddo add`):**
 
