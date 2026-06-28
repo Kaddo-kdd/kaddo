@@ -19,6 +19,7 @@ const TARGETS: Record<string, TargetSpec> = {
   claude: { target: 'claude', file: 'CLAUDE.md', label: 'Claude Code', supportsInject: true },
   opencode: { target: 'opencode', file: 'AGENTS.md', label: 'OpenCode', supportsInject: true },
   antigravity: { target: 'antigravity', file: 'AGENTS.md', label: 'Antigravity', supportsInject: true },
+  kiro: { target: 'kiro', file: 'AGENTS.md', label: 'Kiro', supportsInject: true },
 }
 
 /**

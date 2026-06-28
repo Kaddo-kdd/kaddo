@@ -526,6 +526,7 @@ create --from roadmap → owners → guard → explain`.
 | v3.28.2 | Adapter inject guard: `--inject` on a fully Kaddo-generated AGENTS.md/CLAUDE.md does nothing (suggests `--force`), preventing duplicated Kaddo guidance |
 | v3.29 | OpenCode adapter: `kaddo adapters install opencode` (alias `kaddo export opencode`) generates an `AGENTS.md` projection reusing the shared adapter common core (`--dry-run`/`--force`/`--inject` + inject guard) |
 | v3.30 | Antigravity adapter: `kaddo adapters install antigravity` (alias `kaddo export antigravity`) generates an `AGENTS.md` projection reusing the shared adapter common core (`--dry-run`/`--force`/`--inject` + inject guard) |
+| v3.31 | Kiro adapter: `kaddo adapters install kiro` (alias `kaddo export kiro`) generates an `AGENTS.md` projection reusing the shared adapter common core (`--dry-run`/`--force`/`--inject` + inject guard) |
 
 **Optional modules (installed with `kaddo add`):**
 
