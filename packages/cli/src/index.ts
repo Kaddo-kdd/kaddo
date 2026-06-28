@@ -191,7 +191,7 @@ const adaptersCmd = program
 
 adaptersCmd
   .command('install <adapter>')
-  .description('Generate an adapter file (codex/opencode → AGENTS.md, claude → CLAUDE.md) from Kaddo knowledge')
+  .description('Generate an adapter file (codex/opencode/antigravity → AGENTS.md, claude → CLAUDE.md) from Kaddo knowledge')
   .option('--force', 'Overwrite an existing output file')
   .option('--inject', 'Add or update only the Kaddo block in an existing file, preserving the rest')
   .option('--dry-run', 'Print the content without writing files')
@@ -202,7 +202,7 @@ adaptersCmd
 // Alias: `kaddo export <adapter>`.
 program
   .command('export <adapter>')
-  .description('Alias for `kaddo adapters install <adapter>` (codex/opencode → AGENTS.md, claude → CLAUDE.md)')
+  .description('Alias for `kaddo adapters install <adapter>` (codex/opencode/antigravity → AGENTS.md, claude → CLAUDE.md)')
   .option('--force', 'Overwrite an existing output file')
   .option('--inject', 'Add or update only the Kaddo block in an existing file, preserving the rest')
   .option('--dry-run', 'Print the content without writing files')

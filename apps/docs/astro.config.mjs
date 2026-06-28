@@ -170,6 +170,7 @@ export default defineConfig({
             { label: 'Codex Adapter (AGENTS.md)', translations: { es: 'Adaptador Codex (AGENTS.md)' }, slug: 'codex-adapter' },
             { label: 'Claude Code Adapter (CLAUDE.md)', translations: { es: 'Adaptador Claude Code (CLAUDE.md)' }, slug: 'claude-adapter' },
             { label: 'OpenCode Adapter (AGENTS.md)', translations: { es: 'Adaptador OpenCode (AGENTS.md)' }, slug: 'opencode-adapter' },
+            { label: 'Antigravity Adapter (AGENTS.md)', translations: { es: 'Adaptador Antigravity (AGENTS.md)' }, slug: 'antigravity-adapter' },
             { label: 'Custom Adapters', translations: { es: 'Adapters custom' }, slug: 'custom-adapters' },
             { label: 'Standards, security & stack', translations: { es: 'Estándares, seguridad y stack' }, slug: 'modules/global-docs' },
             { label: 'Git strategy', translations: { es: 'Estrategia de Git' }, slug: 'modules/git-strategy' },
