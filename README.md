@@ -234,13 +234,16 @@ summarize them, installed agent prompts reference the skills they should apply, 
 ## Adapters (AGENTS.md / CLAUDE.md)
 
 Generate a native instruction file so an AI coding tool works inside a Kaddo repo without manual
-context pasting — [`AGENTS.md`](https://kaddo.trycatch.tv/codex-adapter/) for Codex,
+context pasting — [`AGENTS.md`](https://kaddo.trycatch.tv/codex-adapter/) for Codex and
+[OpenCode](https://kaddo.trycatch.tv/opencode-adapter/),
 [`CLAUDE.md`](https://kaddo.trycatch.tv/claude-adapter/) for Claude Code:
 
 ```bash
 kaddo adapters install codex            # write AGENTS.md (alias: kaddo export codex)
 kaddo adapters install claude           # write CLAUDE.md (alias: kaddo export claude)
+kaddo adapters install opencode         # write AGENTS.md for OpenCode (alias: kaddo export opencode)
 kaddo adapters install <adapter> --dry-run  # preview
+kaddo adapters install <adapter> --inject   # add/update only the Kaddo block in a team-owned file
 kaddo adapters install <adapter> --force    # overwrite
 ```
 

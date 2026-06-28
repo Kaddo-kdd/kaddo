@@ -150,9 +150,13 @@ const ROLE_HINTS: Record<string, string> = {
   'capsule-agent': 'use to refine a Knowledge Capsule for sharing.',
 }
 
-export type AdapterTarget = 'codex' | 'claude'
+export type AdapterTarget = 'codex' | 'claude' | 'opencode'
 
-const TARGET_FILE: Record<AdapterTarget, string> = { codex: 'AGENTS.md', claude: 'CLAUDE.md' }
+const TARGET_FILE: Record<AdapterTarget, string> = {
+  codex: 'AGENTS.md',
+  claude: 'CLAUDE.md',
+  opencode: 'AGENTS.md',
+}
 
 /**
  * Render an adapter projection (AGENTS.md for Codex, CLAUDE.md for Claude Code). The body is shared

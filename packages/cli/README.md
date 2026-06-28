@@ -524,6 +524,7 @@ create --from roadmap → owners → guard → explain`.
 | v3.28 | Claude Code adapter: `kaddo adapters install claude` (alias `kaddo export claude`) generates a `CLAUDE.md` projection reusing the shared adapter common core (`--dry-run`/`--force`) |
 | v3.28.1 | Claude adapter safe merge: `--inject` works for `CLAUDE.md` too; adapter markers are now target-neutral (`KADDO ADAPTER`) and legacy Codex markers auto-migrate on update |
 | v3.28.2 | Adapter inject guard: `--inject` on a fully Kaddo-generated AGENTS.md/CLAUDE.md does nothing (suggests `--force`), preventing duplicated Kaddo guidance |
+| v3.29 | OpenCode adapter: `kaddo adapters install opencode` (alias `kaddo export opencode`) generates an `AGENTS.md` projection reusing the shared adapter common core (`--dry-run`/`--force`/`--inject` + inject guard) |
 
 **Optional modules (installed with `kaddo add`):**
 
