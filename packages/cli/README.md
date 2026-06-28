@@ -523,6 +523,7 @@ create --from roadmap → owners → guard → explain`.
 | v3.27.3 | Codex adapter reference stabilization: package-manager-aware command fallbacks (lockfile detection) + Adapter Contract & Custom Adapters docs (reference for future adapters) |
 | v3.28 | Claude Code adapter: `kaddo adapters install claude` (alias `kaddo export claude`) generates a `CLAUDE.md` projection reusing the shared adapter common core (`--dry-run`/`--force`) |
 | v3.28.1 | Claude adapter safe merge: `--inject` works for `CLAUDE.md` too; adapter markers are now target-neutral (`KADDO ADAPTER`) and legacy Codex markers auto-migrate on update |
+| v3.28.2 | Adapter inject guard: `--inject` on a fully Kaddo-generated AGENTS.md/CLAUDE.md does nothing (suggests `--force`), preventing duplicated Kaddo guidance |
 
 **Optional modules (installed with `kaddo add`):**
 

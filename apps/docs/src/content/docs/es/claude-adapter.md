@@ -56,6 +56,10 @@ kaddo adapters install claude --inject             # agrega el bloque Kaddo, con
 kaddo adapters install claude --inject --dry-run   # previsualiza el resultado sin escribir
 ```
 
+Usa **`--force`** cuando el archivo es generado completamente por Kaddo, y **`--inject`** cuando
+pertenece al equipo. Correr `--inject` sobre un archivo **ya generado completamente por Kaddo** no
+hace nada y te indica usar `--force`, para evitar una copia duplicada de la guía.
+
 ## Comportamiento
 
 | Situación | Resultado |
@@ -63,6 +67,7 @@ kaddo adapters install claude --inject --dry-run   # previsualiza el resultado s
 | No existe `CLAUDE.md` | creado |
 | `CLAUDE.md` existe, sin flag | omitido (sugiere `--inject` / `--force` / `--dry-run`) |
 | `--inject` | agrega o actualiza solo el bloque Kaddo, preservando el resto |
+| `--inject` sobre un archivo generado por Kaddo | no cambia nada (sugiere `--force`) |
 | `--dry-run` | imprime el contenido, no escribe nada |
 | `--force` | sobrescribe el archivo existente |
 

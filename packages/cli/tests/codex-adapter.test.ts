@@ -246,7 +246,7 @@ describe('kaddo adapters install claude command (VS-066)', () => {
     expect(errSpy.mock.calls.flat().join(' ')).toContain('codex, claude')
   })
 
-  it('--inject adds/updates only the Kaddo block in an existing CLAUDE.md, preserving team content', () => {
+  it('AC13/AC15: --inject adds/updates only the Kaddo block in an existing CLAUDE.md, preserving team content', () => {
     config()
     write('CLAUDE.md', '# Team rules\n\nDo not change public APIs without approval.\n')
     runAdaptersInstall('claude', { inject: true })
@@ -259,6 +259,17 @@ describe('kaddo adapters install claude command (VS-066)', () => {
     out = fs.readFileSync(path.join(tmp, 'CLAUDE.md'), 'utf-8')
     expect(out.split(KADDO_BEGIN_MARKER).length - 1).toBe(1)
     expect(out).toContain('# Team rules')
+  })
+
+  it('AC1/AC3: --inject on a fully Kaddo-generated CLAUDE.md does nothing (no duplicated guidance)', () => {
+    config()
+    runAdaptersInstall('claude', {}) // full generated file (header, no markers)
+    const before = fs.readFileSync(path.join(tmp, 'CLAUDE.md'), 'utf-8')
+    expect(before).not.toContain(KADDO_BEGIN_MARKER)
+    runAdaptersInstall('claude', { inject: true })
+    const after = fs.readFileSync(path.join(tmp, 'CLAUDE.md'), 'utf-8')
+    expect(after).toBe(before) // unchanged
+    expect(after.split(KADDO_BEGIN_MARKER).length - 1).toBe(0) // no injected block
   })
 })
 
@@ -450,5 +461,16 @@ describe('kaddo adapters install codex --inject command (VS-065.2)', () => {
     const kb = fs.readFileSync(path.join(tmp, 'knowledge/business/business.md'), 'utf-8')
     runAdaptersInstall('codex', { inject: true })
     expect(fs.readFileSync(path.join(tmp, 'knowledge/business/business.md'), 'utf-8')).toBe(kb)
+  })
+
+  it('VS-066.1 AC2/AC3: --inject on a fully Kaddo-generated AGENTS.md does nothing', () => {
+    config()
+    runAdaptersInstall('codex', {}) // full generated file (header, no markers)
+    const before = fs.readFileSync(path.join(tmp, 'AGENTS.md'), 'utf-8')
+    expect(before).not.toContain(KADDO_BEGIN_MARKER)
+    runAdaptersInstall('codex', { inject: true })
+    const after = fs.readFileSync(path.join(tmp, 'AGENTS.md'), 'utf-8')
+    expect(after).toBe(before)
+    expect(after.split(KADDO_BEGIN_MARKER).length - 1).toBe(0)
   })
 })
