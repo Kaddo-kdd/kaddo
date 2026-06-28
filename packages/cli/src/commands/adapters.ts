@@ -8,31 +8,27 @@ import {
   renderKaddoBlock,
   detectAgentsState,
   injectKaddoBlock,
-  type AdapterTarget,
+  ADAPTERS,
+  findAdapter,
+  buildAdapterStatuses,
+  buildSharedFileStatuses,
 } from '../core/codex-adapter.js'
 
 type AdapterOpts = { force?: boolean; dryRun?: boolean; inject?: boolean }
 
-type TargetSpec = { target: AdapterTarget; file: string; label: string; supportsInject: boolean }
-const TARGETS: Record<string, TargetSpec> = {
-  codex: { target: 'codex', file: 'AGENTS.md', label: 'Codex', supportsInject: true },
-  claude: { target: 'claude', file: 'CLAUDE.md', label: 'Claude Code', supportsInject: true },
-  opencode: { target: 'opencode', file: 'AGENTS.md', label: 'OpenCode', supportsInject: true },
-  antigravity: { target: 'antigravity', file: 'AGENTS.md', label: 'Antigravity', supportsInject: true },
-  kiro: { target: 'kiro', file: 'AGENTS.md', label: 'Kiro', supportsInject: true },
-}
+const ADAPTER_LIST = ADAPTERS.map((a) => a.id).join(', ')
 
 /**
- * `kaddo adapters install <codex|claude>` (alias `kaddo export <adapter>`) — generate the adapter
- * projection (AGENTS.md / CLAUDE.md) from Kaddo knowledge. Codex also supports `--inject` (VS-065.2).
+ * `kaddo adapters install <adapter>` (alias `kaddo export <adapter>`) — generate the adapter
+ * projection (AGENTS.md / CLAUDE.md) from Kaddo knowledge. All adapters support `--inject`.
  */
 export function runAdaptersInstall(adapter: string, opts: AdapterOpts = {}): void {
   const dir = cwd()
   requireConfig(dir)
 
-  const spec = TARGETS[adapter]
+  const spec = findAdapter(adapter)
   if (!spec) {
-    console.error(`Unknown adapter: "${adapter}". Available: ${Object.keys(TARGETS).join(', ')}.`)
+    console.error(`Unknown adapter: "${adapter}". Available: ${ADAPTER_LIST}.`)
     process.exit(1)
     return
   }
@@ -69,7 +65,7 @@ export function runAdaptersInstall(adapter: string, opts: AdapterOpts = {}): voi
 
     // No file yet: --inject behaves like a normal create (full projection).
     if (existing === null) {
-      const content = renderAdapterMarkdown(ctx, spec.target)
+      const content = renderAdapterMarkdown(ctx, spec.id)
       if (opts.dryRun) {
         console.log(`# ${rel} preview`, '')
         console.log(content)
@@ -102,7 +98,7 @@ export function runAdaptersInstall(adapter: string, opts: AdapterOpts = {}): voi
     return
   }
 
-  const content = renderAdapterMarkdown(ctx, spec.target)
+  const content = renderAdapterMarkdown(ctx, spec.id)
 
   // Preview only — write nothing.
   if (opts.dryRun) {
@@ -130,3 +126,62 @@ export function runAdaptersInstall(adapter: string, opts: AdapterOpts = {}): voi
 
 // Re-export for tests/consumers that want the raw block.
 export { renderKaddoBlock }
+
+/** `kaddo adapters list` — show the supported adapter catalog. Read-only, no project required. */
+export function runAdaptersList(opts: { json?: boolean } = {}): void {
+  if (opts.json) {
+    console.log(JSON.stringify({ adapters: ADAPTERS.map((a) => ({ id: a.id, label: a.label, file: a.file, supports_inject: a.supportsInject })) }, null, 2))
+    return
+  }
+  const pad = Math.max(...ADAPTERS.map((a) => a.id.length))
+  console.log('Available adapters:\n')
+  for (const a of ADAPTERS) {
+    console.log(`  ${a.id.padEnd(pad)}  ${a.file.padEnd(10)} ${a.supportsInject ? 'Supports --inject' : ''}`.trimEnd())
+  }
+  console.log('\nInstall one with:\n  kaddo adapters install <adapter>')
+  console.log('\nPreview with:\n  kaddo adapters install <adapter> --dry-run')
+}
+
+/** `kaddo adapters status` — inspect each adapter's target file state. Read-only. */
+export function runAdaptersStatus(opts: { json?: boolean } = {}): void {
+  const dir = cwd()
+  requireConfig(dir)
+
+  const statuses = buildAdapterStatuses(dir)
+
+  if (opts.json) {
+    console.log(JSON.stringify({
+      adapters: statuses.map((s) => ({
+        id: s.id,
+        label: s.label,
+        file: s.file,
+        state: s.state,
+        origin_adapter: s.originAdapter,
+        supports_inject: s.supportsInject,
+        recommended_action: s.recommendedAction,
+      })),
+      shared_files: buildSharedFileStatuses(statuses).map((f) => ({
+        file: f.file,
+        adapters: f.adapters,
+        state: f.state,
+        origin_adapter: f.originAdapter,
+      })),
+    }, null, 2))
+    return
+  }
+
+  const idPad = Math.max(...statuses.map((s) => s.id.length))
+  console.log('Adapter status:\n')
+  for (const s of statuses) {
+    const origin = s.originAdapter && s.originAdapter !== s.id ? ` by ${s.originAdapter}` : ''
+    console.log(`  ${s.id.padEnd(idPad)}  ${s.file.padEnd(10)} ${s.state}${origin}`)
+  }
+
+  const actionable = statuses.filter((s) => s.state !== 'injected' && s.state !== 'full-generated')
+  if (actionable.length > 0) {
+    console.log('\nRecommended actions:\n')
+    for (const s of actionable) console.log(`  ${s.id}:\n    ${s.recommendedAction}`)
+  } else {
+    console.log('\nAll adapters are installed or up to date.')
+  }
+}

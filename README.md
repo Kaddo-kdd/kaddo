@@ -249,6 +249,8 @@ kaddo adapters install kiro             # write AGENTS.md for Kiro (alias: kaddo
 kaddo adapters install <adapter> --dry-run  # preview
 kaddo adapters install <adapter> --inject   # add/update only the Kaddo block in a team-owned file
 kaddo adapters install <adapter> --force    # overwrite
+kaddo adapters list                         # the supported adapters (alias: ls)
+kaddo adapters status                       # install state of each adapter in this project (alias: check)
 ```
 
 Both are compact, generated **projections** of the project's knowledge map, operating rules,

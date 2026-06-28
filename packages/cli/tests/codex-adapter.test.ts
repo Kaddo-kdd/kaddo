@@ -13,7 +13,7 @@ import {
   KADDO_BEGIN_MARKER,
   KADDO_END_MARKER,
 } from '../src/core/codex-adapter.js'
-import { runAdaptersInstall } from '../src/commands/adapters.js'
+import { runAdaptersInstall, runAdaptersList, runAdaptersStatus } from '../src/commands/adapters.js'
 
 let tmp: string
 function write(rel: string, content: string) {
@@ -785,5 +785,113 @@ describe('kaddo adapters install codex --inject command (VS-065.2)', () => {
     const after = fs.readFileSync(path.join(tmp, 'AGENTS.md'), 'utf-8')
     expect(after).toBe(before)
     expect(after.split(KADDO_BEGIN_MARKER).length - 1).toBe(0)
+  })
+})
+
+describe('adapters list & status (VS-070)', () => {
+  let logSpy: ReturnType<typeof vi.spyOn>
+  let errSpy: ReturnType<typeof vi.spyOn>
+  let exitSpy: ReturnType<typeof vi.spyOn>
+  const output = () => logSpy.mock.calls.map((c) => c.join(' ')).join('\n')
+  beforeEach(() => {
+    vi.spyOn(process, 'cwd').mockReturnValue(tmp)
+    logSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
+    errSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    exitSpy = vi.spyOn(process, 'exit').mockImplementation((() => { throw new Error('exit') }) as never)
+  })
+  afterEach(() => vi.restoreAllMocks())
+
+  it('AC1/AC3/AC4/AC5: list shows every adapter, its file and inject support', () => {
+    runAdaptersList({})
+    const out = output()
+    for (const id of ['codex', 'claude', 'opencode', 'antigravity', 'kiro']) expect(out).toContain(id)
+    expect(out).toContain('AGENTS.md')
+    expect(out).toContain('CLAUDE.md')
+    expect(out).toContain('Supports --inject')
+  })
+
+  it('AC6/AC32: list --json returns valid JSON and needs no project', () => {
+    runAdaptersList({ json: true })
+    const j = JSON.parse(output())
+    expect(j.adapters).toHaveLength(5)
+    expect(j.adapters[0]).toMatchObject({ id: 'codex', label: 'Codex', file: 'AGENTS.md', supports_inject: true })
+  })
+
+  it('AC7/AC15: status reports missing and recommends install', () => {
+    config()
+    runAdaptersStatus({})
+    const out = output()
+    expect(out).toContain('codex')
+    expect(out).toContain('missing')
+    expect(out).toContain('kaddo adapters install claude')
+  })
+
+  it('AC8/AC16: status detects team-owned and recommends --inject', () => {
+    config()
+    write('AGENTS.md', '# Team instructions\n\nRun tests with pnpm test.\n')
+    runAdaptersStatus({})
+    const out = output()
+    expect(out).toContain('team-owned')
+    expect(out).toContain('kaddo adapters install codex --inject')
+  })
+
+  it('AC9: status detects injected', () => {
+    config()
+    write('AGENTS.md', '# Team\n')
+    runAdaptersInstall('codex', { inject: true })
+    runAdaptersStatus({})
+    expect(output()).toContain('injected')
+  })
+
+  it('AC10: status detects legacy-injected', () => {
+    config()
+    write('AGENTS.md', '# Team\n\n<!-- BEGIN KADDO CODEX ADAPTER -->\nold\n<!-- END KADDO CODEX ADAPTER -->\n')
+    runAdaptersStatus({})
+    expect(output()).toContain('legacy-injected')
+  })
+
+  it('AC11/AC22/AC23: status detects full-generated and shared AGENTS.md origin', () => {
+    config()
+    runAdaptersInstall('kiro', {})
+    runAdaptersStatus({})
+    const out = output()
+    expect(out).toContain('full-generated')
+    expect(out).toContain('by kiro') // shared file shows origin
+  })
+
+  it('AC12/AC19: status detects broken-markers and recommends fixing them', () => {
+    config()
+    write('AGENTS.md', `# Team\n${KADDO_BEGIN_MARKER}\nhalf open\n`)
+    runAdaptersStatus({})
+    const out = output()
+    expect(out).toContain('broken-markers')
+    expect(out.toLowerCase()).toContain('fix the incomplete kaddo adapter markers')
+  })
+
+  it('AC20/AC21: status --json carries id/label/file/state/supports_inject/origin + shared_files', () => {
+    config()
+    runAdaptersInstall('kiro', {})
+    logSpy.mockClear() // drop install's footer output so only the JSON remains
+    runAdaptersStatus({ json: true })
+    const j = JSON.parse(output())
+    const codex = j.adapters.find((a: { id: string }) => a.id === 'codex')
+    expect(codex).toMatchObject({ id: 'codex', label: 'Codex', file: 'AGENTS.md', state: 'full-generated', origin_adapter: 'kiro', supports_inject: true })
+    expect(typeof codex.recommended_action).toBe('string')
+    const shared = j.shared_files.find((f: { file: string }) => f.file === 'AGENTS.md')
+    expect(shared.adapters).toEqual(['codex', 'opencode', 'antigravity', 'kiro'])
+    expect(shared.origin_adapter).toBe('kiro')
+  })
+
+  it('AC25/AC27/AC29: status does not modify files, knowledge/ or .kaddo/', () => {
+    config()
+    write('knowledge/business/business.md', '---\ntype: business\n---\n# B')
+    write('AGENTS.md', '# Team\n')
+    const kb = fs.readFileSync(path.join(tmp, 'knowledge/business/business.md'), 'utf-8')
+    const ag = fs.readFileSync(path.join(tmp, 'AGENTS.md'), 'utf-8')
+    const cfg = fs.readFileSync(path.join(tmp, '.kaddo/config.yml'), 'utf-8')
+    runAdaptersStatus({})
+    expect(fs.readFileSync(path.join(tmp, 'knowledge/business/business.md'), 'utf-8')).toBe(kb)
+    expect(fs.readFileSync(path.join(tmp, 'AGENTS.md'), 'utf-8')).toBe(ag)
+    expect(fs.readFileSync(path.join(tmp, '.kaddo/config.yml'), 'utf-8')).toBe(cfg)
   })
 })

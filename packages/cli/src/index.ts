@@ -23,7 +23,7 @@ import { runReportImpact } from './commands/report.js'
 import { runSavings, runSavingsInit } from './commands/savings.js'
 import { runDrift } from './commands/drift.js'
 import { runQuestions } from './commands/questions.js'
-import { runAdaptersInstall } from './commands/adapters.js'
+import { runAdaptersInstall, runAdaptersList, runAdaptersStatus } from './commands/adapters.js'
 
 // Single source of truth for the version: read it from package.json at runtime so the CLI
 // `--version` can never drift from the published package version. `../package.json` resolves
@@ -197,6 +197,24 @@ adaptersCmd
   .option('--dry-run', 'Print the content without writing files')
   .action((adapter: string, opts: { force?: boolean; inject?: boolean; dryRun?: boolean }) => {
     runAdaptersInstall(adapter, opts)
+  })
+
+adaptersCmd
+  .command('list')
+  .alias('ls')
+  .description('List the supported adapters and their target files')
+  .option('--json', 'Output JSON')
+  .action((opts: { json?: boolean }) => {
+    runAdaptersList(opts)
+  })
+
+adaptersCmd
+  .command('status')
+  .alias('check')
+  .description('Show the install state of each adapter in this project (read-only)')
+  .option('--json', 'Output JSON')
+  .action((opts: { json?: boolean }) => {
+    runAdaptersStatus(opts)
   })
 
 // Alias: `kaddo export <adapter>`.

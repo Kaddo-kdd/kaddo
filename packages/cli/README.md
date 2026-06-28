@@ -527,6 +527,7 @@ create --from roadmap → owners → guard → explain`.
 | v3.29 | OpenCode adapter: `kaddo adapters install opencode` (alias `kaddo export opencode`) generates an `AGENTS.md` projection reusing the shared adapter common core (`--dry-run`/`--force`/`--inject` + inject guard) |
 | v3.30 | Antigravity adapter: `kaddo adapters install antigravity` (alias `kaddo export antigravity`) generates an `AGENTS.md` projection reusing the shared adapter common core (`--dry-run`/`--force`/`--inject` + inject guard) |
 | v3.31 | Kiro adapter: `kaddo adapters install kiro` (alias `kaddo export kiro`) generates an `AGENTS.md` projection reusing the shared adapter common core (`--dry-run`/`--force`/`--inject` + inject guard) |
+| v3.32 | Adapter discovery & status: `kaddo adapters list` (alias `ls`) and `kaddo adapters status` (alias `check`) — read-only catalog + per-adapter install state (missing/team-owned/injected/legacy-injected/full-generated/broken-markers), shared-`AGENTS.md` origin detection, `--json` |
 
 **Optional modules (installed with `kaddo add`):**
 
