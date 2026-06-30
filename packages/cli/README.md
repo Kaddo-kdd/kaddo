@@ -529,6 +529,7 @@ create --from roadmap → owners → guard → explain`.
 | v3.31 | Kiro adapter: `kaddo adapters install kiro` (alias `kaddo export kiro`) generates an `AGENTS.md` projection reusing the shared adapter common core (`--dry-run`/`--force`/`--inject` + inject guard) |
 | v3.32 | Adapter discovery & status: `kaddo adapters list` (alias `ls`) and `kaddo adapters status` (alias `check`) — read-only catalog + per-adapter install state (missing/team-owned/injected/legacy-injected/full-generated/broken-markers), shared-`AGENTS.md` origin detection, `--json` |
 | v3.33 | Open questions resolution tracking: mark questions `[open]`/`[resolved]`/`[assumed]`/`[deferred]` (EN+ES); only `open` blocks readiness, so assumed/resolved/deferred decisions stop false blocks. `kaddo questions` shows status counts + `resolution_status` in JSON |
+| v3.34 | Pre-AI onboarding: `kaddo onboarding` (alias `onboard`) / `kaddo report onboarding` — read-only diagnosis of an existing project's readiness (scan/understand/knowledge/questions/roadmap/work-items/adapters) with a single recommended next step; `--json` |
 
 **Optional modules (installed with `kaddo add`):**
 

@@ -1099,6 +1099,16 @@ on invisible assumptions. When you find unresolved questions, suggest marking ea
 token so Kaddo can track them: \`[open]\`, \`[resolved]\`, \`[assumed]\` or \`[deferred]\` (ES: \`[abierta]\`,
 \`[resuelta]\`, \`[asumida]\`, \`[diferida]\`). Only \`open\` questions block readiness.
 
+## Pre-AI projects
+
+For **pre-AI** projects (existing code, little structured knowledge), use \`kaddo onboarding\` as the
+compass: it diagnoses the current state and recommends a single next step along the cycle
+\`init → scan → understand → onboarding → questions → roadmap → create --from roadmap → adapter →
+implement → guard\`. Use the \`scan\` and \`understand\` outputs as input — **do not invent project
+goals or capabilities**. Capture unknowns as \`[open]\` questions and safe, explicit defaults as
+\`[assumed]\`. Build \`knowledge/tech/current-state.md\` and \`knowledge/tech/codebase.md\` from real
+repo signals before drafting the roadmap or the first Work Item.
+
 ## When to Use
 
 Use this agent after \`kaddo bootstrap\` and after the business artifacts are drafted.

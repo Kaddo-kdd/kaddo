@@ -24,6 +24,7 @@ import { runSavings, runSavingsInit } from './commands/savings.js'
 import { runDrift } from './commands/drift.js'
 import { runQuestions } from './commands/questions.js'
 import { runAdaptersInstall, runAdaptersList, runAdaptersStatus } from './commands/adapters.js'
+import { runOnboarding, runOnboardingReport } from './commands/onboarding.js'
 
 // Single source of truth for the version: read it from package.json at runtime so the CLI
 // `--version` can never drift from the published package version. `../package.json` resolves
@@ -161,6 +162,13 @@ reportCmd
     runDrift(opts)
   })
 
+reportCmd
+  .command('onboarding')
+  .description('Write the pre-AI onboarding report to .kaddo/reports/ (deterministic, no LLM)')
+  .action(() => {
+    runOnboardingReport()
+  })
+
 program
   .command('drift')
   .description('Drift Trend Report from recorded `kaddo guard --record` history')
@@ -184,6 +192,15 @@ program
   .option('--json', 'Output JSON instead of a summary')
   .option('--output <path>', 'Write the report to a file')
   .action(questionsAction)
+
+program
+  .command('onboarding')
+  .alias('onboard')
+  .description('Diagnose a pre-AI project and recommend the next step (read-only)')
+  .option('--json', 'Output JSON')
+  .action((opts: { json?: boolean }) => {
+    runOnboarding(opts)
+  })
 
 const adaptersCmd = program
   .command('adapters')
