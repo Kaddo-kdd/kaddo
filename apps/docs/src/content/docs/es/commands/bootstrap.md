@@ -1,77 +1,75 @@
 ---
 title: kaddo bootstrap
-description: Construye la base de conocimiento inicial de un proyecto nuevo en las capas Negocio → Arquitectura → Codebase → Desarrollo.
+description: Crea el baseline estructural de conocimiento para cualquier proyecto — new, pre-ai o legacy — según project.state.
 ---
 
 ```bash
 kaddo bootstrap
 ```
 
-Para **proyectos nuevos**, `kaddo bootstrap` convierte una idea inicial en conocimiento
-estructurado **antes** de escribir código. Genera la base **mínima** de las cuatro capas
-macro del proyecto desde el template registry:
+`kaddo bootstrap` crea el **baseline estructural de conocimiento** que Kaddo espera. No es
+"bootstrap de proyecto nuevo" — es **bootstrap del baseline de conocimiento** y aplica a cualquier
+tipo de proyecto. Lo que cambia según `project.state` es el **contenido y la orientación** de las
+plantillas, no si bootstrap aplica:
+
+| Estado | Orientación |
+|---|---|
+| `new` | intención — visión de producto, capacidades planeadas, dirección técnica inicial |
+| `pre-ai` | descubrimiento — estado actual, capacidades observadas, supuestos, preguntas abiertas |
+| `legacy` | riesgo — restricciones, criticidad, dependencias, deuda técnica, modernización |
+
+`bootstrap` es determinista: nunca usa un LLM, nunca genera código, nunca decide la arquitectura,
+nunca instala agents/skills, y nunca ejecuta scan/context/git. Escribe plantillas iniciales (con
+placeholders, supuestos y preguntas `[open]`) que luego refinás con agentes.
+
+## Qué crea
+
+El baseline común (archivos + directorios), con contenido según el estado:
 
 ```txt
-Business → Product → Tech → Delivery
+knowledge/business/business.md
+knowledge/product/product.md
+knowledge/product/capabilities.md
+knowledge/tech/codebase.md
+knowledge/tech/current-state.md
+knowledge/tech/decisions/
+knowledge/delivery/roadmap.md
+knowledge/delivery/work-items/
 ```
 
-`bootstrap` es determinístico: nunca llama a un LLM, nunca genera código fuente y nunca
-decide la arquitectura. Crea **artefactos iniciales** (con `TBD`, supuestos y preguntas
-abiertas) que luego refinas con los agentes de bootstrap en tu propio LLM. Genera solo la
-base mínima — **Delivery** (roadmap, work items) y las **decisiones** emergen después, vía
-agentes y trabajo real.
-
-## Las capas macro
-
-```mermaid
-flowchart TD
-    A[kaddo init] --> B[kaddo bootstrap]
-    B --> C[business.md]
-    B --> D[product.md]
-    B --> E[codebase.md]
-    E --> G[kaddo context → agentes → roadmap → create --from roadmap]
-    G -.después.-> H[Delivery: roadmap · work-items/]
-```
-
-## Qué genera — conocimiento mínimo suficiente
-
-Exactamente **un archivo consolidado por capa**, con las secciones dentro:
-
-| Capa | Archivo | Secciones |
-|---|---|---|
-| **Business** | `knowledge/business/business.md` | Problem · Users · Value Proposition · Business Rules · Constraints |
-| **Product** | `knowledge/product/product.md` | Product Brief · Capabilities · Scope · Out of Scope · Success Criteria |
-| **Tech** | `knowledge/tech/codebase.md` | Repository Structure · Candidate Stack · Quality Attributes · Standards · Git Strategy · Initial Modules |
-
-Eso es **todo** lo que crea bootstrap. **No** genera archivos especializados
-(`problem.md`, `users.md`, `capabilities.md`, …), ni `knowledge/delivery/` ni
-`knowledge/tech/decisions/`. A medida que el proyecto madura, `business.md` puede dividirse
-en `problem.md`, `users.md`, … y `product.md` en `product-brief.md`, `capabilities.md` —
-esos templates especializados quedan en el registry como templates **avanzados**. El
-conocimiento crece progresivamente; nunca estás obligado a empezar con todo.
-
-**Los artefactos consolidados son conocimiento válido.** Kaddo reconoce `business.md`,
-`product.md` y `codebase.md` por su `type` de front-matter, así `explain`/`understand` los
-reportan como conocimiento real (estado *Consolidated*) — no como "missing".
+Cada archivo generado lleva `project_state:` en su front matter. Las plantillas `pre-ai` y `legacy`
+agregan secciones de descubrimiento/riesgo (p. ej. *Observed technical signals*, *Risks of
+interpretation*, *Critical dependencies*, *Modernization notes*).
 
 ## Comportamiento
 
-- Requiere `kaddo init` primero (si no: `Run 'kaddo init' first.`).
-- Orientado a `state: new`. En `pre-ai`/`legacy` avisa y pide confirmación.
-- **Nunca sobrescribe** artefactos existentes — se reportan como skipped.
-- Todos los artefactos vienen del template registry central.
+- Requiere `kaddo init` primero.
+- **Mensajes según el estado** — ya no aparece el warning "this project is not marked as new" en
+  `pre-ai`/`legacy`.
+- **Nunca sobrescribe** archivos existentes — se reportan como omitidos. Un `knowledge/knowledge.md`,
+  `roadmap.md` o `work-items/` existente se conserva.
+- **Idempotente** — volver a correrlo no escribe nada nuevo.
+- **No** instala agents ni skills — eso sigue en `kaddo add agents` / `kaddo add skills`.
+
+## Dónde encaja
+
+```txt
+kaddo init → kaddo bootstrap → kaddo add agents → kaddo add skills → …
+```
+
+[`kaddo explain`](explain/) reporta `bootstrap-incomplete` y recomienda `kaddo bootstrap` hasta que el
+baseline exista; después avanza a `agents-missing` / `skills-missing`. `kaddo understand` también
+recomienda `kaddo bootstrap` primero cuando el baseline está incompleto — los agentes no tienen
+archivos destino que refinar hasta que exista.
 
 ## Siguientes pasos
 
 ```bash
-kaddo context        # prepara el context pack para el LLM
-kaddo add agents     # instala business-agent, bootstrap-agent, codebase-agent
+kaddo add agents     # instala los prompt packs de agentes
+kaddo add skills     # instala skills reutilizables
+kaddo scan           # (pre-ai/legacy) captura señales determinísticas del código
 kaddo understand     # handoff guiado
-# refina los artefactos en tu LLM, luego:
-kaddo create --from roadmap
 ```
 
-Los tres agentes de bootstrap — `business-agent`, `bootstrap-agent` y
-`codebase-agent` — convierten estos artefactos iniciales en definición real.
-Kaddo prepara la estructura; tu LLM y tu equipo aportan el contenido. Kaddo nunca inventa
-hechos de negocio ni escribe código.
+Kaddo prepara la estructura; tu LLM y tu equipo aportan el contenido. Kaddo nunca inventa hechos de
+negocio ni escribe código.

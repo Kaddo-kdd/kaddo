@@ -50,7 +50,10 @@ describe('project language config (VS-051)', () => {
     expect(res.written).toEqual([
       'knowledge/business/business.md',
       'knowledge/product/product.md',
+      'knowledge/product/capabilities.md',
       'knowledge/tech/codebase.md',
+      'knowledge/tech/current-state.md',
+      'knowledge/delivery/roadmap.md',
     ])
     const business = fs.readFileSync(path.join(tmp, 'knowledge/business/business.md'), 'utf8')
     expect(business).toContain('Idioma del proyecto')

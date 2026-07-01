@@ -76,6 +76,15 @@ export function runUnderstand(): void {
     console.log(`Next step: ${assessment.nextStep}`)
   }
 
+  // 5a-readiness (VS-073): if the knowledge baseline is incomplete, recommend `kaddo bootstrap`
+  // first — agents have no target files to refine until the baseline exists.
+  const readiness = exp.readiness
+  if (readiness.overall === 'initialized' || readiness.overall === 'bootstrap-incomplete') {
+    console.log('')
+    console.log(`Project readiness: ${readiness.overall}.`)
+    console.log(`  → ${readiness.recommended_next_step.label}`)
+  }
+
   // Recommended reusable skills (VS-059) for the recommended agents, if any are installed.
   const installedSkills = discoverInstalledSkills(dir)
   if (installedSkills.length > 0 && assessment.recommendedAgents.length > 0) {

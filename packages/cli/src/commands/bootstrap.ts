@@ -1,73 +1,38 @@
-// kaddo bootstrap (VS project-knowledge-bootstrap; realigned in knowledge-repository-realignment).
+// kaddo bootstrap — state-aware knowledge baseline (VS-073).
 //
-// Turns an initialized new project into the minimal knowledge base across the project's
-// macro layers: Business → Product → Tech → Delivery. Deterministic — it writes knowledge
-// artifacts from the template registry. It never calls an LLM, never generates source code,
-// and never decides architecture. Existing files are never overwritten.
+// Creates the structural knowledge baseline Kaddo expects, tailored to the project's `project.state`
+// (new / pre-ai / legacy). Bootstrap is NOT "new-project bootstrap" — it is "knowledge baseline
+// bootstrap" and applies to every project type; only the template content differs by state.
 //
-// Bootstrap generates only the minimal base (Business + Product + tech/codebase.md).
-// Roadmap, work items and decisions emerge later through agents and project evolution.
+// Deterministic: writes template files + ensures directories from the template set. Never overwrites
+// existing files (reported as skipped), never installs agents/skills, never runs scan/context/git,
+// never calls an LLM, never generates source code or decides architecture.
 
-import { cwd, exists, join, writeFile } from '../utils/fs.js'
-import { intro, outro, log, confirm } from '../utils/ui.js'
-import { loadConfig, projectLanguage, ConfigError, type ProjectLanguage } from '../core/config.js'
-import { getTemplate } from '../templates/registry.js'
+import { cwd, exists, join, writeFile, ensureDir } from '../utils/fs.js'
+import { intro, outro, log } from '../utils/ui.js'
+import { loadConfig, projectLanguage, ConfigError, type ProjectLanguage, type ProjectState } from '../core/config.js'
+import { baselineTemplate, type BaselineKind } from '../core/bootstrap-templates.js'
+import { printCommandFooter } from '../core/command-help.js'
 
 const CONFIG_PATH = '.kaddo/config.yml'
 
-type BootstrapLayer = 'Business' | 'Product' | 'Tech'
-type LayeredTarget = { layer: BootstrapLayer; path: string; templateId: string }
-
-const TARGETS: LayeredTarget[] = [
-  // Minimum sufficient knowledge: one consolidated file per layer. Specialized
-  // artifacts (problem.md, users.md, capabilities.md, …) appear later, as the project
-  // matures, via agents and refinement — not at bootstrap.
-  { layer: 'Business', path: 'knowledge/business/business.md', templateId: 'business' },
-  { layer: 'Product', path: 'knowledge/product/product.md', templateId: 'product' },
-  { layer: 'Tech', path: 'knowledge/tech/codebase.md', templateId: 'codebase' },
+type FileTarget = { path: string; kind: BaselineKind }
+const FILE_TARGETS: FileTarget[] = [
+  { path: 'knowledge/business/business.md', kind: 'business' },
+  { path: 'knowledge/product/product.md', kind: 'product' },
+  { path: 'knowledge/product/capabilities.md', kind: 'capabilities' },
+  { path: 'knowledge/tech/codebase.md', kind: 'codebase' },
+  { path: 'knowledge/tech/current-state.md', kind: 'current-state' },
+  { path: 'knowledge/delivery/roadmap.md', kind: 'roadmap' },
 ]
-
-export const BOOTSTRAP_LAYERS: BootstrapLayer[] = ['Business', 'Product', 'Tech']
+// Directories that must exist for later artifacts (kept via a .gitkeep placeholder).
+const DIR_TARGETS = ['knowledge/tech/decisions', 'knowledge/delivery/work-items']
 
 export type BootstrapResult = {
+  state: ProjectState
   written: string[]
   skipped: string[]
-  layers: BootstrapLayer[]
-}
-
-/**
- * Generate the minimal initial knowledge base from the template registry. Pure and
- * deterministic; never overwrites existing files (reported as skipped). It does not
- * generate roadmap, work items or decisions — those emerge later through agents.
- */
-export function bootstrap(dir: string): BootstrapResult {
-  const written: string[] = []
-  const skipped: string[] = []
-
-  // Knowledge language (VS-051). The CLI does not translate template prose — it records the
-  // language directive so the bootstrap-agent fills the body in the configured language.
-  let language: ProjectLanguage = 'en'
-  try {
-    const config = loadConfig(dir)
-    if (config) language = projectLanguage(config)
-  } catch {
-    // fall back to English on unreadable config
-  }
-
-  for (const target of TARGETS) {
-    const full = join(dir, target.path)
-    if (exists(full)) {
-      skipped.push(target.path)
-      continue
-    }
-    const tpl = getTemplate(target.templateId)
-    const base = tpl ? tpl.content : ''
-    const content = withLanguageDirective(base, language)
-    writeFile(full, content.endsWith('\n') ? content : `${content}\n`)
-    written.push(target.path)
-  }
-
-  return { written, skipped, layers: BOOTSTRAP_LAYERS }
+  createdDirs: string[]
 }
 
 /** Insert a project-language directive after the front matter (no-op for English). */
@@ -81,63 +46,97 @@ function withLanguageDirective(content: string, language: ProjectLanguage): stri
   return `${note}\n${content}`
 }
 
+/**
+ * Create the state-aware knowledge baseline. Pure and deterministic; never overwrites existing files
+ * (reported as skipped). Does not install agents/skills or generate roadmap candidates/Work Items.
+ */
+export function bootstrap(dir: string): BootstrapResult {
+  const written: string[] = []
+  const skipped: string[] = []
+  const createdDirs: string[] = []
+
+  let state: ProjectState = 'new'
+  let language: ProjectLanguage = 'en'
+  try {
+    const config = loadConfig(dir)
+    if (config) {
+      state = config.project.state
+      language = projectLanguage(config)
+    }
+  } catch {
+    // fall back to defaults on unreadable config
+  }
+
+  for (const target of FILE_TARGETS) {
+    const full = join(dir, target.path)
+    if (exists(full)) {
+      skipped.push(target.path)
+      continue
+    }
+    const content = withLanguageDirective(baselineTemplate(target.kind, state), language)
+    writeFile(full, content.endsWith('\n') ? content : `${content}\n`)
+    written.push(target.path)
+  }
+
+  for (const d of DIR_TARGETS) {
+    const full = join(dir, d)
+    if (exists(full)) {
+      skipped.push(`${d}/`)
+      continue
+    }
+    ensureDir(full)
+    writeFile(join(full, '.gitkeep'), '')
+    createdDirs.push(`${d}/`)
+  }
+
+  return { state, written, skipped, createdDirs }
+}
+
 export async function runBootstrap(dir: string = cwd()): Promise<void> {
   intro('kaddo bootstrap')
 
   if (!exists(join(dir, CONFIG_PATH))) {
     console.error('Kaddo is not initialized in this project.')
-    console.error("Run `kaddo init` first.")
+    console.error('Run `kaddo init` first.')
     process.exit(1)
   }
 
-  let state = 'unknown'
+  let state: ProjectState = 'new'
   try {
     const config = loadConfig(dir)
-    state = config?.project.state ?? 'unknown'
+    state = config?.project.state ?? 'new'
   } catch (err) {
-    const message = err instanceof ConfigError ? err.message : String(err)
-    console.error(message)
+    console.error(err instanceof ConfigError ? err.message : String(err))
     process.exit(1)
   }
 
-  log.info(`Project state: ${state}`)
-  log.info('Base layers: Business → Product → Tech → Delivery')
-
-  if (state !== 'new') {
-    log.warn('This project is not marked as new. Bootstrap is designed for new projects.')
-    const ok = await confirm({ message: 'Continue anyway?', initialValue: false })
-    if (!ok) {
-      outro('Bootstrap cancelled.')
-      return
-    }
-  }
+  const stateLabel = state === 'pre-ai' ? 'pre-ai' : state
+  log.info(`Project state: ${stateLabel}`)
+  log.info(`Creating ${stateLabel} knowledge baseline.`)
+  log.info('Existing files will not be overwritten.')
 
   const result = bootstrap(dir)
 
   console.log('')
-  console.log('Bootstrap layers:')
-  for (const layer of result.layers) console.log(`  ✓ ${layer}`)
-  console.log('')
-
-  if (result.written.length > 0) {
+  if (result.written.length > 0 || result.createdDirs.length > 0) {
     console.log('Created:')
     for (const p of result.written) console.log(`  - ${p}`)
+    for (const d of result.createdDirs) console.log(`  - ${d}`)
   }
   if (result.skipped.length > 0) {
     console.log('')
-    console.log('Kept existing (skipped):')
+    console.log('Skipped (kept existing):')
     for (const p of result.skipped) console.log(`  - ${p}`)
   }
   console.log('')
 
-  console.log('')
   log.info(
     'When you pass the context pack to your LLM/coding agent, it must never commit, push or ' +
       'merge without your confirmation — and create a branch before implementing.'
   )
+  printCommandFooter('bootstrap')
   outro(
-    'Minimal knowledge base ready (Business → Product → Tech). Run `kaddo context` and ' +
-      '`kaddo add agents`, then refine with the business-agent, bootstrap-agent and ' +
-      'codebase-agent. Roadmap and work items come next under knowledge/delivery/.'
+    `${stateLabel} knowledge baseline ready. Next: \`kaddo add agents\` (then \`kaddo add skills\`), ` +
+      'and refine the knowledge with the relevant agents.'
   )
 }

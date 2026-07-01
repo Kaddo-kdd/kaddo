@@ -531,6 +531,7 @@ create --from roadmap → owners → guard → explain`.
 | v3.33 | Open questions resolution tracking: mark questions `[open]`/`[resolved]`/`[assumed]`/`[deferred]` (EN+ES); only `open` blocks readiness, so assumed/resolved/deferred decisions stop false blocks. `kaddo questions` shows status counts + `resolution_status` in JSON |
 | v3.34 | Pre-AI onboarding: `kaddo onboarding` (alias `onboard`) / `kaddo report onboarding` — read-only diagnosis of an existing project's readiness (scan/understand/knowledge/questions/roadmap/work-items/adapters) with a single recommended next step; `--json` |
 | v3.35 | Folded onboarding into `kaddo explain`: removed `kaddo onboarding`/`onboard`/`report onboarding`; project readiness + single recommended next step now live in `kaddo explain` (human `## Project Readiness` + `readiness` in agent JSON) |
+| v3.36 | State-aware bootstrap: `kaddo bootstrap` creates the full knowledge baseline for any `project.state` (new/pre-ai/legacy) with state-specific templates — no more new-only warning; idempotent, never overwrites, ensures `tech/decisions/` and `delivery/work-items/` |
 
 **Optional modules (installed with `kaddo add`):**
 
