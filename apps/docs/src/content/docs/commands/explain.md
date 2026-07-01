@@ -146,3 +146,31 @@ lives. Each layer gets a maturity status:
 Discovery priority: **front-matter type → Kaddo conventions → path → file name** — never the
 other way around. Work Items are recognized by their work-item type under
 `knowledge/delivery/work-items/` (ADRs and untyped files are never Work Items).
+
+## Project Readiness
+
+`kaddo explain` also reports **project readiness** — where the project sits in the Kaddo cycle — and
+recommends the **single** next step. It reuses existing signals only (config, scan, understand,
+agents/skills, knowledge files, [open-questions resolution](../open-questions/), roadmap, Work Items
+and [adapter status](../custom-adapters/)); it never runs commands, installs adapters, edits
+knowledge or code, no git, no LLM.
+
+The human output adds a `## Project Readiness` section and `kaddo explain --for agent` (JSON) adds a
+`readiness` object with `overall`, `signals` and a single `recommended_next_step`.
+
+| Overall | Recommended next step |
+|---|---|
+| `not-initialized` | `kaddo init` |
+| `initialized` | `kaddo scan` |
+| `bootstrap-incomplete` | `kaddo bootstrap` |
+| `agents-missing` | `kaddo add agents` |
+| `skills-missing` | `kaddo add skills` |
+| `scanned` | `kaddo understand` |
+| `knowledge-incomplete` | complete the prioritized knowledge file |
+| `needs-decisions` | resolve / assume / defer blocking open questions |
+| `ready-for-roadmap` | `kaddo roadmap` |
+| `ready-for-work-item` | `kaddo create --from roadmap` |
+| `ready-for-implementation` | install an adapter, then implement and `kaddo guard` |
+
+Only `blocking + open` questions move readiness to `needs-decisions`; assumed / resolved / deferred
+questions are surfaced but never block. (`new` and `legacy` projects report a limited status.)

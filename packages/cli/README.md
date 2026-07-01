@@ -530,6 +530,7 @@ create --from roadmap → owners → guard → explain`.
 | v3.32 | Adapter discovery & status: `kaddo adapters list` (alias `ls`) and `kaddo adapters status` (alias `check`) — read-only catalog + per-adapter install state (missing/team-owned/injected/legacy-injected/full-generated/broken-markers), shared-`AGENTS.md` origin detection, `--json` |
 | v3.33 | Open questions resolution tracking: mark questions `[open]`/`[resolved]`/`[assumed]`/`[deferred]` (EN+ES); only `open` blocks readiness, so assumed/resolved/deferred decisions stop false blocks. `kaddo questions` shows status counts + `resolution_status` in JSON |
 | v3.34 | Pre-AI onboarding: `kaddo onboarding` (alias `onboard`) / `kaddo report onboarding` — read-only diagnosis of an existing project's readiness (scan/understand/knowledge/questions/roadmap/work-items/adapters) with a single recommended next step; `--json` |
+| v3.35 | Folded onboarding into `kaddo explain`: removed `kaddo onboarding`/`onboard`/`report onboarding`; project readiness + single recommended next step now live in `kaddo explain` (human `## Project Readiness` + `readiness` in agent JSON) |
 
 **Optional modules (installed with `kaddo add`):**
 

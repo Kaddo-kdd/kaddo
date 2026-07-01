@@ -412,3 +412,32 @@ describe('project explain — mapped modules (module-aware)', () => {
     expect(json).not.toHaveProperty('mappedModules')
   })
 })
+
+describe('explain — Project Readiness (VS-072.1)', () => {
+  it('AC5/AC12: human output has a Project Readiness section + single next step (initialized → scan)', () => {
+    initConfig()
+    const md = renderExplanationHuman(buildProjectExplanation(tmpDir))
+    expect(md).toContain('## Project Readiness')
+    expect(md).toContain('overall: initialized')
+    expect(md).toContain('### Recommended next step')
+    expect(md).toContain('kaddo scan')
+  })
+
+  it('AC6/AC7/AC8/AC9: agent JSON includes a readiness object with overall/signals/next-step', () => {
+    initConfig()
+    writeScan()
+    const json = JSON.parse(renderExplanationAgent(buildProjectExplanation(tmpDir)))
+    expect(json.readiness).toBeTypeOf('object')
+    expect(json.readiness.overall).toBe('bootstrap-incomplete')
+    expect(json.readiness.signals.scan).toBe('available')
+    expect(json.readiness.recommended_next_step.command).toBe('kaddo bootstrap')
+  })
+
+  it('AC14: detects incomplete bootstrap baseline after scan', () => {
+    initConfig()
+    writeScan()
+    const r = buildProjectExplanation(tmpDir).readiness
+    expect(r.signals.bootstrap_baseline).toBe('incomplete')
+    expect(r.overall).toBe('bootstrap-incomplete')
+  })
+})

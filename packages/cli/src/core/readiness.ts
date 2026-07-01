@@ -1,22 +1,25 @@
-// Pre-AI Onboarding Report (VS-072).
+// Project readiness (VS-072 / folded into explain by VS-072.1).
 //
-// Deterministic diagnosis of how ready an existing (pre-ai) project is to work with agents. Reads
-// existing signals only — config, scan, understand, knowledge files, open-questions readiness,
-// roadmap, Work Items and adapter status. Never runs other commands, never writes (the command layer
-// writes the derived report under .kaddo/reports/), never edits knowledge, no git, no LLM.
+// Deterministic diagnosis of where a project sits in the Kaddo cycle and the single next step. Reads
+// existing signals only — config, scan, understand, agents/skills, knowledge files, open-questions
+// readiness, roadmap, Work Items and adapter status. Never runs other commands, never writes, never
+// edits knowledge, no git, no LLM. Surfaced inside `kaddo explain`.
 
 import { exists, readFile, join } from '../utils/fs.js'
 import { loadConfig } from './config.js'
 import { buildOpenQuestionsReport } from './open-questions.js'
 import { discoverWorkItems } from '../services/knowledge-artifacts.js'
-import { buildAdapterStatuses } from './codex-adapter.js'
+import { buildAdapterStatuses, buildCodexAdapterContext } from './codex-adapter.js'
 
-export type OnboardingStatus =
+export type ReadinessStatus =
   | 'not-initialized'
   | 'not-applicable'
   | 'legacy-project'
   | 'initialized'
   | 'scanned'
+  | 'bootstrap-incomplete'
+  | 'agents-missing'
+  | 'skills-missing'
   | 'knowledge-incomplete'
   | 'needs-decisions'
   | 'ready-for-roadmap'
@@ -27,14 +30,16 @@ export type Presence = 'present' | 'missing' | 'weak'
 export type RoadmapSignal = 'missing' | 'empty' | 'has-candidates'
 export type WorkItemsSignal = 'none' | 'none-ready' | 'ready' | 'in-progress'
 
-export type OnboardingReport = {
-  generated_at: string
+export type ReadinessReport = {
   project_name: string
   project_type: string
-  status: OnboardingStatus
+  overall: ReadinessStatus
   signals: {
     scan: 'available' | 'missing'
     understand: 'available' | 'missing'
+    bootstrap_baseline: 'complete' | 'incomplete'
+    agents: 'present' | 'missing'
+    skills: 'present' | 'missing'
     current_state: Presence
     codebase: Presence
     capabilities: Presence
@@ -59,8 +64,8 @@ const KNOWLEDGE_FILES: { key: 'current_state' | 'codebase' | 'capabilities' | 'p
   { key: 'business', path: 'knowledge/business/business.md', label: 'knowledge/business/business.md' },
 ]
 
-/** Presence of a knowledge file: missing, weak (only frontmatter/headings) or present (real body). */
-function knowledgePresence(dir: string, rel: string): Presence {
+/** Presence of a knowledge file: missing, weak (only front matter/headings) or present (real body). */
+export function knowledgePresence(dir: string, rel: string): Presence {
   const p = join(dir, rel)
   if (!exists(p)) return 'missing'
   let md: string
@@ -70,7 +75,7 @@ function knowledgePresence(dir: string, rel: string): Presence {
     return 'missing'
   }
   const body = md
-    .replace(/^---[\s\S]*?---/m, '') // front matter
+    .replace(/^---[\s\S]*?---/m, '')
     .split(/\r?\n/)
     .filter((l) => !/^\s*#{1,6}\s/.test(l) && !/^\s*$/.test(l) && !/^\s*<!--/.test(l))
     .join(' ')
@@ -87,9 +92,7 @@ function roadmapSignal(dir: string): RoadmapSignal {
   } catch {
     return 'missing'
   }
-  const stripped = md.replace(/^---[\s\S]*?---/m, '')
-  // Candidates = list items / table rows outside an Open Questions section.
-  const lines = stripped.split(/\r?\n/)
+  const lines = md.replace(/^---[\s\S]*?---/m, '').split(/\r?\n/)
   let inOpenQuestions = false
   let candidates = 0
   for (const l of lines) {
@@ -118,18 +121,16 @@ function installedAdapters(dir: string): string[] {
     .map((s) => s.id)
 }
 
-/** Build the deterministic pre-AI onboarding report. */
-export function buildOnboardingReport(dir: string, now: Date = new Date()): OnboardingReport {
+/** Build the deterministic project readiness diagnosis. */
+export function buildReadinessReport(dir: string, now: Date = new Date()): ReadinessReport {
   const config = loadConfig(dir)
-  const ts = now.toISOString()
 
-  const notReady = (status: OnboardingStatus, label: string, command?: string): OnboardingReport => ({
-    generated_at: ts,
+  const stub = (overall: ReadinessStatus, label: string, command?: string): ReadinessReport => ({
     project_name: config?.project.name ?? 'unknown',
     project_type: config?.project.state ?? 'unknown',
-    status,
+    overall,
     signals: {
-      scan: 'missing', understand: 'missing',
+      scan: 'missing', understand: 'missing', bootstrap_baseline: 'incomplete', agents: 'missing', skills: 'missing',
       current_state: 'missing', codebase: 'missing', capabilities: 'missing', product: 'missing', business: 'missing',
       roadmap: 'missing', work_items: 'none', adapters: [],
       blocking_open_questions: 0, assumed_questions: 0, resolved_questions: 0, deferred_questions: 0,
@@ -137,21 +138,25 @@ export function buildOnboardingReport(dir: string, now: Date = new Date()): Onbo
     recommended_next_step: { label, ...(command ? { command } : {}) },
   })
 
-  if (!config) return notReady('not-initialized', 'Run `kaddo init` to initialize Kaddo.', 'kaddo init')
-  if (config.project.state === 'new') return notReady('not-applicable', 'This guide is optimized for pre-AI projects. Use the standard new-project Kaddo flow.')
-  if (config.project.state === 'legacy') return notReady('legacy-project', 'Use the legacy project flow. The onboarding guide targets pre-AI projects.')
+  if (!config) return stub('not-initialized', 'Run `kaddo init` to initialize Kaddo.', 'kaddo init')
+  if (config.project.state === 'new') return stub('not-applicable', 'This project uses the standard new-project Kaddo flow.')
+  if (config.project.state === 'legacy') return stub('legacy-project', 'Use the legacy project flow.')
 
-  // pre-ai: full diagnosis.
   const scan = exists(join(dir, '.kaddo', 'scan.json')) ? 'available' : 'missing'
   const understand = exists(join(dir, '.kaddo', 'understand.md')) ? 'available' : 'missing'
   const presence = Object.fromEntries(KNOWLEDGE_FILES.map((f) => [f.key, knowledgePresence(dir, f.path)])) as Record<typeof KNOWLEDGE_FILES[number]['key'], Presence>
+  const ctx = buildCodexAdapterContext(dir)
+  const agents = ctx.hasAgents ? 'present' : 'missing'
+  const skills = ctx.hasSkills ? 'present' : 'missing'
+  // Bootstrap baseline = the core business + product knowledge the bootstrap step produces.
+  const bootstrapBaseline = presence.business !== 'missing' && presence.product !== 'missing' ? 'complete' : 'incomplete'
   const roadmap = roadmapSignal(dir)
   const work_items = workItemsSignal(dir)
   const adapters = installedAdapters(dir)
   const oq = buildOpenQuestionsReport(dir, now)
 
-  const signals = {
-    scan, understand,
+  const signals: ReadinessReport['signals'] = {
+    scan, understand, bootstrap_baseline: bootstrapBaseline, agents, skills,
     current_state: presence.current_state, codebase: presence.codebase, capabilities: presence.capabilities,
     product: presence.product, business: presence.business,
     roadmap, work_items, adapters,
@@ -159,76 +164,45 @@ export function buildOnboardingReport(dir: string, now: Date = new Date()): Onbo
     assumed_questions: oq.summary.resolution.assumed,
     resolved_questions: oq.summary.resolution.resolved,
     deferred_questions: oq.summary.resolution.deferred,
-  } as OnboardingReport['signals']
+  }
 
-  let status: OnboardingStatus
+  let overall: ReadinessStatus
   let next: { label: string; command?: string }
-
   const firstWeak = KNOWLEDGE_FILES.find((f) => presence[f.key] !== 'present')
 
   if (scan === 'missing') {
-    status = 'initialized'
+    overall = 'initialized'
     next = { label: 'Run `kaddo scan` to capture deterministic signals from the existing code.', command: 'kaddo scan' }
+  } else if (bootstrapBaseline === 'incomplete') {
+    overall = 'bootstrap-incomplete'
+    next = { label: 'Run `kaddo bootstrap` to create the project knowledge baseline.', command: 'kaddo bootstrap' }
+  } else if (agents === 'missing') {
+    overall = 'agents-missing'
+    next = { label: 'Run `kaddo add agents` to install the Kaddo agent prompt packs.', command: 'kaddo add agents' }
+  } else if (skills === 'missing') {
+    overall = 'skills-missing'
+    next = { label: 'Run `kaddo add skills` to install reusable Kaddo skills.', command: 'kaddo add skills' }
   } else if (understand === 'missing') {
-    status = 'scanned'
+    overall = 'scanned'
     next = { label: 'Run `kaddo understand` to summarize the project context.', command: 'kaddo understand' }
   } else if (firstWeak) {
-    status = 'knowledge-incomplete'
+    overall = 'knowledge-incomplete'
     next = { label: `Complete \`${firstWeak.label}\` (it is ${presence[firstWeak.key]}).` }
   } else if (oq.summary.blocking_open > 0) {
-    status = 'needs-decisions'
+    overall = 'needs-decisions'
     next = { label: 'Resolve, assume or defer the blocking open questions (`kaddo questions`).', command: 'kaddo questions' }
   } else if (roadmap !== 'has-candidates') {
-    status = 'ready-for-roadmap'
+    overall = 'ready-for-roadmap'
     next = { label: 'Run `kaddo roadmap` to draft the roadmap from the current knowledge.', command: 'kaddo roadmap' }
   } else if (work_items === 'none' || work_items === 'none-ready') {
-    status = 'ready-for-work-item'
+    overall = 'ready-for-work-item'
     next = { label: 'Run `kaddo create --from roadmap` to materialize the first Work Item.', command: 'kaddo create --from roadmap' }
   } else {
-    status = 'ready-for-implementation'
+    overall = 'ready-for-implementation'
     next = adapters.length > 0
-      ? { label: 'Implement the ready Work Item with an installed adapter, then run `kaddo guard`.' }
-      : { label: 'Install an adapter, then implement the ready Work Item.', command: 'kaddo adapters list' }
+      ? { label: 'Implement the ready Work Item and run `kaddo guard`.' }
+      : { label: 'Run `kaddo adapters list` and install the adapter for your preferred agent.', command: 'kaddo adapters list' }
   }
 
-  return { generated_at: ts, project_name: config.project.name, project_type: config.project.state, status, signals, recommended_next_step: next }
-}
-
-export function serializeOnboardingJson(r: OnboardingReport): string {
-  return JSON.stringify(r, null, 2) + '\n'
-}
-
-export function renderOnboardingMarkdown(r: OnboardingReport): string {
-  const s = r.signals
-  const L: string[] = []
-  L.push('# Pre-AI Onboarding Report', '')
-  L.push('## Summary', '')
-  L.push(`- Project: ${r.project_name}`)
-  L.push(`- Project type: ${r.project_type}`)
-  L.push(`- Status: ${r.status}`)
-  L.push('')
-  if (r.status === 'not-initialized' || r.status === 'not-applicable' || r.status === 'legacy-project') {
-    L.push('## Recommended Next Step', '', r.recommended_next_step.label, '')
-    return L.join('\n')
-  }
-  L.push('## Signals', '')
-  L.push(`- Scan: ${s.scan}`)
-  L.push(`- Understand: ${s.understand}`)
-  L.push(`- Current state: ${s.current_state}`)
-  L.push(`- Codebase: ${s.codebase}`)
-  L.push(`- Capabilities: ${s.capabilities}`)
-  L.push(`- Product: ${s.product}`)
-  L.push(`- Business: ${s.business}`)
-  L.push(`- Roadmap: ${s.roadmap}`)
-  L.push(`- Work Items: ${s.work_items}`)
-  L.push(`- Adapters: ${s.adapters.length > 0 ? s.adapters.join(', ') + ' installed' : 'none installed'}`)
-  L.push('')
-  L.push('## Questions', '')
-  L.push(`- Blocking open: ${s.blocking_open_questions}`)
-  L.push(`- Assumed: ${s.assumed_questions}`)
-  L.push(`- Resolved: ${s.resolved_questions}`)
-  L.push(`- Deferred: ${s.deferred_questions}`)
-  L.push('')
-  L.push('## Recommended Next Step', '', r.recommended_next_step.label, '')
-  return L.join('\n')
+  return { project_name: config.project.name, project_type: config.project.state, overall, signals, recommended_next_step: next }
 }

@@ -148,3 +148,31 @@ un artefacto `type: capabilities`. Cada capa obtiene un estado de madurez:
 Prioridad de descubrimiento: **type del front-matter → convenciones de Kaddo → ruta →
 nombre** — nunca al revés. Los Work Items se reconocen por su tipo de work-item bajo
 `knowledge/delivery/work-items/` (los ADRs y archivos sin tipo nunca son Work Items).
+
+## Project Readiness
+
+`kaddo explain` también reporta **project readiness** — dónde está el proyecto dentro del ciclo
+Kaddo — y recomienda el **único** siguiente paso. Reutiliza solo señales existentes (config, scan,
+understand, agents/skills, archivos de conocimiento, [resolución de preguntas](../open-questions/),
+roadmap, Work Items y [estado de adapters](../custom-adapters/)); nunca ejecuta comandos, instala
+adapters, edita conocimiento o código, sin git, sin LLM.
+
+La salida humana agrega una sección `## Project Readiness` y `kaddo explain --for agent` (JSON) agrega
+un objeto `readiness` con `overall`, `signals` y un único `recommended_next_step`.
+
+| Overall | Siguiente paso recomendado |
+|---|---|
+| `not-initialized` | `kaddo init` |
+| `initialized` | `kaddo scan` |
+| `bootstrap-incomplete` | `kaddo bootstrap` |
+| `agents-missing` | `kaddo add agents` |
+| `skills-missing` | `kaddo add skills` |
+| `scanned` | `kaddo understand` |
+| `knowledge-incomplete` | completar el archivo de conocimiento priorizado |
+| `needs-decisions` | resolver / asumir / diferir preguntas bloqueantes abiertas |
+| `ready-for-roadmap` | `kaddo roadmap` |
+| `ready-for-work-item` | `kaddo create --from roadmap` |
+| `ready-for-implementation` | instalar un adapter, implementar y `kaddo guard` |
+
+Solo las preguntas `blocking + open` mueven el readiness a `needs-decisions`; las assumed / resolved /
+deferred se muestran pero no bloquean. (Los proyectos `new` y `legacy` reportan un estado limitado.)

@@ -71,10 +71,6 @@ export const COMMAND_HELP: Record<string, CommandHelp> = {
     question: 'How does Codex work with this Kaddo project?',
     next: 'Open AGENTS.md, or regenerate it after knowledge changes',
   },
-  onboarding: {
-    question: 'How ready is this pre-AI project to work with agents?',
-    next: 'Run the single recommended next step, then re-run `kaddo onboarding`',
-  },
 }
 
 /** Lines for the contextual footer, or [] if the command has no entry. */

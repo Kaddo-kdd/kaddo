@@ -19,6 +19,7 @@ import {
 } from '../services/mapped-modules.js'
 import { knowledgeLayers, renderLayersMarkdown, type LayerStatus } from './layers.js'
 import { roadmapStats, type RoadmapStats } from './roadmap.js'
+import { buildReadinessReport, type ReadinessReport } from './readiness.js'
 import {
   LIFECYCLE_STATES,
   lifecycleStateOf,
@@ -97,6 +98,8 @@ export type ProjectExplanation = {
   mappedModules: MappedModuleWithCoverage[]
   missingKnowledge: string[]
   suggestedNextSteps: string[]
+  /** Project readiness: where the project sits in the Kaddo cycle + the single next step (VS-072.1). */
+  readiness: ReadinessReport
 }
 
 function normalizeTitle(t: string): string {
@@ -366,6 +369,7 @@ export function buildProjectExplanation(dir: string): ProjectExplanation {
     mappedModules,
     missingKnowledge,
     suggestedNextSteps,
+    readiness: buildReadinessReport(dir),
   }
 }
 
@@ -583,12 +587,38 @@ export function renderExplanationHuman(exp: ProjectExplanation): string {
     lines.push('')
   }
 
+  // Project Readiness (VS-072.1): where the project sits in the Kaddo cycle + the single next step.
+  const r = exp.readiness
+  const s = r.signals
+  lines.push('## Project Readiness')
+  lines.push(`- overall: ${r.overall}`)
+  if (r.overall !== 'not-initialized' && r.overall !== 'not-applicable' && r.overall !== 'legacy-project') {
+    lines.push(`- bootstrap baseline: ${s.bootstrap_baseline}`)
+    lines.push(`- scan: ${s.scan}`)
+    lines.push(`- understand: ${s.understand}`)
+    lines.push(`- agents: ${s.agents}`)
+    lines.push(`- skills: ${s.skills}`)
+    lines.push(`- current-state: ${s.current_state}`)
+    lines.push(`- codebase: ${s.codebase}`)
+    lines.push(`- capabilities: ${s.capabilities}`)
+    lines.push(`- roadmap: ${s.roadmap}`)
+    lines.push(`- work-items: ${s.work_items}`)
+    lines.push(`- adapters: ${s.adapters.length > 0 ? s.adapters.join(', ') + ' installed' : 'none installed'}`)
+    lines.push(`- blocking open questions: ${s.blocking_open_questions}`)
+    lines.push(`- assumptions: ${s.assumed_questions}`)
+    lines.push(`- deferred: ${s.deferred_questions}`)
+  }
+  lines.push('')
+  lines.push('### Recommended next step')
+  lines.push(r.recommended_next_step.label)
+  lines.push('')
+
   return lines.join('\n').trimEnd() + '\n'
 }
 
 export function renderExplanationAgent(exp: ProjectExplanation): string {
   // Expose mapped modules under a stable snake_case key for agents, distinct from add-on
-  // `installed_modules`. The rest of the explanation is emitted as-is.
+  // `installed_modules`. The rest of the explanation is emitted as-is. `readiness` is emitted as-is.
   const { mappedModules, ...rest } = exp
   return JSON.stringify({ ...rest, mapped_modules: mappedModules }, null, 2) + '\n'
 }

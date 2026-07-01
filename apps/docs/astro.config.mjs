@@ -167,7 +167,6 @@ export default defineConfig({
             { label: 'Savings Report', translations: { es: 'Reporte de ahorro' }, slug: 'savings-report' },
             { label: 'Drift Report', translations: { es: 'Reporte de drift' }, slug: 'drift-report' },
             { label: 'Open Questions Gate', translations: { es: 'Preguntas abiertas' }, slug: 'open-questions' },
-            { label: 'Pre-AI Onboarding', translations: { es: 'Onboarding Pre-IA' }, slug: 'onboarding' },
             {
               label: 'Adapters',
               translations: { es: 'Adapters' },
