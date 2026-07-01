@@ -100,6 +100,8 @@ export type ProjectExplanation = {
   suggestedNextSteps: string[]
   /** Project readiness: where the project sits in the Kaddo cycle + the single next step (VS-072.1). */
   readiness: ReadinessReport
+  /** The unified next-step recommendation, shared across context/understand/explain (VS-073.2). */
+  nextStepRecommendation: ReadinessReport['nextStepRecommendation']
 }
 
 function normalizeTitle(t: string): string {
@@ -349,6 +351,8 @@ export function buildProjectExplanation(dir: string): ProjectExplanation {
     )
   }
 
+  const readiness = buildReadinessReport(dir)
+
   return {
     project,
     stack,
@@ -369,7 +373,8 @@ export function buildProjectExplanation(dir: string): ProjectExplanation {
     mappedModules,
     missingKnowledge,
     suggestedNextSteps,
-    readiness: buildReadinessReport(dir),
+    readiness,
+    nextStepRecommendation: readiness.nextStepRecommendation,
   }
 }
 
@@ -578,7 +583,8 @@ export function renderExplanationHuman(exp: ProjectExplanation): string {
     lines.push('- Reason:')
     for (const r of assessment.reasons) lines.push(`  - ${r}`)
   }
-  if (assessment.nextStep) lines.push(`- Next step: ${assessment.nextStep}`)
+  // Unified next step (VS-073.2): the Phase section and Project Readiness show the SAME step.
+  lines.push(`- Next step: ${exp.readiness.recommended_next_step.label}`)
   lines.push('')
 
   if (exp.suggestedNextSteps.length > 0) {
@@ -603,7 +609,6 @@ export function renderExplanationHuman(exp: ProjectExplanation): string {
     lines.push(`- capabilities: ${s.capabilities}`)
     lines.push(`- current-state: ${s.current_state}`)
     lines.push(`- codebase: ${s.codebase}`)
-    lines.push(`- capabilities: ${s.capabilities}`)
     lines.push(`- roadmap: ${s.roadmap}`)
     lines.push(`- work-items: ${s.work_items}`)
     lines.push(`- adapters: ${s.adapters.length > 0 ? s.adapters.join(', ') + ' installed' : 'none installed'}`)

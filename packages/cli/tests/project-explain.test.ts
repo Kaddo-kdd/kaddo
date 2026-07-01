@@ -446,7 +446,8 @@ describe('explain — placeholder-aware readiness (VS-073.1)', () => {
   it('AC16/AC24/AC26: after bootstrap (placeholders), readiness is knowledge-incomplete and recommends an agent', () => {
     initConfig() // dotear-web, state pre-ai
     writeScan()
-    // Past scan / bootstrap / agents / skills / understand, so readiness reaches the knowledge gate.
+    // Past scan / bootstrap / agents / skills / context / understand, so it reaches the knowledge gate.
+    write('.kaddo/context-pack.md', '# context pack\n')
     write('.kaddo/understand.md', '# understand\n')
     write('knowledge/agents/delivery/roadmap-agent.md', '# Roadmap Agent\n')
     write('knowledge/skills/adr-writing/skill.md', '---\ntype: skill\nid: adr-writing\ntitle: ADR\ngroup: tech\n---\n# x\n')

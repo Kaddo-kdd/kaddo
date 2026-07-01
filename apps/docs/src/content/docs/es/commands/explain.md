@@ -157,6 +157,14 @@ understand, agents/skills, archivos de conocimiento, [resolución de preguntas](
 roadmap, Work Items y [estado de adapters](../custom-adapters/)); nunca ejecuta comandos, instala
 adapters, edita conocimiento o código, sin git, sin LLM.
 
+> **Un proyecto, un estado, un siguiente paso.** El siguiente paso lo resuelve un único módulo
+> compartido, así que `kaddo context`, `kaddo understand` y `kaddo explain` (Phase **y** Project
+> Readiness) siempre muestran la **misma** recomendación. El JSON de agente también lo expone
+> top-level como `nextStepRecommendation` (`id`, `label`, `reason`, y — cuando aplica — `command`,
+> `agent`, `target`). La escalera de prioridad es: `init → bootstrap → add agents → add skills → scan
+> → context → understand → refinar Business → Product → Tech → questions → roadmap → create --from
+> roadmap → adapter → implement`.
+
 La salida humana agrega una sección `## Project Readiness` y `kaddo explain --for agent` (JSON) agrega
 un objeto `readiness` con `overall`, `signals` y un único `recommended_next_step`.
 

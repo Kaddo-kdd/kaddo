@@ -6,6 +6,7 @@ import { discoverKnowledge } from '../services/knowledge-artifacts.js'
 import { loadMappedModules, type MappedModuleWithCoverage } from '../services/mapped-modules.js'
 import { knowledgeLayers, type LayerStatus } from './layers.js'
 import { analyzeKnowledgeArtifact, type ArtifactQuality } from './artifact-quality.js'
+import { resolveNextStep, type NextStepRecommendation } from './next-step.js'
 import { roadmapStats, type RoadmapStats } from './roadmap.js'
 import { lifecycleStateOf, isActiveState, lifecycleCounts, type LifecycleState } from './lifecycle.js'
 import { assessPhase, type PhaseAssessment } from './delivery-phase.js'
@@ -66,8 +67,10 @@ export type ContextPack = {
   /** Per-layer knowledge quality (VS-073.1): file existence ≠ ready knowledge. */
   knowledgeQuality: Record<'business' | 'product' | 'tech' | 'delivery', { status: string; artifacts: Record<string, ArtifactQuality> }>
   roadmap: RoadmapStats
-  /** State-aware phase + next-step recommendation (VS-047). */
+  /** State-aware phase + next-step recommendation (VS-047), unified next step (VS-073.2). */
   phase: PhaseAssessment
+  /** The single unified next-step recommendation (VS-073.2). */
+  nextStepRecommendation: NextStepRecommendation
   /** Active Work Items distribution by type (feature/bugfix/hotfix/spike/chore/…). */
   deliveryMix: Record<string, number>
   /** External Knowledge Capsules imported as context (VS-054). */
@@ -325,6 +328,15 @@ export function buildContextPack(
     },
   })
 
+  // Unified next step (VS-073.2): the phase's next step + recommended agents are driven by the shared
+  // resolver so context / understand / explain never contradict each other.
+  const nextStepRecommendation = resolveNextStep(dir, now)
+  const unifiedPhase = {
+    ...phase,
+    nextStep: nextStepRecommendation.label,
+    recommendedAgents: nextStepRecommendation.agent ? [nextStepRecommendation.agent] : phase.recommendedAgents,
+  }
+
   return {
     version: CONTEXT_PACK_VERSION,
     generatedAt: now.toISOString(),
@@ -355,7 +367,8 @@ export function buildContextPack(
     layers,
     knowledgeQuality,
     roadmap,
-    phase,
+    phase: unifiedPhase,
+    nextStepRecommendation,
     deliveryMix,
     external: loadExternalCapsules(dir),
     graph: loadGraphSummary(dir),
@@ -363,14 +376,14 @@ export function buildContextPack(
     skills: discoverInstalledSkills(dir).map((s) => s.id),
     mappedModules,
     missing,
-    // VS-052: the handoff is driven by the REAL phase, not project.state, so the pack never
-    // contradicts the Current Phase block above it.
+    // VS-052/VS-073.2: the handoff is driven by the unified next step, so the pack never contradicts
+    // the Current Phase block above it.
     handoff: {
-      recommendedAgents: phase.recommendedAgents.length > 0
-        ? phase.recommendedAgents
+      recommendedAgents: unifiedPhase.recommendedAgents.length > 0
+        ? unifiedPhase.recommendedAgents
         : recommendedAgentsForState(state),
-      nextSteps: phase.nextStep ? [phase.nextStep] : nextStepsForState(state),
-      instructions: phase.llmInstructions.length > 0 ? phase.llmInstructions : LLM_INSTRUCTIONS,
+      nextSteps: [nextStepRecommendation.label],
+      instructions: unifiedPhase.llmInstructions.length > 0 ? unifiedPhase.llmInstructions : LLM_INSTRUCTIONS,
       operatingRules: OPERATING_RULES,
     },
   }

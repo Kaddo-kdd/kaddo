@@ -533,6 +533,7 @@ create --from roadmap → owners → guard → explain`.
 | v3.35 | Folded onboarding into `kaddo explain`: removed `kaddo onboarding`/`onboard`/`report onboarding`; project readiness + single recommended next step now live in `kaddo explain` (human `## Project Readiness` + `readiness` in agent JSON) |
 | v3.36 | State-aware bootstrap: `kaddo bootstrap` creates the full knowledge baseline for any `project.state` (new/pre-ai/legacy) with state-specific templates — no more new-only warning; idempotent, never overwrites, ensures `tech/decisions/` and `delivery/work-items/` |
 | v3.37 | Placeholder-aware readiness: knowledge files are classified missing/placeholder/weak/useful; a bootstrap file isn't treated as ready knowledge. Layers downgrade to Placeholder/Weak, a new Knowledge Refinement phase recommends the right agent, and `create --from roadmap` is never suggested with 0 candidates |
+| v3.37.1 | Unified next-step: one shared resolver (`core/next-step.ts`) powers `context`, `understand` and `explain` (Phase + Readiness) so they never diverge; agent JSON exposes `nextStepRecommendation`. Fixes duplicate `capabilities` line in explain |
 
 **Optional modules (installed with `kaddo add`):**
 

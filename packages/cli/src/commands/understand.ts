@@ -63,27 +63,17 @@ export function runUnderstand(): void {
   // state (layers, roadmap, Work Items, ownership) — not only the configured project.state.
   const exp = buildProjectExplanation(dir)
   const assessment = assessPhase(exp)
+  // Unified next step (VS-073.2): one recommendation, shared with context and explain.
+  const rec = exp.nextStepRecommendation
   console.log('')
   console.log(`Current phase: ${assessment.phase}`)
   if (assessment.reasons.length > 0) {
     console.log('Reason:')
     for (const r of assessment.reasons) console.log(`  - ${r}`)
   }
-  if (assessment.recommendedAgents.length > 0) {
-    console.log(`Recommended: ${assessment.recommendedAgents.join(', ')}`)
-  }
-  if (assessment.nextStep) {
-    console.log(`Next step: ${assessment.nextStep}`)
-  }
-
-  // 5a-readiness (VS-073): if the knowledge baseline is incomplete, recommend `kaddo bootstrap`
-  // first — agents have no target files to refine until the baseline exists.
-  const readiness = exp.readiness
-  if (readiness.overall === 'initialized' || readiness.overall === 'bootstrap-incomplete') {
-    console.log('')
-    console.log(`Project readiness: ${readiness.overall}.`)
-    console.log(`  → ${readiness.recommended_next_step.label}`)
-  }
+  if (rec.agent) console.log(`Recommended: ${rec.agent}`)
+  console.log(`Next step: ${rec.label}`)
+  if (rec.reason) console.log(`Why: ${rec.reason}`)
 
   // Recommended reusable skills (VS-059) for the recommended agents, if any are installed.
   const installedSkills = discoverInstalledSkills(dir)

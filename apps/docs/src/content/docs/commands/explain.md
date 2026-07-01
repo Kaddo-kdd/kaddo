@@ -158,6 +158,13 @@ knowledge or code, no git, no LLM.
 The human output adds a `## Project Readiness` section and `kaddo explain --for agent` (JSON) adds a
 `readiness` object with `overall`, `signals` and a single `recommended_next_step`.
 
+> **One project, one state, one next step.** The next step is resolved by a single shared module, so
+> `kaddo context`, `kaddo understand` and `kaddo explain` (Phase **and** Project Readiness) always show
+> the **same** recommendation. The agent JSON also exposes it top-level as `nextStepRecommendation`
+> (`id`, `label`, `reason`, and — when applicable — `command`, `agent`, `target`). The priority ladder
+> is: `init → bootstrap → add agents → add skills → scan → context → understand → refine Business →
+> Product → Tech → questions → roadmap → create --from roadmap → adapter → implement`.
+
 | Overall | Recommended next step |
 |---|---|
 | `not-initialized` | `kaddo init` |
