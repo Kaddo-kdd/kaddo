@@ -5,6 +5,7 @@ import { type Artifact } from '../services/artifact-reader.js'
 import { discoverKnowledge } from '../services/knowledge-artifacts.js'
 import { loadMappedModules, type MappedModuleWithCoverage } from '../services/mapped-modules.js'
 import { knowledgeLayers, type LayerStatus } from './layers.js'
+import { analyzeKnowledgeArtifact, type ArtifactQuality } from './artifact-quality.js'
 import { roadmapStats, type RoadmapStats } from './roadmap.js'
 import { lifecycleStateOf, isActiveState, lifecycleCounts, type LifecycleState } from './lifecycle.js'
 import { assessPhase, type PhaseAssessment } from './delivery-phase.js'
@@ -62,6 +63,8 @@ export type ContextPack = {
     artifacts: ContextArtifact[]
   }
   layers: LayerStatus[]
+  /** Per-layer knowledge quality (VS-073.1): file existence ≠ ready knowledge. */
+  knowledgeQuality: Record<'business' | 'product' | 'tech' | 'delivery', { status: string; artifacts: Record<string, ArtifactQuality> }>
   roadmap: RoadmapStats
   /** State-aware phase + next-step recommendation (VS-047). */
   phase: PhaseAssessment
@@ -277,6 +280,27 @@ export function buildContextPack(
   const mappedModules = loadMappedModules(dir)
   const layers = knowledgeLayers(dir)
 
+  // Knowledge quality (VS-073.1): a bootstrap-created file is not ready knowledge. Classify each
+  // baseline file and surface placeholders in Missing Context so nothing advances prematurely.
+  const qa = (rel: string) => analyzeKnowledgeArtifact(dir, rel)
+  const qBusiness = qa('knowledge/business/business.md')
+  const qProduct = qa('knowledge/product/product.md')
+  const qCapabilities = qa('knowledge/product/capabilities.md')
+  const qCodebase = qa('knowledge/tech/codebase.md')
+  const qCurrentState = qa('knowledge/tech/current-state.md')
+  const qRoadmap = qa('knowledge/delivery/roadmap.md')
+  const layerStatusOf = (name: string) => layers.find((l) => l.layer === name)?.status ?? 'Missing'
+  const knowledgeQuality = {
+    business: { status: layerStatusOf('Business'), artifacts: { 'knowledge/business/business.md': qBusiness } },
+    product: { status: layerStatusOf('Product'), artifacts: { 'knowledge/product/product.md': qProduct, 'knowledge/product/capabilities.md': qCapabilities } },
+    tech: { status: layerStatusOf('Tech'), artifacts: { 'knowledge/tech/codebase.md': qCodebase, 'knowledge/tech/current-state.md': qCurrentState } },
+    delivery: { status: layerStatusOf('Delivery'), artifacts: { 'knowledge/delivery/roadmap.md': qRoadmap } },
+  }
+  if (qBusiness === 'placeholder') missing.push('Business context exists but still looks like a bootstrap placeholder.')
+  if (qProduct === 'placeholder' || qCapabilities === 'placeholder') missing.push('Product capabilities exist but still look like a bootstrap placeholder.')
+  if (qCurrentState === 'placeholder') missing.push('Current state exists but still looks like a bootstrap placeholder.')
+  if (qCodebase === 'placeholder') missing.push('Codebase map exists but still looks like a bootstrap placeholder.')
+
   // State-aware phase + next-step recommendation (VS-047) from the real knowledge state.
   const allWorkItems = allArtifacts.filter((a) => a.isWorkItem)
   const wiWithOwnership = allWorkItems.filter((a) => a.codeGlobs.length > 0).length
@@ -329,6 +353,7 @@ export function buildContextPack(
       artifacts: allArtifacts.filter((a) => a.codeGlobs.length > 0).map(toContextArtifact),
     },
     layers,
+    knowledgeQuality,
     roadmap,
     phase,
     deliveryMix,

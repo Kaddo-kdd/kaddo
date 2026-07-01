@@ -11,7 +11,7 @@ import { readArtifacts } from '../services/artifact-reader.js'
 export type LayerName = 'Business' | 'Product' | 'Tech' | 'Delivery'
 
 /** Per-layer knowledge maturity. */
-export type LayerMaturity = 'Missing' | 'Consolidated' | 'Structured' | 'Partial' | 'Traceable'
+export type LayerMaturity = 'Missing' | 'Placeholder' | 'Weak' | 'Consolidated' | 'Structured' | 'Partial' | 'Traceable'
 
 export type LayerStatus = { layer: LayerName; status: LayerMaturity; detected: string[] }
 

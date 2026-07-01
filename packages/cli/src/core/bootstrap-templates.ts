@@ -8,8 +8,10 @@ import type { ProjectState } from './config.js'
 
 export type BaselineKind = 'business' | 'product' | 'capabilities' | 'codebase' | 'current-state' | 'roadmap'
 
+// `generated_by` + `template_version` mark freshly scaffolded files. Quality detection does NOT rely
+// on this metadata (older files won't have it) — it's an extra, best-effort hint (VS-073.1).
 function fm(type: string, state: ProjectState): string {
-  return `---\ntype: ${type}\nproject_state: ${state}\n---\n\n`
+  return `---\ntype: ${type}\nproject_state: ${state}\ngenerated_by: kaddo-bootstrap\ntemplate_version: 1\n---\n\n`
 }
 
 const T: Record<BaselineKind, Record<ProjectState, string>> = {

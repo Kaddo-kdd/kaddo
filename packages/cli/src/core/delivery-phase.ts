@@ -8,6 +8,7 @@ import { LIFECYCLE_STATES, type LifecycleState } from './lifecycle.js'
 
 export type DeliveryPhase =
   | 'Discovery'
+  | 'Knowledge Refinement'
   | 'Planning'
   | 'Delivery Preparation'
   | 'Active Delivery'
@@ -38,12 +39,24 @@ function layer(layers: LayerStatus[], name: LayerName): LayerMaturity {
   return layers.find((l) => l.layer === name)?.status ?? 'Missing'
 }
 
+const NOT_READY_LAYER: LayerMaturity[] = ['Missing', 'Placeholder', 'Weak']
+
 function baseComplete(layers: LayerStatus[]): boolean {
   return (
     layer(layers, 'Business') !== 'Missing' &&
     layer(layers, 'Product') !== 'Missing' &&
     layer(layers, 'Tech') !== 'Missing'
   )
+}
+
+/** Base knowledge exists AND holds real content (not still bootstrap placeholders / too thin). */
+function baseUseful(layers: LayerStatus[]): boolean {
+  return (['Business', 'Product', 'Tech'] as LayerName[]).every((n) => !NOT_READY_LAYER.includes(layer(layers, n)))
+}
+
+/** Roadmap has at least one candidate to materialize. */
+function roadmapHasCandidates(roadmap: PhaseInput['roadmap']): boolean {
+  return roadmap.candidates > 0 || roadmap.remaining > 0
 }
 
 /** Determine the real delivery phase from knowledge state. */
@@ -56,7 +69,11 @@ export function determinePhase(input: PhaseInput): DeliveryPhase {
     workItems.byState.blocked
 
   if (!baseComplete(input.layers)) return 'Discovery'
+  // Files exist but are still placeholders/weak — refine knowledge before planning/delivery (VS-073.1).
+  if (!baseUseful(input.layers)) return 'Knowledge Refinement'
   if (!roadmap.present) return 'Planning'
+  // A roadmap with no candidates and no Work Items is still planning — never recommend `create`.
+  if (!roadmapHasCandidates(roadmap) && workItems.total === 0) return 'Planning'
   if (workItems.total === 0) return 'Delivery Preparation'
   if (active > 0) return 'Active Delivery'
   return 'Maintenance'
@@ -90,6 +107,16 @@ function firstMissingLayerAgent(layers: LayerStatus[]): { agent: string; step: s
   return { agent: 'architecture-agent', step: 'Use architecture-agent to create knowledge/tech/current-state.md' }
 }
 
+/** First base layer that exists but is still a placeholder/weak — recommend the agent to complete it. */
+function firstUnrefinedLayerAgent(layers: LayerStatus[]): { agent: string; step: string } {
+  const isThin = (n: LayerName) => NOT_READY_LAYER.includes(layer(layers, n))
+  if (isThin('Business'))
+    return { agent: 'business-agent', step: 'Use business-agent to complete knowledge/business/business.md' }
+  if (isThin('Product'))
+    return { agent: 'capability-agent', step: 'Use capability-agent to complete knowledge/product/capabilities.md' }
+  return { agent: 'architecture-agent', step: 'Use architecture-agent to complete knowledge/tech/current-state.md' }
+}
+
 /**
  * Recommend the next agent(s) and a concrete next step from the real knowledge state.
  */
@@ -110,6 +137,17 @@ export function assessPhase(input: PhaseInput): PhaseAssessment {
       recommendedAgents = [m.agent]
       nextStep = m.step
       llmInstructions = [`Use the ${m.agent} to fill the missing base knowledge.`, 'Do not write code.']
+      break
+    }
+    case 'Knowledge Refinement': {
+      const m = firstUnrefinedLayerAgent(input.layers)
+      recommendedAgents = [m.agent]
+      nextStep = m.step
+      llmInstructions = [
+        'The baseline files exist but still look like bootstrap placeholders.',
+        `Use the ${m.agent} to replace the placeholders with real, project-specific knowledge.`,
+        'Do not write code.',
+      ]
       break
     }
     case 'Planning': {

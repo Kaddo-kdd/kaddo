@@ -174,3 +174,17 @@ The human output adds a `## Project Readiness` section and `kaddo explain --for 
 
 Only `blocking + open` questions move readiness to `needs-decisions`; assumed / resolved / deferred
 questions are surfaced but never block. (`new` and `legacy` projects report a limited status.)
+
+### Knowledge quality — a file is not knowledge
+
+A file created by `kaddo bootstrap` is **not** ready knowledge until it is filled in. Readiness (and
+`kaddo context`) classify each baseline file as **`missing`**, **`placeholder`** (still a bootstrap
+template), **`weak`** (edited but thin) or **`useful`** (real, project-specific content). The
+heuristic is deterministic and conservative — when in doubt it classifies down, never up.
+
+So after `kaddo bootstrap` on a fresh project, layers show as **Placeholder** (not Consolidated), the
+phase stays **Knowledge Refinement**, and the next step recommends the right agent to complete the
+file (e.g. *"Use architecture-agent to complete `knowledge/tech/current-state.md`"*). Kaddo will not
+recommend `kaddo create --from roadmap` while the roadmap has no candidates. Per-artifact quality is
+included in `kaddo explain --for agent` (`readiness.signals`) and `kaddo context` JSON
+(`knowledgeQuality`).

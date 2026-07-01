@@ -441,3 +441,26 @@ describe('explain — Project Readiness (VS-072.1)', () => {
     expect(r.overall).toBe('bootstrap-incomplete')
   })
 })
+
+describe('explain — placeholder-aware readiness (VS-073.1)', () => {
+  it('AC16/AC24/AC26: after bootstrap (placeholders), readiness is knowledge-incomplete and recommends an agent', () => {
+    initConfig() // dotear-web, state pre-ai
+    writeScan()
+    // Past scan / bootstrap / agents / skills / understand, so readiness reaches the knowledge gate.
+    write('.kaddo/understand.md', '# understand\n')
+    write('knowledge/agents/delivery/roadmap-agent.md', '# Roadmap Agent\n')
+    write('knowledge/skills/adr-writing/skill.md', '---\ntype: skill\nid: adr-writing\ntitle: ADR\ngroup: tech\n---\n# x\n')
+    // Simulate bootstrap output: baseline files that are still placeholders.
+    write('knowledge/business/business.md', '---\ntype: business\nproject_state: pre-ai\n---\n\n## What this product appears to support\n\n_Describe the business purpose._\n')
+    write('knowledge/product/product.md', '---\ntype: product\n---\n\n## Existing product behavior\n\n_Describe what the product currently does._\n')
+    write('knowledge/product/capabilities.md', '---\ntype: capabilities\n---\n\n## Observed capabilities\n\n- [observed] _Capability observed._\n')
+    write('knowledge/tech/codebase.md', '---\ntype: codebase\n---\n\n## Repository structure\n\n_Describe the folders._\n')
+    write('knowledge/tech/current-state.md', '---\ntype: current-state\n---\n\n## What exists today\n\n_Describe the state._\n')
+    const r = buildProjectExplanation(tmpDir).readiness
+    // business/product exist (placeholder) so it's past bootstrap, but not useful yet.
+    expect(r.signals.business).toBe('placeholder')
+    expect(r.overall).toBe('knowledge-incomplete')
+    expect(r.recommended_next_step.label).toMatch(/-agent to complete/)
+    expect(r.recommended_next_step.command).toBeUndefined()
+  })
+})

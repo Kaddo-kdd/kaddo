@@ -10,6 +10,7 @@ import { loadConfig } from './config.js'
 import { buildOpenQuestionsReport } from './open-questions.js'
 import { discoverWorkItems } from '../services/knowledge-artifacts.js'
 import { buildAdapterStatuses, buildCodexAdapterContext } from './codex-adapter.js'
+import { analyzeKnowledgeArtifact, type ArtifactQuality } from './artifact-quality.js'
 
 export type ReadinessStatus =
   | 'not-initialized'
@@ -26,7 +27,7 @@ export type ReadinessStatus =
   | 'ready-for-work-item'
   | 'ready-for-implementation'
 
-export type Presence = 'present' | 'missing' | 'weak'
+export type Presence = ArtifactQuality
 export type RoadmapSignal = 'missing' | 'empty' | 'has-candidates'
 export type WorkItemsSignal = 'none' | 'none-ready' | 'ready' | 'in-progress'
 
@@ -56,32 +57,13 @@ export type ReadinessReport = {
   recommended_next_step: { label: string; command?: string }
 }
 
-const KNOWLEDGE_FILES: { key: 'current_state' | 'codebase' | 'capabilities' | 'product' | 'business'; path: string; label: string }[] = [
-  { key: 'current_state', path: 'knowledge/tech/current-state.md', label: 'knowledge/tech/current-state.md' },
-  { key: 'codebase', path: 'knowledge/tech/codebase.md', label: 'knowledge/tech/codebase.md' },
-  { key: 'capabilities', path: 'knowledge/product/capabilities.md', label: 'knowledge/product/capabilities.md' },
-  { key: 'product', path: 'knowledge/product/product.md', label: 'knowledge/product/product.md' },
-  { key: 'business', path: 'knowledge/business/business.md', label: 'knowledge/business/business.md' },
+const KNOWLEDGE_FILES: { key: 'current_state' | 'codebase' | 'capabilities' | 'product' | 'business'; path: string; label: string; agent: string }[] = [
+  { key: 'current_state', path: 'knowledge/tech/current-state.md', label: 'knowledge/tech/current-state.md', agent: 'architecture-agent' },
+  { key: 'codebase', path: 'knowledge/tech/codebase.md', label: 'knowledge/tech/codebase.md', agent: 'codebase-agent' },
+  { key: 'capabilities', path: 'knowledge/product/capabilities.md', label: 'knowledge/product/capabilities.md', agent: 'capability-agent' },
+  { key: 'product', path: 'knowledge/product/product.md', label: 'knowledge/product/product.md', agent: 'product-agent' },
+  { key: 'business', path: 'knowledge/business/business.md', label: 'knowledge/business/business.md', agent: 'business-agent' },
 ]
-
-/** Presence of a knowledge file: missing, weak (only front matter/headings) or present (real body). */
-export function knowledgePresence(dir: string, rel: string): Presence {
-  const p = join(dir, rel)
-  if (!exists(p)) return 'missing'
-  let md: string
-  try {
-    md = readFile(p)
-  } catch {
-    return 'missing'
-  }
-  const body = md
-    .replace(/^---[\s\S]*?---/m, '')
-    .split(/\r?\n/)
-    .filter((l) => !/^\s*#{1,6}\s/.test(l) && !/^\s*$/.test(l) && !/^\s*<!--/.test(l))
-    .join(' ')
-    .trim()
-  return body.length >= 40 ? 'present' : 'weak'
-}
 
 function roadmapSignal(dir: string): RoadmapSignal {
   const p = join(dir, 'knowledge/delivery/roadmap.md')
@@ -144,11 +126,12 @@ export function buildReadinessReport(dir: string, now: Date = new Date()): Readi
 
   const scan = exists(join(dir, '.kaddo', 'scan.json')) ? 'available' : 'missing'
   const understand = exists(join(dir, '.kaddo', 'understand.md')) ? 'available' : 'missing'
-  const presence = Object.fromEntries(KNOWLEDGE_FILES.map((f) => [f.key, knowledgePresence(dir, f.path)])) as Record<typeof KNOWLEDGE_FILES[number]['key'], Presence>
+  const presence = Object.fromEntries(KNOWLEDGE_FILES.map((f) => [f.key, analyzeKnowledgeArtifact(dir, f.path)])) as Record<typeof KNOWLEDGE_FILES[number]['key'], Presence>
   const ctx = buildCodexAdapterContext(dir)
   const agents = ctx.hasAgents ? 'present' : 'missing'
   const skills = ctx.hasSkills ? 'present' : 'missing'
-  // Bootstrap baseline = the core business + product knowledge the bootstrap step produces.
+  // Bootstrap baseline "complete" = the core files exist (bootstrap has run). Placeholder/weak content
+  // does not block this gate — it is handled later as `knowledge-incomplete` (refine, not re-bootstrap).
   const bootstrapBaseline = presence.business !== 'missing' && presence.product !== 'missing' ? 'complete' : 'incomplete'
   const roadmap = roadmapSignal(dir)
   const work_items = workItemsSignal(dir)
@@ -168,7 +151,8 @@ export function buildReadinessReport(dir: string, now: Date = new Date()): Readi
 
   let overall: ReadinessStatus
   let next: { label: string; command?: string }
-  const firstWeak = KNOWLEDGE_FILES.find((f) => presence[f.key] !== 'present')
+  // The first baseline file that is not yet useful — recommend the agent that completes it.
+  const firstWeak = KNOWLEDGE_FILES.find((f) => presence[f.key] !== 'useful')
 
   if (scan === 'missing') {
     overall = 'initialized'
@@ -187,7 +171,7 @@ export function buildReadinessReport(dir: string, now: Date = new Date()): Readi
     next = { label: 'Run `kaddo understand` to summarize the project context.', command: 'kaddo understand' }
   } else if (firstWeak) {
     overall = 'knowledge-incomplete'
-    next = { label: `Complete \`${firstWeak.label}\` (it is ${presence[firstWeak.key]}).` }
+    next = { label: `Use ${firstWeak.agent} to complete \`${firstWeak.label}\` (it is ${presence[firstWeak.key]}).` }
   } else if (oq.summary.blocking_open > 0) {
     overall = 'needs-decisions'
     next = { label: 'Resolve, assume or defer the blocking open questions (`kaddo questions`).', command: 'kaddo questions' }

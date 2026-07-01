@@ -176,3 +176,17 @@ un objeto `readiness` con `overall`, `signals` y un único `recommended_next_ste
 
 Solo las preguntas `blocking + open` mueven el readiness a `needs-decisions`; las assumed / resolved /
 deferred se muestran pero no bloquean. (Los proyectos `new` y `legacy` reportan un estado limitado.)
+
+### Calidad del conocimiento — un archivo no es conocimiento
+
+Un archivo creado por `kaddo bootstrap` **no** es conocimiento listo hasta completarlo. El readiness
+(y `kaddo context`) clasifican cada archivo base como **`missing`**, **`placeholder`** (sigue siendo
+plantilla), **`weak`** (editado pero pobre) o **`useful`** (contenido real y específico). La
+heurística es determinista y conservadora — ante la duda clasifica hacia abajo, nunca hacia arriba.
+
+Así, tras `kaddo bootstrap` en un proyecto nuevo, las capas aparecen como **Placeholder** (no
+Consolidated), la fase se mantiene en **Knowledge Refinement**, y el siguiente paso recomienda el
+agente adecuado para completar el archivo (p. ej. *"Use architecture-agent to complete
+`knowledge/tech/current-state.md`"*). Kaddo no recomienda `kaddo create --from roadmap` mientras el
+roadmap no tenga candidatos. La calidad por artefacto se incluye en `kaddo explain --for agent`
+(`readiness.signals`) y en el JSON de `kaddo context` (`knowledgeQuality`).
