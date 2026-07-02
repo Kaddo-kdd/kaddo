@@ -20,6 +20,7 @@ import {
 import { knowledgeLayers, renderLayersMarkdown, type LayerStatus } from './layers.js'
 import { roadmapStats, type RoadmapStats } from './roadmap.js'
 import { buildReadinessReport, type ReadinessReport } from './readiness.js'
+import { buildTechDecisions, type TechDecisions } from './decisions.js'
 import {
   LIFECYCLE_STATES,
   lifecycleStateOf,
@@ -102,6 +103,8 @@ export type ProjectExplanation = {
   readiness: ReadinessReport
   /** The unified next-step recommendation, shared across context/understand/explain (VS-073.2). */
   nextStepRecommendation: ReadinessReport['nextStepRecommendation']
+  /** Technical decisions: candidates vs materialized ADRs (VS-075). */
+  techDecisions: TechDecisions
 }
 
 function normalizeTitle(t: string): string {
@@ -375,6 +378,7 @@ export function buildProjectExplanation(dir: string): ProjectExplanation {
     suggestedNextSteps,
     readiness,
     nextStepRecommendation: readiness.nextStepRecommendation,
+    techDecisions: buildTechDecisions(dir),
   }
 }
 
@@ -619,6 +623,18 @@ export function renderExplanationHuman(exp: ProjectExplanation): string {
   lines.push('')
   lines.push('### Recommended next step')
   lines.push(r.recommended_next_step.label)
+  lines.push('')
+
+  // Tech Decisions (VS-075): candidates vs materialized ADRs.
+  const td = exp.techDecisions
+  lines.push('## Tech Decisions')
+  lines.push(`- Decision candidates: ${td.candidates}`)
+  lines.push(`- ADRs: ${td.adrs} (draft: ${td.draft_adrs}, accepted: ${td.accepted_adrs})`)
+  lines.push(`- Status: ${td.status}`)
+  if (td.candidates > 0 && td.adrs === 0) {
+    lines.push('')
+    lines.push('Use the adr-writing skill to materialize decision candidates into ADRs (`kaddo adr`) before implementing related technical Work Items.')
+  }
   lines.push('')
 
   return lines.join('\n').trimEnd() + '\n'

@@ -71,6 +71,10 @@ export const COMMAND_HELP: Record<string, CommandHelp> = {
     question: 'How does Codex work with this Kaddo project?',
     next: 'Open AGENTS.md, or regenerate it after knowledge changes',
   },
+  adr: {
+    question: 'Which technical decisions still need to become ADRs?',
+    next: 'Use the adr-writing skill to draft ADRs, then mark them accepted when confirmed',
+  },
 }
 
 /** Lines for the contextual footer, or [] if the command has no entry. */

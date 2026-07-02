@@ -24,6 +24,7 @@ import { runSavings, runSavingsInit } from './commands/savings.js'
 import { runDrift } from './commands/drift.js'
 import { runQuestions } from './commands/questions.js'
 import { runAdaptersInstall, runAdaptersList, runAdaptersStatus } from './commands/adapters.js'
+import { runAdr } from './commands/adr.js'
 
 // Single source of truth for the version: read it from package.json at runtime so the CLI
 // `--version` can never drift from the published package version. `../package.json` resolves
@@ -184,6 +185,15 @@ program
   .option('--json', 'Output JSON instead of a summary')
   .option('--output <path>', 'Write the report to a file')
   .action(questionsAction)
+
+program
+  .command('adr')
+  .alias('decisions')
+  .description('List technical decision candidates and the ADR files to create from them (read-only)')
+  .option('--json', 'Output JSON')
+  .action((opts: { json?: boolean }) => {
+    runAdr(opts)
+  })
 
 const adaptersCmd = program
   .command('adapters')

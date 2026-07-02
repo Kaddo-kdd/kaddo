@@ -85,6 +85,15 @@ export function runUnderstand(): void {
     }
   }
 
+  // 5b-decisions (VS-075): unmaterialized technical decisions — recommend ADRs before implementing.
+  const td = exp.techDecisions
+  if (td.candidates > 0 && td.adrs === 0) {
+    console.log('')
+    console.log(`Tech decisions: ${td.candidates} decision candidate(s) not yet materialized as ADRs.`)
+    console.log('  → Use the adr-writing skill to create ADR drafts from `knowledge/tech/decision-candidates.md`')
+    console.log('    into `knowledge/tech/decisions/` before implementing affected technical Work Items (`kaddo adr`).')
+  }
+
   // 5b-ext. External Knowledge Capsules (VS-054) — remind the agent of external dependencies.
   if (exp.externalCapsules.length > 0) {
     console.log('')

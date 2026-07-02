@@ -7,6 +7,7 @@ import { loadMappedModules, type MappedModuleWithCoverage } from '../services/ma
 import { knowledgeLayers, type LayerStatus } from './layers.js'
 import { analyzeKnowledgeArtifact, type ArtifactQuality } from './artifact-quality.js'
 import { resolveNextStep, type NextStepRecommendation } from './next-step.js'
+import { buildTechDecisions, type TechDecisions } from './decisions.js'
 import { roadmapStats, type RoadmapStats } from './roadmap.js'
 import { lifecycleStateOf, isActiveState, lifecycleCounts, type LifecycleState } from './lifecycle.js'
 import { assessPhase, type PhaseAssessment } from './delivery-phase.js'
@@ -71,6 +72,8 @@ export type ContextPack = {
   phase: PhaseAssessment
   /** The single unified next-step recommendation (VS-073.2). */
   nextStepRecommendation: NextStepRecommendation
+  /** Technical decisions: candidates vs materialized ADRs (VS-075). */
+  techDecisions: TechDecisions
   /** Active Work Items distribution by type (feature/bugfix/hotfix/spike/chore/…). */
   deliveryMix: Record<string, number>
   /** External Knowledge Capsules imported as context (VS-054). */
@@ -331,6 +334,10 @@ export function buildContextPack(
   // Unified next step (VS-073.2): the phase's next step + recommended agents are driven by the shared
   // resolver so context / understand / explain never contradict each other.
   const nextStepRecommendation = resolveNextStep(dir, now)
+  const techDecisions = buildTechDecisions(dir)
+  if (techDecisions.candidates > 0 && techDecisions.adrs === 0) {
+    missing.push(`${techDecisions.candidates} technical decision candidate(s) not yet materialized as ADRs (run \`kaddo adr\`).`)
+  }
   const unifiedPhase = {
     ...phase,
     nextStep: nextStepRecommendation.label,
@@ -369,6 +376,7 @@ export function buildContextPack(
     roadmap,
     phase: unifiedPhase,
     nextStepRecommendation,
+    techDecisions,
     deliveryMix,
     external: loadExternalCapsules(dir),
     graph: loadGraphSummary(dir),

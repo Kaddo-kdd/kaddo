@@ -537,6 +537,7 @@ create --from roadmap → owners → guard → explain`.
 | v3.38 | Open-question source locations: `kaddo questions` shows each question's `Source` (path:line), `Status`, `Severity`, `Note` + a copy/paste resolution example and localized how-to-resolve guide; JSON/report/MCP carry `sourcePath`, `line`, `raw`, `note` |
 | v3.39 | Existing capability discovery: state-aware `capabilities.md` (pre-ai/legacy = evidence-backed Capability Inventory + Gaps + Roadmap Candidate Signals; legacy adds criticality/change-risk/modernization); capability-agent discovers with evidence, roadmap-agent treats capabilities as primary source |
 | v3.39.1 | Domain-oriented capability inventory: pre-ai/legacy `capabilities.md` groups capabilities under `## Capability Domains` (functional domains, not technical folders); gaps/candidates name their `Domain`; roadmap-agent reads it as a domain map; work-item-agent recommends `related_domain` + `related_capability` |
+| v3.40 | ADR materialization: `kaddo adr` (alias `decisions`) detects decision candidates + ADRs and hands off the ADR files to create; `tech_decisions` status (none/candidates/draft-adrs/accepted-adrs) surfaced in `explain`/`context`/`understand`; adr-writing skill formalized |
 
 **Optional modules (installed with `kaddo add`):**
 

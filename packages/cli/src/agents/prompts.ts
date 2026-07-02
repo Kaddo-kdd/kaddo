@@ -772,6 +772,13 @@ A refined Work Item intended to be saved under the lifecycle workspace:
 capability from knowledge/product/capabilities.md this Work Item advances, so work traces back to the
 system's functional map. Add \`related_domain: <domain>\` and \`related_capability: <name>\` to the front
 matter when known. -->
+
+**Related decisions:** <!-- recommended (VS-075): if this Work Item is affected by a technical
+decision, reference the ADR under knowledge/tech/decisions/ as \`related_decisions: [ADR-001-...]\`. If
+the decision is still a candidate in knowledge/tech/decision-candidates.md with no ADR yet, **warn**
+that it should be materialized first (\`kaddo adr\` + the adr-writing skill) and record
+\`decision_candidates: [<title>]\` — do not implement work that depends on an unformalized decision
+without surfacing it. -->
 \`\`\`
 
 ## Where to Save the Result
@@ -1356,6 +1363,12 @@ architecture, persistence, authentication or the Work Item's scope. Block only o
 \`open\`; if a related question is already \`[assumed]\`, \`[resolved]\` or \`[deferred]\`, proceed and
 mention the relevant assumptions instead of pausing. If any blocking question is still open, pause and
 ask the user to confirm assumptions or resolve them before writing code.
+
+Also check **technical decisions** (VS-075): if the Work Item touches a decision that is still a
+candidate in \`knowledge/tech/decision-candidates.md\` with no ADR under \`knowledge/tech/decisions/\`
+(run \`kaddo adr\`), **warn** and recommend materializing it as an ADR (adr-writing skill) before
+implementing — do not silently implement work that depends on an unformalized architectural,
+security, data, integration or infrastructure decision.
 
 ## When to Use
 
