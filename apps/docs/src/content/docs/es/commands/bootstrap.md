@@ -48,11 +48,16 @@ capacidades con evidencia**, no una lista de deseos. El `capability-agent` lo co
 estado:
 
 - **new** → *Planned Capability Definition* (capacidades `[planned]`).
-- **pre-ai** → *Existing Capability Discovery* — un `## Capability Inventory` donde cada capacidad
-  tiene `Status` (`implemented`/`partial`/`inferred`/`risky`/`deprecated`/`unknown`) con **evidencia**
-  (rutas, endpoints, tablas, funciones), más `## Capability Gaps` y `## Roadmap Candidate Signals`.
-- **legacy** → *Legacy Capability Discovery* — el mismo inventario más `Criticality`, `Change risk`,
-  `Operational dependency` y `Modernization notes`.
+- **pre-ai** → *Existing Capability Discovery* — un mapa `## Capability Domains` donde las capacidades
+  se agrupan por **dominio funcional** (`### Domain: <nombre>` con Purpose + Evidence summary), y cada
+  `#### Capability:` lleva `Status` (`implemented`/`partial`/`inferred`/`risky`/`deprecated`/`unknown`)
+  con **evidencia** (rutas, endpoints, tablas, funciones), más `## Capability Gaps` y
+  `## Roadmap Candidate Signals` (cada uno nombrando su `Domain` + `Related capability`).
+- **legacy** → *Legacy Capability Discovery* — el mismo mapa de dominios más `Criticality`,
+  `Change risk`, `Operational dependency` y `Modernization notes` por dominio/capacidad.
+
+Los dominios se agrupan por responsabilidad funcional (Loyalty, Billing & Subscriptions, …) —
+**nunca** por carpeta técnica (`src/components`, `src/app/api`).
 
 Luego el `roadmap-agent` trata `capabilities.md` como su **fuente principal** de roadmap candidates
 (capacidades parciales, gaps, candidate signals, capacidades riesgosas) y no construye roadmap desde

@@ -41,11 +41,11 @@ Adapt to \`project.state\` (from \`.kaddo/config.yml\`):
 
 - **new → Planned Capability Definition.** Define the capabilities the product *should* have. Use
   \`[planned]\` items; evidence is not required yet.
-- **pre-ai → Existing Capability Discovery.** Document the capabilities the system *already has*, as a
-  structured inventory with **evidence**, status and gaps — a photograph of what exists today, not a
-  wishlist.
-- **legacy → Legacy Capability Discovery.** Same inventory plus **criticality**, **change risk**,
-  **operational dependency** and **modernization notes** per capability.
+- **pre-ai → Existing Capability Discovery (Domain-Oriented Capability Inventory).** Document the
+  capabilities the system *already has*, **grouped by functional domain**, with **evidence**, status
+  and gaps — a photograph of what exists today, not a wishlist.
+- **legacy → Legacy Capability Discovery.** Same domain-oriented inventory plus **criticality**,
+  **change risk**, **operational dependency** and **modernization notes** per domain/capability.
 
 ## Capability status values
 
@@ -84,10 +84,12 @@ Analyze the context pack and identify:
 7. Suggested ownership.
 8. Candidate code globs if evident.
 
-For **pre-ai** and **legacy**, produce the richer inventory (see Output Format): a
-\`## Capability Inventory\` with status + evidence per capability, a \`## Capability Gaps\` section, and
-\`## Roadmap Candidate Signals\` (signals only — never a formal roadmap). For **legacy**, add
-\`Criticality\`, \`Change risk\`, \`Operational dependency\` and \`Modernization notes\` per capability.
+For **pre-ai** and **legacy**, produce the domain-oriented inventory (see Output Format): a
+\`## Capability Domains\` section where each \`### Domain:\` groups capabilities by functional
+responsibility (with Purpose + Evidence summary), each \`#### Capability:\` has status + evidence, plus
+\`## Capability Gaps\` and \`## Roadmap Candidate Signals\` (signals only — never a formal roadmap). Every
+gap and candidate names its \`Domain\` and \`Related capability\`. For **legacy**, add \`Criticality\`,
+\`Change risk\`, \`Operational dependency\` and \`Modernization notes\`.
 
 ## Constraints
 
@@ -140,36 +142,50 @@ Generated from Kaddo Context Pack.
 ## Suggested Next Step
 \`\`\`
 
-### Output Format — pre-ai / legacy (Existing Capability Discovery)
+### Output Format — pre-ai / legacy (Domain-Oriented Capability Inventory)
+
+Group capabilities by **functional domain**, not by technical folder. Infer domains from the system
+(e.g. Loyalty, Billing & Subscriptions, Communications, Operations & Automation) — do not use a rigid
+universal taxonomy and do not use folders like \`src/components\` or \`src/app/api\` as domains. A single
+capability may have evidence across layers (frontend hook + API route + table + webhook).
 
 \`\`\`markdown
 # Existing Capabilities
 
-## Capability Inventory
+## Capability Domains
 
-### <Capability name>
+### Domain: <Domain name>
+
+**Purpose:** <functional responsibility of this domain>
+
+**Evidence summary:**
+- \`<path>\` / \`<route>\` / \`<table>\` / \`<function>\`
+<!-- legacy only: -->
+**Criticality:** low | medium | high
+**Change risk:** low | medium | high
+**Operational dependency:** <...>
+
+#### Capability: <Capability name>
 
 - Status: implemented | partial | inferred | risky | deprecated | unknown
 - Capability type: business | product | technical | integration | operational
 - User-facing: yes | no | internal
 - Evidence:
-  - \`<path/to/file>\`
-  - \`<route>\` / \`<table>\` / \`<function>\`
-- Related flows / data / integrations:
+  - \`<path/to/file>\` / \`<route>\` / \`<table>\` / \`<function>\`
+- Related flows:
+- Related data:
+- Related integrations:
 - Current behavior:
 - Known constraints:
 - Risks or uncertainty:
 - Open questions:
   - [open] ...
-<!-- legacy only: -->
-- Criticality: low | medium | high
-- Change risk: low | medium | high
-- Operational dependency:
-- Modernization notes:
+<!-- legacy only, per capability: Modernization notes -->
 
 ## Capability Gaps
 
 - [gap] <Gap description>
+  - Domain: <Domain name>
   - Related capability: <name>
   - Impact: low | medium | high
   - Possible roadmap candidate: yes | no
@@ -177,9 +193,19 @@ Generated from Kaddo Context Pack.
 ## Roadmap Candidate Signals
 
 - [candidate] <Potential roadmap candidate>
-  - Based on: partial capability | gap | risk | open question | business goal
+  - Domain: <Domain name>
   - Related capability: <name>
+  - Based on: partial capability | gap | risk | open question | business goal
 \`\`\`
+
+### Domain grouping rules
+
+- Group by **functional responsibility**, never by technical folder.
+- A capability may span multiple layers — list all its evidence.
+- Keep the VS-074 evidence rule: \`implemented\` needs concrete evidence; indirect → \`inferred\`; none →
+  \`unknown\`. Never invent domains, paths, routes, tables or functions.
+- Every \`[gap]\` names its \`Domain\` and \`Related capability\`; every \`[candidate]\` names \`Domain\`,
+  \`Related capability\` and \`Based on\`.
 
 ## Where to Save the Result
 
@@ -302,7 +328,8 @@ Use this agent after capabilities and architecture are understood (or at least a
 Provide \`.kaddo/context-pack.md\` as the primary input, and treat
 \`knowledge/product/capabilities.md\` as the **primary source for roadmap candidates** (VS-074).
 
-Derive roadmap candidates from the capability inventory, prioritizing:
+Read \`capabilities.md\` as a **map of functional domains** (\`## Capability Domains\`). Derive roadmap
+candidates from the inventory, prioritizing:
 
 - \`partial\` capabilities (finish what exists)
 - \`## Capability Gaps\` (\`[gap]\` items, especially Impact: high)
@@ -310,6 +337,15 @@ Derive roadmap candidates from the capability inventory, prioritizing:
 - \`risky\` capabilities (especially in legacy — stabilize before extending)
 - resolved/assumed/deferred open questions and business goals
 - technical risks and decision candidates
+
+Each roadmap candidate should reference its \`Domain\` and \`Related capability\`, e.g.:
+
+\`\`\`md
+- [candidate] Harden idempotent payment webhook processing.
+  - Domain: Billing & Subscriptions
+  - Related capability: Payment Webhook Processing
+  - Based on: risk
+\`\`\`
 
 **Do not** build a roadmap from general ideas when \`capabilities.md\` is still a placeholder or weak:
 if capabilities are not yet discovered, recommend running the \`capability-agent\` first.
@@ -732,9 +768,10 @@ A refined Work Item intended to be saved under the lifecycle workspace:
 
 **Suggested ownership (code globs):**
 
-**Related capability:** <!-- recommended (VS-074): the capability from
-knowledge/product/capabilities.md this Work Item advances, so work traces back to a real capability.
-Add \`related_capability: <name>\` to the front matter when known. -->
+**Related domain / capability:** <!-- recommended (VS-074/074.1): the functional domain and the
+capability from knowledge/product/capabilities.md this Work Item advances, so work traces back to the
+system's functional map. Add \`related_domain: <domain>\` and \`related_capability: <name>\` to the front
+matter when known. -->
 \`\`\`
 
 ## Where to Save the Result

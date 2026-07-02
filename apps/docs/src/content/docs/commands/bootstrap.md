@@ -47,11 +47,17 @@ For existing projects, `knowledge/product/capabilities.md` is scaffolded as an *
 capability inventory**, not a wishlist. The `capability-agent` fills it in a state-aware way:
 
 - **new** → *Planned Capability Definition* (`[planned]` capabilities).
-- **pre-ai** → *Existing Capability Discovery* — a `## Capability Inventory` where each capability has
-  a `Status` (`implemented`/`partial`/`inferred`/`risky`/`deprecated`/`unknown`) with **evidence**
-  (paths, routes, tables, functions), plus `## Capability Gaps` and `## Roadmap Candidate Signals`.
-- **legacy** → *Legacy Capability Discovery* — the same inventory plus `Criticality`, `Change risk`,
-  `Operational dependency` and `Modernization notes`.
+- **pre-ai** → *Existing Capability Discovery* — a `## Capability Domains` map where capabilities are
+  grouped by **functional domain** (`### Domain: <name>` with a Purpose + Evidence summary), each
+  `#### Capability:` carrying a `Status`
+  (`implemented`/`partial`/`inferred`/`risky`/`deprecated`/`unknown`) with **evidence** (paths, routes,
+  tables, functions), plus `## Capability Gaps` and `## Roadmap Candidate Signals` (each naming its
+  `Domain` + `Related capability`).
+- **legacy** → *Legacy Capability Discovery* — the same domain map plus `Criticality`, `Change risk`,
+  `Operational dependency` and `Modernization notes` per domain/capability.
+
+Domains are grouped by functional responsibility (Loyalty, Billing & Subscriptions, …) — **never** by
+technical folder (`src/components`, `src/app/api`).
 
 The `roadmap-agent` then treats `capabilities.md` as its **primary source** for roadmap candidates
 (partial capabilities, gaps, candidate signals, risky capabilities) and won't build a roadmap from a

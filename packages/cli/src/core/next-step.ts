@@ -124,7 +124,7 @@ export function resolveNextStep(dir: string, now: Date = new Date()): NextStepRe
   if (qProduct !== 'useful' || qCap !== 'useful') {
     // For existing projects, capabilities is a *discovery* of what the system already does (VS-074).
     if (qCap !== 'useful') {
-      return refine('refine-product', 'capability-agent', CAP, qCap, discovery ? 'discover and document existing system capabilities in' : 'complete')
+      return refine('refine-product', 'capability-agent', CAP, qCap, discovery ? 'discover and document existing system capabilities grouped by functional domains in' : 'complete')
     }
     return refine('refine-product', 'capability-agent', P, qProduct)
   }

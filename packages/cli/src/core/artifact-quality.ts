@@ -26,6 +26,11 @@ function isPlaceholderLine(line: string): boolean {
   // Scaffolding field labels: a bullet `- Label:` with no value, or an enum of options `a | b | c`.
   if (/^[-*]\s+[^:]+:\s*$/.test(t)) return true
   if (/^[-*]\s+[^:]+:\s*\S.*\s\|\s/.test(t)) return true
+  // Bold field labels used in the domain template: `**Purpose:**`, `**Purpose:** _..._`,
+  // `**Criticality:** low | medium | high`.
+  if (/^\*\*[^*]+:\*\*\s*$/.test(t)) return true
+  if (/^\*\*[^*]+:\*\*\s*_.*_$/.test(t)) return true
+  if (/^\*\*[^*]+:\*\*\s*\S.*\s\|\s/.test(t)) return true
   return false
 }
 

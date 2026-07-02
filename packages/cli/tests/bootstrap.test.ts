@@ -46,7 +46,7 @@ describe('bootstrap — state-aware knowledge baseline (VS-073)', () => {
     expect(cs).toContain('project_state: pre-ai')
     expect(cs).toContain('Observed technical signals')
     expect(cs).toContain('Risks of interpretation')
-    expect(read('knowledge/product/capabilities.md')).toContain('Capability Inventory')
+    expect(read('knowledge/product/capabilities.md')).toContain('Capability Domains')
     expect(read('knowledge/product/capabilities.md')).toContain('Roadmap Candidate Signals')
   })
 
@@ -57,7 +57,7 @@ describe('bootstrap — state-aware knowledge baseline (VS-073)', () => {
     expect(cs).toContain('project_state: legacy')
     expect(cs).toContain('Critical dependencies')
     expect(cs).toContain('Modernization notes')
-    expect(read('knowledge/product/capabilities.md')).toContain('Capability Inventory')
+    expect(read('knowledge/product/capabilities.md')).toContain('Capability Domains')
     expect(read('knowledge/product/capabilities.md')).toContain('Criticality')
     expect(read('knowledge/product/capabilities.md')).toContain('Modernization notes')
   })
