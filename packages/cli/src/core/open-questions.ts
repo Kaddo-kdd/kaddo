@@ -16,12 +16,20 @@ export type ResolutionStatus = 'open' | 'resolved' | 'assumed' | 'deferred'
 export type OpenQuestion = {
   id: string
   source: string
+  /** Alias of `source` — the relative path to the file the question lives in (VS-073.3). */
+  sourcePath: string
+  /** 1-based line number of the question bullet in its source file (VS-073.3). */
+  line: number
+  /** The original bullet line as written in the source (VS-073.3). */
+  raw: string
   section: string
   question: string
   classification: QuestionClass
   resolution_status: ResolutionStatus
   reason: string
   resolution_note?: string
+  /** Alias of `resolution_note` for the VS-073.3 output contract. */
+  note?: string
   suggested_assumption?: string
 }
 
@@ -114,7 +122,7 @@ export function classifyQuestion(question: string): { classification: QuestionCl
   return { classification: 'important', reason: 'Relevant, but a temporary assumption can unblock progress.' }
 }
 
-type ExtractedQuestion = { text: string; resolution_status: ResolutionStatus; resolution_note?: string }
+type ExtractedQuestion = { text: string; resolution_status: ResolutionStatus; resolution_note?: string; line: number; raw: string }
 
 /** Extract the bullet/numbered lines under an `## Open Questions` section of a markdown file. */
 function extractFromMarkdown(md: string): ExtractedQuestion[] {
@@ -133,10 +141,10 @@ function extractFromMarkdown(md: string): ExtractedQuestion[] {
     }
     const m = line.match(/^\s*(?:[-*]|\d+\.)\s+(.+?)\s*$/)
     if (m) {
-      const raw = m[1].trim()
-      if (!raw || /^_.*_$/.test(raw)) continue
-      const { text, resolution_status } = parseResolution(raw)
-      if (text) out.push({ text, resolution_status })
+      const bullet = m[1].trim()
+      if (!bullet || /^_.*_$/.test(bullet)) continue
+      const { text, resolution_status } = parseResolution(bullet)
+      if (text) out.push({ text, resolution_status, line: i + 1, raw: line.trim() })
     }
   }
   return out
@@ -180,12 +188,15 @@ export function buildOpenQuestionsReport(dir: string, now: Date = new Date()): O
       questions.push({
         id: `OQ-${String(seq).padStart(3, '0')}`,
         source,
+        sourcePath: source,
+        line: eq.line,
+        raw: eq.raw,
         section: 'Open Questions',
         question: eq.text,
         classification,
         resolution_status: eq.resolution_status,
         reason,
-        ...(eq.resolution_note ? { resolution_note: eq.resolution_note } : {}),
+        ...(eq.resolution_note ? { resolution_note: eq.resolution_note, note: eq.resolution_note } : {}),
         ...(classification === 'blocking' && eq.resolution_status === 'open'
           ? { suggested_assumption: suggestedAssumption(eq.text) }
           : {}),
@@ -273,18 +284,24 @@ export function renderOpenQuestionsMarkdown(r: OpenQuestionsReport): string {
   L.push('## Blocking Open Questions', '')
   if (blockingOpen.length === 0) L.push('_None — nothing blocks readiness._', '')
   for (const q of blockingOpen) {
-    L.push(`### ${q.id}`, '')
-    L.push(`- Source: \`${q.source}\``)
-    L.push(`- Question: ${q.question}`)
+    L.push(`### ${q.question}`, '')
+    L.push(`- Status: ${q.resolution_status}`)
+    L.push(`- Severity: ${q.classification}`)
+    L.push(`- Source: \`${q.sourcePath}:${q.line}\``)
     L.push(`- Reason: ${q.reason}`)
-    if (q.suggested_assumption) L.push(`- Suggested assumption: ${q.suggested_assumption}`)
+    L.push('')
+    L.push('Suggested action:', '')
+    L.push('```md')
+    L.push(`- [assumed] ${q.question}`)
+    L.push(`  - note: ${q.suggested_assumption ?? '<editable assumption for the MVP>'}`)
+    L.push('```')
     L.push('')
   }
 
   const renderStatusList = (title: string, items: OpenQuestion[]) => {
     L.push(`## ${title}`, '')
     if (items.length === 0) L.push('_None._')
-    for (const q of items) L.push(`- ${q.question}${q.resolution_note ? ` — _${q.resolution_note}_` : ''}`)
+    for (const q of items) L.push(`- ${q.question} — \`${q.sourcePath}:${q.line}\`${q.note ? ` — _${q.note}_` : ''}`)
     L.push('')
   }
   renderStatusList('Resolved', r.resolved_questions)

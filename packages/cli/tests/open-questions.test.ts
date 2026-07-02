@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import fs from 'fs'
 import os from 'os'
 import path from 'path'
@@ -165,5 +165,52 @@ describe('Open questions resolution tracking (VS-071)', () => {
     expect(s.blocking_open).toBe(0)
     expect(s.resolution.resolved).toBe(1)
     expect(s.roadmap_readiness).toBe('ready')
+  })
+})
+
+describe('Open questions source locations (VS-073.3)', () => {
+  it('AC9/AC10/AC11: captures sourcePath, line and raw', () => {
+    config()
+    write('knowledge/product/product.md', '---\ntype: product\n---\n# P\n\n## Open Questions\n\n- [open] ¿El identificador principal será email, teléfono o documento para el MVP?\n')
+    const r = buildOpenQuestionsReport(tmp)
+    const q = r.questions[0]
+    expect(q.sourcePath).toBe('knowledge/product/product.md')
+    expect(q.line).toBe(8)
+    expect(q.raw).toBe('- [open] ¿El identificador principal será email, teléfono o documento para el MVP?')
+    expect(q.source).toBe(q.sourcePath)
+  })
+
+  it('AC12/AC19: captures note as both resolution_note and note', () => {
+    config()
+    write('knowledge/product/product.md', '---\ntype: product\n---\n# P\n\n## Open Questions\n\n- [assumed] ¿El identificador principal será email?\n  - note: Se asume email para el MVP.\n')
+    const q = buildOpenQuestionsReport(tmp).questions[0]
+    expect(q.resolution_status).toBe('assumed')
+    expect(q.note).toBe('Se asume email para el MVP.')
+    expect(q.resolution_note).toBe('Se asume email para el MVP.')
+  })
+
+  it('AC16-AC19: JSON carries sourcePath, line, raw and note', () => {
+    config()
+    write('knowledge/tech/codebase.md', '---\ntype: codebase\n---\n# C\n\n## Open Questions\n\n- ¿Qué framework usar para el MVP y el roadmap?\n')
+    const json = JSON.parse(serializeOpenQuestionsJson(buildOpenQuestionsReport(tmp)))
+    expect(json.questions[0].sourcePath).toBe('knowledge/tech/codebase.md')
+    expect(json.questions[0].line).toBe(8)
+    expect(json.questions[0].raw).toContain('framework')
+  })
+
+  it('AC1-AC5: kaddo questions output shows Source/Status/Severity + resolution guide', async () => {
+    config()
+    write('knowledge/tech/codebase.md', '---\ntype: codebase\n---\n# C\n\n## Open Questions\n\n- ¿Qué stack y arquitectura para el MVP?\n')
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
+    vi.spyOn(process, 'cwd').mockReturnValue(tmp)
+    const { runQuestions } = await import('../src/commands/questions.js')
+    runQuestions({})
+    const out = logSpy.mock.calls.map((c) => c.join(' ')).join('\n')
+    expect(out).toContain('Source: knowledge/tech/codebase.md:8')
+    expect(out).toContain('Status: open')
+    expect(out).toContain('Severity: blocking')
+    expect(out).toMatch(/How to resolve|Cómo resolver/)
+    expect(out).toContain('- [assumed]')
+    vi.restoreAllMocks()
   })
 })

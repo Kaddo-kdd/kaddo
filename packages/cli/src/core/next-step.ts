@@ -133,7 +133,7 @@ export function resolveNextStep(dir: string, now: Date = new Date()): NextStepRe
   // Foundational knowledge is useful — now decisions, roadmap and delivery.
   const oq = buildOpenQuestionsReport(dir, now)
   if (oq.summary.blocking_open > 0) {
-    return { id: 'questions', phase: 'Knowledge Refinement', label: 'Resolve, assume or defer the blocking open questions (`kaddo questions`).', command: 'kaddo questions', reason: `${oq.summary.blocking_open} blocking open question(s) remain.` }
+    return { id: 'questions', phase: 'Knowledge Refinement', label: 'Run `kaddo questions` to see source locations and resolution guidance, then resolve, assume or defer the blocking open questions.', command: 'kaddo questions', reason: `${oq.summary.blocking_open} blocking open question(s) remain.` }
   }
 
   const roadmap = roadmapSignal(dir)

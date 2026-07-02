@@ -25,15 +25,32 @@ kaddo questions --output .kaddo/reports/questions-report.md
 
 ```text
 Open questions detected: 4
-Roadmap readiness: needs decisions
+Roadmap readiness: needs decisions (blocking open: 2, important open: 2)
 
-Blocking:
-- ¿El proyecto será API backend, web app o CLI?
-- ¿Fastify o NestJS?
+Blocking (open):
 
-Suggested next:
-Confirm suggested assumptions with the user before generating the roadmap.
+1. ¿El proyecto será API backend, web app o CLI?
+   Source: knowledge/product/product.md:12
+   Status: open
+   Severity: blocking
+   Suggested action:
+     Cambia [open] por [resolved], [assumed] o [deferred].
+   Example:
+     - [assumed] ¿El proyecto será API backend, web app o CLI?
+       - note: <supuesto editable para el MVP>
+
+Cómo resolver
+...
 ```
+
+## Ubicación y guía de resolución
+
+Cada pregunta es **accionable**: `kaddo questions` muestra exactamente dónde vive y cómo actualizarla
+— sin `grep`/`rg`/`Select-String` manual. Por cada pregunta imprime `Source` (`ruta:línea`), `Status`,
+`Severity`, la `Note` capturada, y — para bloqueantes abiertas — un `Example` copy/paste con una nota
+placeholder (nunca una decisión de negocio inventada). Una guía **Cómo resolver** localizada (EN/ES)
+cierra la salida. `kaddo questions --json` y el reporte Markdown llevan `sourcePath`, `line`, `raw` y
+`note` por pregunta, y el recurso MCP `kaddo://open-questions` expone los mismos campos.
 
 ## Clasificación
 
