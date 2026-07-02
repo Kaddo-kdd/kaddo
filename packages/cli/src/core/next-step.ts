@@ -110,8 +110,9 @@ export function resolveNextStep(dir: string, now: Date = new Date()): NextStepRe
   }
 
   // Knowledge refinement — keep the layer order Business → Product → Tech.
-  const refine = (id: string, agent: string, target: string, quality: string): NextStepRecommendation => ({
-    id, phase: 'Knowledge Refinement', label: `Use ${agent} to complete \`${target}\`.`, agent, target,
+  const discovery = state === 'pre-ai' || state === 'legacy'
+  const refine = (id: string, agent: string, target: string, quality: string, verb = 'complete'): NextStepRecommendation => ({
+    id, phase: 'Knowledge Refinement', label: `Use ${agent} to ${verb} \`${target}\`.`, agent, target,
     reason: `${target} is ${quality === 'missing' ? 'missing' : 'still a bootstrap placeholder or too thin'}.`,
     instructions: [
       'The baseline file exists but does not yet hold real, project-specific knowledge.',
@@ -121,8 +122,11 @@ export function resolveNextStep(dir: string, now: Date = new Date()): NextStepRe
   })
   if (qBusiness !== 'useful') return refine('refine-business', 'business-agent', B, qBusiness)
   if (qProduct !== 'useful' || qCap !== 'useful') {
-    const target = qCap !== 'useful' ? CAP : P
-    return refine('refine-product', 'capability-agent', target, qCap !== 'useful' ? qCap : qProduct)
+    // For existing projects, capabilities is a *discovery* of what the system already does (VS-074).
+    if (qCap !== 'useful') {
+      return refine('refine-product', 'capability-agent', CAP, qCap, discovery ? 'discover and document existing system capabilities in' : 'complete')
+    }
+    return refine('refine-product', 'capability-agent', P, qProduct)
   }
   if (qCurrentState !== 'useful') return refine('refine-current-state', 'architecture-agent', CS, qCurrentState)
   if (qCodebase !== 'useful') {

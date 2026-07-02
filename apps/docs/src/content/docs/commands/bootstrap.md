@@ -41,6 +41,22 @@ Every generated file carries `project_state:` in its front matter. `pre-ai` and 
 add discovery/risk sections (e.g. *Observed technical signals*, *Risks of interpretation*,
 *Critical dependencies*, *Modernization notes*).
 
+### Existing capability discovery (pre-ai / legacy)
+
+For existing projects, `knowledge/product/capabilities.md` is scaffolded as an **evidence-backed
+capability inventory**, not a wishlist. The `capability-agent` fills it in a state-aware way:
+
+- **new** → *Planned Capability Definition* (`[planned]` capabilities).
+- **pre-ai** → *Existing Capability Discovery* — a `## Capability Inventory` where each capability has
+  a `Status` (`implemented`/`partial`/`inferred`/`risky`/`deprecated`/`unknown`) with **evidence**
+  (paths, routes, tables, functions), plus `## Capability Gaps` and `## Roadmap Candidate Signals`.
+- **legacy** → *Legacy Capability Discovery* — the same inventory plus `Criticality`, `Change risk`,
+  `Operational dependency` and `Modernization notes`.
+
+The `roadmap-agent` then treats `capabilities.md` as its **primary source** for roadmap candidates
+(partial capabilities, gaps, candidate signals, risky capabilities) and won't build a roadmap from a
+placeholder. The agent never invents evidence — no evidence means `inferred` or `unknown`.
+
 ## Behavior
 
 - Requires `kaddo init` first.

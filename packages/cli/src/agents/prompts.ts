@@ -35,6 +35,32 @@ kaddo context
 Especially useful for pre-AI projects, legacy projects, existing codebases with little
 documentation, and projects where capabilities are not explicitly documented.
 
+## State-aware modes (VS-074)
+
+Adapt to \`project.state\` (from \`.kaddo/config.yml\`):
+
+- **new → Planned Capability Definition.** Define the capabilities the product *should* have. Use
+  \`[planned]\` items; evidence is not required yet.
+- **pre-ai → Existing Capability Discovery.** Document the capabilities the system *already has*, as a
+  structured inventory with **evidence**, status and gaps — a photograph of what exists today, not a
+  wishlist.
+- **legacy → Legacy Capability Discovery.** Same inventory plus **criticality**, **change risk**,
+  **operational dependency** and **modernization notes** per capability.
+
+## Capability status values
+
+Classify every discovered capability with exactly one status:
+
+- \`implemented\` — clearly present; **must have evidence**.
+- \`partial\` — exists but incomplete.
+- \`inferred\` — likely present from indirect signals; not yet confirmed.
+- \`risky\` — exists but carries technical/operational risk.
+- \`deprecated\` — present but obsolete / being replaced.
+- \`unknown\` — not enough evidence to classify.
+
+Never mark a capability \`implemented\` without evidence. When evidence is indirect, use \`inferred\`.
+When there is no evidence at all, use \`unknown\` and write \`Evidence: - pending validation\`.
+
 ## Input Required
 
 Provide \`.kaddo/context-pack.md\` as the primary input.
@@ -58,14 +84,20 @@ Analyze the context pack and identify:
 7. Suggested ownership.
 8. Candidate code globs if evident.
 
+For **pre-ai** and **legacy**, produce the richer inventory (see Output Format): a
+\`## Capability Inventory\` with status + evidence per capability, a \`## Capability Gaps\` section, and
+\`## Roadmap Candidate Signals\` (signals only — never a formal roadmap). For **legacy**, add
+\`Criticality\`, \`Change risk\`, \`Operational dependency\` and \`Modernization notes\` per capability.
+
 ## Constraints
 
 - Do not invent business context.
-- Mark assumptions clearly.
+- Do not invent evidence; never mark \`implemented\` without a concrete path/route/table/function.
+- Mark assumptions clearly; use \`inferred\`/\`unknown\` when evidence is missing.
 - Prefer "candidate capability" when evidence is incomplete.
 - Do not produce implementation tasks.
-- Do not generate a roadmap yet.
-- Do not create ADRs.
+- Do not generate a roadmap yet — only \`[gap]\` and \`[candidate]\` signals.
+- Do not create ADRs or Work Items.
 - Do not write code.
 
 ## Output Format
@@ -106,6 +138,47 @@ Generated from Kaddo Context Pack.
 ## Open Questions
 
 ## Suggested Next Step
+\`\`\`
+
+### Output Format — pre-ai / legacy (Existing Capability Discovery)
+
+\`\`\`markdown
+# Existing Capabilities
+
+## Capability Inventory
+
+### <Capability name>
+
+- Status: implemented | partial | inferred | risky | deprecated | unknown
+- Capability type: business | product | technical | integration | operational
+- User-facing: yes | no | internal
+- Evidence:
+  - \`<path/to/file>\`
+  - \`<route>\` / \`<table>\` / \`<function>\`
+- Related flows / data / integrations:
+- Current behavior:
+- Known constraints:
+- Risks or uncertainty:
+- Open questions:
+  - [open] ...
+<!-- legacy only: -->
+- Criticality: low | medium | high
+- Change risk: low | medium | high
+- Operational dependency:
+- Modernization notes:
+
+## Capability Gaps
+
+- [gap] <Gap description>
+  - Related capability: <name>
+  - Impact: low | medium | high
+  - Possible roadmap candidate: yes | no
+
+## Roadmap Candidate Signals
+
+- [candidate] <Potential roadmap candidate>
+  - Based on: partial capability | gap | risk | open question | business goal
+  - Related capability: <name>
 \`\`\`
 
 ## Where to Save the Result
@@ -226,12 +299,24 @@ Use this agent after capabilities and architecture are understood (or at least a
 
 ## Input Required
 
-Provide \`.kaddo/context-pack.md\` as the primary input.
+Provide \`.kaddo/context-pack.md\` as the primary input, and treat
+\`knowledge/product/capabilities.md\` as the **primary source for roadmap candidates** (VS-074).
+
+Derive roadmap candidates from the capability inventory, prioritizing:
+
+- \`partial\` capabilities (finish what exists)
+- \`## Capability Gaps\` (\`[gap]\` items, especially Impact: high)
+- \`## Roadmap Candidate Signals\` (\`[candidate]\` items)
+- \`risky\` capabilities (especially in legacy — stabilize before extending)
+- resolved/assumed/deferred open questions and business goals
+- technical risks and decision candidates
+
+**Do not** build a roadmap from general ideas when \`capabilities.md\` is still a placeholder or weak:
+if capabilities are not yet discovered, recommend running the \`capability-agent\` first.
 
 Optionally provide (use whatever is available; mark anything missing as an assumption or
 open question):
 
-- \`knowledge/product/capabilities.md\`
 - \`knowledge/tech/current-state.md\`
 - \`knowledge/legacy/risks.md\`
 - \`knowledge/legacy/unknowns.md\`
@@ -646,6 +731,10 @@ A refined Work Item intended to be saved under the lifecycle workspace:
 **Open questions:**
 
 **Suggested ownership (code globs):**
+
+**Related capability:** <!-- recommended (VS-074): the capability from
+knowledge/product/capabilities.md this Work Item advances, so work traces back to a real capability.
+Add \`related_capability: <name>\` to the front matter when known. -->
 \`\`\`
 
 ## Where to Save the Result

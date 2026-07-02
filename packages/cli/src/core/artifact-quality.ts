@@ -21,6 +21,11 @@ function isPlaceholderLine(line: string): boolean {
   if (/^[-*]\s+\[[^\]]+\]\s*$/.test(t)) return true
   // Common template stems used in the bootstrap templates.
   if (/^_(?:Describe|List|Document|What|Which|Who|Use|To be defined|No production code)\b/i.test(t)) return true
+  // Angle-bracket placeholders, e.g. `### <Capability name>` or `- Related capability: <name>`.
+  if (/<[^>]+>/.test(t)) return true
+  // Scaffolding field labels: a bullet `- Label:` with no value, or an enum of options `a | b | c`.
+  if (/^[-*]\s+[^:]+:\s*$/.test(t)) return true
+  if (/^[-*]\s+[^:]+:\s*\S.*\s\|\s/.test(t)) return true
   return false
 }
 
