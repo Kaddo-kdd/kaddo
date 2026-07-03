@@ -1,6 +1,22 @@
 import type { KaddoModule, ModuleFile } from './types.js'
 import { AGENT_PROMPTS } from '../agents/prompts.js'
-import { agentInstallPath } from '../agents/groups.js'
+import { agentInstallPath, agentGroupOf } from '../agents/groups.js'
+import { KADDO_VERSION } from '../core/version.js'
+
+/** Prepend versioned agent front matter (VS-074.2) so installed agents carry name + version. */
+export function withAgentFrontMatter(fileName: string, content: string): string {
+  const name = fileName.replace(/\.md$/, '')
+  const fm = [
+    '---',
+    'type: agent',
+    `name: ${name}`,
+    `version: ${KADDO_VERSION}`,
+    `group: ${agentGroupOf(fileName)}`,
+    '---',
+    '',
+  ].join('\n')
+  return fm + content.replace(/^\s+/, '')
+}
 
 const agentReadme: ModuleFile = {
   path: 'knowledge/agents/README.md',
@@ -74,7 +90,7 @@ const agentReadme: ModuleFile = {
 
 const agentFiles: ModuleFile[] = AGENT_PROMPTS.map((a) => ({
   path: agentInstallPath(a.fileName),
-  content: a.content,
+  content: withAgentFrontMatter(a.fileName, a.content),
 }))
 
 export const agentsModule: KaddoModule = {

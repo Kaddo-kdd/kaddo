@@ -8,6 +8,7 @@ import { knowledgeLayers, type LayerStatus } from './layers.js'
 import { analyzeKnowledgeArtifact, type ArtifactQuality } from './artifact-quality.js'
 import { resolveNextStep, type NextStepRecommendation } from './next-step.js'
 import { buildTechDecisions, type TechDecisions } from './decisions.js'
+import { installedAssetsSummary } from './assets.js'
 import { roadmapStats, type RoadmapStats } from './roadmap.js'
 import { lifecycleStateOf, isActiveState, lifecycleCounts, type LifecycleState } from './lifecycle.js'
 import { assessPhase, type PhaseAssessment } from './delivery-phase.js'
@@ -79,6 +80,12 @@ export type ContextPack = {
     core: Record<string, boolean>
     decisions: { adrs: number; dir: boolean }
     discovery: Record<string, boolean>
+  }
+  /** Installed agent/skill version status vs the current package (VS-074.2). */
+  installedAssets: {
+    version: string
+    agents: { total: number; installed: number; outdated: number; unknown_version: number; modified: number }
+    skills: { total: number; installed: number; outdated: number; unknown_version: number; modified: number }
   }
   /** Active Work Items distribution by type (feature/bugfix/hotfix/spike/chore/…). */
   deliveryMix: Record<string, number>
@@ -401,6 +408,11 @@ export function buildContextPack(
     nextStepRecommendation,
     techDecisions,
     techKnowledge,
+    installedAssets: (() => {
+      const s = installedAssetsSummary(dir)
+      const compact = (a: typeof s.agents) => ({ total: a.total, installed: a.total - a.missing, outdated: a.outdated, unknown_version: a.unknown_version, modified: a.modified })
+      return { version: s.version, agents: compact(s.agents), skills: compact(s.skills) }
+    })(),
     deliveryMix,
     external: loadExternalCapsules(dir),
     graph: loadGraphSummary(dir),

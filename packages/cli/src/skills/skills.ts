@@ -4,6 +4,8 @@
 // the agent's job) — it defines HOW to do one thing well. Agents orchestrate; skills standardize.
 // Skills never execute anything: they are instructions, not tools.
 
+import { KADDO_VERSION } from '../core/version.js'
+
 export type SkillGroup = 'delivery' | 'tech' | 'integration'
 
 export type SkillDef = {
@@ -25,8 +27,9 @@ function skill(
     '---',
     'type: skill',
     `id: ${id}`,
+    `name: ${id}`,
     `title: ${title}`,
-    'version: 1',
+    `version: ${KADDO_VERSION}`,
     `group: ${group}`,
     'applies_to:',
     ...appliesTo.map((a) => `  - ${a}`),

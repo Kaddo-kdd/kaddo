@@ -79,6 +79,14 @@ export const COMMAND_HELP: Record<string, CommandHelp> = {
     question: 'Is knowledge/tech/ cleanly separated (core vs discovery vs decisions)?',
     next: 'Discovery notes now live under knowledge/tech/discovery/',
   },
+  'agents status': {
+    question: 'Are the installed agents aligned with the current Kaddo version?',
+    next: 'Run `kaddo agents update` to refresh outdated agents',
+  },
+  'skills status': {
+    question: 'Are the installed skills aligned with the current Kaddo version?',
+    next: 'Run `kaddo skills update` to refresh outdated skills',
+  },
 }
 
 /** Lines for the contextual footer, or [] if the command has no entry. */

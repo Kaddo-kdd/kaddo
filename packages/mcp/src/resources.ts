@@ -10,6 +10,7 @@ import { buildSavingsReport, renderSavingsMarkdown } from '../../cli/src/core/sa
 import { buildDriftReport, renderDriftMarkdown } from '../../cli/src/core/drift-report.js'
 import { buildOpenQuestionsReport, roadmapReadinessSummary } from '../../cli/src/core/open-questions.js'
 import { buildTechDecisions } from '../../cli/src/core/decisions.js'
+import { installedAssetsSummary } from '../../cli/src/core/assets.js'
 import { listWorkItems } from './workitems.js'
 import { hasKnowledge, readText } from './project.js'
 
@@ -264,6 +265,18 @@ export const RESOURCES: ResourceDescriptor[] = [
         return text('kaddo://tech-decisions', 'Knowledge repository not found. Run `kaddo bootstrap` first.', 'text/plain')
       }
       return [{ uri: 'kaddo://tech-decisions', text: JSON.stringify(buildTechDecisions(root), null, 2), mimeType: 'application/json' }]
+    },
+  },
+  {
+    uri: 'kaddo://installed-assets',
+    name: 'Kaddo installed assets',
+    description: 'Version status of the agents and skills installed in the project vs the current package (up-to-date / outdated / unknown-version / modified / missing). Read-only; never updates.',
+    mimeType: 'application/json',
+    read: (root) => {
+      if (!hasKnowledge(root)) {
+        return text('kaddo://installed-assets', 'Knowledge repository not found. Run `kaddo bootstrap` first.', 'text/plain')
+      }
+      return [{ uri: 'kaddo://installed-assets', text: JSON.stringify(installedAssetsSummary(root), null, 2), mimeType: 'application/json' }]
     },
   },
 ]

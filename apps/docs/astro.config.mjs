@@ -168,6 +168,7 @@ export default defineConfig({
             { label: 'Drift Report', translations: { es: 'Reporte de drift' }, slug: 'drift-report' },
             { label: 'Open Questions Gate', translations: { es: 'Preguntas abiertas' }, slug: 'open-questions' },
             { label: 'Tech Decisions (ADRs)', translations: { es: 'Decisiones técnicas (ADRs)' }, slug: 'tech-decisions' },
+            { label: 'Installed Assets', translations: { es: 'Assets instalados' }, slug: 'installed-assets' },
             {
               label: 'Adapters',
               translations: { es: 'Adapters' },

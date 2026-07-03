@@ -21,6 +21,7 @@ import { knowledgeLayers, renderLayersMarkdown, type LayerStatus } from './layer
 import { roadmapStats, type RoadmapStats } from './roadmap.js'
 import { buildReadinessReport, type ReadinessReport } from './readiness.js'
 import { buildTechDecisions, type TechDecisions } from './decisions.js'
+import { installedAssetsSummary } from './assets.js'
 import {
   LIFECYCLE_STATES,
   lifecycleStateOf,
@@ -110,6 +111,8 @@ export type ProjectExplanation = {
     core: { currentState: boolean; codebase: boolean }
     discovery: { architectureNotes: boolean; decisionCandidates: boolean; legacyLocation: boolean }
   }
+  /** Installed agent/skill version status vs the current package (VS-074.2). */
+  installedAssets: ReturnType<typeof installedAssetsSummary>
 }
 
 function normalizeTitle(t: string): string {
@@ -401,6 +404,7 @@ export function buildProjectExplanation(dir: string): ProjectExplanation {
           exists(join(dir, 'knowledge/tech/decision-candidates.md')),
       },
     },
+    installedAssets: installedAssetsSummary(dir),
   }
 }
 
@@ -667,6 +671,26 @@ export function renderExplanationHuman(exp: ProjectExplanation): string {
   }
   if (tk.discovery.legacyLocation) {
     lines.push('Tech discovery files are in the legacy `knowledge/tech/` root. Suggested cleanup: run `kaddo tech organize`.')
+    lines.push('')
+  }
+
+  // Installed Assets (VS-074.2): agent/skill version alignment with the current package.
+  const ia = exp.installedAssets
+  const agentsInstalled = ia.agents.total - ia.agents.missing
+  const skillsInstalled = ia.skills.total - ia.skills.missing
+  if (agentsInstalled > 0 || skillsInstalled > 0) {
+    const issues = (s: typeof ia.agents) =>
+      [s.outdated ? `${s.outdated} outdated` : '', s.unknown_version ? `${s.unknown_version} unknown-version` : '', s.modified ? `${s.modified} modified` : '']
+        .filter(Boolean)
+        .join(', ')
+    lines.push('## Installed Assets')
+    lines.push(`- CLI version: ${ia.version}`)
+    lines.push(`- Agents: ${agentsInstalled} installed${issues(ia.agents) ? ` (${issues(ia.agents)})` : ''}`)
+    lines.push(`- Skills: ${skillsInstalled} installed${issues(ia.skills) ? ` (${issues(ia.skills)})` : ''}`)
+    if (ia.agents.outdated + ia.agents.unknown_version + ia.skills.outdated + ia.skills.unknown_version > 0) {
+      lines.push('')
+      lines.push('Suggested: run `kaddo agents status` and `kaddo skills status`.')
+    }
     lines.push('')
   }
 

@@ -26,6 +26,7 @@ import { runQuestions } from './commands/questions.js'
 import { runAdaptersInstall, runAdaptersList, runAdaptersStatus } from './commands/adapters.js'
 import { runAdr } from './commands/adr.js'
 import { runTechOrganize } from './commands/tech.js'
+import { runAssetsStatus, runAssetsUpdate } from './commands/assets.js'
 
 // Single source of truth for the version: read it from package.json at runtime so the CLI
 // `--version` can never drift from the published package version. `../package.json` resolves
@@ -186,6 +187,34 @@ program
   .option('--json', 'Output JSON instead of a summary')
   .option('--output <path>', 'Write the report to a file')
   .action(questionsAction)
+
+const agentsCmd = program
+  .command('agents')
+  .description('Inspect and update installed Kaddo agents (version status)')
+agentsCmd
+  .command('status')
+  .description('Show installed agents, their version and whether they are up to date')
+  .option('--json', 'Output JSON')
+  .action((opts: { json?: boolean }) => runAssetsStatus('agent', opts))
+agentsCmd
+  .command('update')
+  .description('Refresh outdated agents (never overwrites modified files without --force)')
+  .option('--force', 'Overwrite unknown-version / locally-modified agents')
+  .action((opts: { force?: boolean }) => runAssetsUpdate('agent', opts))
+
+const skillsCmd = program
+  .command('skills')
+  .description('Inspect and update installed Kaddo skills (version status)')
+skillsCmd
+  .command('status')
+  .description('Show installed skills, their version and whether they are up to date')
+  .option('--json', 'Output JSON')
+  .action((opts: { json?: boolean }) => runAssetsStatus('skill', opts))
+skillsCmd
+  .command('update')
+  .description('Refresh outdated skills (never overwrites modified files without --force)')
+  .option('--force', 'Overwrite unknown-version / locally-modified skills')
+  .action((opts: { force?: boolean }) => runAssetsUpdate('skill', opts))
 
 const techCmd = program
   .command('tech')

@@ -94,6 +94,19 @@ export function runUnderstand(): void {
     console.log('    into `knowledge/tech/decisions/` before implementing affected technical Work Items (`kaddo adr`).')
   }
 
+  // 5b-assets (VS-074.2): warn if a recommended agent is outdated vs the current package version.
+  const ia = exp.installedAssets
+  const outdatedRecommended = ia.agents.items.filter(
+    (a) => (a.state === 'outdated' || a.state === 'unknown-version') && assessment.recommendedAgents.includes(a.name),
+  )
+  if (outdatedRecommended.length > 0) {
+    console.log('')
+    for (const a of outdatedRecommended) {
+      console.log(`Recommended agent ${a.name} is ${a.state} (installed ${a.installed ?? 'unknown'}, available ${a.available}).`)
+    }
+    console.log('  → Run `kaddo agents update` or review `kaddo agents status`.')
+  }
+
   // 5b-ext. External Knowledge Capsules (VS-054) — remind the agent of external dependencies.
   if (exp.externalCapsules.length > 0) {
     console.log('')
