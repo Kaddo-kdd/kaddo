@@ -74,6 +74,7 @@ Hay un ejemplo listo para copiar en
 | `kaddo://guard-history` | `.kaddo/history/guard-runs.jsonl` | recorded guard runs |
 | `kaddo://open-questions` | business/product/codebase/roadmap | classified open questions |
 | `kaddo://roadmap-readiness` | (computed) | roadmap readiness summary |
+| `kaddo://tech-decisions` | (computed) | candidatos de decisión vs ADRs + nombres ADR sugeridos |
 
 ## Tools (solo lectura)
 

@@ -71,6 +71,7 @@ A ready-to-copy example lives in [`examples/mcp/`](https://github.com/Kaddo-kdd/
 | `kaddo://guard-history` | `.kaddo/history/guard-runs.jsonl` | recorded guard runs |
 | `kaddo://open-questions` | business/product/codebase/roadmap | classified open questions |
 | `kaddo://roadmap-readiness` | (computed) | roadmap readiness summary |
+| `kaddo://tech-decisions` | (computed) | decision candidates vs ADRs + suggested ADR filenames |
 
 ## Tools (read-only)
 

@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import fs from 'fs'
 import os from 'os'
 import path from 'path'
-import { buildTechDecisions, parseDecisionCandidates } from '../src/core/decisions.js'
+import { buildTechDecisions, parseDecisionCandidates, cleanCandidateTitle } from '../src/core/decisions.js'
 import { buildProjectExplanation, renderExplanationHuman } from '../src/core/project-explain.js'
 import { buildContextPack } from '../src/core/context-pack.js'
 import { loadConfig } from '../src/core/config.js'
@@ -21,6 +21,31 @@ const CANDIDATES = '# Decision Candidates\n\n## Shared secret for internal endpo
 
 beforeEach(() => { dir = fs.mkdtempSync(path.join(os.tmpdir(), 'kaddo-dec-')) })
 afterEach(() => fs.rmSync(dir, { recursive: true, force: true }))
+
+describe('ADR candidate slug cleanup (VS-075.1)', () => {
+  it('AC3/AC4: cleanCandidateTitle strips numeric/markdown list prefixes', () => {
+    expect(cleanCandidateTitle('1. Seguridad Compartida')).toBe('Seguridad Compartida')
+    expect(cleanCandidateTitle('2) Orquestación de Tareas')).toBe('Orquestación de Tareas')
+    expect(cleanCandidateTitle('(3) Control de Webhooks')).toBe('Control de Webhooks')
+    expect(cleanCandidateTitle('001. Something')).toBe('Something')
+    expect(cleanCandidateTitle('## Heading title')).toBe('Heading title')
+    expect(cleanCandidateTitle('- bulleted')).toBe('bulleted')
+  })
+
+  it('AC1/AC5/AC6: suggested ADR file has no duplicate numbering and normalizes acronyms', () => {
+    const dirLocal = fs.mkdtempSync(path.join(os.tmpdir(), 'kaddo-slug-'))
+    fs.mkdirSync(path.join(dirLocal, '.kaddo'), { recursive: true })
+    fs.writeFileSync(path.join(dirLocal, '.kaddo/config.yml'), 'version: 1\nproject:\n  name: d\n  state: pre-ai\n  structure: monorepo\n  language: es\nteam:\n  size: small\n')
+    fs.mkdirSync(path.join(dirLocal, 'knowledge/tech'), { recursive: true })
+    fs.writeFileSync(path.join(dirLocal, 'knowledge/tech/decision-candidates.md'), '# DC\n\n## 1. Seguridad Compartida para Microservicios Internos (INTERNAL_CRON_SECRET)\n\n## 2) Orquestación de Tareas Programadas (pg_cron vs Vercel Cron)\n')
+    const td = buildTechDecisions(dirLocal)
+    expect(td.candidate_list[0].title).toBe('Seguridad Compartida para Microservicios Internos (INTERNAL_CRON_SECRET)')
+    expect(td.candidate_list[0].suggestedAdrFile).toBe('knowledge/tech/decisions/ADR-001-seguridad-compartida-para-microservicios-internos-internal-cron-secret.md')
+    expect(td.candidate_list[1].suggestedAdrFile).toBe('knowledge/tech/decisions/ADR-002-orquestacion-de-tareas-programadas-pg-cron-vs-vercel-cron.md')
+    for (const c of td.candidate_list) expect(c.suggestedAdrFile).not.toMatch(/ADR-00\d-\d-/)
+    fs.rmSync(dirLocal, { recursive: true, force: true })
+  })
+})
 
 describe('tech decisions detection (VS-075)', () => {
   it('AC2: parses candidate titles from decision-candidates.md', () => {

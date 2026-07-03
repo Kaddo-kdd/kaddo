@@ -26,6 +26,7 @@ describe('MCP resources (VS-057 AC6/AC14)', () => {
         'kaddo://guard-history',
         'kaddo://open-questions',
         'kaddo://roadmap-readiness',
+        'kaddo://tech-decisions',
         'kaddo://roadmap',
         'kaddo://skills',
         'kaddo://understand',
@@ -74,5 +75,19 @@ describe('MCP resources (VS-057 AC6/AC14)', () => {
     root = makeProject()
     config(root)
     expect(JSON.parse(res('kaddo://skills').read(root)[0].text)).toEqual({ skills: [] })
+  })
+
+  it('VS-075.1: tech-decisions resource exposes status + candidate_list with clean suggested ADR files', () => {
+    root = makeProject()
+    config(root)
+    write(root, 'knowledge/tech/decision-candidates.md', '# Decision Candidates\n\n## 1. Shared secret for internal endpoints (INTERNAL_CRON_SECRET)\n\n### Context\nx\n')
+    const before = require('fs').readFileSync(require('path').join(root, 'knowledge/tech/decision-candidates.md'), 'utf8')
+    const json = JSON.parse(res('kaddo://tech-decisions').read(root)[0].text)
+    expect(json.status).toBe('candidates')
+    expect(json.candidates).toBe(1)
+    expect(json.candidate_list[0].source).toBe('knowledge/tech/decision-candidates.md')
+    expect(json.candidate_list[0].suggestedAdrFile).toBe('knowledge/tech/decisions/ADR-001-shared-secret-for-internal-endpoints-internal-cron-secret.md')
+    // read-only: the resource never mutates the source
+    expect(require('fs').readFileSync(require('path').join(root, 'knowledge/tech/decision-candidates.md'), 'utf8')).toBe(before)
   })
 })

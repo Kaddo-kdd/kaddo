@@ -23,14 +23,26 @@ export type TechDecisions = {
   candidate_list: DecisionCandidate[]
 }
 
+/** Strip list/heading prefixes from a candidate title (e.g. `1.`, `2)`, `(3)`, `001.`, `-`, `##`). */
+export function cleanCandidateTitle(title: string): string {
+  return title
+    .replace(/^\s*#{1,6}\s+/, '') // markdown heading
+    .replace(/^\s*[-*]\s+/, '') // bullet
+    .replace(/^\s*\(?\d+\)?[.):]\s+/, '') // 1. / 01. / 1) / (2) / 3:
+    .trim()
+}
+
+/** Filename-safe slug: normalizes acronyms (INTERNAL_CRON_SECRET → internal-cron-secret), accents. */
 function slugify(s: string): string {
-  return s
+  return cleanCandidateTitle(s)
     .toLowerCase()
     .normalize('NFD')
     .replace(/[̀-ͯ]/g, '')
-    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/[^a-z0-9]+/g, '-') // underscores, spaces, parens → single hyphen
+    .replace(/-+/g, '-')
     .replace(/^-+|-+$/g, '')
-    .slice(0, 60)
+    .slice(0, 70)
+    .replace(/-+$/g, '')
 }
 
 /** Parse the `## <title>` decision headings from decision-candidates.md (H1 excluded). */
@@ -39,8 +51,11 @@ export function parseDecisionCandidates(md: string): string[] {
   for (const line of md.split(/\r?\n/)) {
     const m = line.match(/^##\s+(.+?)\s*$/) // level-2 heading = one candidate decision
     if (m) {
-      const t = m[1].trim()
-      if (t && !/^_.*_$/.test(t)) out.push(t)
+      const raw = m[1].trim()
+      if (!raw || /^_.*_$/.test(raw)) continue
+      // Strip any numeric list prefix inside the heading (`## 1. Title` → `Title`) (VS-075.1).
+      const t = cleanCandidateTitle(raw)
+      if (t) out.push(t)
     }
   }
   return out

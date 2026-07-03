@@ -9,6 +9,7 @@ import { buildImpactReport, renderImpactMarkdown } from '../../cli/src/core/impa
 import { buildSavingsReport, renderSavingsMarkdown } from '../../cli/src/core/savings.js'
 import { buildDriftReport, renderDriftMarkdown } from '../../cli/src/core/drift-report.js'
 import { buildOpenQuestionsReport, roadmapReadinessSummary } from '../../cli/src/core/open-questions.js'
+import { buildTechDecisions } from '../../cli/src/core/decisions.js'
 import { listWorkItems } from './workitems.js'
 import { hasKnowledge, readText } from './project.js'
 
@@ -251,6 +252,18 @@ export const RESOURCES: ResourceDescriptor[] = [
         return text('kaddo://roadmap-readiness', 'Knowledge repository not found. Run `kaddo bootstrap` first.', 'text/plain')
       }
       return [{ uri: 'kaddo://roadmap-readiness', text: JSON.stringify(roadmapReadinessSummary(root), null, 2), mimeType: 'application/json' }]
+    },
+  },
+  {
+    uri: 'kaddo://tech-decisions',
+    name: 'Kaddo tech decisions',
+    description: 'Technical decision candidates vs materialized ADRs (status, counts, candidate list with suggested ADR filenames). Read-only; shares buildTechDecisions with `kaddo adr`.',
+    mimeType: 'application/json',
+    read: (root) => {
+      if (!hasKnowledge(root)) {
+        return text('kaddo://tech-decisions', 'Knowledge repository not found. Run `kaddo bootstrap` first.', 'text/plain')
+      }
+      return [{ uri: 'kaddo://tech-decisions', text: JSON.stringify(buildTechDecisions(root), null, 2), mimeType: 'application/json' }]
     },
   },
 ]

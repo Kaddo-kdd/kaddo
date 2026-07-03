@@ -31,6 +31,22 @@ Kaddo computes a `tech_decisions` status from the candidates file and the ADRs f
 adds a Missing Context note when candidates aren't materialized. Both `explain` and `understand`
 recommend the **adr-writing** skill when there are candidates without ADRs.
 
+## Over MCP
+
+Agents can query tech decisions directly — without parsing the whole context pack — via the read-only
+resource `kaddo://tech-decisions`. It returns the same object as `kaddo adr --json`
+(`status`, counts, and `candidate_list` with `title`, `source` and `suggestedAdrFile`), because the
+CLI and MCP share the same `buildTechDecisions(dir)` source. The resource is deterministic and
+read-only: it never writes ADRs, never calls an LLM and never runs git.
+
+## Clean ADR filenames
+
+Suggested ADR filenames are cleaned before the slug is built (VS-075.1): list/heading prefixes are
+stripped (`1.`, `2)`, `(3)`, `001.`, `-`, `##`) so numbering isn't duplicated, and acronyms are
+normalized (`INTERNAL_CRON_SECRET` → `internal-cron-secret`). So a candidate
+`## 1. Shared secret (INTERNAL_CRON_SECRET)` yields
+`ADR-001-shared-secret-internal-cron-secret.md`, not `ADR-001-1-...`.
+
 ## The three levels
 
 ```txt
