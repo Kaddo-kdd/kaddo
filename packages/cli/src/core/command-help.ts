@@ -75,6 +75,10 @@ export const COMMAND_HELP: Record<string, CommandHelp> = {
     question: 'Which technical decisions still need to become ADRs?',
     next: 'Use the adr-writing skill to draft ADRs, then mark them accepted when confirmed',
   },
+  'tech organize': {
+    question: 'Is knowledge/tech/ cleanly separated (core vs discovery vs decisions)?',
+    next: 'Discovery notes now live under knowledge/tech/discovery/',
+  },
 }
 
 /** Lines for the contextual footer, or [] if the command has no entry. */

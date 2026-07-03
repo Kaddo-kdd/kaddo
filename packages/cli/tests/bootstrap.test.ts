@@ -36,7 +36,7 @@ describe('bootstrap — state-aware knowledge baseline (VS-073)', () => {
     expect(fs.existsSync(path.join(dir, 'knowledge/tech/decisions'))).toBe(true)
     expect(fs.existsSync(path.join(dir, 'knowledge/delivery/work-items'))).toBe(true)
     expect(res.written).toEqual(expect.arrayContaining(BASELINE_FILES))
-    expect(res.createdDirs).toEqual(['knowledge/tech/decisions/', 'knowledge/delivery/work-items/'])
+    expect(res.createdDirs).toEqual(['knowledge/tech/decisions/', 'knowledge/tech/discovery/', 'knowledge/delivery/work-items/'])
   })
 
   it('AC2/AC22: pre-ai templates carry project_state and discovery-oriented sections', () => {

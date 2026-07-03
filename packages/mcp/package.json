@@ -1,6 +1,6 @@
 {
   "name": "@kaddo/mcp",
-  "version": "3.40.1",
+  "version": "3.41.0",
   "description": "MCP server for Kaddo project knowledge: read-only resources/tools/prompts plus safe derived generation under .kaddo/.",
   "license": "MIT",
   "repository": {

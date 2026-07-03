@@ -245,9 +245,9 @@ Optionally provide: existing diagrams, infra config, README, dependency manifest
 
 Markdown artifacts intended to be saved as:
 
-- \`knowledge/tech/current-state.md\`
-- \`knowledge/tech/architecture-notes.md\`
-- \`knowledge/tech/decision-candidates.md\`
+- \`knowledge/tech/current-state.md\` (core artifact)
+- \`knowledge/tech/discovery/architecture-notes.md\` (discovery note)
+- \`knowledge/tech/discovery/decision-candidates.md\` (discovery input for ADRs)
 
 ## Instructions
 
@@ -293,10 +293,12 @@ Generated from Kaddo Context Pack.
 
 ## Where to Save the Result
 
-Save the architecture overview as \`knowledge/tech/current-state.md\`, supporting notes as
-\`knowledge/tech/architecture-notes.md\`, and decision candidates as
-\`knowledge/tech/decision-candidates.md\`. Final ADRs always live under
-\`knowledge/tech/decisions/\` — never directly in \`knowledge/tech/\`.
+Save the architecture overview as \`knowledge/tech/current-state.md\` (a **core** artifact). Save
+supporting notes as \`knowledge/tech/discovery/architecture-notes.md\` and decision candidates as
+\`knowledge/tech/discovery/decision-candidates.md\` — **discovery** inputs live under
+\`knowledge/tech/discovery/\`, not directly in \`knowledge/tech/\` (VS-075.2). Final ADRs always live
+under \`knowledge/tech/decisions/\`. Kaddo still reads the legacy root locations for backward
+compatibility, but new output should use \`discovery/\`.
 
 ## Quality Checklist
 

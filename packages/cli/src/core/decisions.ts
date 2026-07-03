@@ -7,8 +7,20 @@
 
 import { exists, readFile, readDir, isFile, join } from '../utils/fs.js'
 
-const CANDIDATES_PATH = 'knowledge/tech/decision-candidates.md'
+// Discovery is the preferred home for decision candidates (VS-075.2); the legacy root path is a
+// backward-compatible fallback.
+const CANDIDATES_DISCOVERY = 'knowledge/tech/discovery/decision-candidates.md'
+const CANDIDATES_LEGACY = 'knowledge/tech/decision-candidates.md'
 const DECISIONS_DIR = 'knowledge/tech/decisions'
+
+/** Resolve the decision-candidates file: prefer discovery/, fall back to the legacy root location. */
+export function resolveCandidatesPath(dir: string): { path: string | null; legacy: boolean; bothExist: boolean } {
+  const discovery = exists(join(dir, CANDIDATES_DISCOVERY))
+  const legacy = exists(join(dir, CANDIDATES_LEGACY))
+  if (discovery) return { path: CANDIDATES_DISCOVERY, legacy: false, bothExist: legacy }
+  if (legacy) return { path: CANDIDATES_LEGACY, legacy: true, bothExist: false }
+  return { path: null, legacy: false, bothExist: false }
+}
 
 export type TechDecisionsStatus = 'none' | 'candidates' | 'draft-adrs' | 'accepted-adrs'
 
@@ -21,6 +33,12 @@ export type TechDecisions = {
   draft_adrs: number
   accepted_adrs: number
   candidate_list: DecisionCandidate[]
+  /** The decision-candidates file actually read (discovery/ or legacy root), or null (VS-075.2). */
+  candidates_source: string | null
+  /** True when the legacy root location was used instead of discovery/. */
+  candidates_legacy_location: boolean
+  /** True when both discovery/ and legacy files exist (discovery/ wins). */
+  candidates_both_exist: boolean
 }
 
 /** Strip list/heading prefixes from a candidate title (e.g. `1.`, `2)`, `(3)`, `001.`, `-`, `##`). */
@@ -88,11 +106,11 @@ function countAdrs(dir: string): { total: number; draft: number; accepted: numbe
 
 /** Build the deterministic tech-decisions readiness snapshot for a project. */
 export function buildTechDecisions(dir: string): TechDecisions {
-  const candFile = join(dir, CANDIDATES_PATH)
+  const resolved = resolveCandidatesPath(dir)
   let titles: string[] = []
-  if (exists(candFile)) {
+  if (resolved.path) {
     try {
-      titles = parseDecisionCandidates(readFile(candFile))
+      titles = parseDecisionCandidates(readFile(join(dir, resolved.path)))
     } catch {
       titles = []
     }
@@ -102,7 +120,7 @@ export function buildTechDecisions(dir: string): TechDecisions {
   // Suggested ADR filenames continue numbering after existing ADRs.
   const candidate_list: DecisionCandidate[] = titles.map((title, i) => {
     const n = String(total + i + 1).padStart(3, '0')
-    return { title, source: CANDIDATES_PATH, suggestedAdrFile: `${DECISIONS_DIR}/ADR-${n}-${slugify(title)}.md` }
+    return { title, source: resolved.path!, suggestedAdrFile: `${DECISIONS_DIR}/ADR-${n}-${slugify(title)}.md` }
   })
 
   let status: TechDecisionsStatus
@@ -118,6 +136,9 @@ export function buildTechDecisions(dir: string): TechDecisions {
     draft_adrs: draft,
     accepted_adrs: accepted,
     candidate_list,
+    candidates_source: resolved.path,
+    candidates_legacy_location: resolved.legacy,
+    candidates_both_exist: resolved.bothExist,
   }
 }
 

@@ -87,13 +87,17 @@ describe('tech decisions detection (VS-075)', () => {
 })
 
 describe('tech decisions surfaced in explain / context (VS-075)', () => {
-  it('AC10: explain shows a Tech Decisions section + adr-writing recommendation', () => {
+  it('AC10/AC13: explain shows a Tech Knowledge section (core/decisions/discovery) + adr-writing', () => {
     config()
     write('knowledge/tech/decision-candidates.md', CANDIDATES)
     const md = renderExplanationHuman(buildProjectExplanation(dir))
-    expect(md).toContain('## Tech Decisions')
-    expect(md).toContain('Decision candidates: 2')
+    expect(md).toContain('## Tech Knowledge')
+    expect(md).toContain('Core:')
+    expect(md).toContain('Decisions:')
+    expect(md).toContain('Discovery:')
     expect(md).toContain('adr-writing')
+    // legacy-location warning surfaces
+    expect(md).toContain('kaddo tech organize')
   })
 
   it('AC11: context-pack carries techDecisions + a Missing Context note', () => {
@@ -102,6 +106,68 @@ describe('tech decisions surfaced in explain / context (VS-075)', () => {
     const pack = buildContextPack(dir, loadConfig(dir)!)
     expect(pack.techDecisions.status).toBe('candidates')
     expect(pack.missing.some((m) => /decision candidate/i.test(m))).toBe(true)
+  })
+})
+
+describe('tech knowledge structure (VS-075.2)', () => {
+  it('AC1/AC6: reads candidates from discovery/', () => {
+    config()
+    write('knowledge/tech/discovery/decision-candidates.md', CANDIDATES)
+    const td = buildTechDecisions(dir)
+    expect(td.candidates).toBe(2)
+    expect(td.candidates_source).toBe('knowledge/tech/discovery/decision-candidates.md')
+    expect(td.candidates_legacy_location).toBe(false)
+  })
+
+  it('AC2/AC7: falls back to the legacy root location', () => {
+    config()
+    write('knowledge/tech/decision-candidates.md', CANDIDATES)
+    const td = buildTechDecisions(dir)
+    expect(td.candidates_source).toBe('knowledge/tech/decision-candidates.md')
+    expect(td.candidates_legacy_location).toBe(true)
+  })
+
+  it('AC8/AC9: prefers discovery/ and flags that both exist', () => {
+    config()
+    write('knowledge/tech/discovery/decision-candidates.md', CANDIDATES)
+    write('knowledge/tech/decision-candidates.md', '# DC\n\n## Legacy only\n')
+    const td = buildTechDecisions(dir)
+    expect(td.candidates_source).toBe('knowledge/tech/discovery/decision-candidates.md')
+    expect(td.candidates_both_exist).toBe(true)
+  })
+
+  it('AC16-AC23: kaddo tech organize moves discovery files, never overwrites, keeps content/core', async () => {
+    config()
+    write('knowledge/tech/architecture-notes.md', 'NOTES BODY')
+    write('knowledge/tech/decision-candidates.md', 'CAND BODY')
+    write('knowledge/tech/current-state.md', 'CS')
+    write('knowledge/tech/codebase.md', 'CB')
+    write('knowledge/tech/decisions/ADR-001-x.md', '---\ntype: adr\n---\n')
+    vi.spyOn(console, 'log').mockImplementation(() => {})
+    const { runTechOrganize } = await import('../src/commands/tech.js')
+    runTechOrganize(dir)
+    expect(fs.existsSync(path.join(dir, 'knowledge/tech/architecture-notes.md'))).toBe(false)
+    expect(fs.readFileSync(path.join(dir, 'knowledge/tech/discovery/architecture-notes.md'), 'utf8')).toBe('NOTES BODY')
+    expect(fs.readFileSync(path.join(dir, 'knowledge/tech/discovery/decision-candidates.md'), 'utf8')).toBe('CAND BODY')
+    // core + decisions untouched
+    expect(fs.readFileSync(path.join(dir, 'knowledge/tech/current-state.md'), 'utf8')).toBe('CS')
+    expect(fs.existsSync(path.join(dir, 'knowledge/tech/decisions/ADR-001-x.md'))).toBe(true)
+    vi.restoreAllMocks()
+  })
+
+  it('AC19: does not overwrite when the target already exists', async () => {
+    config()
+    write('knowledge/tech/decision-candidates.md', 'ROOT')
+    write('knowledge/tech/discovery/decision-candidates.md', 'DISCOVERY')
+    vi.spyOn(console, 'log').mockImplementation(() => {})
+    const warnSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const { runTechOrganize } = await import('../src/commands/tech.js')
+    runTechOrganize(dir)
+    // both kept, content unchanged
+    expect(fs.readFileSync(path.join(dir, 'knowledge/tech/decision-candidates.md'), 'utf8')).toBe('ROOT')
+    expect(fs.readFileSync(path.join(dir, 'knowledge/tech/discovery/decision-candidates.md'), 'utf8')).toBe('DISCOVERY')
+    warnSpy.mockRestore()
+    vi.restoreAllMocks()
   })
 })
 

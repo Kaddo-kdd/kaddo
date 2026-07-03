@@ -539,6 +539,7 @@ create --from roadmap → owners → guard → explain`.
 | v3.39.1 | Domain-oriented capability inventory: pre-ai/legacy `capabilities.md` groups capabilities under `## Capability Domains` (functional domains, not technical folders); gaps/candidates name their `Domain`; roadmap-agent reads it as a domain map; work-item-agent recommends `related_domain` + `related_capability` |
 | v3.40 | ADR materialization: `kaddo adr` (alias `decisions`) detects decision candidates + ADRs and hands off the ADR files to create; `tech_decisions` status (none/candidates/draft-adrs/accepted-adrs) surfaced in `explain`/`context`/`understand`; adr-writing skill formalized |
 | v3.40.1 | ADR slug cleanup + MCP: suggested ADR filenames strip list/heading prefixes (no `ADR-001-1-…`) and normalize acronyms; new read-only MCP resource `kaddo://tech-decisions` sharing `buildTechDecisions` with `kaddo adr` |
+| v3.41 | Tech knowledge structure: `knowledge/tech/discovery/` for architecture-notes/decision-candidates (core vs decisions vs discovery); `kaddo adr` reads discovery-first with legacy fallback; `kaddo tech organize` migrates safely; `explain` shows `## Tech Knowledge` |
 
 **Optional modules (installed with `kaddo add`):**
 

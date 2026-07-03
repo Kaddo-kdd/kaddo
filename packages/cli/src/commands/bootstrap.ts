@@ -26,7 +26,7 @@ const FILE_TARGETS: FileTarget[] = [
   { path: 'knowledge/delivery/roadmap.md', kind: 'roadmap' },
 ]
 // Directories that must exist for later artifacts (kept via a .gitkeep placeholder).
-const DIR_TARGETS = ['knowledge/tech/decisions', 'knowledge/delivery/work-items']
+const DIR_TARGETS = ['knowledge/tech/decisions', 'knowledge/tech/discovery', 'knowledge/delivery/work-items']
 
 export type BootstrapResult = {
   state: ProjectState

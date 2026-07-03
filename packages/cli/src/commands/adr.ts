@@ -25,6 +25,15 @@ export function runAdr(opts: AdrOpts = {}): void {
   console.log(`  Decision candidates: ${td.candidates}`)
   console.log(`  ADRs: ${td.adrs} (draft: ${td.draft_adrs}, accepted: ${td.accepted_adrs})`)
   console.log(`  Status: ${td.status}`)
+  if (td.candidates_source) console.log(`  Source: ${td.candidates_source}`)
+  if (td.candidates_both_exist) {
+    console.log('')
+    console.log('  Note: both decision-candidate files exist.')
+    console.log('    Using: knowledge/tech/discovery/decision-candidates.md')
+    console.log('    Legacy file also found: knowledge/tech/decision-candidates.md')
+  } else if (td.candidates_legacy_location) {
+    console.log('  (legacy location — consider `kaddo tech organize` to move it to knowledge/tech/discovery/)')
+  }
 
   if (td.candidate_list.length > 0 && td.adrs === 0) {
     console.log('')

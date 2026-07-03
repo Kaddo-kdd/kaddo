@@ -25,6 +25,7 @@ import { runDrift } from './commands/drift.js'
 import { runQuestions } from './commands/questions.js'
 import { runAdaptersInstall, runAdaptersList, runAdaptersStatus } from './commands/adapters.js'
 import { runAdr } from './commands/adr.js'
+import { runTechOrganize } from './commands/tech.js'
 
 // Single source of truth for the version: read it from package.json at runtime so the CLI
 // `--version` can never drift from the published package version. `../package.json` resolves
@@ -185,6 +186,16 @@ program
   .option('--json', 'Output JSON instead of a summary')
   .option('--output <path>', 'Write the report to a file')
   .action(questionsAction)
+
+const techCmd = program
+  .command('tech')
+  .description('Organize the knowledge/tech/ structure (core vs discovery vs decisions)')
+techCmd
+  .command('organize')
+  .description('Move discovery artifacts into knowledge/tech/discovery/ (never overwrites, no content change)')
+  .action(() => {
+    runTechOrganize()
+  })
 
 program
   .command('adr')

@@ -105,6 +105,11 @@ export type ProjectExplanation = {
   nextStepRecommendation: ReadinessReport['nextStepRecommendation']
   /** Technical decisions: candidates vs materialized ADRs (VS-075). */
   techDecisions: TechDecisions
+  /** Tech knowledge layout: core artifacts, decisions and discovery notes (VS-075.2). */
+  techKnowledge: {
+    core: { currentState: boolean; codebase: boolean }
+    discovery: { architectureNotes: boolean; decisionCandidates: boolean; legacyLocation: boolean }
+  }
 }
 
 function normalizeTitle(t: string): string {
@@ -379,6 +384,23 @@ export function buildProjectExplanation(dir: string): ProjectExplanation {
     readiness,
     nextStepRecommendation: readiness.nextStepRecommendation,
     techDecisions: buildTechDecisions(dir),
+    techKnowledge: {
+      core: {
+        currentState: exists(join(dir, 'knowledge/tech/current-state.md')),
+        codebase: exists(join(dir, 'knowledge/tech/codebase.md')),
+      },
+      discovery: {
+        architectureNotes:
+          exists(join(dir, 'knowledge/tech/discovery/architecture-notes.md')) ||
+          exists(join(dir, 'knowledge/tech/architecture-notes.md')),
+        decisionCandidates:
+          exists(join(dir, 'knowledge/tech/discovery/decision-candidates.md')) ||
+          exists(join(dir, 'knowledge/tech/decision-candidates.md')),
+        legacyLocation:
+          exists(join(dir, 'knowledge/tech/architecture-notes.md')) ||
+          exists(join(dir, 'knowledge/tech/decision-candidates.md')),
+      },
+    },
   }
 }
 
@@ -625,17 +647,28 @@ export function renderExplanationHuman(exp: ProjectExplanation): string {
   lines.push(r.recommended_next_step.label)
   lines.push('')
 
-  // Tech Decisions (VS-075): candidates vs materialized ADRs.
+  // Tech Knowledge (VS-075.2): core artifacts vs decisions vs discovery notes.
   const td = exp.techDecisions
-  lines.push('## Tech Decisions')
-  lines.push(`- Decision candidates: ${td.candidates}`)
-  lines.push(`- ADRs: ${td.adrs} (draft: ${td.draft_adrs}, accepted: ${td.accepted_adrs})`)
-  lines.push(`- Status: ${td.status}`)
-  if (td.candidates > 0 && td.adrs === 0) {
-    lines.push('')
-    lines.push('Use the adr-writing skill to materialize decision candidates into ADRs (`kaddo adr`) before implementing related technical Work Items.')
-  }
+  const tk = exp.techKnowledge
+  const mark = (b: boolean) => (b ? '✓' : '✗')
+  lines.push('## Tech Knowledge')
+  lines.push('Core:')
+  lines.push(`- ${mark(tk.core.currentState)} current-state.md`)
+  lines.push(`- ${mark(tk.core.codebase)} codebase.md`)
+  lines.push('Decisions:')
+  lines.push(`- ADRs: ${td.adrs} (draft: ${td.draft_adrs}, accepted: ${td.accepted_adrs}) · status: ${td.status}`)
+  lines.push('Discovery:')
+  lines.push(`- ${mark(tk.discovery.architectureNotes)} architecture-notes.md`)
+  lines.push(`- ${mark(tk.discovery.decisionCandidates)} decision-candidates.md`)
   lines.push('')
+  if (td.candidates > 0 && td.adrs === 0) {
+    lines.push('Use the adr-writing skill to materialize decision candidates into ADRs (`kaddo adr`) before implementing related technical Work Items.')
+    lines.push('')
+  }
+  if (tk.discovery.legacyLocation) {
+    lines.push('Tech discovery files are in the legacy `knowledge/tech/` root. Suggested cleanup: run `kaddo tech organize`.')
+    lines.push('')
+  }
 
   return lines.join('\n').trimEnd() + '\n'
 }

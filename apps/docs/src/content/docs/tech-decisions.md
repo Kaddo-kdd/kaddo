@@ -39,6 +39,41 @@ resource `kaddo://tech-decisions`. It returns the same object as `kaddo adr --js
 CLI and MCP share the same `buildTechDecisions(dir)` source. The resource is deterministic and
 read-only: it never writes ADRs, never calls an LLM and never runs git.
 
+## Tech knowledge structure
+
+Not every technical document has the same maturity. `knowledge/tech/` separates three areas
+(VS-075.2):
+
+```txt
+knowledge/tech/
+  current-state.md          ← core: current technical state
+  codebase.md               ← core: repository map
+  decisions/                ← formal ADRs (draft/accepted/superseded/deprecated)
+  discovery/                ← discovery notes + inputs
+    architecture-notes.md
+    decision-candidates.md
+```
+
+**Backward compatible.** Kaddo reads `knowledge/tech/discovery/decision-candidates.md` first and falls
+back to the legacy `knowledge/tech/decision-candidates.md` (same for `architecture-notes.md`). When
+both exist, discovery/ wins and `kaddo adr` shows a soft note. `kaddo explain` shows a `## Tech
+Knowledge` section (Core / Decisions / Discovery) and warns when discovery files are still in the
+legacy root. The Tech layer's maturity depends on `current-state.md` + `codebase.md` — discovery files
+are **not** required to mark Tech as Structured.
+
+### `kaddo tech organize`
+
+A deterministic migration that moves discovery artifacts into `knowledge/tech/discovery/`:
+
+```bash
+kaddo tech organize
+```
+
+It moves `architecture-notes.md` and `decision-candidates.md` from the `knowledge/tech/` root into
+`discovery/` **without changing content**, never touches `current-state.md`, `codebase.md` or
+`decisions/`, and **never overwrites** — if a target already exists it warns and leaves both files for
+manual review. No LLM, no git.
+
 ## Clean ADR filenames
 
 Suggested ADR filenames are cleaned before the slug is built (VS-075.1): list/heading prefixes are

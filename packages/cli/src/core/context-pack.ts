@@ -74,6 +74,12 @@ export type ContextPack = {
   nextStepRecommendation: NextStepRecommendation
   /** Technical decisions: candidates vs materialized ADRs (VS-075). */
   techDecisions: TechDecisions
+  /** Tech knowledge layout: core / decisions / discovery (VS-075.2). */
+  techKnowledge: {
+    core: Record<string, boolean>
+    decisions: { adrs: number; dir: boolean }
+    discovery: Record<string, boolean>
+  }
   /** Active Work Items distribution by type (feature/bugfix/hotfix/spike/chore/…). */
   deliveryMix: Record<string, number>
   /** External Knowledge Capsules imported as context (VS-054). */
@@ -338,6 +344,23 @@ export function buildContextPack(
   if (techDecisions.candidates > 0 && techDecisions.adrs === 0) {
     missing.push(`${techDecisions.candidates} technical decision candidate(s) not yet materialized as ADRs (run \`kaddo adr\`).`)
   }
+  // Tech knowledge layout (VS-075.2): core vs decisions vs discovery, with legacy-location fallback.
+  const techFile = (rel: string) => exists(join(dir, ARCH_DIR, rel))
+  const techKnowledge = {
+    core: {
+      'current-state.md': techFile('tech/current-state.md'),
+      'codebase.md': techFile('tech/codebase.md'),
+    },
+    decisions: { adrs: techDecisions.adrs, dir: exists(join(dir, ARCH_DIR, 'tech/decisions')) },
+    discovery: {
+      'architecture-notes.md': techFile('tech/discovery/architecture-notes.md') || techFile('tech/architecture-notes.md'),
+      'decision-candidates.md': techFile('tech/discovery/decision-candidates.md') || techFile('tech/decision-candidates.md'),
+      legacyLocation: techFile('tech/architecture-notes.md') || techFile('tech/decision-candidates.md'),
+    },
+  }
+  if (techKnowledge.discovery.legacyLocation) {
+    missing.push('Tech discovery files are in the legacy `knowledge/tech/` root. Run `kaddo tech organize` to move them to `knowledge/tech/discovery/`.')
+  }
   const unifiedPhase = {
     ...phase,
     nextStep: nextStepRecommendation.label,
@@ -377,6 +400,7 @@ export function buildContextPack(
     phase: unifiedPhase,
     nextStepRecommendation,
     techDecisions,
+    techKnowledge,
     deliveryMix,
     external: loadExternalCapsules(dir),
     graph: loadGraphSummary(dir),
