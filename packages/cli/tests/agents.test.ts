@@ -92,13 +92,14 @@ describe('roadmap-agent — structured output (VS-009)', () => {
     expect(roadmap()).toContain('knowledge/delivery/roadmap.md')
   })
 
-  it('includes structured initiative fields', () => {
+  it('includes grounded initiative fields (VS-077)', () => {
     const c = roadmap()
     for (const field of [
-      '**Goal:**',
+      '**Related domain:**',
       '**Related capabilities:**',
-      '**Impact:**',
-      '**Risk:**',
+      '**Source signals:**',
+      '**Expected value:**',
+      '**Risks:**',
       '**Dependencies:**',
       '### RM-001',
     ]) {
@@ -106,10 +107,11 @@ describe('roadmap-agent — structured output (VS-009)', () => {
     }
   })
 
-  it('includes a Candidate Work Items section', () => {
+  it('includes a Suggested Work Items section without materializing them (VS-077)', () => {
     const c = roadmap()
-    expect(c).toContain('Candidate Work Items')
+    expect(c).toContain('Suggested Work Items')
     expect(c).toContain('WI-CANDIDATE-001')
+    expect(c).toContain('Never create files under `knowledge/delivery/work-items/`')
   })
 
   it('suggests a Knowledge Level for initiatives', () => {
@@ -118,10 +120,11 @@ describe('roadmap-agent — structured output (VS-009)', () => {
     expect(c).toMatch(/K1 \/ K2 \/ K3 \/ K4/)
   })
 
-  it('guides assumptions and open questions', () => {
+  it('requires grounding and a Not Now section (VS-077)', () => {
     const c = roadmap()
     expect(c).toContain('## Assumptions')
-    expect(c).toContain('**Open questions:**')
+    expect(c).toContain('Grounding rules')
+    expect(c).toContain('## Not Now')
   })
 
   it('adapts priorities to project states', () => {

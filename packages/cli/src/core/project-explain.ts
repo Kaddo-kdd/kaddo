@@ -22,6 +22,7 @@ import { roadmapStats, type RoadmapStats } from './roadmap.js'
 import { buildReadinessReport, type ReadinessReport } from './readiness.js'
 import { buildTechDecisions, type TechDecisions } from './decisions.js'
 import { installedAssetsSummary } from './assets.js'
+import { buildRoadmapQuality, type RoadmapQuality } from './roadmap-quality.js'
 import {
   LIFECYCLE_STATES,
   lifecycleStateOf,
@@ -113,6 +114,8 @@ export type ProjectExplanation = {
   }
   /** Installed agent/skill version status vs the current package (VS-074.2). */
   installedAssets: ReturnType<typeof installedAssetsSummary>
+  /** How well roadmap candidates are grounded in capabilities/signals (VS-077). */
+  roadmapQuality: RoadmapQuality
 }
 
 function normalizeTitle(t: string): string {
@@ -405,6 +408,7 @@ export function buildProjectExplanation(dir: string): ProjectExplanation {
       },
     },
     installedAssets: installedAssetsSummary(dir),
+    roadmapQuality: buildRoadmapQuality(dir),
   }
 }
 
@@ -671,6 +675,22 @@ export function renderExplanationHuman(exp: ProjectExplanation): string {
   }
   if (tk.discovery.legacyLocation) {
     lines.push('Tech discovery files are in the legacy `knowledge/tech/` root. Suggested cleanup: run `kaddo tech organize`.')
+    lines.push('')
+  }
+
+  // Roadmap Quality (VS-077): are candidates grounded in capabilities and source signals?
+  const rq = exp.roadmapQuality
+  if (rq.candidates > 0) {
+    lines.push('## Roadmap Quality')
+    lines.push(`- Candidates: ${rq.candidates}`)
+    lines.push(`- Grounded: ${rq.grounded}/${rq.candidates}`)
+    lines.push(`- With related domain: ${rq.with_related_domain}/${rq.candidates}`)
+    lines.push(`- With related capability: ${rq.with_related_capability}/${rq.candidates}`)
+    lines.push(`- With source signals: ${rq.with_source_signals}/${rq.candidates}`)
+    if (rq.needs_refinement) {
+      lines.push('')
+      lines.push('Roadmap quality: needs refinement. Suggested: use roadmap-agent to add domain / capability / source signals.')
+    }
     lines.push('')
   }
 

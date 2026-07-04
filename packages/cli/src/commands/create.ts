@@ -341,7 +341,7 @@ export function resolveCandidateLevel(
   return getLevelForType(type)
 }
 
-function buildRoadmapFrontMatter(
+export function buildRoadmapFrontMatter(
   id: string,
   type: WorkItemType,
   level: KLevel,
@@ -367,6 +367,18 @@ function buildRoadmapFrontMatter(
     `source: roadmap`,
     `source_id: ${candidate.id}`,
     `source_initiative: ${candidate.initiative?.id ?? 'unknown'}`,
+    // Capability-grounded traceability (VS-077): carry the roadmap metadata into the Work Item.
+    `source_roadmap_candidate: ${candidate.initiative?.id ?? candidate.id}`,
+    ...(candidate.domain ? [`related_domain: "${candidate.domain.replace(/"/g, "'")}"`] : []),
+    ...(candidate.relatedCapabilities && candidate.relatedCapabilities.length > 0
+      ? [`related_capability: "${candidate.relatedCapabilities[0].replace(/"/g, "'")}"`,
+         `related_capabilities: [${candidate.relatedCapabilities.map((c) => `"${c.replace(/"/g, "'")}"`).join(', ')}]`]
+      : []),
+    ...(candidate.expectedValue ? [`expected_value: "${candidate.expectedValue.replace(/"/g, "'")}"`] : []),
+    ...(candidate.risk ? [`risks: "${candidate.risk.replace(/"/g, "'")}"`] : []),
+    ...(candidate.dependencies && candidate.dependencies.length > 0
+      ? [`dependencies: [${candidate.dependencies.map((d) => `"${d.replace(/"/g, "'")}"`).join(', ')}]`]
+      : []),
     `summary: "${summary.replace(/"/g, "'")}"`,
     '---',
   ]

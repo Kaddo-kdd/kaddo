@@ -11,6 +11,7 @@ import { buildDriftReport, renderDriftMarkdown } from '../../cli/src/core/drift-
 import { buildOpenQuestionsReport, roadmapReadinessSummary } from '../../cli/src/core/open-questions.js'
 import { buildTechDecisions } from '../../cli/src/core/decisions.js'
 import { installedAssetsSummary } from '../../cli/src/core/assets.js'
+import { buildRoadmapQuality } from '../../cli/src/core/roadmap-quality.js'
 import { listWorkItems } from './workitems.js'
 import { hasKnowledge, readText } from './project.js'
 
@@ -277,6 +278,18 @@ export const RESOURCES: ResourceDescriptor[] = [
         return text('kaddo://installed-assets', 'Knowledge repository not found. Run `kaddo bootstrap` first.', 'text/plain')
       }
       return [{ uri: 'kaddo://installed-assets', text: JSON.stringify(installedAssetsSummary(root), null, 2), mimeType: 'application/json' }]
+    },
+  },
+  {
+    uri: 'kaddo://roadmap-quality',
+    name: 'Kaddo roadmap quality',
+    description: 'How well roadmap candidates are grounded in capability domains, related capabilities and source signals (VS-077). Read-only.',
+    mimeType: 'application/json',
+    read: (root) => {
+      if (!hasKnowledge(root)) {
+        return text('kaddo://roadmap-quality', 'Knowledge repository not found. Run `kaddo bootstrap` first.', 'text/plain')
+      }
+      return [{ uri: 'kaddo://roadmap-quality', text: JSON.stringify(buildRoadmapQuality(root), null, 2), mimeType: 'application/json' }]
     },
   },
 ]

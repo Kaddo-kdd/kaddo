@@ -9,6 +9,7 @@ import { analyzeKnowledgeArtifact, type ArtifactQuality } from './artifact-quali
 import { resolveNextStep, type NextStepRecommendation } from './next-step.js'
 import { buildTechDecisions, type TechDecisions } from './decisions.js'
 import { installedAssetsSummary } from './assets.js'
+import { buildRoadmapQuality, type RoadmapQuality } from './roadmap-quality.js'
 import { roadmapStats, type RoadmapStats } from './roadmap.js'
 import { lifecycleStateOf, isActiveState, lifecycleCounts, type LifecycleState } from './lifecycle.js'
 import { assessPhase, type PhaseAssessment } from './delivery-phase.js'
@@ -81,6 +82,8 @@ export type ContextPack = {
     decisions: { adrs: number; dir: boolean }
     discovery: Record<string, boolean>
   }
+  /** How well roadmap candidates are grounded in capabilities/signals (VS-077). */
+  roadmapQuality: RoadmapQuality
   /** Installed agent/skill version status vs the current package (VS-074.2). */
   installedAssets: {
     version: string
@@ -408,6 +411,7 @@ export function buildContextPack(
     nextStepRecommendation,
     techDecisions,
     techKnowledge,
+    roadmapQuality: buildRoadmapQuality(dir),
     installedAssets: (() => {
       const s = installedAssetsSummary(dir)
       const compact = (a: typeof s.agents) => ({ total: a.total, installed: a.total - a.missing, outdated: a.outdated, unknown_version: a.unknown_version, modified: a.modified })

@@ -416,6 +416,24 @@ Adapt priorities to the project state from the context pack:
 - **legacy** — prioritize risk reduction, unknowns and safe modernization before feature
   delivery.
 
+## Grounding rules (VS-077)
+
+Every candidate initiative must be **grounded** in the knowledge base — never a loose idea. For each
+\`### RM-xxx\` you must provide:
+
+- **Related domain** — a domain from \`## Capability Domains\` in \`capabilities.md\` (or, if genuinely
+  new, prefix it \`[new candidate domain] <name>\` — do not invent domains silently).
+- **Related capabilities** — one or more existing/partial capabilities.
+- **Source signals** — at least one traceable reason: Capability Gap, Roadmap Candidate Signal, Risk,
+  Open Question, Assumption, Deferred Decision, Tech Decision Candidate, ADR, Business Goal,
+  Operational Need or Legacy Modernization Signal.
+- **Expected value**, **Risks**, **Dependencies**, and **Suggested Work Items** (candidates only).
+
+Do **not** emit a candidate with no source signal. Keep initiatives at initiative granularity (small
+tasks go under **Suggested Work Items**, not as their own RM). Every roadmap ends with a global
+**## Not Now** section. For pre-ai/legacy, prioritize stabilization, security, data, operations,
+architectural decisions and business-blocking gaps before expansive features.
+
 ## Constraints
 
 - Do not invent business priorities or business facts — mark them as assumptions when inferred.
@@ -424,6 +442,8 @@ Adapt priorities to the project state from the context pack:
   implementation-agent, and only after Work Items are materialized. Your handoff is
   \`kaddo create --from roadmap\` → work-item-agent.
 - Do not create the work items themselves; only propose candidates.
+- **Never create files under \`knowledge/delivery/work-items/\`** — materialization is
+  \`kaddo create --from roadmap\`, not the roadmap-agent.
 - Make clear that initiatives and work items are **candidates**, not final decisions.
 - Mark any uncertain information as an assumption or open question.
 - Keep sequencing justified by dependencies and risk.
@@ -457,31 +477,38 @@ human review — not final commitments.
 
 ### RM-001: <Initiative Name>
 
-**Goal:**
+**Status:** candidate <!-- candidate | selected | deferred | rejected -->
 
-**Related capabilities:**
-
-**Project area / domain:**
-
-**Impact:** Low / Medium / High
-
-**Risk:** Low / Medium / High
+**Priority:** high / medium / low
 
 **Suggested Knowledge Level:** K1 / K2 / K3 / K4
 
+**Related domain:** <one of the ## Capability Domains from capabilities.md>
+
+**Related capabilities:**
+- <existing or partial capability>
+
+**Source signals:** <!-- REQUIRED: why this candidate exists (at least one) -->
+- Capability Gap: <...>
+- Roadmap Candidate Signal: <...>
+- Risk / Open Question / Assumption / Deferred Decision / Tech Decision Candidate / ADR / Business Goal: <...>
+
+**Problem / opportunity:**
+
+**Expected value:**
+
+**Risks:**
+
 **Dependencies:**
 
-**Why this comes now:**
-
-**Candidate Work Items:**
-
+**Suggested Work Items:**
 - WI-CANDIDATE-001: <candidate work item>
   - type:
   - suggested knowledge level:
   - expected value:
   - notes:
 
-**Open questions:**
+**Not now:**
 
 ---
 
@@ -782,6 +809,14 @@ that it should be materialized first (\`kaddo adr\` + the adr-writing skill) and
 \`decision_candidates: [<title>]\` — do not implement work that depends on an unformalized decision
 without surfacing it. -->
 \`\`\`
+
+### Preserve roadmap metadata (VS-077)
+
+When a Work Item comes from \`kaddo create --from roadmap\`, the front matter already carries
+\`source_roadmap_candidate\`, \`related_domain\`, \`related_capability\` (+ \`related_capabilities\`),
+\`knowledge_level\`, \`expected_value\`, \`risks\` and \`dependencies\`. **Keep and refine** this metadata —
+do not drop the trace back to the capability domain and source signals. Add \`related_decisions\` /
+\`decision_candidates\` when the work depends on a technical decision.
 
 ## Where to Save the Result
 

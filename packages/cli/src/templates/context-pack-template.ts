@@ -105,6 +105,26 @@ export function renderContextPack(pack: ContextPack): string {
   }
   parts.push((knowledge.roadmapSummary || 'No roadmap baseline found.') + '\n')
 
+  // 4b. Roadmap Quality (VS-077) — how grounded are the candidates in capabilities/signals?
+  const rq = pack.roadmapQuality
+  if (rq.candidates > 0) {
+    parts.push('## Roadmap Quality\n')
+    parts.push(
+      [
+        `- Candidates: ${rq.candidates}`,
+        `- Grounded: ${rq.grounded}/${rq.candidates}`,
+        `- With related domain: ${rq.with_related_domain}/${rq.candidates}`,
+        `- With related capability: ${rq.with_related_capability}/${rq.candidates}`,
+        `- With source signals: ${rq.with_source_signals}/${rq.candidates}`,
+      ].join('\n') + '\n'
+    )
+    if (rq.needs_refinement) {
+      parts.push(
+        'Roadmap quality: needs refinement. Use the roadmap-agent to add domain / capability / source signals.\n'
+      )
+    }
+  }
+
   // 5. Active Work Items
   parts.push('## Active Work Items\n')
   if (knowledge.workItems.length > 0) {

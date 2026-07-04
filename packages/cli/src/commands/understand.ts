@@ -94,6 +94,19 @@ export function runUnderstand(): void {
     console.log('    into `knowledge/tech/decisions/` before implementing affected technical Work Items (`kaddo adr`).')
   }
 
+  // 5b-roadmap (VS-077): if the roadmap has candidates that aren't grounded, recommend refinement
+  // before materializing Work Items.
+  const rq = exp.roadmapQuality
+  if (rq.needs_refinement) {
+    console.log('')
+    console.log(`Roadmap quality: ${rq.grounded}/${rq.candidates} candidates grounded.`)
+    console.log('  → Use roadmap-agent to ground roadmap candidates in capability domains, gaps and source signals')
+    console.log('    before `kaddo create --from roadmap`.')
+  } else if (rq.candidates > 0 && rq.grounded === rq.candidates) {
+    console.log('')
+    console.log('Roadmap candidates are grounded. → Run `kaddo create --from roadmap` to materialize the first Work Item.')
+  }
+
   // 5b-assets (VS-074.2): warn if a recommended agent is outdated vs the current package version.
   const ia = exp.installedAssets
   const outdatedRecommended = ia.agents.items.filter(

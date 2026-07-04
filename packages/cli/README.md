@@ -541,6 +541,7 @@ create --from roadmap → owners → guard → explain`.
 | v3.40.1 | ADR slug cleanup + MCP: suggested ADR filenames strip list/heading prefixes (no `ADR-001-1-…`) and normalize acronyms; new read-only MCP resource `kaddo://tech-decisions` sharing `buildTechDecisions` with `kaddo adr` |
 | v3.41 | Tech knowledge structure: `knowledge/tech/discovery/` for architecture-notes/decision-candidates (core vs decisions vs discovery); `kaddo adr` reads discovery-first with legacy fallback; `kaddo tech organize` migrates safely; `explain` shows `## Tech Knowledge` |
 | v3.42 | Agent & skill version metadata: installed agents/skills carry a `version:`; `kaddo agents status` / `kaddo skills status` classify up-to-date/outdated/unknown-version/modified/missing; `agents update` / `skills update` refresh outdated safely (never overwrite edits without `--force`); MCP `kaddo://installed-assets` |
+| v3.43 | Capability-grounded roadmap: each `RM-xxx` candidate is graded on related domain / capability / source signals; `roadmap_quality` surfaced in `explain`/`context`/`understand`; `create --from roadmap` preserves `source_roadmap_candidate` + related metadata into the Work Item; roadmap-agent emits grounded fields (never materializes Work Items); MCP `kaddo://roadmap-quality` |
 
 **Optional modules (installed with `kaddo add`):**
 
