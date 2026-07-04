@@ -1,9 +1,10 @@
 import { writeFile, exists, join, cwd } from '../utils/fs.js'
 import { intro, outro, log } from '../utils/ui.js'
-import { loadConfig, ConfigError } from '../core/config.js'
+import { loadConfig, ConfigError, languageLabel, projectLanguage } from '../core/config.js'
 import { buildContextPack, serializeContextPackJson } from '../core/context-pack.js'
 import { renderContextPack } from '../templates/context-pack-template.js'
-import { buildUnderstandPlan } from '../core/understand.js'
+import { buildUnderstandPlan, enrichUnderstandPlan, agentIsInstalled } from '../core/understand.js'
+import type { UnderstandWorkItem } from '../core/understand.js'
 import { renderUnderstand, renderUnderstandTerminal } from '../templates/understand-template.js'
 import { activeWorkItems, renderDeliveryLifecycle } from '../core/delivery.js'
 import { buildProjectExplanation } from '../core/project-explain.js'
@@ -11,6 +12,10 @@ import { assessPhase } from '../core/delivery-phase.js'
 import { loadGraphHints } from '../core/graph-hints.js'
 import { buildOpenQuestionsReport } from '../core/open-questions.js'
 import { discoverInstalledSkills, skillsForAgents } from '../services/installed-skills.js'
+import { discoverWorkItems } from '../services/knowledge-artifacts.js'
+import { buildDeliveryState } from '../core/next-step.js'
+import { agentInstallPath } from '../agents/groups.js'
+import { skillInstallPath } from '../skills/skills.js'
 import { printCommandFooter } from '../core/command-help.js'
 
 export function runUnderstand(): void {
@@ -169,7 +174,47 @@ export function runUnderstand(): void {
     }
   }
 
-  writeFile(join(dir, '.kaddo', 'understand.md'), renderUnderstand(plan))
+  // Enrich the plan with state-aware delivery data for the markdown handoff (VS-079.1).
+  const ds = buildDeliveryState(dir)
+  ds.phase = assessment.phase
+  const wis = discoverWorkItems(dir)
+  const activeWis: UnderstandWorkItem[] = wis
+    .filter((w) => w.lifecycle && ['draft', 'ready', 'in-progress', 'blocked'].includes(w.lifecycle))
+    .map((w) => ({
+      id: w.id,
+      title: w.title,
+      type: w.type,
+      lifecycle: w.lifecycle ?? 'draft',
+      knowledgeLevel: w.knowledgeLevel,
+      hasOwnership: w.codeGlobs.length > 0,
+    }))
+
+  const recommendedPaths: string[] = []
+  if (rec.agent) {
+    const agentFile = rec.agent.endsWith('.md') ? rec.agent : `${rec.agent}.md`
+    if (agentIsInstalled(dir, agentFile)) {
+      recommendedPaths.push(agentInstallPath(agentFile))
+    }
+  }
+  const recommendedSkillPaths: string[] = []
+  if (rec.skill) {
+    const sp = skillInstallPath(rec.skill)
+    if (exists(join(dir, sp))) {
+      recommendedSkillPaths.push(sp)
+    }
+  }
+
+  const enrichedPlan = enrichUnderstandPlan(plan, {
+    phase: assessment.phase,
+    nextStepRecommendation: rec,
+    deliveryState: ds,
+    activeWorkItems: activeWis,
+    recommendedPaths,
+    recommendedSkillPaths,
+    language: languageLabel(projectLanguage(config)),
+  })
+
+  writeFile(join(dir, '.kaddo', 'understand.md'), renderUnderstand(enrichedPlan))
   log.success('Wrote .kaddo/understand.md')
 
   printCommandFooter('understand')

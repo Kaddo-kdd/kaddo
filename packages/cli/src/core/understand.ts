@@ -1,6 +1,7 @@
 import { exists, join } from '../utils/fs.js'
 import type { KaddoConfig, ProjectState } from './config.js'
 import { agentInstallPath } from '../agents/groups.js'
+import type { NextStepRecommendation, DeliveryState } from './next-step.js'
 
 /** An agent is installed if present in its layer folder, or (legacy) the flat folder. */
 export function agentIsInstalled(dir: string, fileName: string): boolean {
@@ -19,18 +20,39 @@ export type AgentStep = {
   installed: boolean
 }
 
+/** An active Work Item shown in the understand handoff (VS-079.1). */
+export type UnderstandWorkItem = {
+  id: string
+  title: string
+  type: string
+  lifecycle: string
+  knowledgeLevel: string
+  hasOwnership: boolean
+}
+
 export type UnderstandPlan = {
   project: {
     name: string
     state: ProjectState
     teamSize: string
     structure: string
+    language: string
   }
   scanAvailable: boolean
   contextPackPath: string
   agentsInstalled: boolean
   missingAgents: string[]
   steps: AgentStep[]
+  /** State-aware phase + recommendation (VS-079.1). */
+  phase?: string
+  nextStepRecommendation?: NextStepRecommendation
+  deliveryState?: DeliveryState
+  /** Active Work Items (draft/ready/in-progress/blocked). */
+  activeWorkItems?: UnderstandWorkItem[]
+  /** Paths to recommended agent/skill files that exist on disk. */
+  recommendedPaths?: string[]
+  /** Installed skill paths relevant to the recommendation. */
+  recommendedSkillPaths?: string[]
 }
 
 /** State-aware agent flow: each agent mapped to its expected output artifact. */
@@ -82,11 +104,41 @@ export function buildUnderstandPlan(dir: string, config: KaddoConfig): Understan
       state,
       teamSize: config.team.size,
       structure: config.project.structure,
+      language: 'English',
     },
     scanAvailable: exists(join(dir, '.kaddo', 'scan.json')),
     contextPackPath: '.kaddo/context-pack.md',
     agentsInstalled,
     missingAgents,
     steps,
+  }
+}
+
+/**
+ * Enrich an UnderstandPlan with state-aware delivery data from the project explanation (VS-079.1).
+ * The enrichment is separate from buildUnderstandPlan so the core plan stays testable without
+ * needing the full project explanation.
+ */
+export function enrichUnderstandPlan(
+  plan: UnderstandPlan,
+  opts: {
+    phase: string
+    nextStepRecommendation: NextStepRecommendation
+    deliveryState: DeliveryState
+    activeWorkItems: UnderstandWorkItem[]
+    recommendedPaths: string[]
+    recommendedSkillPaths: string[]
+    language: string
+  },
+): UnderstandPlan {
+  return {
+    ...plan,
+    project: { ...plan.project, language: opts.language },
+    phase: opts.phase,
+    nextStepRecommendation: opts.nextStepRecommendation,
+    deliveryState: opts.deliveryState,
+    activeWorkItems: opts.activeWorkItems,
+    recommendedPaths: opts.recommendedPaths,
+    recommendedSkillPaths: opts.recommendedSkillPaths,
   }
 }

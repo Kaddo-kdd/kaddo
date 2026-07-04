@@ -14,8 +14,9 @@ project state, and writes a reusable guide you can re-open any time.
 It writes / refreshes:
 
 - **`.kaddo/context-pack.md`** and **`.kaddo/context-pack.json`** — the input for agents.
-- **`.kaddo/understand.md`** — the step-by-step handoff guide with the recommended flow,
-  expected outputs and copy/paste instructions.
+- **`.kaddo/understand.md`** — the state-aware handoff guide with the current phase, recommended
+  agent/skill, delivery state, primary and secondary recommendations, active Work Items, concrete
+  agent/skill paths, and copy/paste instructions. The markdown matches the console output (VS-079.1).
 
 ## What it does
 
@@ -120,6 +121,22 @@ tells you the next concrete step (run `kaddo scan` or `kaddo add agents`).
 - **`context`** packages those signals (plus knowledge and work items) into an LLM-ready pack.
 - **`understand`** ties it together: refreshes the pack and tells you which agent to run
   next, in what order, for your project state.
+
+## Markdown handoff alignment (VS-079.1)
+
+Since v3.46.0, `.kaddo/understand.md` reflects the same state-aware recommendation as the console
+output. It includes:
+
+- **Current Phase** — phase, recommended agent/skill, next step and reason.
+- **Delivery State** — draft/ready/in-progress/blocked counts, ownership coverage, remaining
+  candidates, decision candidates, ADRs, adapters.
+- **Primary Recommendation** — the single next step with id, agent, skill, command and reason.
+- **Secondary Recommendations** — parallel suggestions (ownership, ADRs, remaining candidates).
+- **Active Work Items** — Work Items in draft/ready/in-progress/blocked.
+- **Agent Prompts** — concrete paths to the recommended agent and skill files plus the context pack.
+- **Expected Outputs** — what the LLM should produce for the recommended step.
+
+No section is rendered empty — if data is not available, it is omitted or shows a fallback.
 
 ## Example
 

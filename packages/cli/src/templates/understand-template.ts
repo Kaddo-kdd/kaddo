@@ -10,11 +10,14 @@ function agentName(file: string): string {
 }
 
 /**
- * Render the reusable `.kaddo/understand.md` handoff guide.
- * Deterministic — explains how to use the context pack + agents in an LLM chat.
+ * Render the reusable `.kaddo/understand.md` handoff guide (VS-079.1).
+ * State-aware: when phase/recommendation/deliveryState are available the markdown reflects
+ * the same information as the console output. No empty sections.
  */
 export function renderUnderstand(plan: UnderstandPlan): string {
   const { project, steps } = plan
+  const rec = plan.nextStepRecommendation
+  const ds = plan.deliveryState
   const parts: string[] = []
 
   parts.push('# Kaddo Understand Handoff\n')
@@ -24,26 +27,98 @@ export function renderUnderstand(plan: UnderstandPlan): string {
 
   // Project
   parts.push('## Project\n')
-  parts.push(
-    [
-      `- Name: ${project.name}`,
-      `- State: ${project.state}`,
-      `- Team: ${project.teamSize}`,
-      `- Structure: ${project.structure}`,
-    ].join('\n') + '\n'
-  )
+  const projectLines = [
+    `- Name: ${project.name}`,
+    `- State: ${project.state}`,
+    `- Team: ${project.teamSize}`,
+    `- Structure: ${project.structure}`,
+  ]
+  if (project.language) projectLines.push(`- Language: ${project.language}`)
+  parts.push(projectLines.join('\n') + '\n')
+
+  // Current Phase (VS-079.1)
+  if (plan.phase && rec) {
+    parts.push('## Current Phase\n')
+    const phaseLines = [`- Phase: ${plan.phase}`]
+    if (rec.agent) phaseLines.push(`- Recommended agent: ${agentName(rec.agent)}`)
+    if (rec.skill) phaseLines.push(`- Recommended skill: ${rec.skill}`)
+    phaseLines.push(`- Next step: ${rec.label}`)
+    if (rec.reason) phaseLines.push(`- Reason: ${rec.reason}`)
+    parts.push(phaseLines.join('\n') + '\n')
+  }
+
+  // Delivery State (VS-079.1)
+  if (ds && ds.total_work_items > 0) {
+    parts.push('## Delivery State\n')
+    parts.push(
+      [
+        `- Draft Work Items: ${ds.draft_work_items}`,
+        `- Ready Work Items: ${ds.ready_work_items}`,
+        `- In-progress Work Items: ${ds.in_progress_work_items}`,
+        `- Blocked Work Items: ${ds.blocked_work_items}`,
+        `- Ownership coverage: ${ds.ownership_coverage}`,
+        `- Remaining Work Item candidates: ${ds.remaining_work_item_candidates}`,
+        `- Technical decision candidates: ${ds.decision_candidates}`,
+        `- Accepted ADRs: ${ds.accepted_adrs}`,
+        `- Installed adapters: ${ds.adapters_installed}`,
+      ].join('\n') + '\n'
+    )
+  }
 
   // Recommended Agent Flow
-  parts.push('## Recommended Agent Flow\n')
-  parts.push(`Recommended order for a ${stateLabel(project.state)} project:\n`)
-  parts.push(
-    steps
-      .map((s, i) => {
-        const flag = s.installed ? '' : '  _(not installed — run `kaddo add agents`)_'
-        return `${i + 1}. ${agentName(s.agent)} → \`${s.output}\`${flag}`
-      })
-      .join('\n') + '\n'
-  )
+  if (steps.length > 0) {
+    parts.push('## Recommended Agent Flow\n')
+    parts.push(`Recommended order for a ${stateLabel(project.state)} project:\n`)
+    parts.push(
+      steps
+        .map((s, i) => {
+          const flag = s.installed ? '' : '  _(not installed — run `kaddo add agents`)_'
+          return `${i + 1}. ${agentName(s.agent)} → \`${s.output}\`${flag}`
+        })
+        .join('\n') + '\n'
+    )
+  } else if (rec) {
+    parts.push('## Recommended Agent Flow\n')
+    const flowSteps: string[] = []
+    if (rec.agent) flowSteps.push(agentName(rec.agent))
+    if (rec.secondary) {
+      for (const s of rec.secondary) {
+        if (s.agent) flowSteps.push(agentName(s.agent))
+        else if (s.skill) flowSteps.push(`${s.skill} skill`)
+        else if (s.command) flowSteps.push(`\`${s.command}\``)
+      }
+    }
+    if (flowSteps.length > 0) {
+      parts.push(flowSteps.map((f, i) => `${i + 1}. ${f}`).join('\n') + '\n')
+    }
+  }
+
+  // Primary Recommendation (VS-079.1)
+  if (rec) {
+    parts.push('## Primary Recommendation\n')
+    const recLines = [`- id: ${rec.id}`]
+    if (rec.agent) recLines.push(`- agent: ${agentName(rec.agent)}`)
+    if (rec.skill) recLines.push(`- skill: ${rec.skill}`)
+    if (rec.command) recLines.push(`- command: \`${rec.command}\``)
+    recLines.push(`- reason: ${rec.reason}`)
+    parts.push(recLines.join('\n') + '\n')
+  }
+
+  // Secondary Recommendations (VS-079.1)
+  if (rec?.secondary && rec.secondary.length > 0) {
+    parts.push('## Secondary Recommendations\n')
+    parts.push(rec.secondary.map((s, i) => `${i + 1}. ${s.label}`).join('\n') + '\n')
+  }
+
+  // Active Work Items (VS-079.1)
+  if (plan.activeWorkItems && plan.activeWorkItems.length > 0) {
+    parts.push('## Active Work Items\n')
+    parts.push(
+      plan.activeWorkItems
+        .map((w) => `- ${w.id} [${w.type}] ${w.lifecycle} — ${w.title}`)
+        .join('\n') + '\n'
+    )
+  }
 
   // Context Pack
   parts.push('## Context Pack\n')
@@ -52,20 +127,56 @@ export function renderUnderstand(plan: UnderstandPlan): string {
     : ' (incomplete — run `kaddo scan` first for a richer baseline)'
   parts.push(`Use \`${plan.contextPackPath}\` as the primary input${scanNote}.\n`)
 
-  // Agent Prompts
-  parts.push('## Agent Prompts\n')
-  parts.push(
-    steps.map((s) => `- \`${agentInstallPath(s.agent)}\``).join('\n') + '\n'
-  )
+  // Agent Prompts — only render if there are concrete paths to show
+  const agentPaths: string[] = []
+  if (plan.recommendedPaths && plan.recommendedPaths.length > 0) {
+    agentPaths.push(...plan.recommendedPaths)
+  } else if (steps.length > 0) {
+    agentPaths.push(...steps.map((s) => agentInstallPath(s.agent)))
+  }
+  if (plan.recommendedSkillPaths && plan.recommendedSkillPaths.length > 0) {
+    agentPaths.push(...plan.recommendedSkillPaths)
+  }
+  agentPaths.push(plan.contextPackPath)
 
-  // Expected Outputs
-  parts.push('## Expected Outputs\n')
-  parts.push(steps.map((s) => `- \`${s.output}\``).join('\n') + '\n')
+  parts.push('## Agent Prompts\n')
+  if (agentPaths.length > 1) {
+    parts.push('Use:\n')
+    parts.push(agentPaths.map((p) => `- \`${p}\``).join('\n') + '\n')
+  } else {
+    parts.push(`- \`${plan.contextPackPath}\`\n`)
+  }
+
+  // Expected Outputs — only render if there's content
+  if (steps.length > 0) {
+    parts.push('## Expected Outputs\n')
+    parts.push(steps.map((s) => `- \`${s.output}\``).join('\n') + '\n')
+  } else if (rec) {
+    parts.push('## Expected Outputs\n')
+    const outputs: string[] = []
+    if (rec.target) outputs.push(`- \`${rec.target}\``)
+    if (rec.id === 'refine-work-item' || rec.id === 'resolve-blocker')
+      outputs.push('- Refined Work Item content.')
+    if (rec.id === 'create-work-item')
+      outputs.push('- A new Work Item under `knowledge/delivery/work-items/`.')
+    if (rec.id === 'implement')
+      outputs.push('- Implementation plan or code changes guided by the Work Item.')
+    if (rec.id === 'guard')
+      outputs.push('- Updated knowledge artifacts reflecting recent code changes.')
+    if (rec.id === 'install-adapter')
+      outputs.push('- An adapter configured and injected (`kaddo adapters list`).')
+    if (outputs.length > 0) {
+      parts.push('The LLM should produce:\n')
+      parts.push(outputs.join('\n') + '\n')
+    } else {
+      parts.push('_See the primary recommendation above._\n')
+    }
+  }
 
   // Copy/Paste Instructions
   parts.push('## Copy/Paste Instructions\n')
-  const first = steps[0]
-  if (first) {
+  if (steps.length > 0) {
+    const first = steps[0]
     parts.push(
       [
         `Start with **${agentName(first.agent)}**:`,
@@ -77,11 +188,31 @@ export function renderUnderstand(plan: UnderstandPlan): string {
         `5. Save the result in: \`${first.output}\``,
       ].join('\n') + '\n'
     )
+  } else if (agentPaths.length > 1) {
+    parts.push('Paste the following into your LLM chat:\n')
+    parts.push(agentPaths.map((p, i) => `${i + 1}. \`${p}\``).join('\n') + '\n')
+    if (rec?.agent) {
+      parts.push(`Ask the LLM to follow the ${agentName(rec.agent)} instructions.\n`)
+    }
+  } else {
+    parts.push(`Paste \`${plan.contextPackPath}\` into your LLM chat.\n`)
   }
 
   // Next Steps
   parts.push('## Next Steps\n')
-  if (steps.length > 1) {
+  if (rec) {
+    const nextLines: string[] = []
+    nextLines.push(`1. ${rec.label}`)
+    let n = 2
+    if (rec.secondary) {
+      for (const s of rec.secondary) {
+        nextLines.push(`${n}. ${s.label}`)
+        n++
+      }
+    }
+    nextLines.push(`${n}. Re-run \`kaddo explain\`.`)
+    parts.push(nextLines.join('\n') + '\n')
+  } else if (steps.length > 1) {
     parts.push(
       `After saving \`${steps[0].output}\`, continue with **${agentName(steps[1].agent)}** ` +
         `(feed it the context pack plus the artifacts you already produced). Re-run ` +

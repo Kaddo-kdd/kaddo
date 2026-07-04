@@ -14,8 +14,10 @@ de tu proyecto, y escribe una guía reutilizable que puedes reabrir cuando quier
 Escribe / refresca:
 
 - **`.kaddo/context-pack.md`** y **`.kaddo/context-pack.json`** — la entrada para los agentes.
-- **`.kaddo/understand.md`** — la guía paso a paso con el flujo recomendado, las salidas
-  esperadas y las instrucciones para copiar/pegar.
+- **`.kaddo/understand.md`** — la guía state-aware con la fase actual, agente/skill recomendados,
+  estado de delivery, recomendaciones primaria y secundarias, Work Items activos, paths concretos
+  de agentes/skills e instrucciones para copiar/pegar. El markdown coincide con la salida de
+  consola (VS-079.1).
 
 ## Qué hace
 
@@ -108,6 +110,22 @@ Si el proyecto está en la fase **Active Delivery** y
 [`kaddo graph export`](/es/knowledge-graph-export/) reportó hints que afectan Work Items
 **activos**, `understand` recomienda revisarlos antes de seguir con la implementación y sugiere el
 `graph-agent`. El aviso solo aparece cuando los hints tocan trabajo activo — si no, no estorba.
+
+## Alineación del markdown (VS-079.1)
+
+Desde v3.46.0, `.kaddo/understand.md` refleja la misma recomendación state-aware que la salida de
+consola. Incluye:
+
+- **Current Phase** — fase, agente/skill recomendados, siguiente paso y razón.
+- **Delivery State** — conteos de draft/ready/in-progress/blocked, cobertura de ownership,
+  candidatos restantes, candidatos de decisión, ADRs, adapters.
+- **Primary Recommendation** — el siguiente paso con id, agente, skill, comando y razón.
+- **Secondary Recommendations** — sugerencias paralelas (ownership, ADRs, candidatos restantes).
+- **Active Work Items** — Work Items en draft/ready/in-progress/blocked.
+- **Agent Prompts** — paths concretos al agente y skill recomendados más el context pack.
+- **Expected Outputs** — lo que el LLM debe producir para el paso recomendado.
+
+Ninguna sección se renderiza vacía — si no hay datos, se omite o muestra un fallback.
 
 ## Funciona aunque falte contexto
 
