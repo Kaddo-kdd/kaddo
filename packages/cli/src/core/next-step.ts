@@ -11,9 +11,22 @@ import { analyzeKnowledgeArtifact } from './artifact-quality.js'
 import { buildOpenQuestionsReport } from './open-questions.js'
 import { discoverWorkItems } from '../services/knowledge-artifacts.js'
 import { buildAdapterStatuses, buildCodexAdapterContext } from './codex-adapter.js'
+import { buildTechDecisions } from './decisions.js'
+import { roadmapStats } from './roadmap.js'
+import { type LifecycleState } from './lifecycle.js'
 
 export type RoadmapSignal = 'missing' | 'empty' | 'has-candidates'
 export type WorkItemsSignal = 'none' | 'none-ready' | 'ready' | 'in-progress'
+
+/** A parallel, non-primary recommendation (ownership, ADRs, remaining candidates). VS-079. */
+export type SecondaryRecommendation = {
+  id: string
+  label: string
+  command?: string
+  agent?: string
+  skill?: string
+  reason: string
+}
 
 export type NextStepRecommendation = {
   id: string
@@ -21,9 +34,61 @@ export type NextStepRecommendation = {
   label: string
   command?: string
   agent?: string
+  skill?: string
   target?: string
   reason: string
   instructions?: string[]
+  /** Parallel recommendations that don't replace the primary one (VS-079). */
+  secondary?: SecondaryRecommendation[]
+}
+
+/** A snapshot of the delivery state used to pick a state-aware next step (VS-079). */
+export type DeliveryState = {
+  phase: string
+  draft_work_items: number
+  ready_work_items: number
+  in_progress_work_items: number
+  blocked_work_items: number
+  total_work_items: number
+  ownership_coverage: string
+  remaining_work_item_candidates: number
+  decision_candidates: number
+  accepted_adrs: number
+  adapters_installed: number
+}
+
+/** Gather the delivery-state counts once, from the real knowledge base (deterministic). */
+export function buildDeliveryState(dir: string): DeliveryState {
+  const wis = discoverWorkItems(dir)
+  const byState = (s: LifecycleState) => wis.filter((w) => w.lifecycle === s).length
+  const total = wis.length
+  const withOwnership = wis.filter((w) => w.codeGlobs.length > 0).length
+  const td = buildTechDecisions(dir)
+  const roadmapPath = join(dir, 'knowledge/delivery/roadmap.md')
+  const roadmapMd = exists(roadmapPath) ? safeRead(roadmapPath) : null
+  const stats = roadmapStats(roadmapMd, total)
+  const adapters = installedAdapters(dir)
+  return {
+    phase: '',
+    draft_work_items: byState('draft'),
+    ready_work_items: byState('ready'),
+    in_progress_work_items: byState('in-progress'),
+    blocked_work_items: byState('blocked'),
+    total_work_items: total,
+    ownership_coverage: `${withOwnership}/${total}`,
+    remaining_work_item_candidates: stats.remaining_work_item_candidates,
+    decision_candidates: td.candidates,
+    accepted_adrs: td.accepted_adrs,
+    adapters_installed: adapters.length,
+  }
+}
+
+function safeRead(p: string): string | null {
+  try {
+    return readFile(p)
+  } catch {
+    return null
+  }
 }
 
 /** Roadmap candidate signal (bullets/table rows outside an Open Questions section). */
@@ -145,14 +210,133 @@ export function resolveNextStep(dir: string, now: Date = new Date()): NextStepRe
     return { id: 'roadmap', phase: 'Planning', label: 'Use roadmap-agent to define roadmap candidates (`kaddo roadmap`).', command: 'kaddo roadmap', agent: 'roadmap-agent', target: 'knowledge/delivery/roadmap.md', reason: 'The roadmap has no candidates yet.' }
   }
 
-  const wi = workItemsSignal(dir)
-  if (wi === 'none' || wi === 'none-ready') {
-    return { id: 'create-work-item', phase: 'Delivery Preparation', label: 'Run `kaddo create --from roadmap` to materialize the first Work Item.', command: 'kaddo create --from roadmap', reason: 'The roadmap has candidates but no Work Item is ready.' }
+  // State-aware delivery recommendation (VS-079): the next step depends on the most urgent delivery
+  // state, not just on the existence of roadmap candidates. We never recommend "materialize the first
+  // Work Item" once one already exists.
+  const st = buildDeliveryState(dir)
+  const secondary = buildSecondaryRecommendations(st)
+
+  // Case 1 — roadmap has candidates but no Work Item exists yet.
+  if (st.total_work_items === 0) {
+    return {
+      id: 'create-work-item',
+      phase: 'Delivery Preparation',
+      label: 'Run `kaddo create --from roadmap` to materialize the first Work Item.',
+      command: 'kaddo create --from roadmap',
+      reason: 'The roadmap has candidates but no Work Item exists yet.',
+      ...(secondary.length ? { secondary } : {}),
+    }
   }
 
-  const adapters = installedAdapters(dir)
-  if (adapters.length === 0) {
-    return { id: 'install-adapter', phase: 'Active Delivery', label: 'Run `kaddo adapters list` and install the adapter for your preferred agent.', command: 'kaddo adapters list', reason: 'A Work Item is ready but no adapter is installed.' }
+  const adapters = st.adapters_installed
+  // Ready Work Items — prepare or start implementation (Cases 5 & 6).
+  if (st.ready_work_items > 0) {
+    if (adapters === 0) {
+      return {
+        id: 'install-adapter',
+        phase: 'Active Delivery',
+        label: 'Install or configure an adapter before implementation (`kaddo adapters list`).',
+        command: 'kaddo adapters list',
+        reason: `${st.ready_work_items} Work Item(s) are ready but no adapter is installed.`,
+        ...(secondary.length ? { secondary } : {}),
+      }
+    }
+    return {
+      id: 'implement',
+      phase: 'Active Delivery',
+      label: 'Use the implementation-agent or your installed adapter to plan implementation.',
+      agent: 'implementation-agent',
+      reason: `${st.ready_work_items} Work Item(s) are ready and an adapter is installed.`,
+      ...(secondary.length ? { secondary } : {}),
+    }
   }
-  return { id: 'implement', phase: 'Active Delivery', label: 'Implement the ready Work Item and run `kaddo guard`.', reason: 'A Work Item is ready and an adapter is installed.' }
+
+  // In-progress Work Items — keep knowledge in sync (Case 7).
+  if (st.in_progress_work_items > 0) {
+    return {
+      id: 'guard',
+      phase: 'Active Delivery',
+      label: 'Run `kaddo guard` and update affected knowledge after significant changes.',
+      command: 'kaddo guard',
+      reason: `${st.in_progress_work_items} Work Item(s) are in progress.`,
+      ...(secondary.length ? { secondary } : {}),
+    }
+  }
+
+  // Draft Work Items — refine before creating more (Case 2, Rules 1 & 3).
+  if (st.draft_work_items > 0) {
+    return {
+      id: 'refine-work-item',
+      phase: 'Active Delivery',
+      label: 'Refine the existing draft Work Item with the work-item-agent.',
+      agent: 'work-item-agent',
+      skill: 'work-item-refinement',
+      reason: `There ${st.draft_work_items === 1 ? 'is' : 'are'} ${st.draft_work_items} draft Work Item${st.draft_work_items === 1 ? '' : 's'} and no Work Item is ready.`,
+      ...(secondary.length ? { secondary } : {}),
+    }
+  }
+
+  // Blocked Work Items — resolve the blocker.
+  if (st.blocked_work_items > 0) {
+    return {
+      id: 'resolve-blocker',
+      phase: 'Active Delivery',
+      label: 'Resolve the blocker on the blocked Work Item with the work-item-agent.',
+      agent: 'work-item-agent',
+      reason: `${st.blocked_work_items} Work Item(s) are blocked.`,
+      ...(secondary.length ? { secondary } : {}),
+    }
+  }
+
+  // Only completed/archived work remains — materialize remaining candidates or plan the next initiative.
+  if (st.remaining_work_item_candidates > 0) {
+    return {
+      id: 'materialize-more-work-items',
+      phase: 'Maintenance',
+      label: `Materialize the remaining ${st.remaining_work_item_candidates} Work Item candidate(s) with \`kaddo create --from roadmap\`.`,
+      command: 'kaddo create --from roadmap',
+      reason: 'No active Work Items remain; roadmap candidates are still pending.',
+      ...(secondary.length ? { secondary } : {}),
+    }
+  }
+  return {
+    id: 'plan-next',
+    phase: 'Maintenance',
+    label: 'Use the roadmap-agent to plan the next initiative.',
+    agent: 'roadmap-agent',
+    reason: 'No active Work Items and no remaining roadmap candidates.',
+  }
+}
+
+/** Ownership, ADR and remaining-candidate recommendations that run parallel to the primary (VS-079). */
+export function buildSecondaryRecommendations(st: DeliveryState): SecondaryRecommendation[] {
+  const out: SecondaryRecommendation[] = []
+  const [withOwnership] = st.ownership_coverage.split('/').map(Number)
+  if (st.total_work_items > 0 && withOwnership < st.total_work_items) {
+    out.push({
+      id: 'suggest-ownership',
+      label: 'Run `kaddo owners suggest` for Work Items without code ownership.',
+      command: 'kaddo owners suggest',
+      reason: `Ownership coverage is ${st.ownership_coverage}.`,
+    })
+  }
+  if (st.total_work_items > 0 && st.decision_candidates > 0 && st.accepted_adrs === 0) {
+    out.push({
+      id: 'materialize-adrs',
+      label: 'Use the adr-writing skill (`kaddo adr`) to materialize decision candidates into ADRs before implementing related technical Work Items.',
+      command: 'kaddo adr',
+      skill: 'adr-writing',
+      reason: `There are ${st.decision_candidates} technical decision candidate(s) and ${st.accepted_adrs} accepted ADR(s).`,
+    })
+  }
+  // Remaining candidates are only a *secondary* suggestion once at least one Work Item exists (Rule 2).
+  if (st.total_work_items > 0 && st.remaining_work_item_candidates > 0) {
+    out.push({
+      id: 'materialize-more-work-items',
+      label: `Later, materialize the remaining ${st.remaining_work_item_candidates} Work Item candidate(s) with \`kaddo create --from roadmap\`.`,
+      command: 'kaddo create --from roadmap',
+      reason: `There are ${st.remaining_work_item_candidates} remaining Work Item candidate(s).`,
+    })
+  }
+  return out
 }

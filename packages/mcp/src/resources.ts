@@ -13,6 +13,7 @@ import { buildTechDecisions } from '../../cli/src/core/decisions.js'
 import { installedAssetsSummary } from '../../cli/src/core/assets.js'
 import { buildRoadmapQuality } from '../../cli/src/core/roadmap-quality.js'
 import { parseRoadmapCandidates } from '../../cli/src/core/roadmap.js'
+import { resolveNextStep, buildDeliveryState } from '../../cli/src/core/next-step.js'
 import { listWorkItems } from './workitems.js'
 import { hasKnowledge, readText } from './project.js'
 
@@ -305,6 +306,20 @@ export const RESOURCES: ResourceDescriptor[] = [
       const md = readText(root, 'knowledge/delivery/roadmap.md')
       const candidates = md ? parseRoadmapCandidates(md) : []
       return [{ uri: 'kaddo://work-item-candidates', text: JSON.stringify({ candidates }, null, 2), mimeType: 'application/json' }]
+    },
+  },
+  {
+    uri: 'kaddo://next-step',
+    name: 'Kaddo next step',
+    description: 'State-aware next-step recommendation for the current delivery state, with parallel (secondary) recommendations and the delivery-state counts behind it (VS-079). Read-only.',
+    mimeType: 'application/json',
+    read: (root) => {
+      if (!hasKnowledge(root)) {
+        return text('kaddo://next-step', 'Knowledge repository not found. Run `kaddo bootstrap` first.', 'text/plain')
+      }
+      const nextStepRecommendation = resolveNextStep(root)
+      const deliveryState = { ...buildDeliveryState(root), phase: nextStepRecommendation.phase }
+      return [{ uri: 'kaddo://next-step', text: JSON.stringify({ nextStepRecommendation, deliveryState }, null, 2), mimeType: 'application/json' }]
     },
   },
 ]

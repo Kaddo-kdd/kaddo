@@ -72,8 +72,15 @@ export function runUnderstand(): void {
     for (const r of assessment.reasons) console.log(`  - ${r}`)
   }
   if (rec.agent) console.log(`Recommended: ${rec.agent}`)
+  if (rec.skill) console.log(`Recommended skill: ${rec.skill}`)
   console.log(`Next step: ${rec.label}`)
   if (rec.reason) console.log(`Why: ${rec.reason}`)
+
+  // Parallel (secondary) recommendations (VS-079): ownership, ADRs, remaining candidates.
+  if (rec.secondary && rec.secondary.length > 0) {
+    console.log('Also:')
+    for (const s of rec.secondary) console.log(`  - ${s.label}`)
+  }
 
   // Recommended reusable skills (VS-059) for the recommended agents, if any are installed.
   const installedSkills = discoverInstalledSkills(dir)
@@ -102,7 +109,7 @@ export function runUnderstand(): void {
     console.log(`Roadmap quality: ${rqi.grounded}/${rqi.total} initiatives grounded.`)
     console.log('  → Use roadmap-agent to ground roadmap initiatives in capability domains, gaps and source signals')
     console.log('    before `kaddo create --from roadmap`.')
-  } else if (rqi.total > 0 && rqi.grounded === rqi.total) {
+  } else if (rqi.total > 0 && rqi.grounded === rqi.total && exp.roadmap.materialized_work_items === 0) {
     console.log('')
     console.log('Roadmap initiatives are grounded. → Run `kaddo create --from roadmap` to materialize the first Work Item.')
   }

@@ -622,9 +622,17 @@ export function renderExplanationHuman(exp: ProjectExplanation): string {
   lines.push(`- Next step: ${exp.readiness.recommended_next_step.label}`)
   lines.push('')
 
-  if (exp.suggestedNextSteps.length > 0) {
+  // Suggested Next Steps (VS-079): in a delivery phase, lead with the state-aware primary step and its
+  // parallel (secondary) recommendations; otherwise fall back to the early-phase guidance list.
+  const rec = exp.nextStepRecommendation
+  const secondary = rec.secondary ?? []
+  const steps =
+    secondary.length > 0 || /Delivery|Active|Maintenance/.test(rec.phase)
+      ? [rec.label, ...secondary.map((s) => s.label)]
+      : exp.suggestedNextSteps
+  if (steps.length > 0) {
     lines.push('## Suggested Next Steps')
-    exp.suggestedNextSteps.forEach((s, i) => lines.push(`${i + 1}. ${s}`))
+    steps.forEach((s, i) => lines.push(`${i + 1}. ${s}`))
     lines.push('')
   }
 

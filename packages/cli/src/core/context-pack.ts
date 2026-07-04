@@ -6,7 +6,7 @@ import { discoverKnowledge } from '../services/knowledge-artifacts.js'
 import { loadMappedModules, type MappedModuleWithCoverage } from '../services/mapped-modules.js'
 import { knowledgeLayers, type LayerStatus } from './layers.js'
 import { analyzeKnowledgeArtifact, type ArtifactQuality } from './artifact-quality.js'
-import { resolveNextStep, type NextStepRecommendation } from './next-step.js'
+import { resolveNextStep, buildDeliveryState, type NextStepRecommendation, type DeliveryState } from './next-step.js'
 import { buildTechDecisions, type TechDecisions } from './decisions.js'
 import { installedAssetsSummary } from './assets.js'
 import { buildRoadmapQuality, type RoadmapQuality } from './roadmap-quality.js'
@@ -74,6 +74,7 @@ export type ContextPack = {
   phase: PhaseAssessment
   /** The single unified next-step recommendation (VS-073.2). */
   nextStepRecommendation: NextStepRecommendation
+  deliveryState: DeliveryState
   /** Technical decisions: candidates vs materialized ADRs (VS-075). */
   techDecisions: TechDecisions
   /** Tech knowledge layout: core / decisions / discovery (VS-075.2). */
@@ -376,6 +377,8 @@ export function buildContextPack(
     nextStep: nextStepRecommendation.label,
     recommendedAgents: nextStepRecommendation.agent ? [nextStepRecommendation.agent] : phase.recommendedAgents,
   }
+  // State-aware delivery snapshot (VS-079) — the counts behind the next-step recommendation.
+  const deliveryState = { ...buildDeliveryState(dir), phase: nextStepRecommendation.phase }
 
   return {
     version: CONTEXT_PACK_VERSION,
@@ -409,6 +412,7 @@ export function buildContextPack(
     roadmap,
     phase: unifiedPhase,
     nextStepRecommendation,
+    deliveryState,
     techDecisions,
     techKnowledge,
     roadmapQuality: buildRoadmapQuality(dir),

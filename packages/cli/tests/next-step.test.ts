@@ -134,3 +134,108 @@ describe('unified next step — no divergence (VS-073.2)', () => {
     expect(pack.handoff.nextSteps[0]).toBe(rec.label)
   })
 })
+
+describe('resolveNextStep — state-aware delivery (VS-079)', () => {
+  function usefulKnowledge() {
+    pastSetup()
+    write('knowledge/business/business.md', USEFUL('Business'))
+    write('knowledge/product/product.md', USEFUL('Product'))
+    write('knowledge/product/capabilities.md', USEFUL('Capabilities'))
+    write('knowledge/tech/codebase.md', USEFUL('Codebase'))
+    write('knowledge/tech/current-state.md', USEFUL('CurrentState'))
+    write('knowledge/delivery/roadmap.md', '---\ntype: roadmap\n---\n# Roadmap\n\n## Candidate Work Items\n- WI-CANDIDATE-001: First capability\n- WI-CANDIDATE-002: Second capability\n- WI-CANDIDATE-003: Third capability\n')
+  }
+  function writeWI(state: string, id: string, opts: { code?: boolean } = {}) {
+    const code = opts.code ? `code: ["src/${id}.ts"]` : 'code: []'
+    write(
+      `knowledge/delivery/work-items/${state}/${id}.md`,
+      `---\ntype: feature\nid: ${id}\ntitle: ${id} title\nstatus: ${state}\n${code}\n---\n# ${id}\n`
+    )
+  }
+
+  it('AC6: roadmap candidates, no Work Items → create --from roadmap', () => {
+    usefulKnowledge()
+    const rec = resolveNextStep(dir)
+    expect(rec.id).toBe('create-work-item')
+    expect(rec.command).toBe('kaddo create --from roadmap')
+  })
+
+  it('AC1/AC2: a draft Work Item exists → refine with work-item-agent (never "first Work Item")', () => {
+    usefulKnowledge()
+    writeWI('draft', 'WI-001')
+    const rec = resolveNextStep(dir)
+    expect(rec.id).toBe('refine-work-item')
+    expect(rec.agent).toBe('work-item-agent')
+    expect(rec.skill).toBe('work-item-refinement')
+    expect(rec.label).not.toContain('first Work Item')
+  })
+
+  it('AC3/AC4: draft + missing ownership + remaining candidates → secondary owners + materialize-later', () => {
+    usefulKnowledge()
+    writeWI('draft', 'WI-001') // no code → missing ownership
+    const rec = resolveNextStep(dir)
+    const ids = (rec.secondary ?? []).map((s) => s.id)
+    expect(ids).toContain('suggest-ownership')
+    expect(ids).toContain('materialize-more-work-items')
+    // remaining candidates must be secondary, not the primary
+    expect(rec.id).toBe('refine-work-item')
+  })
+
+  it('AC5: tech decision candidates without ADR + Work Item → secondary adr-writing', () => {
+    usefulKnowledge()
+    writeWI('draft', 'WI-001', { code: true })
+    write('knowledge/tech/decision-candidates.md', '# Decision Candidates\n\n## 1. Shared secret\n\n### Context\nx\n\n## 2. Rate limit\n\n### Context\ny\n')
+    const rec = resolveNextStep(dir)
+    const adr = (rec.secondary ?? []).find((s) => s.id === 'materialize-adrs')
+    expect(adr).toBeTruthy()
+    expect(adr!.skill).toBe('adr-writing')
+    expect(adr!.command).toBe('kaddo adr')
+  })
+
+  it('AC7: a ready Work Item with no adapter → install adapter', () => {
+    usefulKnowledge()
+    writeWI('ready', 'WI-001', { code: true })
+    const rec = resolveNextStep(dir)
+    expect(rec.id).toBe('install-adapter')
+    expect(rec.command).toBe('kaddo adapters list')
+  })
+
+  it('AC8: a ready Work Item with an adapter installed → implementation-agent', () => {
+    usefulKnowledge()
+    writeWI('ready', 'WI-001', { code: true })
+    write('AGENTS.md', '# Agents\n\n<!-- BEGIN KADDO ADAPTER -->\nKaddo guidance\n<!-- END KADDO ADAPTER -->\n')
+    const rec = resolveNextStep(dir)
+    expect(rec.id).toBe('implement')
+    expect(rec.agent).toBe('implementation-agent')
+  })
+
+  it('AC9: an in-progress Work Item → guard', () => {
+    usefulKnowledge()
+    writeWI('in-progress', 'WI-001', { code: true })
+    const rec = resolveNextStep(dir)
+    expect(rec.id).toBe('guard')
+    expect(rec.command).toBe('kaddo guard')
+  })
+
+  it('AC15-AC21: the recommendation carries id/phase/label/reason (+ agent/skill)', () => {
+    usefulKnowledge()
+    writeWI('draft', 'WI-001')
+    const rec = resolveNextStep(dir)
+    expect(rec.id).toBeTruthy()
+    expect(rec.phase).toBe('Active Delivery')
+    expect(rec.label).toBeTruthy()
+    expect(rec.reason).toBeTruthy()
+    expect(rec.agent).toBe('work-item-agent')
+    expect(rec.skill).toBe('work-item-refinement')
+  })
+
+  it('AC11: context-pack carries deliveryState + the state-aware recommendation', () => {
+    usefulKnowledge()
+    writeWI('draft', 'WI-001')
+    const pack = buildContextPack(dir, loadConfig(dir)!)
+    expect(pack.deliveryState.draft_work_items).toBe(1)
+    expect(pack.deliveryState.ready_work_items).toBe(0)
+    expect(pack.deliveryState.phase).toBe('Active Delivery')
+    expect(pack.nextStepRecommendation.id).toBe('refine-work-item')
+  })
+})

@@ -45,6 +45,33 @@ export function renderContextPack(pack: ContextPack): string {
     parts.push(`Next step: ${pack.phase.nextStep}\n`)
   }
 
+  // 1a-delivery. State-aware delivery snapshot + next-step recommendation (VS-079).
+  const ds = pack.deliveryState
+  const rec = pack.nextStepRecommendation
+  if (ds.total_work_items > 0 || rec.phase !== 'Setup') {
+    parts.push('## Delivery State\n')
+    parts.push(
+      [
+        `- Phase: ${ds.phase}`,
+        `- Draft Work Items: ${ds.draft_work_items}`,
+        `- Ready Work Items: ${ds.ready_work_items}`,
+        `- In-progress Work Items: ${ds.in_progress_work_items}`,
+        `- Ownership coverage: ${ds.ownership_coverage}`,
+        `- Remaining Work Item candidates: ${ds.remaining_work_item_candidates}`,
+      ].join('\n') + '\n'
+    )
+    parts.push('## Next Step Recommendation\n')
+    const recLines = [`- ${rec.label}`, `  - id: ${rec.id}`, `  - reason: ${rec.reason}`]
+    if (rec.agent) recLines.push(`  - agent: ${rec.agent}`)
+    if (rec.skill) recLines.push(`  - skill: ${rec.skill}`)
+    if (rec.command) recLines.push(`  - command: \`${rec.command}\``)
+    parts.push(recLines.join('\n') + '\n')
+    if (rec.secondary && rec.secondary.length > 0) {
+      parts.push('Also (secondary):\n')
+      parts.push(rec.secondary.map((s) => `- ${s.label}`).join('\n') + '\n')
+    }
+  }
+
   // 1b. Knowledge Layers + maturity (Business → Product → Tech → Delivery)
   parts.push('## Knowledge Layers\n')
   parts.push(

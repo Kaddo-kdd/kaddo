@@ -30,6 +30,7 @@ describe('MCP resources (VS-057 AC6/AC14)', () => {
         'kaddo://installed-assets',
         'kaddo://roadmap-quality',
         'kaddo://work-item-candidates',
+        'kaddo://next-step',
         'kaddo://roadmap',
         'kaddo://skills',
         'kaddo://understand',

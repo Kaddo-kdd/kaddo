@@ -169,6 +169,7 @@ export default defineConfig({
             { label: 'Open Questions Gate', translations: { es: 'Preguntas abiertas' }, slug: 'open-questions' },
             { label: 'Tech Decisions (ADRs)', translations: { es: 'Decisiones técnicas (ADRs)' }, slug: 'tech-decisions' },
             { label: 'Roadmap Quality', translations: { es: 'Calidad del roadmap' }, slug: 'roadmap-quality' },
+            { label: 'State-Aware Next Step', translations: { es: 'Siguiente paso según el estado' }, slug: 'next-step' },
             { label: 'Installed Assets', translations: { es: 'Assets instalados' }, slug: 'installed-assets' },
             {
               label: 'Adapters',
