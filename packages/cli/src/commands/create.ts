@@ -4,7 +4,12 @@ import type { ModuleWorkItemType } from '../modules/types.js'
 import { exists, readFile, readDir, writeFile, join, cwd, isFile } from '../utils/fs.js'
 import { intro, outro, log, text, select } from '../utils/ui.js'
 import { loadConfig, createGuidanceForState, ConfigError } from '../core/config.js'
-import { parseRoadmapCandidates, type RoadmapCandidateWorkItem } from '../core/roadmap.js'
+import {
+  parseRoadmapCandidates,
+  normalizeCapabilityList,
+  domainsFromRelated,
+  type RoadmapCandidateWorkItem,
+} from '../core/roadmap.js'
 
 const WORK_ITEMS_DIR = 'knowledge/delivery/work-items'
 // New Work Items start in the `draft` lifecycle state (VS-041).
@@ -352,34 +357,53 @@ export function buildRoadmapFrontMatter(
   const today = new Date().toISOString().split('T')[0]
   const summary = (answers.problem?.split('.')[0] ?? candidate.expectedValue ?? title).trim()
   const initiative = candidate.initiative?.title ?? candidate.initiative?.id ?? ''
+  const q = (s: string) => s.replace(/"/g, "'")
+
+  // VS-078 normalization: fill `domains` from `related_domain`, split comma-joined capabilities into
+  // a real list, and carry risks/dependencies/decision candidates as YAML block sequences. Never
+  // invents values — only normalizes what the roadmap candidate already provided.
+  const domains = domainsFromRelated(candidate.domain)
+  const relatedCapabilities = normalizeCapabilityList(candidate.relatedCapabilities)
+  const risks = candidate.risk ? [candidate.risk] : []
+  const dependencies = candidate.dependencies ?? []
+  const sourceSignals = candidate.sourceSignals ?? []
+  const decisionCandidates = candidate.decisionCandidates ?? []
+
+  const yamlList = (key: string, items: string[]): string[] =>
+    items.length === 0 ? [] : [`${key}:`, ...items.map((i) => `  - "${q(i)}"`)]
+
   const lines = [
     '---',
     `type: ${type}`,
     `id: ${id}`,
-    `title: "${title}"`,
+    `title: "${q(title)}"`,
     `knowledge_level: ${level}`,
     `status: draft`,
     `phase: now`,
-    `initiative: "${initiative.replace(/"/g, "'")}"`,
-    `domains: []`,
+    `initiative: "${q(initiative)}"`,
+    ...yamlList('domains', domains),
+    ...(domains.length === 0 ? ['domains: []'] : []),
     `code: []`,
     `created_at: ${today}`,
     `source: roadmap`,
     `source_id: ${candidate.id}`,
     `source_initiative: ${candidate.initiative?.id ?? 'unknown'}`,
-    // Capability-grounded traceability (VS-077): carry the roadmap metadata into the Work Item.
-    `source_roadmap_candidate: ${candidate.initiative?.id ?? candidate.id}`,
-    ...(candidate.domain ? [`related_domain: "${candidate.domain.replace(/"/g, "'")}"`] : []),
-    ...(candidate.relatedCapabilities && candidate.relatedCapabilities.length > 0
-      ? [`related_capability: "${candidate.relatedCapabilities[0].replace(/"/g, "'")}"`,
-         `related_capabilities: [${candidate.relatedCapabilities.map((c) => `"${c.replace(/"/g, "'")}"`).join(', ')}]`]
+    // Capability-grounded traceability (VS-077 / VS-078): distinguish the parent roadmap initiative
+    // from the specific Work Item candidate it was materialized from.
+    `source_roadmap_initiative: ${candidate.initiative?.id ?? 'unknown'}`,
+    `source_work_item_candidate: ${candidate.id}`,
+    ...(candidate.initiative?.title
+      ? [`source_initiative_title: "${q(candidate.initiative.title)}"`]
       : []),
-    ...(candidate.expectedValue ? [`expected_value: "${candidate.expectedValue.replace(/"/g, "'")}"`] : []),
-    ...(candidate.risk ? [`risks: "${candidate.risk.replace(/"/g, "'")}"`] : []),
-    ...(candidate.dependencies && candidate.dependencies.length > 0
-      ? [`dependencies: [${candidate.dependencies.map((d) => `"${d.replace(/"/g, "'")}"`).join(', ')}]`]
-      : []),
-    `summary: "${summary.replace(/"/g, "'")}"`,
+    ...(candidate.domain ? [`related_domain: "${q(candidate.domain)}"`] : []),
+    ...yamlList('related_capabilities', relatedCapabilities),
+    ...(candidate.expectedValue ? [`expected_value: "${q(candidate.expectedValue)}"`] : []),
+    ...yamlList('risks', risks),
+    ...yamlList('dependencies', dependencies),
+    ...yamlList('source_signals', sourceSignals),
+    ...yamlList('decision_candidates', decisionCandidates),
+    ...(decisionCandidates.length > 0 ? ['related_decisions: []'] : []),
+    `summary: "${q(summary)}"`,
     '---',
   ]
   return lines.join('\n')
@@ -398,39 +422,53 @@ function buildRoadmapBody(
   sections.push(`# ${title}\n`)
   sections.push(`> Type: ${type} · Level: ${level}\n`)
 
-  // Source traceability.
+  // Source traceability (VS-078): show initiative + work item candidate + related domain/capabilities.
   const initiativeLabel = candidate.initiative
     ? `${candidate.initiative.id ?? ''}${candidate.initiative.title ? ` — ${candidate.initiative.title}` : ''}`.trim()
     : 'unknown'
-  sections.push(
-    [
-      '## Source\n',
-      `- Source: roadmap`,
-      `- Candidate: ${candidate.id}`,
-      `- Initiative: ${initiativeLabel || 'unknown'}`,
-    ].join('\n') + '\n'
-  )
+  const relatedCapabilities = normalizeCapabilityList(candidate.relatedCapabilities)
+  const sourceLines = [
+    '## Source\n',
+    `- Source: roadmap`,
+    `- Roadmap Initiative: ${initiativeLabel || 'unknown'}`,
+    `- Work Item Candidate: ${candidate.id}`,
+  ]
+  if (candidate.domain) sourceLines.push(`- Related domain: ${candidate.domain}`)
+  if (relatedCapabilities.length) {
+    sourceLines.push('- Related capabilities:')
+    relatedCapabilities.forEach((c) => sourceLines.push(`  - ${c}`))
+  }
+  sections.push(sourceLines.join('\n') + '\n')
+
+  // Warning when the Work Item depends on tech decision candidates that have no ADR yet (VS-078).
+  if (candidate.decisionCandidates?.length) {
+    sections.push(
+      '> Warning: This Work Item is related to technical decision candidates that have not been ' +
+        'materialized as ADRs.\n'
+    )
+  }
 
   if (answers.problem) sections.push(`## Problem\n\n${answers.problem}\n`)
 
   const expectedValue = candidate.expectedValue ?? answers.expected_result
   if (expectedValue) sections.push(`## Expected Value\n\n${expectedValue}\n`)
 
-  // Context inherited from the roadmap.
-  const ctx: string[] = []
-  if (candidate.relatedCapabilities?.length)
-    ctx.push(`**Related capabilities:** ${candidate.relatedCapabilities.join(', ')}`)
-  if (candidate.domain) ctx.push(`**Domain:** ${candidate.domain}`)
-  if (candidate.impact) ctx.push(`**Impact:** ${candidate.impact}`)
-  if (candidate.risk) ctx.push(`**Risk:** ${candidate.risk}`)
+  // Context From Roadmap (VS-078): expected value, risks, dependencies and source signals — verbatim
+  // from the roadmap. Never invents source signals; when absent it says so explicitly.
+  const initiativeRef = candidate.initiative?.id
+    ? `roadmap initiative ${candidate.initiative.id}`
+    : 'a roadmap candidate'
+  const ctx: string[] = [`This Work Item was materialized from ${initiativeRef}.`, '']
+  if (candidate.expectedValue) ctx.push(`**Expected value:** ${candidate.expectedValue}`)
+  if (candidate.risk) ctx.push(`**Risks:** ${candidate.risk}`)
   if (candidate.dependencies?.length)
-    ctx.push(`**Dependencies:**\n${formatList(candidate.dependencies)}`)
-  const initiativeNote = candidate.initiative?.id
-    ? `This candidate was created from the roadmap initiative ${candidate.initiative.id}.`
-    : 'This work item was created from a roadmap candidate.'
-  sections.push(
-    `## Context From Roadmap\n\n${initiativeNote}${ctx.length ? '\n\n' + ctx.join('\n\n') : ''}\n`
-  )
+    ctx.push(`**Dependencies:** ${candidate.dependencies.join('; ')}`)
+  if (candidate.sourceSignals?.length) {
+    ctx.push(`**Source signals:**\n${formatList(candidate.sourceSignals)}`)
+  } else {
+    ctx.push('**Source signals:** _Not provided in roadmap._')
+  }
+  sections.push(`## Context From Roadmap\n\n${ctx.join('\n\n')}\n`)
 
   if (answers.acceptance_criteria) {
     const items = answers.acceptance_criteria

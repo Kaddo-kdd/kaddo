@@ -255,9 +255,9 @@ describe('buildProjectExplanation — roadmap candidates vs materialized (VS-039
     initConfig()
     write('knowledge/delivery/roadmap.md', roadmap)
     const out = renderExplanationHuman(buildProjectExplanation(tmpDir))
-    expect(out).toContain('Roadmap candidates: 3')
-    expect(out).toContain('Materialized work items: 0')
-    expect(out).toContain('Remaining candidates: 3')
+    expect(out).toContain('Work Item candidates: 3')
+    expect(out).toContain('Materialized Work Items: 0')
+    expect(out).toContain('Remaining Work Item candidates: 3')
   })
 })
 

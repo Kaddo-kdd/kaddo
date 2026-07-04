@@ -472,10 +472,11 @@ export function renderExplanationHuman(exp: ProjectExplanation): string {
   lines.push(`- Delivery: ${ls('Delivery')}`)
   lines.push(`- Agents: ${exp.knowledge.hasAgents ? 'available' : 'missing'}`)
   if (exp.roadmap.present) {
-    lines.push(`- Roadmap candidates: ${exp.roadmap.candidates}`)
-    lines.push(`- Materialized work items: ${exp.roadmap.materialized}`)
-    if (exp.roadmap.remaining > 0)
-      lines.push(`- Remaining candidates: ${exp.roadmap.remaining}`)
+    lines.push(`- Roadmap initiatives: ${exp.roadmap.initiatives}`)
+    lines.push(`- Work Item candidates: ${exp.roadmap.work_item_candidates}`)
+    lines.push(`- Materialized Work Items: ${exp.roadmap.materialized_work_items}`)
+    if (exp.roadmap.remaining_work_item_candidates > 0)
+      lines.push(`- Remaining Work Item candidates: ${exp.roadmap.remaining_work_item_candidates}`)
   } else {
     lines.push(`- Work items: ${exp.workItems.total}`)
   }
@@ -678,18 +679,45 @@ export function renderExplanationHuman(exp: ProjectExplanation): string {
     lines.push('')
   }
 
-  // Roadmap Quality (VS-077): are candidates grounded in capabilities and source signals?
+  // Roadmap Status (VS-077.1): separate initiatives from Work Item candidates and materialization.
+  if (exp.roadmap.present) {
+    lines.push('## Roadmap Status')
+    lines.push(`- Initiatives: ${exp.roadmap.initiatives}`)
+    lines.push(`- Work Item candidates: ${exp.roadmap.work_item_candidates}`)
+    lines.push(`- Materialized Work Items: ${exp.roadmap.materialized_work_items}`)
+    lines.push(`- Remaining Work Item candidates: ${exp.roadmap.remaining_work_item_candidates}`)
+    lines.push('')
+  }
+
+  // Roadmap Quality (VS-077 / VS-077.1): grade initiatives and Work Item candidates separately.
   const rq = exp.roadmapQuality
-  if (rq.candidates > 0) {
+  const rqi = rq.initiatives
+  const rqw = rq.work_item_candidates
+  if (rqi.total > 0 || rqw.total > 0) {
     lines.push('## Roadmap Quality')
-    lines.push(`- Candidates: ${rq.candidates}`)
-    lines.push(`- Grounded: ${rq.grounded}/${rq.candidates}`)
-    lines.push(`- With related domain: ${rq.with_related_domain}/${rq.candidates}`)
-    lines.push(`- With related capability: ${rq.with_related_capability}/${rq.candidates}`)
-    lines.push(`- With source signals: ${rq.with_source_signals}/${rq.candidates}`)
-    if (rq.needs_refinement) {
+    if (rqi.total > 0) {
+      lines.push('Initiatives:')
+      lines.push(`- Candidates evaluated: ${rqi.total}`)
+      lines.push(`- Grounded: ${rqi.grounded}/${rqi.total}`)
+      lines.push(`- With related domain: ${rqi.with_related_domain}/${rqi.total}`)
+      lines.push(`- With related capability: ${rqi.with_related_capability}/${rqi.total}`)
+      lines.push(`- With source signals: ${rqi.with_source_signals}/${rqi.total}`)
+    }
+    if (rqw.total > 0) {
       lines.push('')
-      lines.push('Roadmap quality: needs refinement. Suggested: use roadmap-agent to add domain / capability / source signals.')
+      lines.push('Work Item Candidates:')
+      lines.push(`- Candidates: ${rqw.total}`)
+      lines.push(`- With source initiative: ${rqw.with_source_initiative}/${rqw.total}`)
+      lines.push(`- With related domain: ${rqw.with_related_domain}/${rqw.total}`)
+      lines.push(`- With related capability: ${rqw.with_related_capability}/${rqw.total}`)
+    }
+    if (rqi.needs_refinement) {
+      lines.push('')
+      lines.push('Roadmap quality: needs refinement.')
+      lines.push('Suggested: use roadmap-agent to add domain / capability / source signals.')
+    } else if (rqw.total > 0) {
+      lines.push('')
+      lines.push('Work Item candidate quality: good.')
     }
     lines.push('')
   }

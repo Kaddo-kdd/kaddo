@@ -11,7 +11,45 @@ califica ese fundamento y lo expone — sin bloquear el roadmap (VS-077).
 El fundamento es **guía de calidad, no una puerta rígida**. Aún puedes escribir candidatos simples;
 Kaddo solo te dice cuáles están fundamentados y cuáles necesitan refinamiento.
 
-## Qué hace que un candidato esté fundamentado
+## Dos niveles: iniciativas vs Work Item candidates
+
+Un roadmap tiene **dos** niveles distintos, y Kaddo los cuenta por separado (VS-077.1) para que los
+números dejen de ser ambiguos:
+
+| Nivel | Qué es | Encabezado |
+|---|---|---|
+| Iniciativas de roadmap | agrupaciones estratégicas, calificadas por fundamento | `### RM-001` |
+| Work Item candidates | ítems materializables dentro de una iniciativa | `- WI-CANDIDATE-001: …` |
+
+`kaddo explain` muestra un bloque **Roadmap Status** que los mantiene separados:
+
+```txt
+## Roadmap Status
+- Initiatives: 3
+- Work Item candidates: 7
+- Materialized Work Items: 0
+- Remaining Work Item candidates: 7
+```
+
+Y **Roadmap Quality** califica cada nivel por su cuenta:
+
+```txt
+## Roadmap Quality
+Initiatives:
+- Candidates evaluated: 3
+- Grounded: 0/3
+- With related domain: 0/3
+- With related capability: 3/3
+- With source signals: 0/3
+
+Work Item Candidates:
+- Candidates: 7
+- With source initiative: 7/7
+- With related domain: 7/7
+- With related capability: 7/7
+```
+
+## Qué hace que una iniciativa esté fundamentada
 
 Un candidato del roadmap (un encabezado `### RM-xxx` en `knowledge/delivery/roadmap.md`) está
 **fundamentado** cuando lleva los tres:
@@ -35,11 +73,12 @@ kaddo context          # lleva el mismo resumen al context pack
 kaddo understand       # sugiere fundamentar o create --from roadmap
 ```
 
-El resumen cuenta `candidates`, `grounded`, `with_related_domain`, `with_related_capability`,
-`with_source_signals`, y marca `needs_refinement` cuando al menos un candidato no está fundamentado.
-Cuando todos los candidatos están fundamentados, `understand` sugiere materializarlos con
-`kaddo create --from roadmap`; cuando algunos necesitan refinamiento recomienda el **roadmap-agent**
-para agregar el dominio / la capacidad / las señales de origen faltantes.
+El resumen `roadmapQuality` tiene dos sub-objetos — `initiatives` (con `total`, `grounded`, los conteos
+por campo y `needs_refinement`) y `work_item_candidates` (con `total`, `with_source_initiative`,
+`with_related_domain`, `with_related_capability`). Cuando todas las iniciativas están fundamentadas,
+`understand` sugiere materializar candidatos con `kaddo create --from roadmap`; cuando algunas necesitan
+refinamiento recomienda el **roadmap-agent**. Cuando los Work Item candidates tienen buena metadata,
+`explain` imprime `Work Item candidate quality: good.`
 
 Esto es determinista y de solo lectura: la CLI nunca inventa dominios ni capacidades, nunca llama a un
 LLM y nunca ejecuta git.
@@ -47,28 +86,51 @@ LLM y nunca ejecuta git.
 ## Sobre MCP
 
 Los agentes pueden consultar el fundamento directamente vía el recurso de solo lectura
-`kaddo://roadmap-quality`, que devuelve el mismo objeto que el bloque `## Roadmap Quality`
-(`candidates`, `grounded`, los conteos por campo, `needs_refinement` e `items`). La CLI y MCP comparten
-la misma fuente `buildRoadmapQuality(dir)`, así que el recurso es determinista y nunca escribe nada.
+`kaddo://roadmap-quality`, que devuelve el objeto de dos niveles (`initiatives` +
+`work_item_candidates`). Los candidatos materializables se exponen de solo lectura vía
+`kaddo://work-item-candidates`. La CLI y MCP comparten las mismas fuentes `buildRoadmapQuality(dir)` y
+`parseRoadmapCandidates`, así que ambos recursos son deterministas y nunca escriben nada.
 
 ## Metadata que se lleva a los Work Items
 
-Cuando materializas un candidato fundamentado con `kaddo create --from roadmap`, el front matter del
-nuevo Work Item preserva la trazabilidad:
+Cuando materializas un candidato con `kaddo create --from roadmap`, el front matter del nuevo Work Item
+preserva **y normaliza** la trazabilidad (VS-078):
 
 ```yaml
-source_roadmap_candidate: RM-001
+source: roadmap
+source_roadmap_initiative: RM-001
+source_work_item_candidate: WI-CANDIDATE-001
+source_initiative_title: "Estabilización y Despliegue de Suscripciones PRO"
 related_domain: "Billing & Subscriptions"
-related_capability: "Payment Webhook Processing"
-related_capabilities: ["Payment Webhook Processing", "Trial Management"]
-knowledge_level: K2
+domains:
+  - "Billing & Subscriptions"
+related_capabilities:
+  - "Payment Webhook Processing"
+  - "Trial Management"
 expected_value: "Reduces payment activation risk"
-risks: "Mercado Pago webhook failures"
-dependencies: ["ADR for internal endpoint protection"]
+risks:
+  - "Medium"
+dependencies:
+  - "Edge Function deploy"
+source_signals:
+  - "Capability Gap: webhook hardening"
+decision_candidates:
+  - "INTERNAL_CRON_SECRET"
+related_decisions: []
 ```
 
-Así la línea **capacidad → candidato del roadmap → Work Item** queda rastreable de punta a punta. Los
-campos solo se escriben cuando el candidato los llevaba — Kaddo nunca inventa valores.
+**Reglas de normalización:** `domains` se rellena desde `related_domain` (nunca queda vacío cuando
+existe un related domain), y las cadenas de capacidades separadas por comas se dividen en una lista real
+— una capacidad por ítem, nunca un solo string `"a, b, c"`. El cuerpo del Work Item obtiene un bloque
+**Source** mejorado (iniciativa + Work Item candidate + dominio/capacidades) y una sección **Context
+From Roadmap** con expected value, risks, dependencies y source signals. Cuando el roadmap no tiene
+source signals dice `**Source signals:** _Not provided in roadmap._` en vez de inventarlas. Si el
+candidato depende de un decision candidate técnico sin ADR, el cuerpo lleva un warning y el front matter
+registra `decision_candidates` + `related_decisions: []`.
+
+Así la línea **capacidad → iniciativa de roadmap → Work Item candidate → Work Item** queda rastreable de
+punta a punta. Los campos solo se escriben cuando el candidato los llevaba — Kaddo nunca inventa
+valores.
 
 ## El roadmap-agent
 

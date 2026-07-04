@@ -183,8 +183,8 @@ describe('buildRoadmapWorkItem', () => {
       candidate,
     })
     expect(content).toContain('## Source')
-    expect(content).toContain('- Candidate: WI-CANDIDATE-001')
-    expect(content).toContain('Initiative: RM-001 — Establish capability baseline')
+    expect(content).toContain('- Work Item Candidate: WI-CANDIDATE-001')
+    expect(content).toContain('Roadmap Initiative: RM-001 — Establish capability baseline')
     expect(content).toContain('## Expected Value')
     expect(content).toContain('reduce ambiguity before further development')
     expect(content).toContain('## Context From Roadmap')
@@ -307,12 +307,20 @@ describe('roadmapStats', () => {
     const md = '- WI-001 a\n- WI-002 b\n- WI-003 c\n'
     expect(roadmapStats(md, 1)).toEqual({
       present: true,
+      initiatives: 0,
+      work_item_candidates: 3,
+      materialized_work_items: 1,
+      remaining_work_item_candidates: 2,
       candidates: 3,
       materialized: 1,
       remaining: 2,
     })
     expect(roadmapStats(null, 0)).toEqual({
       present: false,
+      initiatives: 0,
+      work_item_candidates: 0,
+      materialized_work_items: 0,
+      remaining_work_item_candidates: 0,
       candidates: 0,
       materialized: 0,
       remaining: 0,

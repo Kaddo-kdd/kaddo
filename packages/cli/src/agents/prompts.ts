@@ -810,13 +810,22 @@ that it should be materialized first (\`kaddo adr\` + the adr-writing skill) and
 without surfacing it. -->
 \`\`\`
 
-### Preserve roadmap metadata (VS-077)
+### Preserve roadmap metadata (VS-077 / VS-078)
 
-When a Work Item comes from \`kaddo create --from roadmap\`, the front matter already carries
-\`source_roadmap_candidate\`, \`related_domain\`, \`related_capability\` (+ \`related_capabilities\`),
-\`knowledge_level\`, \`expected_value\`, \`risks\` and \`dependencies\`. **Keep and refine** this metadata —
-do not drop the trace back to the capability domain and source signals. Add \`related_decisions\` /
-\`decision_candidates\` when the work depends on a technical decision.
+When a Work Item comes from \`kaddo create --from roadmap\`, the front matter already carries the trace
+back to the roadmap. **Keep and refine — never delete** these fields:
+
+- \`source_roadmap_initiative\` and \`source_work_item_candidate\` (the RM-xxx initiative and the
+  WI-CANDIDATE-xxx it was materialized from)
+- \`related_domain\` and \`domains\` (keep them consistent — \`domains\` must not be empty when
+  \`related_domain\` exists)
+- \`related_capabilities\` (a real list, one capability per item — never a single comma-joined string)
+- \`expected_value\`, \`risks\`, \`dependencies\`
+- \`source_signals\` (do **not** invent them — if absent, leave them absent)
+- \`decision_candidates\` and \`related_decisions\` (when the work depends on a technical decision)
+
+Do not drop the trace back to the capability domain and source signals. If a Work Item depends on a
+tech decision candidate with no ADR yet, keep the warning surfaced in the body.
 
 ## Where to Save the Result
 

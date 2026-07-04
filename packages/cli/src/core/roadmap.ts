@@ -25,6 +25,10 @@ export type RoadmapCandidateWorkItem = {
   risk?: string
   dependencies?: string[]
   openQuestions?: string[]
+  /** Traceable reasons behind the initiative (capability gap, open question, decision, goal). VS-078. */
+  sourceSignals?: string[]
+  /** Tech decision candidates the initiative depends on (no ADR yet). VS-078. */
+  decisionCandidates?: string[]
   /** Raw markdown excerpt for the candidate, kept as fallback context. */
   rawMarkdown: string
 }
@@ -72,14 +76,25 @@ type BlockMeta = {
   risk?: string
   dependencies: string[]
   openQuestions: string[]
+  sourceSignals: string[]
 }
 
 /** Parse one initiative block into its metadata and candidate work items. */
 function parseBlock(block: InitiativeBlock): RoadmapCandidateWorkItem[] {
-  const meta: BlockMeta = { relatedCapabilities: [], dependencies: [], openQuestions: [] }
+  const meta: BlockMeta = {
+    relatedCapabilities: [],
+    dependencies: [],
+    openQuestions: [],
+    sourceSignals: [],
+  }
   const rawCandidates: RoadmapCandidateWorkItem[] = []
 
-  let listField: 'relatedCapabilities' | 'dependencies' | 'openQuestions' | null = null
+  let listField:
+    | 'relatedCapabilities'
+    | 'dependencies'
+    | 'openQuestions'
+    | 'sourceSignals'
+    | null = null
   let inCandidateSection = false
   let current: RoadmapCandidateWorkItem | null = null
 
@@ -134,7 +149,12 @@ function parseBlock(block: InitiativeBlock): RoadmapCandidateWorkItem[] {
         meta.impact = value || undefined
       } else if (key === 'risk') {
         meta.risk = value || undefined
-      } else if (key === 'project area / domain' || key === 'domain' || key === 'project area') {
+      } else if (
+        key === 'project area / domain' ||
+        key === 'domain' ||
+        key === 'project area' ||
+        key === 'related domain'
+      ) {
         meta.domain = value || undefined
       } else if (key === 'related capabilities') {
         listField = 'relatedCapabilities'
@@ -145,6 +165,9 @@ function parseBlock(block: InitiativeBlock): RoadmapCandidateWorkItem[] {
       } else if (key === 'open questions') {
         listField = 'openQuestions'
         if (value) meta.openQuestions.push(value)
+      } else if (key === 'source signals' || key === 'source signal') {
+        listField = 'sourceSignals'
+        if (value) meta.sourceSignals.push(value)
       }
       continue
     }
@@ -165,6 +188,8 @@ function parseBlock(block: InitiativeBlock): RoadmapCandidateWorkItem[] {
   }
   flush()
 
+  const decisionCandidates = decisionCandidatesFromSignals(meta.sourceSignals)
+
   // Attach the fully-parsed initiative metadata to every candidate in the block.
   return rawCandidates.map((c) => ({
     ...c,
@@ -176,7 +201,27 @@ function parseBlock(block: InitiativeBlock): RoadmapCandidateWorkItem[] {
     risk: meta.risk,
     dependencies: meta.dependencies.length ? [...meta.dependencies] : undefined,
     openQuestions: meta.openQuestions.length ? [...meta.openQuestions] : undefined,
+    sourceSignals: meta.sourceSignals.length ? [...meta.sourceSignals] : undefined,
+    decisionCandidates: decisionCandidates.length ? decisionCandidates : undefined,
   }))
+}
+
+/**
+ * Derive tech decision candidates from source-signal lines like
+ * `Tech Decision Candidate: INTERNAL_CRON_SECRET`. Extracts an ALL_CAPS identifier when present,
+ * else the trimmed remainder. Never invents — only reads what the roadmap already states.
+ */
+function decisionCandidatesFromSignals(signals: string[]): string[] {
+  const out: string[] = []
+  for (const sig of signals) {
+    const m = sig.match(/decision candidate\s*:?\s*(.+)$/i)
+    if (!m) continue
+    const rest = m[1].trim()
+    const token = rest.match(/\b[A-Z][A-Z0-9_]{2,}\b/)
+    const value = token ? token[0] : rest.replace(/[.。]+$/, '').trim()
+    if (value && !out.includes(value)) out.push(value)
+  }
+  return out
 }
 
 // ---------------------------------------------------------------------------
@@ -293,14 +338,71 @@ export function parseRoadmapCandidates(markdown: string): RoadmapCandidateWorkIt
 
 export type RoadmapStats = {
   present: boolean
+  /** Number of `RM-xxx` roadmap initiatives. VS-077.1. */
+  initiatives: number
+  /** Number of Work Item candidates (WI-CANDIDATE-xxx) inside the roadmap. VS-077.1. */
+  work_item_candidates: number
+  materialized_work_items: number
+  remaining_work_item_candidates: number
+  // Back-compat aliases (candidates == Work Item candidates). Prefer the explicit fields above.
   candidates: number
   materialized: number
   remaining: number
 }
 
-/** Roadmap candidate vs materialized stats for explain/context. */
+/** Count `RM-xxx` roadmap initiatives (distinct from Work Item candidates). VS-077.1. */
+export function countRoadmapInitiatives(markdown: string | null): number {
+  if (markdown == null) return 0
+  let n = 0
+  for (const line of markdown.split(/\r?\n/)) if (INITIATIVE_RE.test(line)) n++
+  return n
+}
+
+/** Roadmap initiative + Work Item candidate vs materialized stats for explain/context. */
 export function roadmapStats(markdown: string | null, materialized: number): RoadmapStats {
-  if (markdown == null) return { present: false, candidates: 0, materialized, remaining: 0 }
+  if (markdown == null)
+    return {
+      present: false,
+      initiatives: 0,
+      work_item_candidates: 0,
+      materialized_work_items: materialized,
+      remaining_work_item_candidates: 0,
+      candidates: 0,
+      materialized,
+      remaining: 0,
+    }
   const candidates = parseRoadmapCandidates(markdown).length
-  return { present: true, candidates, materialized, remaining: Math.max(0, candidates - materialized) }
+  const remaining = Math.max(0, candidates - materialized)
+  return {
+    present: true,
+    initiatives: countRoadmapInitiatives(markdown),
+    work_item_candidates: candidates,
+    materialized_work_items: materialized,
+    remaining_work_item_candidates: remaining,
+    candidates,
+    materialized,
+    remaining,
+  }
+}
+
+/**
+ * Normalize a list of capability strings: split comma-separated entries into individual
+ * capabilities, trim, strip trailing punctuation, and dedupe. Deterministic; never invents. VS-078.
+ */
+export function normalizeCapabilityList(raw: string[] | undefined): string[] {
+  if (!raw || raw.length === 0) return []
+  const out: string[] = []
+  for (const entry of raw) {
+    for (const part of entry.split(/[,;]/)) {
+      const cap = part.replace(/[.。]+\s*$/, '').trim()
+      if (cap && !out.includes(cap)) out.push(cap)
+    }
+  }
+  return out
+}
+
+/** Derive `domains` from a `related_domain` string (single-element list). VS-078. */
+export function domainsFromRelated(domain: string | undefined): string[] {
+  const d = domain?.trim()
+  return d ? [d] : []
 }

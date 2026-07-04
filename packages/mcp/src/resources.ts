@@ -12,6 +12,7 @@ import { buildOpenQuestionsReport, roadmapReadinessSummary } from '../../cli/src
 import { buildTechDecisions } from '../../cli/src/core/decisions.js'
 import { installedAssetsSummary } from '../../cli/src/core/assets.js'
 import { buildRoadmapQuality } from '../../cli/src/core/roadmap-quality.js'
+import { parseRoadmapCandidates } from '../../cli/src/core/roadmap.js'
 import { listWorkItems } from './workitems.js'
 import { hasKnowledge, readText } from './project.js'
 
@@ -283,13 +284,27 @@ export const RESOURCES: ResourceDescriptor[] = [
   {
     uri: 'kaddo://roadmap-quality',
     name: 'Kaddo roadmap quality',
-    description: 'How well roadmap candidates are grounded in capability domains, related capabilities and source signals (VS-077). Read-only.',
+    description: 'How well roadmap initiatives and Work Item candidates are grounded in capability domains, related capabilities and source signals (VS-077 / VS-077.1). Two levels: initiatives + work_item_candidates. Read-only.',
     mimeType: 'application/json',
     read: (root) => {
       if (!hasKnowledge(root)) {
         return text('kaddo://roadmap-quality', 'Knowledge repository not found. Run `kaddo bootstrap` first.', 'text/plain')
       }
       return [{ uri: 'kaddo://roadmap-quality', text: JSON.stringify(buildRoadmapQuality(root), null, 2), mimeType: 'application/json' }]
+    },
+  },
+  {
+    uri: 'kaddo://work-item-candidates',
+    name: 'Kaddo work item candidates',
+    description: 'Materializable Work Item candidates (WI-CANDIDATE-xxx) parsed from the roadmap, with their source initiative and inherited metadata (VS-078). Read-only.',
+    mimeType: 'application/json',
+    read: (root) => {
+      if (!hasKnowledge(root)) {
+        return text('kaddo://work-item-candidates', 'Knowledge repository not found. Run `kaddo bootstrap` first.', 'text/plain')
+      }
+      const md = readText(root, 'knowledge/delivery/roadmap.md')
+      const candidates = md ? parseRoadmapCandidates(md) : []
+      return [{ uri: 'kaddo://work-item-candidates', text: JSON.stringify({ candidates }, null, 2), mimeType: 'application/json' }]
     },
   },
 ]

@@ -87,38 +87,55 @@ export function renderContextPack(pack: ContextPack): string {
   parts.push('## Current Knowledge\n')
   parts.push((knowledge.summary || 'No project knowledge summary found yet.') + '\n')
 
-  // 4. Roadmap
-  parts.push('## Roadmap\n')
+  // 4. Roadmap Status (VS-077.1) — initiatives vs Work Item candidates vs materialization.
+  parts.push('## Roadmap Status\n')
   if (pack.roadmap.present) {
     parts.push(
       [
-        `- Roadmap candidates: ${pack.roadmap.candidates}`,
-        `- Materialized work items: ${pack.roadmap.materialized}`,
-        `- Remaining candidates: ${pack.roadmap.remaining}`,
+        `- Initiatives: ${pack.roadmap.initiatives}`,
+        `- Work Item candidates: ${pack.roadmap.work_item_candidates}`,
+        `- Materialized Work Items: ${pack.roadmap.materialized_work_items}`,
+        `- Remaining Work Item candidates: ${pack.roadmap.remaining_work_item_candidates}`,
       ].join('\n') + '\n'
     )
-    if (pack.roadmap.remaining > 0) {
+    if (pack.roadmap.remaining_work_item_candidates > 0) {
       parts.push(
-        'Candidates are not yet Work Items. Materialize them with `kaddo create --from roadmap`.\n'
+        'Work Item candidates are not yet Work Items. Materialize them with `kaddo create --from roadmap`.\n'
       )
     }
   }
   parts.push((knowledge.roadmapSummary || 'No roadmap baseline found.') + '\n')
 
-  // 4b. Roadmap Quality (VS-077) — how grounded are the candidates in capabilities/signals?
+  // 4b. Roadmap Quality (VS-077 / VS-077.1) — grade initiatives and Work Item candidates separately.
   const rq = pack.roadmapQuality
-  if (rq.candidates > 0) {
+  const rqi = rq.initiatives
+  const rqw = rq.work_item_candidates
+  if (rqi.total > 0 || rqw.total > 0) {
     parts.push('## Roadmap Quality\n')
-    parts.push(
-      [
-        `- Candidates: ${rq.candidates}`,
-        `- Grounded: ${rq.grounded}/${rq.candidates}`,
-        `- With related domain: ${rq.with_related_domain}/${rq.candidates}`,
-        `- With related capability: ${rq.with_related_capability}/${rq.candidates}`,
-        `- With source signals: ${rq.with_source_signals}/${rq.candidates}`,
-      ].join('\n') + '\n'
-    )
-    if (rq.needs_refinement) {
+    if (rqi.total > 0) {
+      parts.push(
+        [
+          'Initiatives:',
+          `- Candidates evaluated: ${rqi.total}`,
+          `- Grounded: ${rqi.grounded}/${rqi.total}`,
+          `- With related domain: ${rqi.with_related_domain}/${rqi.total}`,
+          `- With related capability: ${rqi.with_related_capability}/${rqi.total}`,
+          `- With source signals: ${rqi.with_source_signals}/${rqi.total}`,
+        ].join('\n') + '\n'
+      )
+    }
+    if (rqw.total > 0) {
+      parts.push(
+        [
+          'Work Item Candidates:',
+          `- Candidates: ${rqw.total}`,
+          `- With source initiative: ${rqw.with_source_initiative}/${rqw.total}`,
+          `- With related domain: ${rqw.with_related_domain}/${rqw.total}`,
+          `- With related capability: ${rqw.with_related_capability}/${rqw.total}`,
+        ].join('\n') + '\n'
+      )
+    }
+    if (rqi.needs_refinement) {
       parts.push(
         'Roadmap quality: needs refinement. Use the roadmap-agent to add domain / capability / source signals.\n'
       )

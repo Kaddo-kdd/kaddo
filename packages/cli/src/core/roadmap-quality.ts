@@ -6,6 +6,7 @@
 // LLM, no writes. Tolerant of both `- Key:` bullet fields and `**Key:**` bold fields.
 
 import { exists, readFile, join } from '../utils/fs.js'
+import { parseRoadmapCandidates } from './roadmap.js'
 
 const ROADMAP_PATH = 'knowledge/delivery/roadmap.md'
 // A candidate initiative heading, e.g. `### RM-001 — Stabilize PRO Subscription Launch`.
@@ -20,14 +21,32 @@ export type RoadmapCandidateQuality = {
   grounded: boolean
 }
 
-export type RoadmapQuality = {
-  candidates: number
+/** Grounding quality of roadmap initiatives (RM-xxx). VS-077 / VS-077.1. */
+export type RoadmapInitiativesQuality = {
+  total: number
   grounded: number
   with_related_domain: number
   with_related_capability: number
   with_source_signals: number
   needs_refinement: boolean
   items: RoadmapCandidateQuality[]
+}
+
+/** Metadata quality of Work Item candidates (WI-CANDIDATE-xxx) inside the roadmap. VS-077.1. */
+export type WorkItemCandidatesQuality = {
+  total: number
+  with_source_initiative: number
+  with_related_domain: number
+  with_related_capability: number
+}
+
+/**
+ * Two-level roadmap quality (VS-077.1): initiatives and Work Item candidates are graded separately,
+ * because they are two distinct things the old flat `candidates` shape conflated.
+ */
+export type RoadmapQuality = {
+  initiatives: RoadmapInitiativesQuality
+  work_item_candidates: WorkItemCandidatesQuality
 }
 
 /** A field is "present" when its label appears with an inline value or with sub-bullet content. */
@@ -80,7 +99,7 @@ export function parseRoadmapCandidateQuality(md: string): RoadmapCandidateQualit
   return items
 }
 
-/** Build the roadmap quality snapshot for a project (empty when no roadmap or no candidates). */
+/** Build the two-level roadmap quality snapshot for a project. Empty when no roadmap. */
 export function buildRoadmapQuality(dir: string): RoadmapQuality {
   let md = ''
   const p = join(dir, ROADMAP_PATH)
@@ -91,17 +110,33 @@ export function buildRoadmapQuality(dir: string): RoadmapQuality {
       md = ''
     }
   }
+
+  // Initiative-level grounding (RM-xxx).
   const items = parseRoadmapCandidateQuality(md)
   const count = (pred: (i: RoadmapCandidateQuality) => boolean) => items.filter(pred).length
   const grounded = count((i) => i.grounded)
-  return {
-    candidates: items.length,
+  const initiatives: RoadmapInitiativesQuality = {
+    total: items.length,
     grounded,
     with_related_domain: count((i) => i.hasRelatedDomain),
     with_related_capability: count((i) => i.hasRelatedCapability),
     with_source_signals: count((i) => i.hasSourceSignals),
-    // Only "needs refinement" when there are candidates and at least one isn't grounded.
+    // Only "needs refinement" when there are initiatives and at least one isn't grounded.
     needs_refinement: items.length > 0 && grounded < items.length,
     items,
   }
+
+  // Work Item candidate metadata quality (WI-CANDIDATE-xxx) — do they carry a source initiative,
+  // a related domain and related capabilities inherited from the roadmap?
+  const wiCandidates = md ? parseRoadmapCandidates(md) : []
+  const wcount = (pred: (c: (typeof wiCandidates)[number]) => boolean) =>
+    wiCandidates.filter(pred).length
+  const work_item_candidates: WorkItemCandidatesQuality = {
+    total: wiCandidates.length,
+    with_source_initiative: wcount((c) => Boolean(c.initiative?.id || c.initiative?.title)),
+    with_related_domain: wcount((c) => Boolean(c.domain)),
+    with_related_capability: wcount((c) => Boolean(c.relatedCapabilities?.length)),
+  }
+
+  return { initiatives, work_item_candidates }
 }

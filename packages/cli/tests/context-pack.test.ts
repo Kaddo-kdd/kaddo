@@ -82,9 +82,9 @@ describe('context-pack — roadmap candidates (VS-039)', () => {
     expect(pack.roadmap.materialized).toBe(1)
     expect(pack.roadmap.remaining).toBe(2)
     const md = renderContextPack(pack)
-    expect(md).toContain('Roadmap candidates: 3')
-    expect(md).toContain('Materialized work items: 1')
-    expect(md).toContain('Remaining candidates: 2')
+    expect(md).toContain('Work Item candidates: 3')
+    expect(md).toContain('Materialized Work Items: 1')
+    expect(md).toContain('Remaining Work Item candidates: 2')
   })
 
   it('reports roadmap not present when no roadmap file exists', () => {
