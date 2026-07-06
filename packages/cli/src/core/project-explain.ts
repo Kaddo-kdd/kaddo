@@ -31,6 +31,7 @@ import {
   type LifecycleState,
 } from './lifecycle.js'
 import { buildProjectRoute, renderRouteMarkdown, type ProjectRoute } from './project-route.js'
+import { type ScanSignals, renderSignalsCompact, signalCount } from './scan-signals.js'
 
 const ARCH_DIR = 'knowledge'
 
@@ -119,6 +120,8 @@ export type ProjectExplanation = {
   roadmapQuality: RoadmapQuality
   /** Project route progress map (VS-080). */
   projectRoute: ProjectRoute
+  /** Scan signals: auth, payments, webhooks, etc. (VS-081). */
+  scanSignals: ScanSignals | null
 }
 
 function normalizeTitle(t: string): string {
@@ -194,6 +197,17 @@ function loadScan(dir: string): ScanDetected | null {
       contractFiles: toStringArray(detected.contractFiles),
       infrastructureFiles: toStringArray(detected.infrastructureFiles),
     }
+  } catch {
+    return null
+  }
+}
+
+function loadScanSignals(dir: string): ScanSignals | null {
+  const scanPath = join(dir, '.kaddo', 'scan.json')
+  if (!exists(scanPath)) return null
+  try {
+    const parsed = JSON.parse(readFile(scanPath)) as { signals?: ScanSignals }
+    return parsed.signals ?? null
   } catch {
     return null
   }
@@ -413,6 +427,7 @@ export function buildProjectExplanation(dir: string): ProjectExplanation {
     installedAssets: installedAssetsSummary(dir),
     roadmapQuality: buildRoadmapQuality(dir),
     projectRoute: buildProjectRoute(dir),
+    scanSignals: loadScanSignals(dir),
   }
 }
 
@@ -464,6 +479,12 @@ export function renderExplanationHuman(exp: ProjectExplanation): string {
     if (exp.stack.infrastructureFiles.length > 0)
       lines.push(`- Infrastructure: ${exp.stack.infrastructureFiles.join(', ')}`)
     lines.push('')
+  }
+
+  // Scan Signals (VS-081)
+  if (exp.scanSignals && signalCount(exp.scanSignals) > 0) {
+    lines.push('## Scan Signals')
+    lines.push(renderSignalsCompact(exp.scanSignals))
   }
 
   const ls = (name: string) => exp.layers.find((l) => l.layer === name)?.status ?? 'Missing'

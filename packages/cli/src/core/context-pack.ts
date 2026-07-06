@@ -18,6 +18,7 @@ import { loadGraphSummary, type GraphSummary } from './graph.js'
 import { loadGraphHints, type GraphHintsSummary } from './graph-hints.js'
 import { discoverInstalledSkills } from '../services/installed-skills.js'
 import { buildProjectRoute, type ProjectRoute } from './project-route.js'
+import { type ScanSignals } from './scan-signals.js'
 
 export const CONTEXT_PACK_VERSION = '1'
 
@@ -102,6 +103,8 @@ export type ContextPack = {
   graphHints: GraphHintsSummary | null
   /** Installed reusable skill ids (VS-059) — summary only, content lives in knowledge/skills/. */
   skills: string[]
+  /** Scan signals: auth, payments, webhooks, etc. (VS-081). */
+  scanSignals: ScanSignals | null
   /** Project route progress map (VS-080). */
   projectRoute: ProjectRoute
   mappedModules: MappedModuleWithCoverage[]
@@ -126,6 +129,7 @@ type ScanJson = {
     contractFiles?: string[]
     infrastructureFiles?: string[]
   }
+  signals?: ScanSignals
 }
 
 function readScanJson(dir: string): ScanJson | null {
@@ -429,6 +433,7 @@ export function buildContextPack(
     graph: loadGraphSummary(dir),
     graphHints: loadGraphHints(dir),
     skills: discoverInstalledSkills(dir).map((s) => s.id),
+    scanSignals: scanJson?.signals ?? null,
     projectRoute: buildProjectRoute(dir),
     mappedModules,
     missing,

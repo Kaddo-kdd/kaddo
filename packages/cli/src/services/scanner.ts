@@ -1,5 +1,6 @@
 import path from 'path'
 import { exists, readFile, readDir, isDir, isFile, join } from '../utils/fs.js'
+import { buildScanSignals, type ScanSignals } from '../core/scan-signals.js'
 
 export type Language = 'typescript' | 'javascript' | 'python' | 'go' | 'rust' | 'java' | 'unknown'
 export type Framework =
@@ -30,6 +31,7 @@ export type ScanResult = {
   testDirs: string[]
   hasGit: boolean
   suggestedDomains: string[]
+  signals: ScanSignals
 }
 
 function detectLanguage(dir: string): Language {
@@ -202,6 +204,7 @@ export function scan(dir: string): ScanResult {
   const testDirs = detectTestDirs(dir)
   const hasGit = isDir(join(dir, '.git'))
   const suggestedDomains = suggestDomains(dir, codeDirs)
+  const signals = buildScanSignals(dir, codeDirs, migrationDirs, testDirs, infraFiles)
 
   return {
     language,
@@ -214,5 +217,6 @@ export function scan(dir: string): ScanResult {
     testDirs,
     hasGit,
     suggestedDomains,
+    signals,
   }
 }

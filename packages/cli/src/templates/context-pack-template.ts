@@ -2,6 +2,7 @@ import type { ContextPack } from '../core/context-pack.js'
 import { presentArtifacts } from '../services/mapped-modules.js'
 import { renderLayersMarkdown } from '../core/layers.js'
 import { renderRouteCompact } from '../core/project-route.js'
+import { renderSignalsCompact, signalCount } from '../core/scan-signals.js'
 
 /**
  * Render an LLM-friendly markdown context pack.
@@ -113,6 +114,12 @@ export function renderContextPack(pack: ContextPack): string {
     parts.push(lines.join('\n') + '\n')
   } else {
     parts.push('Scan baseline missing. Run `kaddo scan` for better context.\n')
+  }
+
+  // 2b. Scan Signals (VS-081)
+  if (pack.scanSignals && signalCount(pack.scanSignals) > 0) {
+    parts.push('## Scan Signals\n')
+    parts.push(renderSignalsCompact(pack.scanSignals))
   }
 
   // 3. Current Knowledge

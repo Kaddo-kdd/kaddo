@@ -1,4 +1,5 @@
 import type { ScanResult } from '../services/scanner.js'
+import type { ScanSignals } from './scan-signals.js'
 import { exists, readFile, join } from '../utils/fs.js'
 import { parse as parseYaml } from 'yaml'
 
@@ -24,6 +25,7 @@ export type ScanBaseline = {
     infrastructureFiles: string[]
     testDirectories: string[]
   }
+  signals: ScanSignals
   suggestions: {
     possibleDomains: string[]
     openQuestions: string[]
@@ -108,6 +110,7 @@ export function buildBaseline(
       infrastructureFiles: result.infraFiles,
       testDirectories: result.testDirs,
     },
+    signals: result.signals,
     suggestions: {
       possibleDomains: result.suggestedDomains.map((d) => d.replace(/^#\s*/, '').trim()).filter(Boolean),
       openQuestions: buildOpenQuestions(result, context),

@@ -39,6 +39,40 @@ This is a pre-AI monorepo.
 Next: Use this baseline to create a context pack and understand the existing system with LLM agents.
 ```
 
+## Scan Signals (v3.48.0)
+
+Starting with v3.48.0, `kaddo scan` detects **actionable signals** across 14 categories:
+
+| Category | Examples |
+|---|---|
+| `auth` | NextAuth, Supabase Auth, Clerk, Passport |
+| `payments` | Stripe, Mercado Pago, PayPal, Wompi |
+| `webhooks` | Webhook route directories |
+| `storage` | AWS S3, Cloudinary, Uploadthing |
+| `background_jobs` | BullMQ, Supabase Edge Functions, cron dirs |
+| `email` | Resend, SendGrid, Nodemailer |
+| `database` | Prisma, Drizzle, Supabase, Mongoose |
+| `migrations` | Migration directories detected by scan |
+| `api_routes` | Next.js API routes, Express routers |
+| `tests` | Vitest, Jest, test directories (warns if missing) |
+| `security` | Helmet, CORS, RLS policies |
+| `infrastructure` | Docker, Amplify, Vercel, GitHub Actions |
+| `external_integrations` | Sentry, Redis, Algolia, Firebase |
+| `environment` | Environment variable names from `.env.example` |
+
+Each signal includes a **confidence** level (`high` / `medium` / `low`) and **evidence** (dependency names, file paths). Some signals include a `recommended_review` suggestion.
+
+Signals appear in:
+
+- **Console output** after each scan
+- **`knowledge/inventory.md`** under "Detected Signals"
+- **`.kaddo/scan.json`** in the `signals` field
+- **Context pack** and **explain** output
+- **MCP** via `kaddo://scan-signals`
+
+> **Security**: environment detection reads variable **names only** — values are never
+> stored, logged, or exposed.
+
 Example `knowledge/inventory.md`:
 
 ```markdown

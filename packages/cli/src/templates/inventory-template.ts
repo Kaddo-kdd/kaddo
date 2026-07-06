@@ -1,4 +1,5 @@
 import type { ScanBaseline } from '../core/scan-baseline.js'
+import { signalCount, renderSignalsInventory } from '../core/scan-signals.js'
 
 function section(title: string, items: string[], emptyNote = '_(none detected)_'): string {
   const body = items.length > 0 ? items.map((i) => `- ${i}`).join('\n') : emptyNote
@@ -40,6 +41,12 @@ export function renderInventory(baseline: ScanBaseline): string {
   parts.push(section('Contracts', detected.contractFiles))
   parts.push(section('Infrastructure', detected.infrastructureFiles))
   parts.push(section('Tests', detected.testDirectories.map((d) => `${d}/`)))
+  // Detected Signals (VS-081)
+  if (signalCount(baseline.signals) > 0) {
+    parts.push('## Detected Signals\n')
+    parts.push(renderSignalsInventory(baseline.signals))
+  }
+
   parts.push(section('Possible Domains', suggestions.possibleDomains))
   parts.push(section('Open Questions', suggestions.openQuestions))
 

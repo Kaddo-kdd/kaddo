@@ -6,6 +6,7 @@ import { buildBaseline, serializeBaseline, readProjectContext } from '../core/sc
 import { renderInventory } from '../templates/inventory-template.js'
 import { loadConfig, describeProject, nextStepsForState, ConfigError } from '../core/config.js'
 import { printCommandFooter } from '../core/command-help.js'
+import { signalCount, renderSignalsConsole } from '../core/scan-signals.js'
 
 function formatList(items: string[]): string {
   return items.length > 0 ? items.map((i) => `  - ${i}`).join('\n') : '  (none detected)'
@@ -53,7 +54,16 @@ function printResult(result: ScanResult): void {
     console.log('You can add them manually in .kaddo/config.yml under project.domains.')
   }
 
-  console.log('')
+  // Signals (VS-081)
+  const signalLines = renderSignalsConsole(result.signals)
+  if (signalLines.length > 0) {
+    console.log('Signals:')
+    for (const line of signalLines) console.log(line)
+    console.log('')
+  } else {
+    console.log('Signals: none detected')
+    console.log('')
+  }
 }
 
 function updateConfig(dir: string, result: ScanResult): void {

@@ -7,6 +7,7 @@
 import { exists, join } from '../utils/fs.js'
 import { loadConfig, type ProjectState } from './config.js'
 import { analyzeKnowledgeArtifact, type ArtifactQuality } from './artifact-quality.js'
+import { hasWarnings as hasScanSignalWarnings } from './scan-signals.js'
 import { discoverWorkItems } from '../services/knowledge-artifacts.js'
 import { buildTechDecisions } from './decisions.js'
 import { roadmapStats } from './roadmap.js'
@@ -66,6 +67,7 @@ type RouteContext = {
   totalAdrs: number
   adaptersInstalled: number
   hasGuardHistory: boolean
+  hasScanWarnings: boolean
   nextStepId: string
 }
 
@@ -88,11 +90,11 @@ const enableKaddo: StepDef = {
 const scanRepository: StepDef = {
   id: 'scan-repository',
   label: 'Scan repository',
-  evaluate: (ctx) => ({
-    status: ctx.hasScan ? 'done' : (ctx.hasConfig ? 'pending' : 'pending'),
-    evidence: ctx.hasScan ? ['.kaddo/scan.json'] : undefined,
-    command: ctx.hasScan ? undefined : 'kaddo scan',
-  }),
+  evaluate: (ctx) => {
+    if (!ctx.hasScan) return { status: 'pending', command: 'kaddo scan' }
+    if (ctx.hasScanWarnings) return { status: 'warning', evidence: ['.kaddo/scan.json'], reason: 'Scan has warnings (e.g. no test directory detected).', command: 'kaddo scan' }
+    return { status: 'done', evidence: ['.kaddo/scan.json'] }
+  },
 }
 
 const defineBusiness: StepDef = {
@@ -401,7 +403,17 @@ function buildRouteContext(dir: string): RouteContext {
     totalAdrs: td.adrs,
     adaptersInstalled: adapters.length,
     hasGuardHistory: exists(join(dir, '.kaddo', 'history', 'guard-runs.jsonl')),
+    hasScanWarnings: hasScan ? loadScanWarnings(dir) : false,
     nextStepId: mapNextStepId(nextStep.id),
+  }
+}
+
+function loadScanWarnings(dir: string): boolean {
+  try {
+    const parsed = JSON.parse(readFile(join(dir, '.kaddo', 'scan.json')))
+    return parsed.signals ? hasScanSignalWarnings(parsed.signals) : false
+  } catch {
+    return false
   }
 }
 

@@ -335,4 +335,22 @@ export const RESOURCES: ResourceDescriptor[] = [
       return [{ uri: 'kaddo://project-route', text: JSON.stringify(buildProjectRoute(root), null, 2), mimeType: 'application/json' }]
     },
   },
+  {
+    uri: 'kaddo://scan-signals',
+    name: 'Kaddo scan signals',
+    description: 'Actionable signals detected by `kaddo scan`: auth, payments, webhooks, storage, background jobs, email, database, migrations, API routes, tests, security, infrastructure, integrations, environment (VS-081). Read-only.',
+    mimeType: 'application/json',
+    read: (root) => {
+      const body = readText(root, '.kaddo/scan.json')
+      if (body) {
+        try {
+          const parsed = JSON.parse(body)
+          if (parsed.signals) {
+            return [{ uri: 'kaddo://scan-signals', text: JSON.stringify(parsed.signals, null, 2), mimeType: 'application/json' }]
+          }
+        } catch { /* malformed */ }
+      }
+      return text('kaddo://scan-signals', 'Scan signals not found. Run `kaddo scan` first.', 'text/plain')
+    },
+  },
 ]
