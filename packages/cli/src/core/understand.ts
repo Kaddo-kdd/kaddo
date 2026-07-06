@@ -29,6 +29,8 @@ export type UnderstandWorkItem = {
   lifecycle: string
   knowledgeLevel: string
   hasOwnership: boolean
+  /** Source metadata (VS-082). */
+  source?: { type: string; id?: string }
 }
 
 export type UnderstandPlan = {

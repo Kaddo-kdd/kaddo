@@ -6,6 +6,15 @@
 import matter from 'gray-matter'
 import { listFiles, readText } from './project.js'
 
+export type WorkItemSourceMeta = {
+  type: string
+  id?: string
+  title?: string
+  url?: string
+  provider?: string
+  inferred: boolean
+}
+
 export type WorkItemSummary = {
   id: string
   title: string
@@ -18,6 +27,24 @@ export type WorkItemSummary = {
   capabilities: string[]
   decisions: string[]
   capsules: string[]
+  source: WorkItemSourceMeta
+}
+
+const VALID_SOURCES = new Set(['manual', 'roadmap', 'jira', 'github', 'notion', 'xlsx', 'csv', 'api', 'external', 'unknown'])
+
+function optStr(v: unknown): string | undefined {
+  return typeof v === 'string' && v.trim() ? v.trim() : undefined
+}
+
+function parseSource(data: Record<string, unknown>): WorkItemSourceMeta {
+  const raw = data.source ? String(data.source) : ''
+  if (raw && VALID_SOURCES.has(raw)) {
+    return { type: raw, id: optStr(data.source_id), title: optStr(data.source_title), url: optStr(data.source_url), provider: optStr(data.source_provider), inferred: false }
+  }
+  if (data.source_work_item_candidate || data.source_roadmap_initiative) {
+    return { type: 'roadmap', id: optStr(data.source_id) ?? optStr(data.source_work_item_candidate), title: optStr(data.source_initiative_title), inferred: true }
+  }
+  return { type: 'unknown', inferred: true }
 }
 
 const ACTIVE_STATES = new Set(['draft', 'ready', 'in-progress', 'blocked'])
@@ -72,6 +99,7 @@ export function listWorkItems(root: string): WorkItemSummary[] {
       capabilities: strArray(data.capabilities),
       decisions: strArray(data.decisions),
       capsules: strArray(data.capsules),
+      source: parseSource(data),
     })
   }
   return items.sort((a, b) => a.id.localeCompare(b.id))

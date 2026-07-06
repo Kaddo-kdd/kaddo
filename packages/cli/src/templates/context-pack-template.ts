@@ -3,6 +3,7 @@ import { presentArtifacts } from '../services/mapped-modules.js'
 import { renderLayersMarkdown } from '../core/layers.js'
 import { renderRouteCompact } from '../core/project-route.js'
 import { renderSignalsCompact, signalCount } from '../core/scan-signals.js'
+import { renderSourceCompact } from '../core/work-item-source.js'
 
 /**
  * Render an LLM-friendly markdown context pack.
@@ -188,7 +189,9 @@ export function renderContextPack(pack: ContextPack): string {
       const level = wi.knowledgeLevel ? ` [${wi.knowledgeLevel}]` : ''
       const status = wi.lifecycle ? ` (${wi.lifecycle})` : wi.status ? ` (${wi.status})` : ''
       const domains = wi.domains.length > 0 ? ` · domains: ${wi.domains.join(', ')}` : ''
-      return `- ${wi.id || wi.title} [${wi.type}]${level}${status} — ${wi.title}${domains}`
+      const line = `- ${wi.id || wi.title} [${wi.type}]${level}${status} — ${wi.title}${domains}`
+      const src = wi.source && wi.source.type !== 'unknown' ? `\n  - Source: ${renderSourceCompact(wi.source)}` : ''
+      return `${line}${src}`
     })
     parts.push(lines.join('\n') + '\n')
   } else {

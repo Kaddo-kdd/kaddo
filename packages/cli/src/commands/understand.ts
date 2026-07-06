@@ -13,6 +13,7 @@ import { loadGraphHints } from '../core/graph-hints.js'
 import { buildOpenQuestionsReport } from '../core/open-questions.js'
 import { discoverInstalledSkills, skillsForAgents } from '../services/installed-skills.js'
 import { discoverWorkItems } from '../services/knowledge-artifacts.js'
+import { parseWorkItemSource } from '../core/work-item-source.js'
 import { buildDeliveryState } from '../core/next-step.js'
 import { agentInstallPath } from '../agents/groups.js'
 import { skillInstallPath } from '../skills/skills.js'
@@ -188,6 +189,10 @@ export function runUnderstand(): void {
       lifecycle: w.lifecycle ?? 'draft',
       knowledgeLevel: w.knowledgeLevel,
       hasOwnership: w.codeGlobs.length > 0,
+      source: (() => {
+        const s = parseWorkItemSource(w.rawFrontmatter)
+        return { type: s.type, ...(s.id ? { id: s.id } : {}) }
+      })(),
     }))
 
   const recommendedPaths: string[] = []

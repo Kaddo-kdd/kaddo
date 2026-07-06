@@ -88,6 +88,7 @@ function buildFrontMatter(
     `domains: []`,
     `code: []`,
     `created_at: ${today}`,
+    `source: manual`,
     `summary: "${answers.problem?.split('.')[0] ?? title}"`,
     '---',
   ]
@@ -171,6 +172,7 @@ function buildModuleFrontMatter(
     `domains: []`,
     `code: []`,
     `created_at: ${today}`,
+    `source: manual`,
     `summary: "${title}"`,
     ...extraLines,
     '---',
@@ -392,6 +394,8 @@ export function buildRoadmapFrontMatter(
     // from the specific Work Item candidate it was materialized from.
     `source_roadmap_initiative: ${candidate.initiative?.id ?? 'unknown'}`,
     `source_work_item_candidate: ${candidate.id}`,
+    `source_title: "${q(candidate.title)}"`,
+    `source_context: "Materialized from roadmap candidate ${candidate.id}${candidate.initiative?.id ? ` under initiative ${candidate.initiative.id}` : ''}."`,
     ...(candidate.initiative?.title
       ? [`source_initiative_title: "${q(candidate.initiative.title)}"`]
       : []),

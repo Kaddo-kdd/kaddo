@@ -133,6 +133,51 @@ Official states are `draft`, `ready`, `in-progress`, `blocked`, `completed` and 
 Flat legacy files under `knowledge/delivery/work-items/*.md` are still read as `ready` until
 you migrate them into state folders.
 
+## Source metadata
+
+Every Work Item carries a `source` field in its front matter that records where it came from.
+This enables traceability across `kaddo explain`, `kaddo understand`, `kaddo context`, and the
+MCP server.
+
+### Supported source types
+
+| Source | When used |
+|---|---|
+| `manual` | Created interactively via `kaddo create` |
+| `roadmap` | Materialized from a roadmap candidate |
+| `jira` | Imported from Jira |
+| `github` | Imported from GitHub Issues/PRs |
+| `notion` | Imported from Notion |
+| `xlsx` | Imported from an Excel spreadsheet |
+| `csv` | Imported from a CSV file |
+| `api` | Created programmatically via API |
+| `external` | Imported from another external system |
+| `unknown` | No source metadata found (legacy items) |
+
+### Source fields
+
+```yaml
+---
+source: jira
+source_id: DOT-123
+source_title: "Fix trial reminder emails"
+source_url: "https://jira.example.com/browse/DOT-123"
+source_context: "From Q3 sprint planning"
+source_provider: jira
+source_imported_at: "2026-07-01"
+source_synced_at: "2026-07-06"
+---
+```
+
+All fields except `source` are optional. Manual creates automatically set `source: manual`.
+Roadmap creates set `source: roadmap` with `source_id`, `source_title`, and `source_context`.
+
+### Legacy items
+
+Work Items created before source metadata was available are read with `source: unknown` at
+runtime — the files are never modified. `kaddo explain` shows a "Work Item Sources" summary
+and `kaddo project-route` warns when work items have unknown sources.
+
 ## Activate Guard Lite
 
 Add code globs to the `code:` field of the generated front matter:

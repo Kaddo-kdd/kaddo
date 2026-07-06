@@ -32,6 +32,7 @@ import {
 } from './lifecycle.js'
 import { buildProjectRoute, renderRouteMarkdown, type ProjectRoute } from './project-route.js'
 import { type ScanSignals, renderSignalsCompact, signalCount } from './scan-signals.js'
+import { parseWorkItemSource, summarizeWorkItemSources, renderSourcesSummary } from './work-item-source.js'
 
 const ARCH_DIR = 'knowledge'
 
@@ -80,6 +81,8 @@ export type ProjectExplanation = {
       knowledgeLevel: string
       hasOwnership: boolean
       domains: string[]
+      /** Source metadata (VS-082). */
+      source: { type: string; id?: string; inferred: boolean }
     }[]
   }
   ownership: {
@@ -276,17 +279,21 @@ export function buildProjectExplanation(dir: string): ProjectExplanation {
   // layer docs, and guarantees explain sees exactly what owners/guard/context see.
   const workItemArtifacts = discoverWorkItems(dir)
 
-  const items = workItemArtifacts.map((a) => ({
-    id: a.id || a.title,
-    title: a.title,
-    type: a.type,
-    status: a.status,
-    lifecycle: lifecycleStateOf({ status: a.status, filePath: a.filePath }),
-    initiative: a.initiative,
-    knowledgeLevel: a.knowledgeLevel,
-    hasOwnership: a.codeGlobs.length > 0,
-    domains: a.domains,
-  }))
+  const items = workItemArtifacts.map((a) => {
+    const src = parseWorkItemSource(a.rawFrontmatter)
+    return {
+      id: a.id || a.title,
+      title: a.title,
+      type: a.type,
+      status: a.status,
+      lifecycle: lifecycleStateOf({ status: a.status, filePath: a.filePath }),
+      initiative: a.initiative,
+      knowledgeLevel: a.knowledgeLevel,
+      hasOwnership: a.codeGlobs.length > 0,
+      domains: a.domains,
+      source: { type: src.type, ...(src.id ? { id: src.id } : {}), inferred: src.inferred },
+    }
+  })
 
   const byState = lifecycleCounts(items.map((i) => i.lifecycle))
 
@@ -522,6 +529,19 @@ export function renderExplanationHuman(exp: ProjectExplanation): string {
     if (typeEntries.length > 0) {
       lines.push('## Work Items by Type')
       for (const [t, n] of typeEntries) lines.push(`- ${typeLabel(t)}: ${n}`)
+      lines.push('')
+    }
+
+    // Work Item Sources (VS-082) — non-intrusive summary of where work comes from.
+    const sourceCounts: Record<string, number> = {}
+    for (const i of exp.workItems.items) {
+      const t = i.source?.type ?? 'unknown'
+      sourceCounts[t] = (sourceCounts[t] ?? 0) + 1
+    }
+    const sourceEntries = Object.entries(sourceCounts).filter(([, n]) => n > 0)
+    if (sourceEntries.length > 0) {
+      lines.push('## Work Item Sources')
+      for (const [t, n] of sourceEntries) lines.push(`- ${t.charAt(0).toUpperCase() + t.slice(1)}: ${n}`)
       lines.push('')
     }
 

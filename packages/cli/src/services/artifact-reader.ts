@@ -16,6 +16,8 @@ export type Artifact = {
   initiative: string
   source: string
   sourceId: string
+  /** Raw frontmatter data for source metadata parsing (VS-082). */
+  rawFrontmatter: Record<string, unknown>
   /** ADR/decision IDs this artifact depends on (front matter `decisions`). */
   decisions: string[]
   /** External Knowledge Capsule IDs this artifact uses (front matter `capsules`). */
@@ -42,6 +44,7 @@ function parseArtifact(filePath: string, raw: string): Artifact | null {
       initiative: String(data.initiative ?? data.source_initiative ?? ''),
       source: data.source ? String(data.source) : '',
       sourceId: String(data.source_id ?? ''),
+      rawFrontmatter: data as Record<string, unknown>,
       decisions: Array.isArray(data.decisions) ? data.decisions.map(String).filter(Boolean) : [],
       capsules: Array.isArray(data.capsules) ? data.capsules.map(String).filter(Boolean) : [],
     }

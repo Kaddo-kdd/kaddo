@@ -19,6 +19,7 @@ import { loadGraphHints, type GraphHintsSummary } from './graph-hints.js'
 import { discoverInstalledSkills } from '../services/installed-skills.js'
 import { buildProjectRoute, type ProjectRoute } from './project-route.js'
 import { type ScanSignals } from './scan-signals.js'
+import { parseWorkItemSource, type WorkItemSource } from './work-item-source.js'
 
 export const CONTEXT_PACK_VERSION = '1'
 
@@ -30,6 +31,7 @@ export type ContextWorkItem = {
   lifecycle: LifecycleState
   knowledgeLevel: string
   domains: string[]
+  source: WorkItemSource
 }
 
 export type ContextArtifact = {
@@ -228,6 +230,7 @@ function toContextWorkItem(a: Artifact): ContextWorkItem {
     lifecycle: lifecycleStateOf({ status: a.status, filePath: a.filePath }),
     knowledgeLevel: a.knowledgeLevel,
     domains: a.domains,
+    source: parseWorkItemSource(a.rawFrontmatter),
   }
 }
 

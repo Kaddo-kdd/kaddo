@@ -133,6 +133,53 @@ Los estados oficiales son `draft`, `ready`, `in-progress`, `blocked`, `completed
 `archived`. Los archivos planos heredados bajo `knowledge/delivery/work-items/*.md` se siguen
 leyendo como `ready` hasta que los migres a carpetas de estado.
 
+## Metadatos de origen
+
+Cada Work Item incluye un campo `source` en su front matter que registra de dónde proviene.
+Esto permite trazabilidad en `kaddo explain`, `kaddo understand`, `kaddo context` y el
+servidor MCP.
+
+### Tipos de origen soportados
+
+| Origen | Cuándo se usa |
+|---|---|
+| `manual` | Creado interactivamente con `kaddo create` |
+| `roadmap` | Materializado desde un candidato del roadmap |
+| `jira` | Importado desde Jira |
+| `github` | Importado desde GitHub Issues/PRs |
+| `notion` | Importado desde Notion |
+| `xlsx` | Importado desde una hoja Excel |
+| `csv` | Importado desde un archivo CSV |
+| `api` | Creado programáticamente vía API |
+| `external` | Importado desde otro sistema externo |
+| `unknown` | Sin metadatos de origen (items legacy) |
+
+### Campos de origen
+
+```yaml
+---
+source: jira
+source_id: DOT-123
+source_title: "Fix trial reminder emails"
+source_url: "https://jira.example.com/browse/DOT-123"
+source_context: "Del sprint planning de Q3"
+source_provider: jira
+source_imported_at: "2026-07-01"
+source_synced_at: "2026-07-06"
+---
+```
+
+Todos los campos excepto `source` son opcionales. Los creates manuales establecen
+`source: manual` automáticamente. Los creates desde roadmap establecen `source: roadmap`
+con `source_id`, `source_title` y `source_context`.
+
+### Items legacy
+
+Los Work Items creados antes de los metadatos de origen se leen con `source: unknown` en
+tiempo de ejecución — los archivos nunca se modifican. `kaddo explain` muestra un resumen de
+"Work Item Sources" y `kaddo project-route` advierte cuando hay work items con origen
+desconocido.
+
 ## Activar Guard Lite
 
 Agrega globs de código al campo `code:` del front matter generado:

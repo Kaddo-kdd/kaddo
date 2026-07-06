@@ -8,6 +8,7 @@ import { exists, join } from '../utils/fs.js'
 import { loadConfig, type ProjectState } from './config.js'
 import { analyzeKnowledgeArtifact, type ArtifactQuality } from './artifact-quality.js'
 import { hasWarnings as hasScanSignalWarnings } from './scan-signals.js'
+import { parseWorkItemSource } from './work-item-source.js'
 import { discoverWorkItems } from '../services/knowledge-artifacts.js'
 import { buildTechDecisions } from './decisions.js'
 import { roadmapStats } from './roadmap.js'
@@ -68,6 +69,7 @@ type RouteContext = {
   adaptersInstalled: number
   hasGuardHistory: boolean
   hasScanWarnings: boolean
+  hasUnknownSources: boolean
   nextStepId: string
 }
 
@@ -166,12 +168,12 @@ const captureTechDecisions: StepDef = {
 const createWorkSource: StepDef = {
   id: 'create-work-source',
   label: 'Create or connect work source',
-  evaluate: (ctx) => ({
-    status: ctx.hasRoadmap || ctx.totalWorkItems > 0 ? 'done' : 'pending',
-    evidence: ctx.hasRoadmap ? ['knowledge/delivery/roadmap.md'] : undefined,
-    command: ctx.hasRoadmap ? undefined : 'kaddo roadmap',
-    agent: ctx.hasRoadmap ? undefined : 'roadmap-agent',
-  }),
+  evaluate: (ctx) => {
+    if (!ctx.hasRoadmap && ctx.totalWorkItems === 0) return { status: 'pending', command: 'kaddo roadmap', agent: 'roadmap-agent' }
+    if (ctx.hasUnknownSources) return { status: 'warning', evidence: ['Work Items with unknown source'], reason: 'Some Work Items have no source metadata.' }
+    const evidence = ctx.hasRoadmap ? ['knowledge/delivery/roadmap.md'] : undefined
+    return { status: 'done', evidence }
+  },
 }
 
 const materializeWorkItem: StepDef = {
@@ -404,6 +406,10 @@ function buildRouteContext(dir: string): RouteContext {
     adaptersInstalled: adapters.length,
     hasGuardHistory: exists(join(dir, '.kaddo', 'history', 'guard-runs.jsonl')),
     hasScanWarnings: hasScan ? loadScanWarnings(dir) : false,
+    hasUnknownSources: wis.some((w) => {
+      const src = parseWorkItemSource(w.rawFrontmatter)
+      return src.type === 'unknown' && src.inferred
+    }),
     nextStepId: mapNextStepId(nextStep.id),
   }
 }

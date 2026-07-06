@@ -122,7 +122,10 @@ export function renderUnderstand(plan: UnderstandPlan): string {
     parts.push('## Active Work Items\n')
     parts.push(
       plan.activeWorkItems
-        .map((w) => `- ${w.id} [${w.type}] ${w.lifecycle} — ${w.title}`)
+        .map((w) => {
+          const src = w.source && w.source.type !== 'unknown' ? `\n  - Source: ${w.source.type}${w.source.id ? ` · ${w.source.id}` : ''}` : ''
+          return `- ${w.id} [${w.type}] ${w.lifecycle} — ${w.title}${src}`
+        })
         .join('\n') + '\n'
     )
   }
