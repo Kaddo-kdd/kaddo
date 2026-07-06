@@ -16,6 +16,7 @@ import { discoverWorkItems } from '../services/knowledge-artifacts.js'
 import { buildDeliveryState } from '../core/next-step.js'
 import { agentInstallPath } from '../agents/groups.js'
 import { skillInstallPath } from '../skills/skills.js'
+import { buildProjectRoute } from '../core/project-route.js'
 import { printCommandFooter } from '../core/command-help.js'
 
 export function runUnderstand(): void {
@@ -212,6 +213,7 @@ export function runUnderstand(): void {
     recommendedPaths,
     recommendedSkillPaths,
     language: languageLabel(projectLanguage(config)),
+    projectRoute: buildProjectRoute(dir),
   })
 
   writeFile(join(dir, '.kaddo', 'understand.md'), renderUnderstand(enrichedPlan))

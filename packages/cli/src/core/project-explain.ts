@@ -30,6 +30,7 @@ import {
   emptyLifecycleCounts,
   type LifecycleState,
 } from './lifecycle.js'
+import { buildProjectRoute, renderRouteMarkdown, type ProjectRoute } from './project-route.js'
 
 const ARCH_DIR = 'knowledge'
 
@@ -116,6 +117,8 @@ export type ProjectExplanation = {
   installedAssets: ReturnType<typeof installedAssetsSummary>
   /** How well roadmap candidates are grounded in capabilities/signals (VS-077). */
   roadmapQuality: RoadmapQuality
+  /** Project route progress map (VS-080). */
+  projectRoute: ProjectRoute
 }
 
 function normalizeTitle(t: string): string {
@@ -409,6 +412,7 @@ export function buildProjectExplanation(dir: string): ProjectExplanation {
     },
     installedAssets: installedAssetsSummary(dir),
     roadmapQuality: buildRoadmapQuality(dir),
+    projectRoute: buildProjectRoute(dir),
   }
 }
 
@@ -609,6 +613,9 @@ export function renderExplanationHuman(exp: ProjectExplanation): string {
     lines.push('Review before continuing (non-blocking).')
     lines.push('')
   }
+
+  // Project Route (VS-080): visual progress within the lifecycle.
+  lines.push(renderRouteMarkdown(exp.projectRoute))
 
   // Phase + reason (VS-047): explain why the project is where it is, from real knowledge state.
   const assessment = assessPhase(exp)

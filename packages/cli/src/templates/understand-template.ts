@@ -1,5 +1,6 @@
 import type { UnderstandPlan } from '../core/understand.js'
 import { agentInstallPath } from '../agents/groups.js'
+import { renderRouteCompact } from '../core/project-route.js'
 
 function stateLabel(state: string): string {
   return state === 'pre-ai' ? 'pre-AI' : state
@@ -63,6 +64,12 @@ export function renderUnderstand(plan: UnderstandPlan): string {
         `- Installed adapters: ${ds.adapters_installed}`,
       ].join('\n') + '\n'
     )
+  }
+
+  // Project Route (VS-080)
+  if (plan.projectRoute) {
+    parts.push('## Project Route\n')
+    parts.push(renderRouteCompact(plan.projectRoute))
   }
 
   // Recommended Agent Flow

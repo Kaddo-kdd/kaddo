@@ -2,6 +2,7 @@ import { exists, join } from '../utils/fs.js'
 import type { KaddoConfig, ProjectState } from './config.js'
 import { agentInstallPath } from '../agents/groups.js'
 import type { NextStepRecommendation, DeliveryState } from './next-step.js'
+import type { ProjectRoute } from './project-route.js'
 
 /** An agent is installed if present in its layer folder, or (legacy) the flat folder. */
 export function agentIsInstalled(dir: string, fileName: string): boolean {
@@ -53,6 +54,8 @@ export type UnderstandPlan = {
   recommendedPaths?: string[]
   /** Installed skill paths relevant to the recommendation. */
   recommendedSkillPaths?: string[]
+  /** Project route progress map (VS-080). */
+  projectRoute?: ProjectRoute
 }
 
 /** State-aware agent flow: each agent mapped to its expected output artifact. */
@@ -129,6 +132,7 @@ export function enrichUnderstandPlan(
     recommendedPaths: string[]
     recommendedSkillPaths: string[]
     language: string
+    projectRoute?: ProjectRoute
   },
 ): UnderstandPlan {
   return {
@@ -140,5 +144,6 @@ export function enrichUnderstandPlan(
     activeWorkItems: opts.activeWorkItems,
     recommendedPaths: opts.recommendedPaths,
     recommendedSkillPaths: opts.recommendedSkillPaths,
+    projectRoute: opts.projectRoute,
   }
 }

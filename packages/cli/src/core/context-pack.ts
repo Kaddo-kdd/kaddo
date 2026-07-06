@@ -17,6 +17,7 @@ import { loadExternalCapsules, type ConsumedCapsule } from './capsule.js'
 import { loadGraphSummary, type GraphSummary } from './graph.js'
 import { loadGraphHints, type GraphHintsSummary } from './graph-hints.js'
 import { discoverInstalledSkills } from '../services/installed-skills.js'
+import { buildProjectRoute, type ProjectRoute } from './project-route.js'
 
 export const CONTEXT_PACK_VERSION = '1'
 
@@ -101,6 +102,8 @@ export type ContextPack = {
   graphHints: GraphHintsSummary | null
   /** Installed reusable skill ids (VS-059) — summary only, content lives in knowledge/skills/. */
   skills: string[]
+  /** Project route progress map (VS-080). */
+  projectRoute: ProjectRoute
   mappedModules: MappedModuleWithCoverage[]
   missing: string[]
   handoff: {
@@ -426,6 +429,7 @@ export function buildContextPack(
     graph: loadGraphSummary(dir),
     graphHints: loadGraphHints(dir),
     skills: discoverInstalledSkills(dir).map((s) => s.id),
+    projectRoute: buildProjectRoute(dir),
     mappedModules,
     missing,
     // VS-052/VS-073.2: the handoff is driven by the unified next step, so the pack never contradicts

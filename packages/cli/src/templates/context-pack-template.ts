@@ -1,6 +1,7 @@
 import type { ContextPack } from '../core/context-pack.js'
 import { presentArtifacts } from '../services/mapped-modules.js'
 import { renderLayersMarkdown } from '../core/layers.js'
+import { renderRouteCompact } from '../core/project-route.js'
 
 /**
  * Render an LLM-friendly markdown context pack.
@@ -71,6 +72,10 @@ export function renderContextPack(pack: ContextPack): string {
       parts.push(rec.secondary.map((s) => `- ${s.label}`).join('\n') + '\n')
     }
   }
+
+  // 1a-route. Project Route progress map (VS-080).
+  parts.push('## Project Route\n')
+  parts.push(renderRouteCompact(pack.projectRoute))
 
   // 1b. Knowledge Layers + maturity (Business → Product → Tech → Delivery)
   parts.push('## Knowledge Layers\n')

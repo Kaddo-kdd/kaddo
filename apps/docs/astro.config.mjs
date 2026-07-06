@@ -170,6 +170,7 @@ export default defineConfig({
             { label: 'Tech Decisions (ADRs)', translations: { es: 'Decisiones técnicas (ADRs)' }, slug: 'tech-decisions' },
             { label: 'Roadmap Quality', translations: { es: 'Calidad del roadmap' }, slug: 'roadmap-quality' },
             { label: 'State-Aware Next Step', translations: { es: 'Siguiente paso según el estado' }, slug: 'next-step' },
+            { label: 'Project Route', translations: { es: 'Ruta del Proyecto' }, slug: 'project-route' },
             { label: 'Installed Assets', translations: { es: 'Assets instalados' }, slug: 'installed-assets' },
             {
               label: 'Adapters',

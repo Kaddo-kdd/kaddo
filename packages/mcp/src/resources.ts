@@ -14,6 +14,7 @@ import { installedAssetsSummary } from '../../cli/src/core/assets.js'
 import { buildRoadmapQuality } from '../../cli/src/core/roadmap-quality.js'
 import { parseRoadmapCandidates } from '../../cli/src/core/roadmap.js'
 import { resolveNextStep, buildDeliveryState } from '../../cli/src/core/next-step.js'
+import { buildProjectRoute } from '../../cli/src/core/project-route.js'
 import { listWorkItems } from './workitems.js'
 import { hasKnowledge, readText } from './project.js'
 
@@ -320,6 +321,18 @@ export const RESOURCES: ResourceDescriptor[] = [
       const nextStepRecommendation = resolveNextStep(root)
       const deliveryState = { ...buildDeliveryState(root), phase: nextStepRecommendation.phase }
       return [{ uri: 'kaddo://next-step', text: JSON.stringify({ nextStepRecommendation, deliveryState }, null, 2), mimeType: 'application/json' }]
+    },
+  },
+  {
+    uri: 'kaddo://project-route',
+    name: 'Kaddo project route',
+    description: 'Project route progress map — where the project sits in its lifecycle (new/pre-ai/legacy), completed steps, current step, warnings (VS-080). Read-only.',
+    mimeType: 'application/json',
+    read: (root) => {
+      if (!hasKnowledge(root)) {
+        return text('kaddo://project-route', 'Knowledge repository not found. Run `kaddo bootstrap` first.', 'text/plain')
+      }
+      return [{ uri: 'kaddo://project-route', text: JSON.stringify(buildProjectRoute(root), null, 2), mimeType: 'application/json' }]
     },
   },
 ]
