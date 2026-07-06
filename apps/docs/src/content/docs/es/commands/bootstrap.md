@@ -79,10 +79,17 @@ un placeholder. El agente nunca inventa evidencia — sin evidencia es `inferred
 kaddo init → kaddo bootstrap → kaddo add agents → kaddo add skills → …
 ```
 
-[`kaddo explain`](explain/) reporta `bootstrap-incomplete` y recomienda `kaddo bootstrap` hasta que el
-baseline exista; después avanza a `agents-missing` / `skills-missing`. `kaddo understand` también
-recomienda `kaddo bootstrap` primero cuando el baseline está incompleto — los agentes no tienen
-archivos destino que refinar hasta que exista.
+Todas las superficies de Kaddo convergen en `kaddo bootstrap` como la **recomendación dominante**
+cuando el baseline está incompleto:
+
+- **`kaddo explain`** — sugiere `kaddo bootstrap` primero, luego agents, skills y context en orden.
+- **`kaddo context`** — suprime el handoff de agentes ("No agent handoff yet") y muestra mensajes
+  específicos de bootstrap en el contexto faltante.
+- **`kaddo understand`** — muestra "Agent handoff is not ready yet. Run `kaddo bootstrap` first."
+- **`kaddo route`** — incluye un paso `bootstrap` dedicado que aparece como `current` hasta que el
+  baseline exista.
+- **Recursos MCP** (`kaddo://next-step`, `kaddo://project-route`) — retornan la misma recomendación
+  bootstrap-first.
 
 ## Siguientes pasos
 

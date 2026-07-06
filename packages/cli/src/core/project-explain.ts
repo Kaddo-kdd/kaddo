@@ -235,6 +235,16 @@ function hasAgents(dir: string): boolean {
   return hasAgentMd(agentsDir)
 }
 
+function hasSkills(dir: string): boolean {
+  const skillsDir = join(dir, ARCH_DIR, 'skills')
+  if (!exists(skillsDir)) return false
+  try {
+    return readDir(skillsDir).some((e) => e.endsWith('.md') && isFile(join(skillsDir, e)))
+  } catch {
+    return false
+  }
+}
+
 export function buildProjectExplanation(dir: string): ProjectExplanation {
   const config = loadConfig(dir)
   const project = {
@@ -268,10 +278,13 @@ export function buildProjectExplanation(dir: string): ProjectExplanation {
     hasInventory: exists(join(dir, ARCH_DIR, 'inventory.md')),
     hasContextPack: exists(join(dir, '.kaddo', 'context-pack.md')),
     hasUnderstand: exists(join(dir, '.kaddo', 'understand.md')),
+    hasBusiness: exists(join(dir, 'knowledge/business/business.md')),
+    hasProduct: exists(join(dir, 'knowledge/product/product.md')),
     hasCapabilities: layerStatus('Product') !== 'Missing',
     hasArchitecture: layerStatus('Tech') !== 'Missing',
     hasRoadmap: layerStatus('Delivery') !== 'Missing',
     hasAgents: hasAgents(dir),
+    hasSkills: hasSkills(dir),
   }
 
   // Work Items come from the unified discovery service (VS-046): typed artifacts under
@@ -360,33 +373,42 @@ export function buildProjectExplanation(dir: string): ProjectExplanation {
   if (items.length === 0) missingKnowledge.push('Work items (knowledge/delivery/work-items/)')
 
   const suggestedNextSteps: string[] = []
-  if (!knowledge.hasScan) {
-    suggestedNextSteps.push('Run `kaddo scan` to detect the technical stack.')
-  } else if (!knowledge.hasContextPack) {
-    suggestedNextSteps.push('Run `kaddo context` to prepare an LLM context pack.')
-  }
-  if (!knowledge.hasAgents) {
-    suggestedNextSteps.push('Run `kaddo add agents` to install knowledge agents.')
-  }
-  if (!knowledge.hasCapabilities) {
-    suggestedNextSteps.push('Use capability-agent to generate knowledge/product/capabilities.md.')
-  }
-  if (!knowledge.hasArchitecture) {
-    suggestedNextSteps.push('Use architecture-agent to generate knowledge/tech/current-state.md.')
-  }
-  if (!knowledge.hasRoadmap) {
-    suggestedNextSteps.push('Use roadmap-agent to generate knowledge/delivery/roadmap.md.')
-  } else if (roadmap.remaining > 0) {
-    suggestedNextSteps.push(
-      `Materialize ${roadmap.remaining} roadmap candidate(s) with \`kaddo create --from roadmap\`.`
-    )
-  }
-  if (items.length === 0 && !roadmap.present) {
-    suggestedNextSteps.push('Create your first Work Item with `kaddo create`.')
-  } else if (ownership.workItemsMissingOwnership > 0) {
-    suggestedNextSteps.push(
-      'Run `kaddo owners suggest` for Work Items without code ownership.'
-    )
+  const baselineIncomplete = !knowledge.hasBusiness || !knowledge.hasProduct
+  if (baselineIncomplete) {
+    suggestedNextSteps.push('Run `kaddo bootstrap` to create the project knowledge baseline.')
+    if (!knowledge.hasAgents) suggestedNextSteps.push('Then run `kaddo add agents`.')
+    if (!knowledge.hasSkills) suggestedNextSteps.push('Then run `kaddo add skills`.')
+    suggestedNextSteps.push('Then run `kaddo context`.')
+    suggestedNextSteps.push('Then run `kaddo understand`.')
+  } else {
+    if (!knowledge.hasScan) {
+      suggestedNextSteps.push('Run `kaddo scan` to detect the technical stack.')
+    } else if (!knowledge.hasContextPack) {
+      suggestedNextSteps.push('Run `kaddo context` to prepare an LLM context pack.')
+    }
+    if (!knowledge.hasAgents) {
+      suggestedNextSteps.push('Run `kaddo add agents` to install knowledge agents.')
+    }
+    if (!knowledge.hasCapabilities) {
+      suggestedNextSteps.push('Use capability-agent to generate knowledge/product/capabilities.md.')
+    }
+    if (!knowledge.hasArchitecture) {
+      suggestedNextSteps.push('Use architecture-agent to generate knowledge/tech/current-state.md.')
+    }
+    if (!knowledge.hasRoadmap) {
+      suggestedNextSteps.push('Use roadmap-agent to generate knowledge/delivery/roadmap.md.')
+    } else if (roadmap.remaining > 0) {
+      suggestedNextSteps.push(
+        `Materialize ${roadmap.remaining} roadmap candidate(s) with \`kaddo create --from roadmap\`.`
+      )
+    }
+    if (items.length === 0 && !roadmap.present) {
+      suggestedNextSteps.push('Create your first Work Item with `kaddo create`.')
+    } else if (ownership.workItemsMissingOwnership > 0) {
+      suggestedNextSteps.push(
+        'Run `kaddo owners suggest` for Work Items without code ownership.'
+      )
+    }
   }
 
   const readiness = buildReadinessReport(dir)

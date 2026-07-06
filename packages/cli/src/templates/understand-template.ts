@@ -73,7 +73,12 @@ export function renderUnderstand(plan: UnderstandPlan): string {
   }
 
   // Recommended Agent Flow
-  if (steps.length > 0) {
+  const isBootstrap = rec && rec.id === 'bootstrap'
+  if (isBootstrap) {
+    parts.push('## Agent Handoff\n')
+    parts.push('Agent handoff is not ready yet.\n')
+    parts.push('Run `kaddo bootstrap` first.\n')
+  } else if (steps.length > 0) {
     parts.push('## Recommended Agent Flow\n')
     parts.push(`Recommended order for a ${stateLabel(project.state)} project:\n`)
     parts.push(
@@ -249,25 +254,37 @@ export function renderUnderstandTerminal(plan: UnderstandPlan): string {
   lines.push(`Structure: ${project.structure}`)
   lines.push('')
 
-  const first = steps[0]
-  if (first) {
-    lines.push('Foundational knowledge still needed:')
-    steps.forEach((s, i) => {
-      const flag = s.installed ? '' : '  (not installed)'
-      lines.push(`  ${i + 1}. ${agentName(s.agent)} → ${s.output}${flag}`)
-    })
+  const rec = plan.nextStepRecommendation
+  const isBootstrapIncomplete = rec && rec.id === 'bootstrap'
+
+  if (isBootstrapIncomplete) {
+    lines.push('Current phase: Setup')
+    lines.push('Next step: Run `kaddo bootstrap` to create the project knowledge baseline.')
+    lines.push('Reason: The knowledge baseline is incomplete.')
     lines.push('')
-    lines.push(`First step: use ${agentName(first.agent)}.`)
-    lines.push('')
-    lines.push(`  Context:         ${plan.contextPackPath}`)
-    lines.push(`  Agent prompt:    ${agentInstallPath(first.agent)}`)
-    lines.push(`  Expected output: ${first.output}`)
-    lines.push('')
-    lines.push('Instructions:')
-    lines.push('  Open your preferred LLM chat, paste the context pack, then paste the agent')
-    lines.push('  prompt. Ask the LLM to generate the expected output and save it in the target file.')
+    lines.push('Agent handoff is not ready yet.')
+    lines.push('Run `kaddo bootstrap` first.')
   } else {
-    lines.push('Foundational knowledge looks complete — see the phase recommendation below.')
+    const first = steps[0]
+    if (first) {
+      lines.push('Foundational knowledge still needed:')
+      steps.forEach((s, i) => {
+        const flag = s.installed ? '' : '  (not installed)'
+        lines.push(`  ${i + 1}. ${agentName(s.agent)} → ${s.output}${flag}`)
+      })
+      lines.push('')
+      lines.push(`First step: use ${agentName(first.agent)}.`)
+      lines.push('')
+      lines.push(`  Context:         ${plan.contextPackPath}`)
+      lines.push(`  Agent prompt:    ${agentInstallPath(first.agent)}`)
+      lines.push(`  Expected output: ${first.output}`)
+      lines.push('')
+      lines.push('Instructions:')
+      lines.push('  Open your preferred LLM chat, paste the context pack, then paste the agent')
+      lines.push('  prompt. Ask the LLM to generate the expected output and save it in the target file.')
+    } else {
+      lines.push('Foundational knowledge looks complete — see the phase recommendation below.')
+    }
   }
   lines.push('')
   lines.push('Kaddo does not call an LLM. You stay in control of the interpretation.')

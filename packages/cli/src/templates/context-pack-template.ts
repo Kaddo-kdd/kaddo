@@ -300,8 +300,19 @@ export function renderContextPack(pack: ContextPack): string {
   }
 
   // 7. Missing Context
+  const isBootstrapIncomplete = rec.id === 'bootstrap'
   parts.push('## Missing Context\n')
-  if (missing.length > 0) {
+  if (isBootstrapIncomplete) {
+    const baselineMissing = [
+      '- Bootstrap baseline is incomplete.',
+      ...(!pack.knowledgeQuality.business || pack.knowledgeQuality.business.status === 'Missing' ? ['- Missing business knowledge.'] : []),
+      ...(!pack.knowledgeQuality.product || pack.knowledgeQuality.product.status === 'Missing' ? ['- Missing product knowledge.'] : []),
+    ]
+    if (missing.length > 0) {
+      baselineMissing.push(...missing.filter((m) => !baselineMissing.some((b) => b.includes(m))))
+    }
+    parts.push(baselineMissing.join('\n') + '\n')
+  } else if (missing.length > 0) {
     parts.push(missing.map((m) => `- ${m}`).join('\n') + '\n')
   } else {
     parts.push('_None — all expected context is present._\n')
@@ -310,11 +321,16 @@ export function renderContextPack(pack: ContextPack): string {
   // 8. Recommended Agent Handoff — driven by the real phase (VS-052), so it agrees with the
   // Current Phase block above instead of recommending early-stage agents by project.state.
   parts.push('## Recommended Agent Handoff\n')
-  parts.push(`Recommended next for the **${pack.phase.phase}** phase:\n`)
-  parts.push(handoff.recommendedAgents.map((a, i) => `${i + 1}. ${a}`).join('\n') + '\n')
-  if (handoff.nextSteps.length > 0) {
-    parts.push('Next step:\n')
-    parts.push(handoff.nextSteps.map((s) => `- ${s}`).join('\n') + '\n')
+  if (isBootstrapIncomplete) {
+    parts.push('No agent handoff yet.\n')
+    parts.push('Run `kaddo bootstrap` first to create the baseline files.\n')
+  } else {
+    parts.push(`Recommended next for the **${pack.phase.phase}** phase:\n`)
+    parts.push(handoff.recommendedAgents.map((a, i) => `${i + 1}. ${a}`).join('\n') + '\n')
+    if (handoff.nextSteps.length > 0) {
+      parts.push('Next step:\n')
+      parts.push(handoff.nextSteps.map((s) => `- ${s}`).join('\n') + '\n')
+    }
   }
 
   // 9. Instructions for the LLM — phase-specific (VS-052).

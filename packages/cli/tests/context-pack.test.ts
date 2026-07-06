@@ -225,6 +225,8 @@ describe('context-pack — renderContextPack', () => {
   it('renders all sections in markdown', () => {
     writeConfig('pre-ai')
     writeScan()
+    write('knowledge/business/business.md', '---\ntype: business-context\n---\nBusiness context.')
+    write('knowledge/product/product.md', '---\ntype: product-overview\n---\nProduct overview.')
     const md = renderContextPack(build())
     expect(md).toContain('# Kaddo Context Pack')
     expect(md).toContain('## Project Metadata')

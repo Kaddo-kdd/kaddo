@@ -30,6 +30,11 @@ ${extra}`
   )
 }
 
+function writeBaseline() {
+  write('knowledge/business/business.md', '---\ntype: business-context\n---\nBusiness context.')
+  write('knowledge/product/product.md', '---\ntype: product-overview\n---\nProduct overview.')
+}
+
 function writeScan() {
   write(
     '.kaddo/scan.json',
@@ -112,6 +117,7 @@ describe('buildProjectExplanation', () => {
 
   it('reports no scan baseline when scan.json missing', () => {
     initConfig()
+    writeBaseline()
     const exp = buildProjectExplanation(tmpDir)
     expect(exp.stack).toBeNull()
     expect(exp.knowledge.hasScan).toBe(false)
@@ -152,6 +158,7 @@ describe('buildProjectExplanation', () => {
 
   it('reports ownership coverage', () => {
     initConfig()
+    writeBaseline()
     writeWorkItem('WI-001', 'in-progress', ['src/payments/**'])
     writeWorkItem('WI-002', 'in-progress')
     const exp = buildProjectExplanation(tmpDir)
@@ -165,6 +172,7 @@ describe('buildProjectExplanation', () => {
 
   it('lists missing knowledge and next steps for a fresh init', () => {
     initConfig()
+    writeBaseline()
     const exp = buildProjectExplanation(tmpDir)
     expect(exp.missingKnowledge.length).toBeGreaterThan(0)
     expect(exp.missingKnowledge.some((m) => m.includes('Work items'))).toBe(true)
@@ -173,6 +181,7 @@ describe('buildProjectExplanation', () => {
 
   it('recommends context after scan but before context pack', () => {
     initConfig()
+    writeBaseline()
     writeScan()
     const exp = buildProjectExplanation(tmpDir)
     expect(exp.suggestedNextSteps).toContain('Run `kaddo context` to prepare an LLM context pack.')
@@ -223,6 +232,7 @@ describe('buildProjectExplanation — roadmap candidates vs materialized (VS-039
 
   it('counts candidates and computes remaining when nothing is materialized', () => {
     initConfig()
+    writeBaseline()
     write('knowledge/delivery/roadmap.md', roadmap)
     const exp = buildProjectExplanation(tmpDir)
     expect(exp.roadmap.present).toBe(true)
@@ -416,6 +426,7 @@ describe('project explain — mapped modules (module-aware)', () => {
 describe('explain — Project Readiness (VS-072.1)', () => {
   it('AC5/AC12: human output has a Project Readiness section + single next step (initialized → scan)', () => {
     initConfig()
+    writeBaseline()
     const md = renderExplanationHuman(buildProjectExplanation(tmpDir))
     expect(md).toContain('## Project Readiness')
     expect(md).toContain('overall: initialized')

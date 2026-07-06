@@ -99,6 +99,15 @@ const scanRepository: StepDef = {
   },
 }
 
+const bootstrapBaseline: StepDef = {
+  id: 'bootstrap',
+  label: 'Bootstrap knowledge baseline',
+  evaluate: (ctx) => {
+    if (ctx.qBusiness !== 'missing' && ctx.qProduct !== 'missing') return { status: 'done', evidence: ['knowledge/business/business.md', 'knowledge/product/product.md'] }
+    return { status: 'pending', command: 'kaddo bootstrap', reason: 'The knowledge baseline is incomplete.' }
+  },
+}
+
 const defineBusiness: StepDef = {
   id: 'define-business',
   label: 'Define business context',
@@ -314,6 +323,7 @@ const NEW_STEPS: StepDef[] = [
 const PRE_AI_STEPS: StepDef[] = [
   enableKaddo,
   scanRepository,
+  bootstrapBaseline,
   defineBusiness,
   defineProduct,
   discoverCapabilities,
@@ -332,6 +342,7 @@ const PRE_AI_STEPS: StepDef[] = [
 const LEGACY_STEPS: StepDef[] = [
   enableKaddo,
   scanRepository,
+  bootstrapBaseline,
   identifyLegacyModules,
   { ...discoverCapabilities, label: 'Discover critical capabilities' },
   describeArchitecture,
@@ -426,7 +437,7 @@ function loadScanWarnings(dir: string): boolean {
 function mapNextStepId(id: string): string {
   const MAP: Record<string, string> = {
     init: 'enable-kaddo',
-    bootstrap: 'define-business',
+    bootstrap: 'bootstrap',
     'add-agents': 'enable-kaddo',
     'add-skills': 'enable-kaddo',
     scan: 'scan-repository',
