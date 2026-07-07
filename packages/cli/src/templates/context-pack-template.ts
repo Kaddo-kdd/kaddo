@@ -324,8 +324,18 @@ export function renderContextPack(pack: ContextPack): string {
   if (isBootstrapIncomplete) {
     parts.push('No agent handoff yet.\n')
     parts.push('Run `kaddo bootstrap` first to create the baseline files.\n')
+  } else if (rec.agent && rec.agentInstalled === false) {
+    parts.push(`Recommended agent: ${rec.agent.replace(/\.md$/, '')}\n`)
+    parts.push('**Agent is not installed.**\n')
+    if (rec.installCommand) {
+      parts.push(`Run \`${rec.installCommand}\` to install it.\n`)
+    }
+    parts.push('Then run `kaddo context` and `kaddo understand`.\n')
   } else {
     parts.push(`Recommended next for the **${pack.phase.phase}** phase:\n`)
+    if (rec.agentPath) {
+      parts.push(`Agent prompt: \`${rec.agentPath}\`\n`)
+    }
     parts.push(handoff.recommendedAgents.map((a, i) => `${i + 1}. ${a}`).join('\n') + '\n')
     if (handoff.nextSteps.length > 0) {
       parts.push('Next step:\n')

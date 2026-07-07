@@ -86,6 +86,11 @@ export function runUnderstand(): void {
       for (const r of assessment.reasons) console.log(`  - ${r}`)
     }
     if (rec.agent) console.log(`Recommended: ${rec.agent}`)
+    if (rec.agent && rec.agentInstalled === false) {
+      console.log(`  ⚠ Agent not installed. Run: ${rec.installCommand ?? 'kaddo add agents'}`)
+    } else if (rec.agentPath) {
+      console.log(`  Agent prompt: ${rec.agentPath}`)
+    }
     if (rec.skill) console.log(`Recommended skill: ${rec.skill}`)
     console.log(`Next step: ${rec.label}`)
     if (rec.reason) console.log(`Why: ${rec.reason}`)

@@ -64,6 +64,7 @@ const RECOMMENDED_BY_STATE: Record<ProjectState, string[]> = {
     'adr-agent.md',
   ],
   'pre-ai': [
+    'business-agent.md',
     'capability-agent.md',
     'architecture-agent.md',
     'roadmap-agent.md',

@@ -110,6 +110,32 @@ Items, `understand` recommends reviewing them before continuing implementation a
 `graph-agent`. The nudge only appears when hints touch active work — it stays out of the way
 otherwise.
 
+## Bootstrap alignment (VS-083 / VS-083.1)
+
+When the knowledge baseline is incomplete (neither `knowledge/business/business.md` nor
+`knowledge/product/product.md` exist), `understand` enters **Setup** mode:
+
+- The project route marks the `bootstrap` step as current.
+- The phase is reported as **Setup** instead of Discovery.
+- Agent handoff sections (Agent Prompts, Expected Outputs, Copy/Paste) are suppressed —
+  agents cannot produce useful output without baseline knowledge.
+- The terminal and markdown guide show a numbered bootstrap sequence:
+  1. `kaddo bootstrap` → 2. `kaddo add agents` → 3. `kaddo add skills` → 4. `kaddo context` → 5. `kaddo understand`.
+
+Once both baseline files exist, the normal phase-aware flow resumes.
+
+## Knowledge refinement handoff (VS-083.2)
+
+After the bootstrap baseline exists but a knowledge file is still a placeholder or too thin,
+`understand` recommends a **Knowledge Refinement** step with the specific agent needed:
+
+- The recommendation includes `agentPath`, `agentInstalled`, and `installCommand`.
+- If the recommended agent is **not installed**, the markdown guide shows a
+  **Missing Agent** section with the install command instead of Agent Prompts.
+- If the agent **is installed**, the markdown shows the agent prompt path in the
+  Agent Prompts section.
+- The context pack's Recommended Agent Handoff section also reflects agent install status.
+
 ## Works even when context is incomplete
 
 If the scan baseline or some agents are missing, the command still produces a plan and

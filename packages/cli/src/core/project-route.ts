@@ -443,6 +443,11 @@ function mapNextStepId(id: string): string {
     scan: 'scan-repository',
     context: 'scan-repository',
     understand: 'scan-repository',
+    'refine-business': 'define-business',
+    'refine-product': 'define-product',
+    'refine-capabilities': 'discover-capabilities',
+    'refine-current-state': 'describe-architecture',
+    'refine-codebase': 'describe-architecture',
   }
   return MAP[id] ?? id
 }

@@ -127,6 +127,33 @@ consola. Incluye:
 
 Ninguna sección se renderiza vacía — si no hay datos, se omite o muestra un fallback.
 
+## Alineación de bootstrap (VS-083 / VS-083.1)
+
+Cuando el baseline de conocimiento está incompleto (no existen `knowledge/business/business.md` ni
+`knowledge/product/product.md`), `understand` entra en modo **Setup**:
+
+- La ruta del proyecto marca el paso `bootstrap` como actual.
+- La fase se reporta como **Setup** en lugar de Discovery.
+- Las secciones de handoff de agente (Agent Prompts, Expected Outputs, Copy/Paste) se suprimen —
+  los agentes no pueden producir output útil sin conocimiento baseline.
+- La terminal y la guía markdown muestran una secuencia numerada de bootstrap:
+  1. `kaddo bootstrap` → 2. `kaddo add agents` → 3. `kaddo add skills` → 4. `kaddo context` → 5. `kaddo understand`.
+
+Una vez que ambos archivos baseline existen, el flujo normal phase-aware se reanuda.
+
+## Handoff de refinamiento de conocimiento (VS-083.2)
+
+Después de que el baseline de bootstrap existe pero un archivo de conocimiento sigue siendo un
+placeholder o es demasiado delgado, `understand` recomienda un paso de **Knowledge Refinement**
+con el agente específico necesario:
+
+- La recomendación incluye `agentPath`, `agentInstalled` e `installCommand`.
+- Si el agente recomendado **no está instalado**, la guía markdown muestra una sección
+  **Missing Agent** con el comando de instalación en lugar de Agent Prompts.
+- Si el agente **está instalado**, el markdown muestra el path del prompt del agente en la
+  sección Agent Prompts.
+- La sección Recommended Agent Handoff del context pack también refleja el estado de instalación.
+
 ## Funciona aunque falte contexto
 
 Si falta el baseline de scan o algunos agentes, el comando igual produce un plan y te indica

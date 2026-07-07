@@ -5,8 +5,9 @@
 // read-only: no LLM, no git, no command execution, no knowledge edits. When in doubt it stays
 // conservative and never recommends `create --from roadmap` with an empty roadmap.
 
-import { exists, readFile, join } from '../utils/fs.js'
+import { exists, readFile, join, isFile } from '../utils/fs.js'
 import { loadConfig } from './config.js'
+import { agentInstallPath, agentGroupOf } from '../agents/groups.js'
 import { analyzeKnowledgeArtifact } from './artifact-quality.js'
 import { buildOpenQuestionsReport } from './open-questions.js'
 import { discoverWorkItems } from '../services/knowledge-artifacts.js'
@@ -34,6 +35,12 @@ export type NextStepRecommendation = {
   label: string
   command?: string
   agent?: string
+  /** Resolved path to the agent prompt file (relative to project root). */
+  agentPath?: string
+  /** Whether the recommended agent is installed on disk. */
+  agentInstalled?: boolean
+  /** Command to install the missing agent. */
+  installCommand?: string
   skill?: string
   target?: string
   reason: string
@@ -176,15 +183,26 @@ export function resolveNextStep(dir: string, now: Date = new Date()): NextStepRe
 
   // Knowledge refinement — keep the layer order Business → Product → Tech.
   const discovery = state === 'pre-ai' || state === 'legacy'
-  const refine = (id: string, agent: string, target: string, quality: string, verb = 'complete'): NextStepRecommendation => ({
-    id, phase: 'Knowledge Refinement', label: `Use ${agent} to ${verb} \`${target}\`.`, agent, target,
-    reason: `${target} is ${quality === 'missing' ? 'missing' : 'still a bootstrap placeholder or too thin'}.`,
-    instructions: [
-      'The baseline file exists but does not yet hold real, project-specific knowledge.',
-      `Use the ${agent} to replace the placeholders with real knowledge.`,
-      'Do not write code.',
-    ],
-  })
+  const resolveAgent = (agent: string) => {
+    const file = agent.endsWith('.md') ? agent : `${agent}.md`
+    const path = agentInstallPath(file)
+    const installed = isFile(join(dir, path))
+    const group = agentGroupOf(file)
+    return { agentPath: path, agentInstalled: installed, installCommand: installed ? undefined : `kaddo add agents --group ${group}` }
+  }
+  const refine = (id: string, agent: string, target: string, quality: string, verb = 'complete'): NextStepRecommendation => {
+    const ar = resolveAgent(agent)
+    return {
+      id, phase: 'Knowledge Refinement', label: `Use ${agent} to ${verb} \`${target}\`.`, agent, target,
+      agentPath: ar.agentPath, agentInstalled: ar.agentInstalled, installCommand: ar.installCommand,
+      reason: `${target} is ${quality === 'missing' ? 'missing' : 'still a bootstrap placeholder or too thin'}.`,
+      instructions: [
+        'The baseline file exists but does not yet hold real, project-specific knowledge.',
+        `Use the ${agent} to replace the placeholders with real knowledge.`,
+        'Do not write code.',
+      ],
+    }
+  }
   if (qBusiness !== 'useful') return refine('refine-business', 'business-agent', B, qBusiness)
   if (qProduct !== 'useful' || qCap !== 'useful') {
     // For existing projects, capabilities is a *discovery* of what the system already does (VS-074).
