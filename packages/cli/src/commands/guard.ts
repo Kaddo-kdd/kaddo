@@ -3,6 +3,7 @@ import { discoverKnowledge } from '../services/knowledge-artifacts.js'
 import { analyzeGuard, normalizeTouchedPathForProject, type ArtifactMatch } from '../core/diff-analysis.js'
 import { loadIgnores, saveIgnore, isIgnored } from '../services/ignore-store.js'
 import { collectWorkspaceChanges, type WorkspaceScan } from '../services/workspace-guard.js'
+import { analyzeMetadataHealth } from '../core/metadata-health.js'
 import { exists, join, cwd, readFile } from '../utils/fs.js'
 import path from 'path'
 import { parse as parseYaml } from 'yaml'
@@ -368,6 +369,16 @@ export async function runGuard(opts: { staged?: boolean; interactive?: boolean; 
 
   // Show plugin signals
   printPluginSignals(pluginSignals)
+
+  // Metadata health warnings (VS-084).
+  const mh = analyzeMetadataHealth(dir)
+  if (mh.findings.length > 0) {
+    console.log('Metadata health:')
+    for (const f of mh.findings) {
+      console.log(`  ⚠ ${f.file}: ${f.detail}`)
+    }
+    console.log('')
+  }
 
   // Show domain owners for matched domains
   const ownerMap = loadOwners(dir)

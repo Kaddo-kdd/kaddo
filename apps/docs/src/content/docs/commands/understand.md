@@ -178,6 +178,30 @@ output. It includes:
 
 No section is rendered empty — if data is not available, it is omitted or shows a fallback.
 
+## Agent output metadata preservation (VS-084)
+
+When agents refine knowledge files created by `kaddo bootstrap`, they must preserve the YAML
+frontmatter metadata (`type`, `generated_by`, `template_version`). Agents that rewrite
+knowledge files automatically receive **Frontmatter Rules** in their prompt that instruct them
+to:
+
+- Preserve existing frontmatter fields.
+- Not remove `type`, `generated_by`, or `template_version`.
+- Set `project_state: ai-assisted` when the document is no longer a placeholder.
+- Add or update `refined_by` with the agent name.
+
+A separate **metadata health** analyzer detects drift — missing required fields or
+inconsistent `project_state` after refinement. Metadata health is independent of content
+quality: a file with useful content but drifted metadata is still classified as useful by
+the content quality analyzer.
+
+Metadata health warnings appear in:
+
+- `context-pack.json` (`metadataHealth` field) and `context-pack.md` (Metadata Health section).
+- `.kaddo/understand.md` and the terminal output of `kaddo understand`.
+- `kaddo explain` (human and agent modes).
+- `kaddo guard` output.
+
 ## Example
 
 ```text

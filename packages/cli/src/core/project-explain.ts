@@ -33,6 +33,7 @@ import {
 import { buildProjectRoute, renderRouteMarkdown, type ProjectRoute } from './project-route.js'
 import { type ScanSignals, renderSignalsCompact, signalCount } from './scan-signals.js'
 import { parseWorkItemSource, summarizeWorkItemSources, renderSourcesSummary } from './work-item-source.js'
+import { analyzeMetadataHealth, type MetadataHealth } from './metadata-health.js'
 
 const ARCH_DIR = 'knowledge'
 
@@ -125,6 +126,8 @@ export type ProjectExplanation = {
   projectRoute: ProjectRoute
   /** Scan signals: auth, payments, webhooks, etc. (VS-081). */
   scanSignals: ScanSignals | null
+  /** Knowledge file metadata health (VS-084). */
+  metadataHealth: MetadataHealth
 }
 
 function normalizeTitle(t: string): string {
@@ -457,6 +460,7 @@ export function buildProjectExplanation(dir: string): ProjectExplanation {
     roadmapQuality: buildRoadmapQuality(dir),
     projectRoute: buildProjectRoute(dir),
     scanSignals: loadScanSignals(dir),
+    metadataHealth: analyzeMetadataHealth(dir),
   }
 }
 
@@ -816,6 +820,15 @@ export function renderExplanationHuman(exp: ProjectExplanation): string {
     if (ia.agents.outdated + ia.agents.unknown_version + ia.skills.outdated + ia.skills.unknown_version > 0) {
       lines.push('')
       lines.push('Suggested: run `kaddo agents status` and `kaddo skills status`.')
+    }
+    lines.push('')
+  }
+
+  // Metadata health (VS-084).
+  if (exp.metadataHealth.findings.length > 0) {
+    lines.push('## Metadata Health')
+    for (const f of exp.metadataHealth.findings) {
+      lines.push(`- \`${f.file}\`: ${f.detail}`)
     }
     lines.push('')
   }

@@ -10,6 +10,7 @@ import { activeWorkItems, renderDeliveryLifecycle } from '../core/delivery.js'
 import { buildProjectExplanation } from '../core/project-explain.js'
 import { assessPhase } from '../core/delivery-phase.js'
 import { loadGraphHints } from '../core/graph-hints.js'
+import { analyzeMetadataHealth } from '../core/metadata-health.js'
 import { buildOpenQuestionsReport } from '../core/open-questions.js'
 import { discoverInstalledSkills, skillsForAgents } from '../services/installed-skills.js'
 import { discoverWorkItems } from '../services/knowledge-artifacts.js'
@@ -232,6 +233,7 @@ export function runUnderstand(): void {
     recommendedSkillPaths,
     language: languageLabel(projectLanguage(config)),
     projectRoute: buildProjectRoute(dir),
+    metadataHealth: analyzeMetadataHealth(dir),
   })
 
   writeFile(join(dir, '.kaddo', 'understand.md'), renderUnderstand(enrichedPlan))

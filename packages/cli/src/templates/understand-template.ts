@@ -262,6 +262,14 @@ export function renderUnderstand(plan: UnderstandPlan): string {
     parts.push('Re-run `kaddo understand` any time to see this plan again.\n')
   }
 
+  // Metadata health warnings (VS-084).
+  if (plan.metadataHealth && plan.metadataHealth.findings.length > 0) {
+    parts.push('## Metadata Health\n')
+    for (const f of plan.metadataHealth.findings) {
+      parts.push(`- \`${f.file}\`: ${f.detail}\n`)
+    }
+  }
+
   return parts.join('\n')
 }
 
@@ -328,7 +336,15 @@ export function renderUnderstandTerminal(plan: UnderstandPlan): string {
       }
     }
   }
-  lines.push('')
+  // Metadata health warnings (VS-084).
+  if (plan.metadataHealth && plan.metadataHealth.findings.length > 0) {
+    lines.push('Metadata health:')
+    for (const f of plan.metadataHealth.findings) {
+      lines.push(`  ⚠ ${f.file}: ${f.detail}`)
+    }
+    lines.push('')
+  }
+
   lines.push('Kaddo does not call an LLM. You stay in control of the interpretation.')
   lines.push('')
 

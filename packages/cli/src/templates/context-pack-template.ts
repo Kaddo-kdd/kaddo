@@ -318,6 +318,14 @@ export function renderContextPack(pack: ContextPack): string {
     parts.push('_None — all expected context is present._\n')
   }
 
+  // Metadata health warnings (VS-084): frontmatter drift is separate from content quality.
+  if (pack.metadataHealth.findings.length > 0) {
+    parts.push('\n### Metadata Health\n')
+    for (const f of pack.metadataHealth.findings) {
+      parts.push(`- \`${f.file}\`: ${f.detail}\n`)
+    }
+  }
+
   // 8. Recommended Agent Handoff — driven by the real phase (VS-052), so it agrees with the
   // Current Phase block above instead of recommending early-stage agents by project.state.
   parts.push('## Recommended Agent Handoff\n')

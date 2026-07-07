@@ -20,6 +20,7 @@ import { discoverInstalledSkills } from '../services/installed-skills.js'
 import { buildProjectRoute, type ProjectRoute } from './project-route.js'
 import { type ScanSignals } from './scan-signals.js'
 import { parseWorkItemSource, type WorkItemSource } from './work-item-source.js'
+import { analyzeMetadataHealth, type MetadataHealth } from './metadata-health.js'
 
 export const CONTEXT_PACK_VERSION = '1'
 
@@ -109,6 +110,8 @@ export type ContextPack = {
   scanSignals: ScanSignals | null
   /** Project route progress map (VS-080). */
   projectRoute: ProjectRoute
+  /** Knowledge file metadata health — frontmatter drift detection (VS-084). */
+  metadataHealth: MetadataHealth
   mappedModules: MappedModuleWithCoverage[]
   missing: string[]
   handoff: {
@@ -444,6 +447,7 @@ export function buildContextPack(
     skills: discoverInstalledSkills(dir).map((s) => s.id),
     scanSignals: scanJson?.signals ?? null,
     projectRoute: buildProjectRoute(dir),
+    metadataHealth: analyzeMetadataHealth(dir),
     mappedModules,
     missing,
     // VS-052/VS-073.2: the handoff is driven by the unified next step, so the pack never contradicts

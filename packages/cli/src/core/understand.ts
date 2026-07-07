@@ -3,6 +3,7 @@ import type { KaddoConfig, ProjectState } from './config.js'
 import { agentInstallPath } from '../agents/groups.js'
 import type { NextStepRecommendation, DeliveryState } from './next-step.js'
 import type { ProjectRoute } from './project-route.js'
+import type { MetadataHealth } from './metadata-health.js'
 
 /** An agent is installed if present in its layer folder, or (legacy) the flat folder. */
 export function agentIsInstalled(dir: string, fileName: string): boolean {
@@ -58,6 +59,8 @@ export type UnderstandPlan = {
   recommendedSkillPaths?: string[]
   /** Project route progress map (VS-080). */
   projectRoute?: ProjectRoute
+  /** Knowledge file metadata health (VS-084). */
+  metadataHealth?: MetadataHealth
 }
 
 /** State-aware agent flow: each agent mapped to its expected output artifact. */
@@ -135,6 +138,7 @@ export function enrichUnderstandPlan(
     recommendedSkillPaths: string[]
     language: string
     projectRoute?: ProjectRoute
+    metadataHealth?: MetadataHealth
   },
 ): UnderstandPlan {
   return {
@@ -147,5 +151,6 @@ export function enrichUnderstandPlan(
     recommendedPaths: opts.recommendedPaths,
     recommendedSkillPaths: opts.recommendedSkillPaths,
     projectRoute: opts.projectRoute,
+    metadataHealth: opts.metadataHealth,
   }
 }

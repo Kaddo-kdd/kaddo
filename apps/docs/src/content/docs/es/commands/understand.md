@@ -169,6 +169,30 @@ con el agente específico necesario:
   sección Agent Prompts.
 - La sección Recommended Agent Handoff del context pack también refleja el estado de instalación.
 
+## Preservación de metadatos en salida de agentes (VS-084)
+
+Cuando los agentes refinan archivos de conocimiento creados por `kaddo bootstrap`, deben
+preservar los metadatos del frontmatter YAML (`type`, `generated_by`, `template_version`).
+Los agentes que reescriben archivos de conocimiento reciben automáticamente **Frontmatter Rules**
+en su prompt que los instruyen a:
+
+- Preservar los campos de frontmatter existentes.
+- No eliminar `type`, `generated_by` ni `template_version`.
+- Establecer `project_state: ai-assisted` cuando el documento deja de ser un placeholder.
+- Agregar o actualizar `refined_by` con el nombre del agente.
+
+Un analizador de **metadata health** separado detecta drift — campos requeridos faltantes o
+`project_state` inconsistente después del refinamiento. La salud de metadatos es independiente
+de la calidad del contenido: un archivo con contenido útil pero metadatos con drift sigue
+clasificándose como útil por el analizador de calidad de contenido.
+
+Las advertencias de metadata health aparecen en:
+
+- `context-pack.json` (campo `metadataHealth`) y `context-pack.md` (sección Metadata Health).
+- `.kaddo/understand.md` y la salida de terminal de `kaddo understand`.
+- `kaddo explain` (modos humano y agente).
+- Salida de `kaddo guard`.
+
 ## Funciona aunque falte contexto
 
 Si falta el baseline de scan o algunos agentes, el comando igual produce un plan y te indica

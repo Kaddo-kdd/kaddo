@@ -338,13 +338,54 @@ export function renderSkillsSection(agent: string): string {
   ].join('\n')
 }
 
-/** Append language rule + boundaries + skills + trace sections to a prompt (no-op if no entry). */
+/**
+ * Agents that refine knowledge files created by `kaddo bootstrap` or templates. These agents
+ * get frontmatter preservation rules appended to their prompts (VS-084).
+ */
+const KNOWLEDGE_REFINING_AGENTS: Record<string, string> = {
+  'business-agent': 'business-agent',
+  'capability-agent': 'capability-agent',
+  'bootstrap-agent': 'bootstrap-agent',
+  'codebase-agent': 'codebase-agent',
+  'architecture-agent': 'architecture-agent',
+  'roadmap-agent': 'roadmap-agent',
+  'legacy-agent': 'legacy-agent',
+  'work-item-agent': 'work-item-agent',
+  'backlog-agent': 'backlog-agent',
+  'adr-agent': 'adr-agent',
+  'implementation-agent': 'implementation-agent',
+}
+
+/**
+ * Frontmatter preservation rules (VS-084) for agents that rewrite existing Kaddo knowledge files.
+ */
+export function renderFrontmatterRules(agent: string): string {
+  if (!KNOWLEDGE_REFINING_AGENTS[agent]) return ''
+  return [
+    '## Frontmatter Rules',
+    '',
+    'When rewriting an existing Kaddo knowledge file:',
+    '',
+    '- Preserve the existing YAML frontmatter.',
+    '- Do not remove `type`, `generated_by`, or `template_version`.',
+    '- If the document is no longer a placeholder, set `project_state: ai-assisted`.',
+    `- Add or update \`refined_by: ${agent}\`.`,
+    '- Preserve unknown frontmatter keys — do not strip fields you do not recognize.',
+    '- Only rewrite the markdown body unless metadata changes are explicitly required by these rules.',
+    '- Preserve structural sections like `## Open Questions` — leave them empty rather than removing them.',
+    '',
+  ].join('\n')
+}
+
+/** Append language rule + frontmatter rules + boundaries + skills + trace sections to a prompt (no-op if no entry). */
 export function withResponsibilityTrace(fileName: string, content: string): string {
   const agent = fileName.replace(/\.md$/, '')
   if (!RESPONSIBILITY_MATRIX[agent]) return content
   const skills = renderSkillsSection(agent)
   const skillsBlock = skills ? `${skills}\n` : ''
-  return `${content.trimEnd()}\n\n${renderLanguageRule()}\n${renderAgentBoundaries(agent)}\n${skillsBlock}${renderAgentTrace(agent)}`
+  const frontmatter = renderFrontmatterRules(agent)
+  const frontmatterBlock = frontmatter ? `${frontmatter}\n` : ''
+  return `${content.trimEnd()}\n\n${renderLanguageRule()}\n${frontmatterBlock}${renderAgentBoundaries(agent)}\n${skillsBlock}${renderAgentTrace(agent)}`
 }
 
 /** Render the full responsibility matrix as Markdown (docs + reference). */
