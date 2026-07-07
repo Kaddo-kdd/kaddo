@@ -131,7 +131,7 @@ describe('VS-088 — review-work-item next step', () => {
     write('knowledge/delivery/work-items/draft/WI-001.md', REFINED_DRAFT_WI)
     const rec = resolveNextStep(dir)
     expect(rec.id).toBe('review-work-item')
-    expect(rec.command).toBe('kaddo ready')
+    expect(rec.command).toBe('kaddo ready WI-001')
     expect(rec.mcpAction).toBe('kaddo_mark_work_item_ready')
     expect(rec.phase).toBe('Active Delivery')
   })
@@ -153,11 +153,12 @@ describe('VS-088 — review-work-item next step', () => {
     expect(rec.id).toBe('review-work-item')
   })
 
-  it('review-work-item reason mentions count of refined drafts', () => {
+  it('review-work-item reason mentions specific WI ID for single target', () => {
     pastUsefulKnowledge()
     write('knowledge/delivery/work-items/draft/WI-001.md', REFINED_DRAFT_WI)
     const rec = resolveNextStep(dir)
-    expect(rec.reason).toContain('1 refined draft')
+    expect(rec.reason).toContain('WI-001')
+    expect(rec.reason).toContain('refined draft')
   })
 
   it('does not return review-work-item when roadmap has candidates', () => {
@@ -195,5 +196,97 @@ describe('VS-088 — MCP tool safety', () => {
     const src = fs.readFileSync(path.resolve(__dirname, '../../mcp/src/tools.ts'), 'utf-8')
     expect(src).toContain('needs_confirmation')
     expect(src).toContain('kaddo ready')
+  })
+})
+
+const REFINED_DRAFT_WI_2 = `---
+type: feature
+id: WI-003
+title: "Add metrics endpoint"
+knowledge_level: K2
+status: draft
+phase: now
+work_type: feature
+domains:
+  - observability
+code:
+  - src/metrics.ts
+source:
+  type: manual
+  inferred: false
+refined_by: work-item-agent
+generated_by: kaddo-create
+template_version: 1
+---
+
+## Problem
+
+No metrics endpoint exists.
+
+## Acceptance criteria
+
+- [ ] GET /metrics returns Prometheus format.
+
+## Validation
+
+curl localhost:3000/metrics
+`
+
+describe('VS-089 — targeted recommendation', () => {
+  it('single refined draft sets target and mcpArgs', () => {
+    pastUsefulKnowledge()
+    write('knowledge/delivery/work-items/draft/WI-001.md', REFINED_DRAFT_WI)
+    const rec = resolveNextStep(dir)
+    expect(rec.id).toBe('review-work-item')
+    expect(rec.target).toBe('WI-001')
+    expect(rec.mcpArgs).toEqual({ id: 'WI-001' })
+    expect(rec.targets).toBeUndefined()
+  })
+
+  it('multiple refined drafts sets targets array without target/mcpArgs', () => {
+    pastUsefulKnowledge()
+    write('knowledge/delivery/work-items/draft/WI-001.md', REFINED_DRAFT_WI)
+    write('knowledge/delivery/work-items/draft/WI-003.md', REFINED_DRAFT_WI_2)
+    const rec = resolveNextStep(dir)
+    expect(rec.id).toBe('review-work-item')
+    expect(rec.targets).toEqual(expect.arrayContaining(['WI-001', 'WI-003']))
+    expect(rec.targets).toHaveLength(2)
+    expect(rec.target).toBeUndefined()
+    expect(rec.mcpArgs).toBeUndefined()
+  })
+
+  it('multiple refined drafts uses generic command', () => {
+    pastUsefulKnowledge()
+    write('knowledge/delivery/work-items/draft/WI-001.md', REFINED_DRAFT_WI)
+    write('knowledge/delivery/work-items/draft/WI-003.md', REFINED_DRAFT_WI_2)
+    const rec = resolveNextStep(dir)
+    expect(rec.command).toBe('kaddo ready <WI-ID>')
+    expect(rec.reason).toContain('2 refined draft')
+  })
+
+  it('refined_draft_ids populated in DeliveryState', () => {
+    config()
+    write('knowledge/delivery/work-items/draft/WI-001.md', REFINED_DRAFT_WI)
+    write('knowledge/delivery/work-items/draft/WI-003.md', REFINED_DRAFT_WI_2)
+    const st = buildDeliveryState(dir)
+    expect(st.refined_draft_ids).toEqual(expect.arrayContaining(['WI-001', 'WI-003']))
+    expect(st.refined_draft_ids).toHaveLength(2)
+  })
+
+  it('single refined draft label includes WI ID', () => {
+    pastUsefulKnowledge()
+    write('knowledge/delivery/work-items/draft/WI-001.md', REFINED_DRAFT_WI)
+    const rec = resolveNextStep(dir)
+    expect(rec.label).toContain('WI-001')
+    expect(rec.label).toContain('ready')
+  })
+
+  it('context-pack JSON includes target and mcpArgs for single', () => {
+    pastUsefulKnowledge()
+    write('knowledge/delivery/work-items/draft/WI-001.md', REFINED_DRAFT_WI)
+    const rec = resolveNextStep(dir)
+    const json = JSON.stringify(rec)
+    expect(json).toContain('"target":"WI-001"')
+    expect(json).toContain('"mcpArgs"')
   })
 })

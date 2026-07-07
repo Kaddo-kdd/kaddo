@@ -43,10 +43,14 @@ export type NextStepRecommendation = {
   installCommand?: string
   skill?: string
   target?: string
+  /** Multiple targets when more than one candidate exists (VS-089). */
+  targets?: string[]
   reason: string
   instructions?: string[]
   /** MCP tool name the agent can invoke instead of the CLI command (VS-088). */
   mcpAction?: string
+  /** MCP tool arguments for a single-target recommendation (VS-089). */
+  mcpArgs?: Record<string, string>
   /** Parallel recommendations that don't replace the primary one (VS-079). */
   secondary?: SecondaryRecommendation[]
 }
@@ -56,6 +60,7 @@ export type DeliveryState = {
   phase: string
   draft_work_items: number
   refined_draft_work_items: number
+  refined_draft_ids: string[]
   ready_work_items: number
   in_progress_work_items: number
   blocked_work_items: number
@@ -82,6 +87,7 @@ export function buildDeliveryState(dir: string): DeliveryState {
     phase: '',
     draft_work_items: byState('draft'),
     refined_draft_work_items: wis.filter((w) => w.lifecycle === 'draft' && w.rawFrontmatter.refined_by).length,
+    refined_draft_ids: wis.filter((w) => w.lifecycle === 'draft' && w.rawFrontmatter.refined_by).map((w) => w.id),
     ready_work_items: byState('ready'),
     in_progress_work_items: byState('in-progress'),
     blocked_work_items: byState('blocked'),
@@ -240,13 +246,20 @@ export function resolveNextStep(dir: string, now: Date = new Date()): NextStepRe
 
   if (roadmap !== 'has-candidates' && st.draft_work_items > 0) {
     if (st.refined_draft_work_items > 0) {
+      const ids = st.refined_draft_ids
+      const single = ids.length === 1
       return {
         id: 'review-work-item',
         phase: 'Active Delivery',
-        label: 'Review the refined draft Work Item and mark it ready with `kaddo ready`.',
-        command: 'kaddo ready',
+        label: single
+          ? `Review ${ids[0]} and mark it ready for implementation.`
+          : 'Review refined draft Work Items and mark one ready for implementation.',
+        command: single ? `kaddo ready ${ids[0]}` : 'kaddo ready <WI-ID>',
         mcpAction: 'kaddo_mark_work_item_ready',
-        reason: `There ${st.refined_draft_work_items === 1 ? 'is' : 'are'} ${st.refined_draft_work_items} refined draft Work Item${st.refined_draft_work_items === 1 ? '' : 's'} awaiting human review.`,
+        ...(single ? { target: ids[0], mcpArgs: { id: ids[0] } } : { targets: ids }),
+        reason: single
+          ? `${ids[0]} is a refined draft Work Item awaiting human review.`
+          : `There are ${ids.length} refined draft Work Items awaiting human review.`,
         ...(secondary.length ? { secondary } : {}),
       }
     }

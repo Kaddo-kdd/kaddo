@@ -24,18 +24,21 @@ Kaddo evalúa el siguiente paso en orden de prioridad:
 5. Work Item **ready** + sin adapter → instalar un adapter (`kaddo adapters list`)
 6. Work Item **ready** + adapter → **implementation-agent**
 7. Work Item **in-progress** → `kaddo guard`
-8. Work Item **draft** → **work-item-agent** (nunca "crear el primer Work Item")
-9. Work Item **blocked** → resolver el bloqueo con el work-item-agent
-10. Solo trabajo completed/archived → materializar candidatos restantes o planear la próxima iniciativa
+8. Work Item **draft refinado** (`refined_by` presente) → `kaddo ready <WI-ID>` (revisión humana)
+9. Work Item **draft** → **work-item-agent** (nunca "crear el primer Work Item")
+10. Work Item **blocked** → resolver el bloqueo con el work-item-agent
+11. Solo trabajo completed/archived → materializar candidatos restantes o planear la próxima iniciativa
 
 La regla central: **Kaddo recomienda el siguiente paso según el estado real del delivery, no solo según
 la existencia de candidatos de roadmap pendientes.**
 
 ## Recomendaciones primaria + secundarias
 
-La recomendación es un objeto con `id`, `phase`, `label`, `reason` y opcionalmente `command`, `agent` y
-`skill`. Las preocupaciones paralelas se exponen como recomendaciones **secundarias** que no reemplazan
-a la primaria:
+La recomendación es un objeto con `id`, `phase`, `label`, `reason` y opcionalmente `command`, `agent`,
+`skill`, `mcpAction`, `target`, `targets` y `mcpArgs`. Cuando la recomendación apunta a un solo Work
+Item, `target` y `mcpArgs` se establecen para que los agentes puedan invocar la herramienta MCP
+directamente. Cuando hay múltiples candidatos, `targets` lista todos los IDs. Las preocupaciones
+paralelas se exponen como recomendaciones **secundarias** que no reemplazan a la primaria:
 
 - **Ownership** — cuando la cobertura de ownership es menor al 100%, aparece `kaddo owners suggest`.
 - **ADRs** — cuando hay decision candidates técnicos y ningún ADR aceptado, se sugiere la skill
@@ -65,14 +68,18 @@ primaria:
   "deliveryState": {
     "phase": "Active Delivery",
     "draft_work_items": 1,
+    "refined_draft_work_items": 1,
+    "refined_draft_ids": ["WI-001"],
     "ready_work_items": 0,
     "ownership_coverage": "0/1",
     "remaining_work_item_candidates": 6
   },
   "nextStepRecommendation": {
-    "id": "refine-work-item",
-    "agent": "work-item-agent",
-    "skill": "work-item-refinement"
+    "id": "review-work-item",
+    "command": "kaddo ready WI-001",
+    "mcpAction": "kaddo_mark_work_item_ready",
+    "target": "WI-001",
+    "mcpArgs": { "id": "WI-001" }
   }
 }
 ```
