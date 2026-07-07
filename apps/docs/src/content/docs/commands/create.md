@@ -178,6 +178,40 @@ Work Items created before source metadata was available are read with `source: u
 runtime — the files are never modified. `kaddo explain` shows a "Work Item Sources" summary
 and `kaddo project-route` warns when work items have unknown sources.
 
+## Directory resilience (VS-085)
+
+Since v3.55.0, `kaddo create` automatically creates the `knowledge/delivery/work-items/`
+directory if it is missing, as long as the project is initialized (`.kaddo/config.yml` exists).
+The misleading "Run `kaddo init` first" error only appears when the project is truly not
+initialized.
+
+## Acceptance criteria UX (VS-085)
+
+Acceptance criteria are now collected one at a time with a "Add another?" confirmation prompt,
+which is reliable across all shells including PowerShell on Windows. Semicolon-separated input
+is also supported: `criterion 1; criterion 2; criterion 3`.
+
+All criteria are normalized to Markdown checkbox format:
+
+```md
+- [ ] Criterion text.
+```
+
+## Source metadata (VS-085)
+
+Manually created Work Items include structured source metadata:
+
+```yaml
+source:
+  type: manual
+  inferred: false
+generated_by: kaddo-create
+template_version: 1
+```
+
+This aligns with VS-084 metadata health and makes manual Work Items traceable alongside
+roadmap-materialized ones.
+
 ## Activate Guard Lite
 
 Add code globs to the `code:` field of the generated front matter:

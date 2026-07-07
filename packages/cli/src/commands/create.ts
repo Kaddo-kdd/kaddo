@@ -1,8 +1,8 @@
 import { getLevel, getLevelForType, normalizeType, type WorkItemType, type KLevel } from '../core/knowledge-levels.js'
 import { findWorkItemType } from '../modules/registry.js'
 import type { ModuleWorkItemType } from '../modules/types.js'
-import { exists, readFile, readDir, writeFile, join, cwd, isFile } from '../utils/fs.js'
-import { intro, outro, log, text, select } from '../utils/ui.js'
+import { exists, readFile, readDir, writeFile, join, cwd, isFile, ensureDir } from '../utils/fs.js'
+import { intro, outro, log, text, select, confirm } from '../utils/ui.js'
 import { loadConfig, createGuidanceForState, ConfigError } from '../core/config.js'
 import {
   parseRoadmapCandidates,
@@ -17,6 +17,66 @@ const DRAFT_DIR = `${WORK_ITEMS_DIR}/draft`
 const ROADMAP_PATH = 'knowledge/delivery/roadmap.md'
 
 export type CreateOptions = { from?: string }
+
+/** Ensure the work-items directory exists. Creates it if the project is initialized. */
+function ensureWorkItemsDir(dir: string): void {
+  if (exists(join(dir, WORK_ITEMS_DIR))) return
+  if (!exists(join(dir, '.kaddo', 'config.yml'))) {
+    log.warn('Kaddo is not initialized. Run `kaddo init` first.')
+    process.exit(1)
+  }
+  ensureDir(join(dir, WORK_ITEMS_DIR))
+  log.info(`Created ${WORK_ITEMS_DIR}/`)
+}
+
+/**
+ * Collect acceptance criteria interactively: one at a time with "add another?" confirmation.
+ * Also supports semicolon-separated input in a single line.
+ */
+async function collectAcceptanceCriteria(): Promise<string> {
+  const criteria: string[] = []
+
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    const criterion = await text({
+      message: criteria.length === 0 ? 'Acceptance criterion' : 'Acceptance criterion',
+      placeholder: 'e.g. Users see confirmation after checkout',
+      validate: (v) => (criteria.length === 0 && v.trim().length === 0 ? 'At least one criterion is required.' : undefined),
+    })
+
+    const trimmed = criterion.trim()
+    if (!trimmed && criteria.length > 0) break
+
+    // Support semicolon-separated input
+    if (trimmed.includes(';')) {
+      criteria.push(...trimmed.split(';').map(s => s.trim()).filter(Boolean))
+    } else {
+      criteria.push(trimmed)
+    }
+
+    const addMore = await confirm({ message: 'Add another acceptance criterion?' })
+    if (!addMore) break
+  }
+
+  return criteria.join('\n')
+}
+
+/**
+ * Normalize acceptance criteria text into Markdown checkbox list items.
+ * Each criterion gets a trailing period if missing, and is prefixed with `- [ ] `.
+ */
+export function renderAcceptanceCriteria(raw: string): string {
+  const items = raw
+    .split(/\n|;/)
+    .map(l => l.trim())
+    .filter(Boolean)
+  return items
+    .map(item => {
+      const normalized = item.endsWith('.') ? item : `${item}.`
+      return `- [ ] ${normalized.charAt(0).toUpperCase() + normalized.slice(1)}`
+    })
+    .join('\n')
+}
 
 /** Print state-aware helper text if config exists. Best-effort, never blocks. */
 function printStateGuidance(dir: string): void {
@@ -84,11 +144,16 @@ function buildFrontMatter(
     `knowledge_level: ${level}`,
     `status: draft`,
     `phase: now`,
+    `work_type: ${type}`,
     `initiative:`,
     `domains: []`,
     `code: []`,
     `created_at: ${today}`,
-    `source: manual`,
+    `source:`,
+    `  type: manual`,
+    `  inferred: false`,
+    `generated_by: kaddo-create`,
+    `template_version: 1`,
     `summary: "${answers.problem?.split('.')[0] ?? title}"`,
     '---',
   ]
@@ -120,11 +185,7 @@ function buildBody(
   }
 
   if (answers.acceptance_criteria) {
-    const items = answers.acceptance_criteria
-      .split('\n')
-      .map((l) => l.trim())
-      .filter(Boolean)
-    sections.push(`## Acceptance criteria\n\n${formatList(items)}\n`)
+    sections.push(`## Acceptance criteria\n\n${renderAcceptanceCriteria(answers.acceptance_criteria)}\n`)
   }
 
   if (answers.design) {
@@ -242,6 +303,8 @@ export async function runCreate(type: string, opts: CreateOptions = {}): Promise
   log.info(`Knowledge level: ${level} — ${levelDef.description}`)
   printStateGuidance(dir)
 
+  ensureWorkItemsDir(dir)
+
   const title = await text({
     message: 'Title for this work item',
     placeholder: `e.g. ${workItemType === 'feature' ? 'Add email verification to checkout' : workItemType === 'hotfix' ? 'Fix null pointer in payment handler' : workItemType === 'bugfix' ? 'Fix broken pagination on orders list' : workItemType === 'chore' ? 'Configure Vitest and CI pipeline' : 'Explore caching strategies for API responses'}`,
@@ -251,6 +314,10 @@ export async function runCreate(type: string, opts: CreateOptions = {}): Promise
   const answers: Record<string, string> = {}
 
   for (const question of levelDef.questions) {
+    if (question.frontMatterField === 'acceptance_criteria') {
+      answers.acceptance_criteria = await collectAcceptanceCriteria()
+      continue
+    }
     const answer = await text({
       message: question.prompt,
       placeholder: question.placeholder,
@@ -270,11 +337,6 @@ export async function runCreate(type: string, opts: CreateOptions = {}): Promise
   const body = buildBody(workItemType, level, title.trim(), answers, levelDef.qualityGate)
   const content = `${frontMatter}\n\n${body}`
 
-  if (!exists(join(dir, WORK_ITEMS_DIR))) {
-    log.warn(`${WORK_ITEMS_DIR}/ not found. Run \`kaddo init\` first.`)
-    process.exit(1)
-  }
-
   writeFile(filePath, content)
   log.success(`Created ${DRAFT_DIR}/${fileName}`)
   log.info(`New Work Items start in \`draft\`. Move to \`ready\` when scope and acceptance are set.`)
@@ -287,10 +349,7 @@ async function runCreateModule(dir: string, modType: ModuleWorkItemType): Promis
   log.info(`Knowledge level: ${modType.knowledgeLevel} — ${modType.description}`)
   printStateGuidance(dir)
 
-  if (!exists(join(dir, WORK_ITEMS_DIR))) {
-    log.warn(`${WORK_ITEMS_DIR}/ not found. Run \`kaddo init\` first.`)
-    process.exit(1)
-  }
+  ensureWorkItemsDir(dir)
 
   const title = await text({
     message: 'Title for this work item',
@@ -475,11 +534,7 @@ function buildRoadmapBody(
   sections.push(`## Context From Roadmap\n\n${ctx.join('\n\n')}\n`)
 
   if (answers.acceptance_criteria) {
-    const items = answers.acceptance_criteria
-      .split('\n')
-      .map((l) => l.trim())
-      .filter(Boolean)
-    sections.push(`## Acceptance Criteria\n\n${formatList(items)}\n`)
+    sections.push(`## Acceptance Criteria\n\n${renderAcceptanceCriteria(answers.acceptance_criteria)}\n`)
   }
 
   if (answers.design) sections.push(`## Design\n\n${answers.design}\n`)
@@ -527,10 +582,7 @@ export function buildRoadmapWorkItem(opts: {
 async function runCreateFromRoadmap(dir: string, cliType?: string): Promise<void> {
   intro('kaddo create --from roadmap')
 
-  if (!exists(join(dir, WORK_ITEMS_DIR))) {
-    log.warn(`${WORK_ITEMS_DIR}/ not found. Run \`kaddo init\` first.`)
-    process.exit(1)
-  }
+  ensureWorkItemsDir(dir)
 
   const roadmapFull = join(dir, ROADMAP_PATH)
   if (!exists(roadmapFull)) {

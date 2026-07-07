@@ -180,6 +180,39 @@ tiempo de ejecución — los archivos nunca se modifican. `kaddo explain` muestr
 "Work Item Sources" y `kaddo project-route` advierte cuando hay work items con origen
 desconocido.
 
+## Resiliencia de directorio (VS-085)
+
+Desde v3.55.0, `kaddo create` crea automáticamente el directorio `knowledge/delivery/work-items/`
+si no existe, siempre que el proyecto esté inicializado (`.kaddo/config.yml` existe). El error
+engañoso "Run `kaddo init` first" solo aparece cuando el proyecto realmente no está inicializado.
+
+## UX de criterios de aceptación (VS-085)
+
+Los criterios de aceptación ahora se capturan uno a la vez con confirmación "¿Agregar otro?",
+lo cual es confiable en todos los shells incluido PowerShell en Windows. También se soporta
+entrada separada por punto y coma: `criterio 1; criterio 2; criterio 3`.
+
+Todos los criterios se normalizan a formato checklist Markdown:
+
+```md
+- [ ] Texto del criterio.
+```
+
+## Metadatos de fuente (VS-085)
+
+Los Work Items creados manualmente incluyen metadatos de fuente estructurados:
+
+```yaml
+source:
+  type: manual
+  inferred: false
+generated_by: kaddo-create
+template_version: 1
+```
+
+Esto se alinea con VS-084 (metadata health) y hace que los Work Items manuales sean trazables
+junto con los materializados desde el roadmap.
+
 ## Activar Guard Lite
 
 Agrega globs de código al campo `code:` del front matter generado:

@@ -204,8 +204,8 @@ describe('buildRoadmapWorkItem', () => {
     expect(content).toContain('## Problem')
     expect(content).toContain('Capabilities are ambiguous')
     expect(content).toContain('## Acceptance Criteria')
-    expect(content).toContain('- Customer validated')
-    expect(content).toContain('- Points validated')
+    expect(content).toContain('- [ ] Customer validated.')
+    expect(content).toContain('- [ ] Points validated.')
   })
 })
 
