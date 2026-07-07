@@ -133,6 +133,7 @@ export default defineConfig({
             { label: 'context', slug: 'commands/context' },
             { label: 'understand', slug: 'commands/understand' },
             { label: 'create', slug: 'commands/create' },
+            { label: 'ready', slug: 'commands/ready' },
             { label: 'guard', slug: 'commands/guard' },
             { label: 'explain', slug: 'commands/explain' },
           ],

@@ -27,6 +27,7 @@ import { runAdaptersInstall, runAdaptersList, runAdaptersStatus } from './comman
 import { runAdr } from './commands/adr.js'
 import { runTechOrganize } from './commands/tech.js'
 import { runAssetsStatus, runAssetsUpdate } from './commands/assets.js'
+import { runReady } from './commands/ready.js'
 
 // Single source of truth for the version: read it from package.json at runtime so the CLI
 // `--version` can never drift from the published package version. `../package.json` resolves
@@ -69,6 +70,14 @@ program
   .option('--from <source>', 'Create from a source artifact (currently: roadmap)')
   .action(async (type: string | undefined, opts: { from?: string }) => {
     await runCreate(type ?? '', opts)
+  })
+
+program
+  .command('ready <id>')
+  .description('Mark a draft Work Item as ready for implementation after human review')
+  .option('--yes', 'Skip confirmation prompt')
+  .action(async (id: string, opts: { yes?: boolean }) => {
+    await runReady(id, opts)
   })
 
 const capsuleCmd = program
