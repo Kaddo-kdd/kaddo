@@ -83,9 +83,11 @@ Todas las superficies de Kaddo convergen en `kaddo bootstrap` como la **recomend
 cuando el baseline está incompleto:
 
 - **`kaddo explain`** — sugiere `kaddo bootstrap` primero, luego agents, skills y context en orden.
-- **`kaddo context`** — suprime el handoff de agentes ("No agent handoff yet") y muestra mensajes
-  específicos de bootstrap en el contexto faltante.
-- **`kaddo understand`** — muestra "Agent handoff is not ready yet. Run `kaddo bootstrap` first."
+- **`kaddo context`** — suprime el handoff de agentes tanto en markdown como en JSON
+  (`recommendedAgents: []`, "No agent handoff yet"), muestra mensajes específicos de bootstrap en el
+  contexto faltante e instrucciones LLM ajustadas al bootstrap.
+- **`kaddo understand`** — muestra "Agent handoff is not ready yet" con la secuencia bootstrap
+  (bootstrap → agents → skills → context → understand). No aparece flujo de agentes ni rutas de prompts.
 - **`kaddo route`** — incluye un paso `bootstrap` dedicado que aparece como `current` hasta que el
   baseline exista.
 - **Recursos MCP** (`kaddo://next-step`, `kaddo://project-route`) — retornan la misma recomendación

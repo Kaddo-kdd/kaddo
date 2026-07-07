@@ -142,80 +142,92 @@ export function renderUnderstand(plan: UnderstandPlan): string {
     : ' (incomplete — run `kaddo scan` first for a richer baseline)'
   parts.push(`Use \`${plan.contextPackPath}\` as the primary input${scanNote}.\n`)
 
-  // Agent Prompts — only render if there are concrete paths to show
-  const agentPaths: string[] = []
-  if (plan.recommendedPaths && plan.recommendedPaths.length > 0) {
-    agentPaths.push(...plan.recommendedPaths)
-  } else if (steps.length > 0) {
-    agentPaths.push(...steps.map((s) => agentInstallPath(s.agent)))
-  }
-  if (plan.recommendedSkillPaths && plan.recommendedSkillPaths.length > 0) {
-    agentPaths.push(...plan.recommendedSkillPaths)
-  }
-  agentPaths.push(plan.contextPackPath)
+  // Agent Prompts, Expected Outputs, Copy/Paste — suppressed when bootstrap incomplete (VS-083.1).
+  if (!isBootstrap) {
+    const agentPaths: string[] = []
+    if (plan.recommendedPaths && plan.recommendedPaths.length > 0) {
+      agentPaths.push(...plan.recommendedPaths)
+    } else if (steps.length > 0) {
+      agentPaths.push(...steps.map((s) => agentInstallPath(s.agent)))
+    }
+    if (plan.recommendedSkillPaths && plan.recommendedSkillPaths.length > 0) {
+      agentPaths.push(...plan.recommendedSkillPaths)
+    }
+    agentPaths.push(plan.contextPackPath)
 
-  parts.push('## Agent Prompts\n')
-  if (agentPaths.length > 1) {
-    parts.push('Use:\n')
-    parts.push(agentPaths.map((p) => `- \`${p}\``).join('\n') + '\n')
-  } else {
-    parts.push(`- \`${plan.contextPackPath}\`\n`)
-  }
-
-  // Expected Outputs — only render if there's content
-  if (steps.length > 0) {
-    parts.push('## Expected Outputs\n')
-    parts.push(steps.map((s) => `- \`${s.output}\``).join('\n') + '\n')
-  } else if (rec) {
-    parts.push('## Expected Outputs\n')
-    const outputs: string[] = []
-    if (rec.target) outputs.push(`- \`${rec.target}\``)
-    if (rec.id === 'refine-work-item' || rec.id === 'resolve-blocker')
-      outputs.push('- Refined Work Item content.')
-    if (rec.id === 'create-work-item')
-      outputs.push('- A new Work Item under `knowledge/delivery/work-items/`.')
-    if (rec.id === 'implement')
-      outputs.push('- Implementation plan or code changes guided by the Work Item.')
-    if (rec.id === 'guard')
-      outputs.push('- Updated knowledge artifacts reflecting recent code changes.')
-    if (rec.id === 'install-adapter')
-      outputs.push('- An adapter configured and injected (`kaddo adapters list`).')
-    if (outputs.length > 0) {
-      parts.push('The LLM should produce:\n')
-      parts.push(outputs.join('\n') + '\n')
+    parts.push('## Agent Prompts\n')
+    if (agentPaths.length > 1) {
+      parts.push('Use:\n')
+      parts.push(agentPaths.map((p) => `- \`${p}\``).join('\n') + '\n')
     } else {
-      parts.push('_See the primary recommendation above._\n')
+      parts.push(`- \`${plan.contextPackPath}\`\n`)
     }
-  }
 
-  // Copy/Paste Instructions
-  parts.push('## Copy/Paste Instructions\n')
-  if (steps.length > 0) {
-    const first = steps[0]
-    parts.push(
-      [
-        `Start with **${agentName(first.agent)}**:`,
-        '',
-        '1. Open your preferred LLM chat (Claude, ChatGPT, Cursor, Copilot, Windsurf…).',
-        `2. Paste the context pack: \`${plan.contextPackPath}\``,
-        `3. Paste the agent prompt: \`${agentInstallPath(first.agent)}\``,
-        `4. Ask the LLM to produce: \`${first.output}\``,
-        `5. Save the result in: \`${first.output}\``,
-      ].join('\n') + '\n'
-    )
-  } else if (agentPaths.length > 1) {
-    parts.push('Paste the following into your LLM chat:\n')
-    parts.push(agentPaths.map((p, i) => `${i + 1}. \`${p}\``).join('\n') + '\n')
-    if (rec?.agent) {
-      parts.push(`Ask the LLM to follow the ${agentName(rec.agent)} instructions.\n`)
+    // Expected Outputs — only render if there's content
+    if (steps.length > 0) {
+      parts.push('## Expected Outputs\n')
+      parts.push(steps.map((s) => `- \`${s.output}\``).join('\n') + '\n')
+    } else if (rec) {
+      parts.push('## Expected Outputs\n')
+      const outputs: string[] = []
+      if (rec.target) outputs.push(`- \`${rec.target}\``)
+      if (rec.id === 'refine-work-item' || rec.id === 'resolve-blocker')
+        outputs.push('- Refined Work Item content.')
+      if (rec.id === 'create-work-item')
+        outputs.push('- A new Work Item under `knowledge/delivery/work-items/`.')
+      if (rec.id === 'implement')
+        outputs.push('- Implementation plan or code changes guided by the Work Item.')
+      if (rec.id === 'guard')
+        outputs.push('- Updated knowledge artifacts reflecting recent code changes.')
+      if (rec.id === 'install-adapter')
+        outputs.push('- An adapter configured and injected (`kaddo adapters list`).')
+      if (outputs.length > 0) {
+        parts.push('The LLM should produce:\n')
+        parts.push(outputs.join('\n') + '\n')
+      } else {
+        parts.push('_See the primary recommendation above._\n')
+      }
     }
-  } else {
-    parts.push(`Paste \`${plan.contextPackPath}\` into your LLM chat.\n`)
+
+    // Copy/Paste Instructions
+    parts.push('## Copy/Paste Instructions\n')
+    if (steps.length > 0) {
+      const first = steps[0]
+      parts.push(
+        [
+          `Start with **${agentName(first.agent)}**:`,
+          '',
+          '1. Open your preferred LLM chat (Claude, ChatGPT, Cursor, Copilot, Windsurf…).',
+          `2. Paste the context pack: \`${plan.contextPackPath}\``,
+          `3. Paste the agent prompt: \`${agentInstallPath(first.agent)}\``,
+          `4. Ask the LLM to produce: \`${first.output}\``,
+          `5. Save the result in: \`${first.output}\``,
+        ].join('\n') + '\n'
+      )
+    } else if (agentPaths.length > 1) {
+      parts.push('Paste the following into your LLM chat:\n')
+      parts.push(agentPaths.map((p, i) => `${i + 1}. \`${p}\``).join('\n') + '\n')
+      if (rec?.agent) {
+        parts.push(`Ask the LLM to follow the ${agentName(rec.agent)} instructions.\n`)
+      }
+    } else {
+      parts.push(`Paste \`${plan.contextPackPath}\` into your LLM chat.\n`)
+    }
   }
 
   // Next Steps
   parts.push('## Next Steps\n')
-  if (rec) {
+  if (isBootstrap) {
+    parts.push(
+      [
+        '1. Run `kaddo bootstrap`.',
+        '2. Run `kaddo add agents`.',
+        '3. Run `kaddo add skills`.',
+        '4. Run `kaddo context`.',
+        '5. Run `kaddo understand`.',
+      ].join('\n') + '\n'
+    )
+  } else if (rec) {
     const nextLines: string[] = []
     nextLines.push(`1. ${rec.label}`)
     let n = 2
@@ -263,7 +275,12 @@ export function renderUnderstandTerminal(plan: UnderstandPlan): string {
     lines.push('Reason: The knowledge baseline is incomplete.')
     lines.push('')
     lines.push('Agent handoff is not ready yet.')
-    lines.push('Run `kaddo bootstrap` first.')
+    lines.push('')
+    lines.push('Run `kaddo bootstrap` first. Then run:')
+    lines.push('  1. kaddo add agents')
+    lines.push('  2. kaddo add skills')
+    lines.push('  3. kaddo context')
+    lines.push('  4. kaddo understand')
   } else {
     const first = steps[0]
     if (first) {

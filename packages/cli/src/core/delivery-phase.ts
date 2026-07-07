@@ -7,6 +7,7 @@ import type { LayerName, LayerStatus, LayerMaturity } from './knowledge-discover
 import { LIFECYCLE_STATES, type LifecycleState } from './lifecycle.js'
 
 export type DeliveryPhase =
+  | 'Setup'
   | 'Discovery'
   | 'Knowledge Refinement'
   | 'Planning'

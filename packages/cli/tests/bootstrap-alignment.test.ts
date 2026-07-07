@@ -354,4 +354,141 @@ describe('VS-083 — Bootstrap Recommendation Alignment', () => {
       expect(step.id).not.toBe('bootstrap')
     })
   })
+
+  describe('VS-083.1 — context-pack JSON suppression', () => {
+    it('AC1: phase.recommendedAgents is empty when bootstrap incomplete', () => {
+      writeConfig('pre-ai')
+      writeKnowledge()
+      writeScan()
+      const pack = buildContextPack(tmpDir, loadConfig(tmpDir)!)
+      expect(pack.phase.recommendedAgents).toEqual([])
+    })
+
+    it('AC2: handoff.recommendedAgents is empty when bootstrap incomplete', () => {
+      writeConfig('pre-ai')
+      writeKnowledge()
+      writeScan()
+      const pack = buildContextPack(tmpDir, loadConfig(tmpDir)!)
+      expect(pack.handoff.recommendedAgents).toEqual([])
+    })
+
+    it('AC3: phase.llmInstructions do not mention agents when bootstrap incomplete', () => {
+      writeConfig('pre-ai')
+      writeKnowledge()
+      writeScan()
+      const pack = buildContextPack(tmpDir, loadConfig(tmpDir)!)
+      for (const instruction of pack.phase.llmInstructions) {
+        expect(instruction).not.toContain('business-agent')
+        expect(instruction).not.toContain('capability-agent')
+      }
+    })
+
+    it('AC4: handoff.instructions do not mention agents when bootstrap incomplete', () => {
+      writeConfig('pre-ai')
+      writeKnowledge()
+      writeScan()
+      const pack = buildContextPack(tmpDir, loadConfig(tmpDir)!)
+      for (const instruction of pack.handoff.instructions) {
+        expect(instruction).not.toContain('business-agent')
+        expect(instruction).not.toContain('capability-agent')
+      }
+    })
+
+    it('AC5: context-pack MD says No agent handoff yet when bootstrap incomplete', () => {
+      writeConfig('pre-ai')
+      writeKnowledge()
+      writeScan()
+      const pack = buildContextPack(tmpDir, loadConfig(tmpDir)!)
+      const md = renderContextPack(pack)
+      expect(md).toContain('No agent handoff yet.')
+      expect(md).not.toContain('Recommended next: business-agent')
+    })
+
+    it('phase is Setup when bootstrap incomplete', () => {
+      writeConfig('pre-ai')
+      writeKnowledge()
+      writeScan()
+      const pack = buildContextPack(tmpDir, loadConfig(tmpDir)!)
+      expect(pack.phase.phase).toBe('Setup')
+    })
+
+    it('after bootstrap, handoff agents appear again', () => {
+      writeConfig('pre-ai')
+      writeKnowledge()
+      writeBaseline()
+      writeScan()
+      const pack = buildContextPack(tmpDir, loadConfig(tmpDir)!)
+      expect(pack.handoff.recommendedAgents.length).toBeGreaterThan(0)
+    })
+  })
+
+  describe('VS-083.1 — understand.md suppression', () => {
+    function enrich(p: ReturnType<typeof buildUnderstandPlan>) {
+      return enrichUnderstandPlan(p, {
+        phase: 'Setup',
+        nextStepRecommendation: {
+          id: 'bootstrap',
+          phase: 'Setup',
+          label: 'Run `kaddo bootstrap` to create the project knowledge baseline.',
+          reason: 'The knowledge baseline is incomplete.',
+          command: 'kaddo bootstrap',
+          secondary: [],
+        },
+        deliveryState: {
+          phase: 'Setup',
+          total_work_items: 0,
+          draft_work_items: 0,
+          ready_work_items: 0,
+          in_progress_work_items: 0,
+          blocked_work_items: 0,
+          ownership_coverage: 'none',
+          remaining_work_item_candidates: 0,
+          decision_candidates: 0,
+          accepted_adrs: 0,
+          adapters_installed: 0,
+        },
+        activeWorkItems: [],
+        recommendedPaths: [],
+        recommendedSkillPaths: [],
+        language: 'typescript',
+      })
+    }
+
+    it('AC9: understand.md says No agent handoff yet before bootstrap', () => {
+      writeConfig('pre-ai')
+      writeKnowledge()
+      const md = renderUnderstand(enrich(buildUnderstandPlan(tmpDir, loadConfig(tmpDir)!)))
+      expect(md).toContain('Agent handoff is not ready yet.')
+      expect(md).toContain('Run `kaddo bootstrap` first.')
+    })
+
+    it('AC10: understand.md does not include agent prompt paths before bootstrap', () => {
+      writeConfig('pre-ai')
+      writeKnowledge()
+      const md = renderUnderstand(enrich(buildUnderstandPlan(tmpDir, loadConfig(tmpDir)!)))
+      expect(md).not.toContain('capability-agent.md')
+      expect(md).not.toContain('## Agent Prompts')
+      expect(md).not.toContain('## Expected Outputs')
+      expect(md).not.toContain('## Copy/Paste Instructions')
+    })
+
+    it('understand.md shows bootstrap next steps sequence', () => {
+      writeConfig('pre-ai')
+      writeKnowledge()
+      const md = renderUnderstand(enrich(buildUnderstandPlan(tmpDir, loadConfig(tmpDir)!)))
+      expect(md).toContain('1. Run `kaddo bootstrap`.')
+      expect(md).toContain('2. Run `kaddo add agents`.')
+      expect(md).toContain('5. Run `kaddo understand`.')
+    })
+
+    it('terminal shows bootstrap sequence instead of agent flow', () => {
+      writeConfig('pre-ai')
+      writeKnowledge()
+      const terminal = renderUnderstandTerminal(enrich(buildUnderstandPlan(tmpDir, loadConfig(tmpDir)!)))
+      expect(terminal).toContain('Run `kaddo bootstrap` first. Then run:')
+      expect(terminal).toContain('kaddo add agents')
+      expect(terminal).not.toContain('Foundational knowledge still needed')
+      expect(terminal).not.toContain('First step: use capability-agent')
+    })
+  })
 })

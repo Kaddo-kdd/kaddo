@@ -382,10 +382,16 @@ export function buildContextPack(
   if (techKnowledge.discovery.legacyLocation) {
     missing.push('Tech discovery files are in the legacy `knowledge/tech/` root. Run `kaddo tech organize` to move them to `knowledge/tech/discovery/`.')
   }
+  const isBootstrap = nextStepRecommendation.id === 'bootstrap'
   const unifiedPhase = {
     ...phase,
+    phase: isBootstrap ? 'Setup' : phase.phase,
+    reasons: isBootstrap ? ['The knowledge baseline is incomplete.'] : phase.reasons,
     nextStep: nextStepRecommendation.label,
-    recommendedAgents: nextStepRecommendation.agent ? [nextStepRecommendation.agent] : phase.recommendedAgents,
+    recommendedAgents: isBootstrap ? [] : (nextStepRecommendation.agent ? [nextStepRecommendation.agent] : phase.recommendedAgents),
+    llmInstructions: isBootstrap
+      ? ['Run `kaddo bootstrap` before using agent handoff.', 'Do not ask an LLM to generate baseline knowledge until bootstrap files exist.']
+      : phase.llmInstructions,
   }
   // State-aware delivery snapshot (VS-079) — the counts behind the next-step recommendation.
   const deliveryState = { ...buildDeliveryState(dir), phase: nextStepRecommendation.phase }
@@ -443,11 +449,13 @@ export function buildContextPack(
     // VS-052/VS-073.2: the handoff is driven by the unified next step, so the pack never contradicts
     // the Current Phase block above it.
     handoff: {
-      recommendedAgents: unifiedPhase.recommendedAgents.length > 0
+      recommendedAgents: isBootstrap ? [] : (unifiedPhase.recommendedAgents.length > 0
         ? unifiedPhase.recommendedAgents
-        : recommendedAgentsForState(state),
+        : recommendedAgentsForState(state)),
       nextSteps: [nextStepRecommendation.label],
-      instructions: unifiedPhase.llmInstructions.length > 0 ? unifiedPhase.llmInstructions : LLM_INSTRUCTIONS,
+      instructions: isBootstrap
+        ? ['No agent handoff yet.', 'Run `kaddo bootstrap` first to create the baseline files.']
+        : (unifiedPhase.llmInstructions.length > 0 ? unifiedPhase.llmInstructions : LLM_INSTRUCTIONS),
       operatingRules: OPERATING_RULES,
     },
   }

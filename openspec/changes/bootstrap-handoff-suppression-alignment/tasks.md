@@ -1,0 +1,21 @@
+# VS-083.1 — Tasks
+
+- [x] Suppress `phase.recommendedAgents` in context-pack JSON when bootstrap
+- [x] Suppress `handoff.recommendedAgents` in context-pack JSON when bootstrap
+- [x] Override `phase.llmInstructions` with bootstrap guidance
+- [x] Override `handoff.instructions` with bootstrap guidance
+- [x] Set `phase.phase` to `Setup` when bootstrap
+- [x] Add `Setup` to `DeliveryPhase` union type
+- [x] Early `resolveNextStep` in understand command before terminal render
+- [x] Suppress agent flow in understand terminal output when bootstrap
+- [x] Show bootstrap sequence in understand terminal
+- [x] Suppress Agent Prompts / Expected Outputs / Copy/Paste in understand.md
+- [x] Show bootstrap Next Steps sequence in understand.md
+- [x] Skip phase/agent console output in understand command when bootstrap
+- [x] Write VS-083.1 tests (11 new tests, 36 total in bootstrap-alignment.test.ts)
+- [x] Fix existing test affected by handoff suppression
+- [x] All 878 tests pass
+- [x] Build CLI + MCP
+- [x] Update docs EN/ES
+- [x] Build docs
+- [x] Version bump to 3.51.0

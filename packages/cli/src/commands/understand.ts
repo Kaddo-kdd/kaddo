@@ -14,7 +14,7 @@ import { buildOpenQuestionsReport } from '../core/open-questions.js'
 import { discoverInstalledSkills, skillsForAgents } from '../services/installed-skills.js'
 import { discoverWorkItems } from '../services/knowledge-artifacts.js'
 import { parseWorkItemSource } from '../core/work-item-source.js'
-import { buildDeliveryState } from '../core/next-step.js'
+import { buildDeliveryState, resolveNextStep } from '../core/next-step.js'
 import { agentInstallPath } from '../agents/groups.js'
 import { skillInstallPath } from '../skills/skills.js'
 import { buildProjectRoute } from '../core/project-route.js'
@@ -55,11 +55,14 @@ export function runUnderstand(): void {
 
   // 4. Build the state-aware plan and check installed agents.
   const plan = buildUnderstandPlan(dir, config)
-  if (plan.missingAgents.length > 0) {
+  // Early next-step resolution so the terminal output can suppress agent flow when bootstrap incomplete.
+  const earlyRec = resolveNextStep(dir)
+  if (earlyRec.id !== 'bootstrap' && plan.missingAgents.length > 0) {
     log.warn(
       `Agents are not installed (${plan.missingAgents.map((a) => a.replace(/\.md$/, '')).join(', ')}). Run \`kaddo add agents\`.`
     )
   }
+  plan.nextStepRecommendation = earlyRec
 
   // 5. Print the concise handoff and write the reusable guide.
   console.log(renderUnderstandTerminal(plan))
@@ -72,76 +75,81 @@ export function runUnderstand(): void {
   const assessment = assessPhase(exp)
   // Unified next step (VS-073.2): one recommendation, shared with context and explain.
   const rec = exp.nextStepRecommendation
-  console.log('')
-  console.log(`Current phase: ${assessment.phase}`)
-  if (assessment.reasons.length > 0) {
-    console.log('Reason:')
-    for (const r of assessment.reasons) console.log(`  - ${r}`)
-  }
-  if (rec.agent) console.log(`Recommended: ${rec.agent}`)
-  if (rec.skill) console.log(`Recommended skill: ${rec.skill}`)
-  console.log(`Next step: ${rec.label}`)
-  if (rec.reason) console.log(`Why: ${rec.reason}`)
 
-  // Parallel (secondary) recommendations (VS-079): ownership, ADRs, remaining candidates.
-  if (rec.secondary && rec.secondary.length > 0) {
-    console.log('Also:')
-    for (const s of rec.secondary) console.log(`  - ${s.label}`)
-  }
-
-  // Recommended reusable skills (VS-059) for the recommended agents, if any are installed.
-  const installedSkills = discoverInstalledSkills(dir)
-  if (installedSkills.length > 0 && assessment.recommendedAgents.length > 0) {
-    const recSkills = skillsForAgents(installedSkills, assessment.recommendedAgents)
-    if (recSkills.length > 0) {
-      console.log('Recommended skills:')
-      for (const s of recSkills) console.log(`  - ${s}`)
+  // VS-083.1: when bootstrap is the dominant recommendation, the terminal render already shows
+  // the full bootstrap guidance. Skip the agent-specific phase output to avoid contradictions.
+  if (earlyRec.id !== 'bootstrap') {
+    console.log('')
+    console.log(`Current phase: ${assessment.phase}`)
+    if (assessment.reasons.length > 0) {
+      console.log('Reason:')
+      for (const r of assessment.reasons) console.log(`  - ${r}`)
     }
-  }
+    if (rec.agent) console.log(`Recommended: ${rec.agent}`)
+    if (rec.skill) console.log(`Recommended skill: ${rec.skill}`)
+    console.log(`Next step: ${rec.label}`)
+    if (rec.reason) console.log(`Why: ${rec.reason}`)
 
-  // 5b-decisions (VS-075): unmaterialized technical decisions — recommend ADRs before implementing.
-  const td = exp.techDecisions
-  if (td.candidates > 0 && td.adrs === 0) {
-    console.log('')
-    console.log(`Tech decisions: ${td.candidates} decision candidate(s) not yet materialized as ADRs.`)
-    console.log('  → Use the adr-writing skill to create ADR drafts from `knowledge/tech/decision-candidates.md`')
-    console.log('    into `knowledge/tech/decisions/` before implementing affected technical Work Items (`kaddo adr`).')
-  }
-
-  // 5b-roadmap (VS-077): if the roadmap has candidates that aren't grounded, recommend refinement
-  // before materializing Work Items.
-  const rqi = exp.roadmapQuality.initiatives
-  if (rqi.needs_refinement) {
-    console.log('')
-    console.log(`Roadmap quality: ${rqi.grounded}/${rqi.total} initiatives grounded.`)
-    console.log('  → Use roadmap-agent to ground roadmap initiatives in capability domains, gaps and source signals')
-    console.log('    before `kaddo create --from roadmap`.')
-  } else if (rqi.total > 0 && rqi.grounded === rqi.total && exp.roadmap.materialized_work_items === 0) {
-    console.log('')
-    console.log('Roadmap initiatives are grounded. → Run `kaddo create --from roadmap` to materialize the first Work Item.')
-  }
-
-  // 5b-assets (VS-074.2): warn if a recommended agent is outdated vs the current package version.
-  const ia = exp.installedAssets
-  const outdatedRecommended = ia.agents.items.filter(
-    (a) => (a.state === 'outdated' || a.state === 'unknown-version') && assessment.recommendedAgents.includes(a.name),
-  )
-  if (outdatedRecommended.length > 0) {
-    console.log('')
-    for (const a of outdatedRecommended) {
-      console.log(`Recommended agent ${a.name} is ${a.state} (installed ${a.installed ?? 'unknown'}, available ${a.available}).`)
+    // Parallel (secondary) recommendations (VS-079): ownership, ADRs, remaining candidates.
+    if (rec.secondary && rec.secondary.length > 0) {
+      console.log('Also:')
+      for (const s of rec.secondary) console.log(`  - ${s.label}`)
     }
-    console.log('  → Run `kaddo agents update` or review `kaddo agents status`.')
-  }
 
-  // 5b-ext. External Knowledge Capsules (VS-054) — remind the agent of external dependencies.
-  if (exp.externalCapsules.length > 0) {
-    console.log('')
-    console.log('External knowledge:')
-    for (const cap of exp.externalCapsules) {
-      console.log(`  - ${cap.system}${cap.owner ? ` (owner: ${cap.owner})` : ''}`)
+    // Recommended reusable skills (VS-059) for the recommended agents, if any are installed.
+    const installedSkills = discoverInstalledSkills(dir)
+    if (installedSkills.length > 0 && assessment.recommendedAgents.length > 0) {
+      const recSkills = skillsForAgents(installedSkills, assessment.recommendedAgents)
+      if (recSkills.length > 0) {
+        console.log('Recommended skills:')
+        for (const s of recSkills) console.log(`  - ${s}`)
+      }
     }
-    console.log('  → Review the relevant capsule before changing integration behavior with it.')
+
+    // 5b-decisions (VS-075): unmaterialized technical decisions — recommend ADRs before implementing.
+    const td = exp.techDecisions
+    if (td.candidates > 0 && td.adrs === 0) {
+      console.log('')
+      console.log(`Tech decisions: ${td.candidates} decision candidate(s) not yet materialized as ADRs.`)
+      console.log('  → Use the adr-writing skill to create ADR drafts from `knowledge/tech/decision-candidates.md`')
+      console.log('    into `knowledge/tech/decisions/` before implementing affected technical Work Items (`kaddo adr`).')
+    }
+
+    // 5b-roadmap (VS-077): if the roadmap has candidates that aren't grounded, recommend refinement
+    // before materializing Work Items.
+    const rqi = exp.roadmapQuality.initiatives
+    if (rqi.needs_refinement) {
+      console.log('')
+      console.log(`Roadmap quality: ${rqi.grounded}/${rqi.total} initiatives grounded.`)
+      console.log('  → Use roadmap-agent to ground roadmap initiatives in capability domains, gaps and source signals')
+      console.log('    before `kaddo create --from roadmap`.')
+    } else if (rqi.total > 0 && rqi.grounded === rqi.total && exp.roadmap.materialized_work_items === 0) {
+      console.log('')
+      console.log('Roadmap initiatives are grounded. → Run `kaddo create --from roadmap` to materialize the first Work Item.')
+    }
+
+    // 5b-assets (VS-074.2): warn if a recommended agent is outdated vs the current package version.
+    const ia = exp.installedAssets
+    const outdatedRecommended = ia.agents.items.filter(
+      (a) => (a.state === 'outdated' || a.state === 'unknown-version') && assessment.recommendedAgents.includes(a.name),
+    )
+    if (outdatedRecommended.length > 0) {
+      console.log('')
+      for (const a of outdatedRecommended) {
+        console.log(`Recommended agent ${a.name} is ${a.state} (installed ${a.installed ?? 'unknown'}, available ${a.available}).`)
+      }
+      console.log('  → Run `kaddo agents update` or review `kaddo agents status`.')
+    }
+
+    // 5b-ext. External Knowledge Capsules (VS-054) — remind the agent of external dependencies.
+    if (exp.externalCapsules.length > 0) {
+      console.log('')
+      console.log('External knowledge:')
+      for (const cap of exp.externalCapsules) {
+        console.log(`  - ${cap.system}${cap.owner ? ` (owner: ${cap.owner})` : ''}`)
+      }
+      console.log('  → Review the relevant capsule before changing integration behavior with it.')
+    }
   }
 
   // 5b-graph. Graph hints (VS-056): only nudge during Active Delivery and only when hints affect

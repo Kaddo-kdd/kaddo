@@ -82,9 +82,11 @@ All Kaddo surfaces converge on `kaddo bootstrap` as the **dominant recommendatio
 is incomplete:
 
 - **`kaddo explain`** — suggests `kaddo bootstrap` first, then agents, skills, and context in order.
-- **`kaddo context`** — suppresses agent handoff ("No agent handoff yet") and shows bootstrap-specific
-  missing-context messages.
-- **`kaddo understand`** — shows "Agent handoff is not ready yet. Run `kaddo bootstrap` first."
+- **`kaddo context`** — suppresses agent handoff in both markdown and JSON output
+  (`recommendedAgents: []`, "No agent handoff yet"), shows bootstrap-specific missing-context messages
+  and bootstrap-aware LLM instructions.
+- **`kaddo understand`** — shows "Agent handoff is not ready yet" with the bootstrap sequence
+  (bootstrap → agents → skills → context → understand). No agent flow or prompt paths appear.
 - **`kaddo route`** — includes a dedicated `bootstrap` step that is `current` until the baseline exists.
 - **MCP resources** (`kaddo://next-step`, `kaddo://project-route`) — return the same bootstrap-first
   recommendation.

@@ -204,8 +204,10 @@ describe('context-pack — state-aware recommendations', () => {
     expect(recommendedAgentsForState('legacy')[0]).toBe('legacy-agent')
   })
   it('wires phase-based recommendations into the built pack (VS-052)', () => {
-    // Empty project → Discovery phase → recommends the missing-base-layer agent, not project.state.
+    // Project with baseline → Discovery phase → recommends the missing-base-layer agent, not project.state.
     writeConfig('legacy')
+    write('knowledge/business/business.md', '---\ntype: business-context\n---\nBusiness context.')
+    write('knowledge/product/product.md', '---\ntype: product-overview\n---\nProduct overview.')
     const pack = build()
     expect(pack.handoff.recommendedAgents[0]).toBe('business-agent')
   })
