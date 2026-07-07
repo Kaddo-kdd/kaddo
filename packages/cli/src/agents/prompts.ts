@@ -835,7 +835,16 @@ and \`blocked\` as active work; \`completed\` and \`archived\` are historical kn
 
 ## Handoff
 
-When the Work Item is refined and ready to build, **hand off to the implementation-agent**.
+After refining a Work Item, **do not mark it ready automatically**. If the Work Item appears
+complete (acceptance criteria, validation, code globs, domains all present, open questions
+resolved), recommend human review and the ready transition:
+
+- **CLI:** \`kaddo ready <WI-ID>\`
+- **MCP:** \`mark_work_item_ready({ id: "<WI-ID>" })\`
+
+The transition to \`ready\` requires explicit human confirmation. Only after a human marks the
+Work Item as ready should it be handed off to the implementation-agent.
+
 You do **not** suggest branches, commits or pull requests — implementation (including any Git
 branch suggestion) is the implementation-agent's responsibility, and only by respecting the
 project Git strategy. Your job ends at a clear, traceable Work Item that **states how to test it**.

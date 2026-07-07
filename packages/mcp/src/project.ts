@@ -143,6 +143,43 @@ export function writeDerived(root: string, relPath: string, content: string): vo
   fs.writeFileSync(abs, content, 'utf-8')
 }
 
+/**
+ * Write a Work Item file during a lifecycle transition (e.g. draft → ready).
+ * Only allows writes strictly under `knowledge/delivery/work-items/`.
+ */
+export function writeWorkItemTransition(root: string, relPath: string, content: string): void {
+  const p = toPosix(relPath).replace(/^\/+/, '')
+  if (path.isAbsolute(relPath) || p.split('/').some((seg) => seg === '..')) {
+    throw new KaddoMcpError('Blocked unsafe work-item write path.')
+  }
+  if (!p.startsWith('knowledge/delivery/work-items/')) {
+    throw new KaddoMcpError('Work Item transitions can only write under knowledge/delivery/work-items/.')
+  }
+  if (!p.endsWith('.md')) {
+    throw new KaddoMcpError('Work Item files must be markdown.')
+  }
+  const abs = path.resolve(root, p)
+  const base = toPosix(root).replace(/\/+$/, '')
+  if (toPosix(abs) !== base && !toPosix(abs).startsWith(base + '/')) {
+    throw new KaddoMcpError('Blocked unsafe work-item write path.')
+  }
+  fs.mkdirSync(path.dirname(abs), { recursive: true })
+  fs.writeFileSync(abs, content, 'utf-8')
+}
+
+/** Remove a Work Item file during a lifecycle transition (e.g. moving from draft/ to ready/). */
+export function removeWorkItemFile(root: string, relPath: string): void {
+  const p = toPosix(relPath).replace(/^\/+/, '')
+  if (path.isAbsolute(relPath) || p.split('/').some((seg) => seg === '..')) {
+    throw new KaddoMcpError('Blocked unsafe work-item remove path.')
+  }
+  if (!p.startsWith('knowledge/delivery/work-items/')) {
+    throw new KaddoMcpError('Work Item removal can only target knowledge/delivery/work-items/.')
+  }
+  const abs = path.resolve(root, p)
+  if (fs.existsSync(abs)) fs.unlinkSync(abs)
+}
+
 /** List files under a project-relative directory (recursively), returning project-relative paths. */
 export function listFiles(root: string, relDir: string, filterExt?: string): string[] {
   let absDir: string

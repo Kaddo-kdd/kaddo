@@ -1,0 +1,23 @@
+# Tasks — MCP Work Item Ready Action (VS-088)
+
+- [x] Add `assessReadiness` and `WorkItemReadiness` to MCP workitems.ts
+- [x] Fix MCP `parseSource` for object-type sources
+- [x] Add `writeWorkItemTransition` and `removeWorkItemFile` to project.ts
+- [x] Implement `markWorkItemReady` with confirm flow in tools.ts
+- [x] Register `kaddo_mark_work_item_ready` tool with confirm param in server.ts
+- [x] Fix gray-matter cache mutation (shallow-clone data before mutating)
+- [x] Add `refined_draft_work_items` to `DeliveryState`
+- [x] Add `mcpAction` field to `NextStepRecommendation`
+- [x] Update `resolveNextStep` to return `review-work-item` for refined drafts
+- [x] Map `review-work-item` in project-route.ts
+- [x] Update work-item-agent prompt with ready transition guidance
+- [x] Update work-item-refinement skill with human confirmation rule
+- [x] Update work-item-agent responsibility matrix
+- [x] Write CLI tests (12 scenarios)
+- [x] Write MCP tests (14 scenarios)
+- [x] Update MCP docs EN
+- [x] Update MCP docs ES
+- [x] Typecheck CLI + MCP
+- [x] Build CLI + MCP + docs
+- [x] All tests pass (998)
+- [x] Create openspec

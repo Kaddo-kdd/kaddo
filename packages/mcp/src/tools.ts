@@ -3,10 +3,11 @@
 // Each tool returns a plain JS value (string/object). The server wraps it as MCP content. Tools
 // only read project knowledge — they never modify files, run git or call an LLM.
 
+import matter from 'gray-matter'
 import { listWorkItems, type WorkItemSummary } from './workitems.js'
 import { listCapsules, getCapsule, listAgents, getAgentPrompt } from './catalog.js'
 import { listSkills, getSkill } from './skills.js'
-import { readJson, readText } from './project.js'
+import { readJson, readText, writeWorkItemTransition, removeWorkItemFile } from './project.js'
 
 export type ToolResult = { ok: true; data: unknown } | { ok: false; message: string }
 
@@ -76,6 +77,71 @@ export function getWorkItem(root: string, id: string): ToolResult {
   if (!item) return fail(`Work Item "${id}" not found.`)
   const content = readText(root, item.path)
   return ok({ ...item, content: content ?? '' })
+}
+
+export function markWorkItemReady(root: string, id: string, confirm?: boolean): ToolResult {
+  const item = listWorkItems(root).find((w: WorkItemSummary) => w.id === id)
+  if (!item) return fail(`Work Item "${id}" not found.`)
+
+  if (item.status === 'ready') {
+    return ok({ status: 'already_ready', id: item.id, message: `Work Item ${item.id} is already ready.` })
+  }
+  if (item.status !== 'draft') {
+    return fail(`Work Item ${item.id} is in state "${item.status}", not "draft". Only draft Work Items can be marked as ready.`)
+  }
+
+  const warnings = item.readiness?.warnings ?? []
+
+  if (!confirm) {
+    return ok({
+      status: 'needs_confirmation',
+      workItem: {
+        id: item.id,
+        title: item.title,
+        type: item.type,
+        status: item.status,
+        domains: item.domains,
+        source: item.source,
+        code: item.code,
+        readiness: item.readiness,
+      },
+      command: `kaddo ready ${item.id}`,
+      message: `Review this Work Item and call mark_work_item_ready with confirm=true to mark it ready.`,
+    })
+  }
+
+  const raw = readText(root, item.path)
+  if (!raw) return fail(`Could not read Work Item file: ${item.path}`)
+
+  const parsed = matter(raw)
+  const data = { ...(parsed.data as Record<string, unknown>) }
+  const today = new Date().toISOString().slice(0, 10)
+  data.status = 'ready'
+  data.ready_at = today
+  const newContent = matter.stringify(parsed.content, data)
+
+  const posixPath = item.path.replace(/\\/g, '/')
+  let newRelPath = item.path
+  if (posixPath.includes('/work-items/draft/')) {
+    newRelPath = item.path.replace(/[/\\]draft[/\\]/, '/ready/')
+  }
+
+  writeWorkItemTransition(root, newRelPath, newContent)
+  if (newRelPath !== item.path) {
+    removeWorkItemFile(root, item.path)
+  }
+
+  const status = warnings.length > 0 ? 'ready_with_warnings' : 'ready'
+  return ok({
+    status,
+    id: item.id,
+    from: 'draft',
+    to: 'ready',
+    ready_at: today,
+    moved: newRelPath !== item.path ? { from: item.path, to: newRelPath } : undefined,
+    ...(warnings.length > 0 ? { warnings } : {}),
+    next: ['Run kaddo context', 'Run kaddo understand'],
+  })
 }
 
 // --- Capsules -------------------------------------------------------------

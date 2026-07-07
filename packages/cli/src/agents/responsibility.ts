@@ -152,9 +152,9 @@ export const RESPONSIBILITY_MATRIX: Record<string, AgentResponsibility> = {
     agent: 'work-item-agent',
     responsibleFor: ['Work Item refinement'],
     produces: ['knowledge/delivery/work-items/'],
-    canSuggest: ['implementation-agent'],
+    canSuggest: ['kaddo ready', 'mark_work_item_ready', 'implementation-agent'],
     cannotSuggest: ['branches', 'commits', 'pull requests', 'code'],
-    next: ['implementation-agent'],
+    next: ['kaddo ready (human review)', 'implementation-agent'],
   },
   'implementation-agent': {
     agent: 'implementation-agent',

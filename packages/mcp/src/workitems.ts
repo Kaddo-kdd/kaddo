@@ -15,6 +15,12 @@ export type WorkItemSourceMeta = {
   inferred: boolean
 }
 
+export type WorkItemReadiness = {
+  readyCandidate: boolean
+  warnings: string[]
+  recommendedAction?: string
+}
+
 export type WorkItemSummary = {
   id: string
   title: string
@@ -28,6 +34,8 @@ export type WorkItemSummary = {
   decisions: string[]
   capsules: string[]
   source: WorkItemSourceMeta
+  domains: string[]
+  readiness?: WorkItemReadiness
 }
 
 const VALID_SOURCES = new Set(['manual', 'roadmap', 'jira', 'github', 'notion', 'xlsx', 'csv', 'api', 'external', 'unknown'])
@@ -37,7 +45,14 @@ function optStr(v: unknown): string | undefined {
 }
 
 function parseSource(data: Record<string, unknown>): WorkItemSourceMeta {
-  const raw = data.source ? String(data.source) : ''
+  const rawSource = data.source
+  if (rawSource != null && typeof rawSource === 'object' && !Array.isArray(rawSource)) {
+    const obj = rawSource as Record<string, unknown>
+    const t = optStr(obj.type)
+    const type = t && VALID_SOURCES.has(t) ? t : 'unknown'
+    return { type, id: optStr(obj.id) ?? optStr(data.source_id), title: optStr(obj.title) ?? optStr(data.source_title), url: optStr(obj.url) ?? optStr(data.source_url), provider: optStr(obj.provider) ?? optStr(data.source_provider), inferred: obj.inferred === true || obj.inferred === 'true' }
+  }
+  const raw = rawSource ? String(rawSource) : ''
   if (raw && VALID_SOURCES.has(raw)) {
     return { type: raw, id: optStr(data.source_id), title: optStr(data.source_title), url: optStr(data.source_url), provider: optStr(data.source_provider), inferred: false }
   }
@@ -87,19 +102,26 @@ export function listWorkItems(root: string): WorkItemSummary[] {
     }
     const data = parsed.data as Record<string, unknown>
     if (!data.type) continue // only typed Work Items
+    const status = lifecycleOf(data, rel)
+    const code = strArray(data.code)
+    const domains = strArray(data.domains)
+    const source = parseSource(data)
+    const readiness = status === 'draft' ? assessReadiness(data, parsed.content, code, domains, source) : undefined
     items.push({
       id: String(data.id ?? '') || rel,
       title: String(data.title ?? ''),
-      status: lifecycleOf(data, rel),
+      status,
       type: String(data.type ?? ''),
       knowledge_level: String(data.knowledge_level ?? ''),
       path: rel,
       summary: String(data.summary ?? '') || firstParagraph(parsed.content),
-      code: strArray(data.code),
+      code,
       capabilities: strArray(data.capabilities),
       decisions: strArray(data.decisions),
       capsules: strArray(data.capsules),
-      source: parseSource(data),
+      source,
+      domains,
+      readiness,
     })
   }
   return items.sort((a, b) => a.id.localeCompare(b.id))
@@ -107,4 +129,32 @@ export function listWorkItems(root: string): WorkItemSummary[] {
 
 export function isActiveStatus(status: string): boolean {
   return ACTIVE_STATES.has(status)
+}
+
+function assessReadiness(data: Record<string, unknown>, content: string, code: string[], domains: string[], source: WorkItemSourceMeta): WorkItemReadiness {
+  const body = content.trim()
+  const lower = body.toLowerCase()
+  const warnings: string[] = []
+
+  if (domains.length === 0) warnings.push('No domains declared.')
+  if (code.length === 0) warnings.push('No code ownership globs declared.')
+  if (!/## acceptance criteria|## criterios de aceptación/i.test(body)) warnings.push('No acceptance criteria section found.')
+  if (!/## validation|## validación/i.test(body)) warnings.push('No validation section found.')
+
+  const oqMatch = body.match(/## (?:open questions|preguntas abiertas)\s*\n([\s\S]*?)(?=\n##|\n*$)/i)
+  if (oqMatch) {
+    const oqText = oqMatch[1].trim().toLowerCase()
+    if (oqText && !/^(none|ninguna|resolved|resueltas|deferred|diferidas)\.?$/i.test(oqText)) {
+      warnings.push('Open questions are still present.')
+    }
+  }
+
+  const hasRefinedBy = Boolean(data.refined_by)
+  const readyCandidate = hasRefinedBy && warnings.length === 0
+
+  return {
+    readyCandidate,
+    warnings,
+    recommendedAction: readyCandidate ? 'mark_work_item_ready' : undefined,
+  }
 }

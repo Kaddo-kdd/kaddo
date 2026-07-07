@@ -45,6 +45,8 @@ export type NextStepRecommendation = {
   target?: string
   reason: string
   instructions?: string[]
+  /** MCP tool name the agent can invoke instead of the CLI command (VS-088). */
+  mcpAction?: string
   /** Parallel recommendations that don't replace the primary one (VS-079). */
   secondary?: SecondaryRecommendation[]
 }
@@ -53,6 +55,7 @@ export type NextStepRecommendation = {
 export type DeliveryState = {
   phase: string
   draft_work_items: number
+  refined_draft_work_items: number
   ready_work_items: number
   in_progress_work_items: number
   blocked_work_items: number
@@ -78,6 +81,7 @@ export function buildDeliveryState(dir: string): DeliveryState {
   return {
     phase: '',
     draft_work_items: byState('draft'),
+    refined_draft_work_items: wis.filter((w) => w.lifecycle === 'draft' && w.rawFrontmatter.refined_by).length,
     ready_work_items: byState('ready'),
     in_progress_work_items: byState('in-progress'),
     blocked_work_items: byState('blocked'),
@@ -235,6 +239,17 @@ export function resolveNextStep(dir: string, now: Date = new Date()): NextStepRe
   const roadmap = roadmapSignal(dir)
 
   if (roadmap !== 'has-candidates' && st.draft_work_items > 0) {
+    if (st.refined_draft_work_items > 0) {
+      return {
+        id: 'review-work-item',
+        phase: 'Active Delivery',
+        label: 'Review the refined draft Work Item and mark it ready with `kaddo ready`.',
+        command: 'kaddo ready',
+        mcpAction: 'kaddo_mark_work_item_ready',
+        reason: `There ${st.refined_draft_work_items === 1 ? 'is' : 'are'} ${st.refined_draft_work_items} refined draft Work Item${st.refined_draft_work_items === 1 ? '' : 's'} awaiting human review.`,
+        ...(secondary.length ? { secondary } : {}),
+      }
+    }
     return {
       id: 'refine-work-item',
       phase: 'Active Delivery',

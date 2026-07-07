@@ -147,6 +147,8 @@ validation (how to test it), definition of done, open questions and dependencies
 - Do not expand scope without explicit confirmation.
 - Do not create mega Work Items — split when it covers multiple outcomes.
 - Keep acceptance criteria testable.
+- This skill refines scope and acceptance criteria but does not approve implementation readiness.
+  Readiness requires human confirmation through \`kaddo ready\` or the MCP \`mark_work_item_ready\` action.
 
 ## Quality checklist
 

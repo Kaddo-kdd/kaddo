@@ -10,6 +10,7 @@ import {
   projectStatus,
   listWorkItemsTool,
   getWorkItem,
+  markWorkItemReady,
   listCapsulesTool,
   getCapsuleTool,
   listAgentsTool,
@@ -120,6 +121,16 @@ export function createServer(root: string): McpServer {
     'kaddo_get_work_item',
     { title: 'Get Work Item', description: 'Get a Work Item by ID (summary + full markdown).', inputSchema: { id: z.string() } },
     async (args) => toolText(guarded(root, () => getWorkItem(root, args.id)))
+  )
+
+  server.registerTool(
+    'kaddo_mark_work_item_ready',
+    {
+      title: 'Mark Work Item ready',
+      description: 'Assess whether a draft Work Item is ready for implementation. Without confirm, returns a preview with readiness warnings. With confirm=true, transitions the Work Item from draft to ready.',
+      inputSchema: { id: z.string(), confirm: z.boolean().optional() },
+    },
+    async (args) => toolText(guarded(root, () => markWorkItemReady(root, args.id, args.confirm)))
   )
 
   server.registerTool(

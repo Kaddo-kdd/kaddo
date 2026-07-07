@@ -447,6 +447,7 @@ function mapNextStepId(id: string): string {
     'refine-capabilities': 'discover-capabilities',
     'refine-current-state': 'describe-architecture',
     'refine-codebase': 'describe-architecture',
+    'review-work-item': 'refine-work-item',
   }
   return MAP[id] ?? id
 }

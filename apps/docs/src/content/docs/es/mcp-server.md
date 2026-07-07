@@ -81,6 +81,7 @@ Hay un ejemplo listo para copiar en
 - `kaddo_project_status` — estado compacto (state, work items, ownership, calidad del grafo, capsules).
 - `kaddo_list_work_items` — filtra por `status` / `type` / `knowledge_level`.
 - `kaddo_get_work_item` — un Work Item por `id` (resumen + markdown completo).
+- `kaddo_mark_work_item_ready` — evalúa si un Work Item en borrador está listo para implementación. Devuelve advertencias de readiness y el comando CLI `kaddo ready <id>` para transicionarlo (el servidor MCP no puede modificar archivos de knowledge directamente).
 - `kaddo_list_capsules` / `kaddo_get_capsule` — Knowledge Capsules externas.
 - `kaddo_list_agents` / `kaddo_get_agent_prompt` — prompts de agentes instalados.
 - `kaddo_list_skills` / `kaddo_get_skill` — [skills](/es/skills/) reutilizables instaladas.

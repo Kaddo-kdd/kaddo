@@ -37,7 +37,7 @@ describe('agent responsibility matrix (VS-044)', () => {
   it('AC4: work-item-agent cannot suggest commits or pull requests', () => {
     const r = RESPONSIBILITY_MATRIX['work-item-agent']
     expect(r.cannotSuggest).toEqual(expect.arrayContaining(['commits', 'pull requests', 'branches']))
-    expect(r.next).toEqual(['implementation-agent'])
+    expect(r.next).toEqual(['kaddo ready (human review)', 'implementation-agent'])
     expect(canSuggestBranches('work-item-agent')).toBe(false)
   })
 
