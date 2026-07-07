@@ -228,16 +228,27 @@ export function resolveNextStep(dir: string, now: Date = new Date()): NextStepRe
     return { id: 'questions', phase: 'Knowledge Refinement', label: 'Run `kaddo questions` to see source locations and resolution guidance, then resolve, assume or defer the blocking open questions.', command: 'kaddo questions', reason: `${oq.summary.blocking_open} blocking open question(s) remain.` }
   }
 
+  // VS-086: build delivery state early so draft Work Items can take priority over empty roadmap.
+  const st = buildDeliveryState(dir)
+  const secondary = buildSecondaryRecommendations(st)
+
   const roadmap = roadmapSignal(dir)
+
+  if (roadmap !== 'has-candidates' && st.draft_work_items > 0) {
+    return {
+      id: 'refine-work-item',
+      phase: 'Active Delivery',
+      label: 'Refine the existing draft Work Item with the work-item-agent.',
+      agent: 'work-item-agent',
+      skill: 'work-item-refinement',
+      reason: `There ${st.draft_work_items === 1 ? 'is' : 'are'} ${st.draft_work_items} draft Work Item${st.draft_work_items === 1 ? '' : 's'}. Refine before defining roadmap candidates.`,
+      ...(secondary.length ? { secondary } : {}),
+    }
+  }
+
   if (roadmap !== 'has-candidates') {
     return { id: 'roadmap', phase: 'Planning', label: 'Use roadmap-agent to define roadmap candidates (`kaddo roadmap`).', command: 'kaddo roadmap', agent: 'roadmap-agent', target: 'knowledge/delivery/roadmap.md', reason: 'The roadmap has no candidates yet.' }
   }
-
-  // State-aware delivery recommendation (VS-079): the next step depends on the most urgent delivery
-  // state, not just on the existence of roadmap candidates. We never recommend "materialize the first
-  // Work Item" once one already exists.
-  const st = buildDeliveryState(dir)
-  const secondary = buildSecondaryRecommendations(st)
 
   // Case 1 — roadmap has candidates but no Work Item exists yet.
   if (st.total_work_items === 0) {

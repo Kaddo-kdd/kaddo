@@ -212,6 +212,10 @@ template_version: 1
 This aligns with VS-084 metadata health and makes manual Work Items traceable alongside
 roadmap-materialized ones.
 
+Since v3.56.0 (VS-086), the source parser correctly reads this YAML object format. Previously,
+`source` objects were stringified as `[object Object]` and reported as `unknown`. Both the
+object format and the legacy string format (`source: manual`) are supported.
+
 ## Activate Guard Lite
 
 Add code globs to the `code:` field of the generated front matter:

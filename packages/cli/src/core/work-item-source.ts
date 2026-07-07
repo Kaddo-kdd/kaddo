@@ -31,7 +31,27 @@ export function isValidSource(s: string): s is WorkItemSourceType {
  * Infers `roadmap` from legacy fields; defaults to `unknown` for items with no source metadata.
  */
 export function parseWorkItemSource(frontmatter: Record<string, unknown>): WorkItemSource {
-  const raw = frontmatter.source ? String(frontmatter.source) : ''
+  const rawSource = frontmatter.source
+
+  if (rawSource != null && typeof rawSource === 'object' && !Array.isArray(rawSource)) {
+    const obj = rawSource as Record<string, unknown>
+    const t = optStr(obj.type)
+    const type: WorkItemSourceType = t && isValidSource(t) ? t : 'unknown'
+    return {
+      type,
+      id: optStr(obj.id) ?? optStr(frontmatter.source_id),
+      title: optStr(obj.title) ?? optStr(frontmatter.source_title),
+      context: optStr(obj.context) ?? optStr(frontmatter.source_context),
+      provider: optStr(obj.provider) ?? optStr(frontmatter.source_provider),
+      url: optStr(obj.url) ?? optStr(frontmatter.source_url),
+      imported_at: optStr(obj.imported_at) ?? optStr(frontmatter.source_imported_at),
+      synced_at: optStr(obj.synced_at) ?? optStr(frontmatter.source_synced_at),
+      inferred: obj.inferred === true || obj.inferred === 'true',
+      reason: t && !isValidSource(t) ? `Invalid source type in object: "${t}".` : undefined,
+    }
+  }
+
+  const raw = rawSource ? String(rawSource) : ''
 
   if (raw && isValidSource(raw)) {
     return {

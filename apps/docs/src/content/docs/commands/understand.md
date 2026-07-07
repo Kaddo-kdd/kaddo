@@ -202,6 +202,24 @@ Metadata health warnings appear in:
 - `kaddo explain` (human and agent modes).
 - `kaddo guard` output.
 
+## Manual Work Item source parsing and draft priority (VS-086)
+
+Since v3.56.0, `parseWorkItemSource` correctly reads `source` as a YAML object — not just a
+plain string. Work Items created by `kaddo create` write:
+
+```yaml
+source:
+  type: manual
+  inferred: false
+```
+
+Previously, the parser stringified this object as `[object Object]` and reported it as
+`unknown`. Now it reads the nested `type` and `inferred` fields directly.
+
+Additionally, when draft Work Items exist but the roadmap is empty, `kaddo understand`
+recommends **work-item-agent** (refine the draft) instead of **roadmap-agent** (define
+candidates). The rule: *a materialized Work Item in draft has priority over an empty roadmap*.
+
 ## Example
 
 ```text
