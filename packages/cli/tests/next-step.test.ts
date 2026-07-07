@@ -62,7 +62,8 @@ describe('resolveNextStep — priority ladder (VS-073.2)', () => {
     write('.kaddo/scan.json', '{}')
     expect(resolveNextStep(dir).command).toBe('kaddo context')
     write('.kaddo/context-pack.md', '# c\n')
-    expect(resolveNextStep(dir).command).toBe('kaddo understand')
+    // VS-083.3: refinement takes priority over understand when knowledge is thin.
+    expect(resolveNextStep(dir).agent).toBe('business-agent')
   })
   it('AC25: all placeholder → business-agent first (layer order)', () => {
     pastSetup()

@@ -124,6 +124,20 @@ When the knowledge baseline is incomplete (neither `knowledge/business/business.
 
 Once both baseline files exist, the normal phase-aware flow resumes.
 
+## Self-recommendation guard (VS-083.3)
+
+`understand` never recommends itself ("run `kaddo understand`") when actionable refinement
+steps exist. Before v3.53.0, the priority ladder checked for `understand.md` existence
+before checking knowledge quality — so on the first run, `understand` always self-recommended
+instead of pointing to the actual next agent.
+
+Now refinement checks run first: if `business.md` is a placeholder, the recommendation is
+`refine-business` with `business-agent`, not "run `kaddo understand`". The `understand` fallback
+only fires when all knowledge layers are useful and no `understand.md` exists yet.
+
+This also fixes `projectRoute.currentStep`: it now correctly shows `define-business` instead
+of `scan-repository` when business knowledge needs refinement.
+
 ## Knowledge refinement handoff (VS-083.2)
 
 After the bootstrap baseline exists but a knowledge file is still a placeholder or too thin,

@@ -177,11 +177,11 @@ export function resolveNextStep(dir: string, now: Date = new Date()): NextStepRe
   if (!exists(join(dir, '.kaddo', 'context-pack.md'))) {
     return { id: 'context', phase: 'Discovery', label: 'Run `kaddo context` to prepare the LLM context pack.', command: 'kaddo context', reason: 'No context pack has been generated yet.' }
   }
-  if (!exists(join(dir, '.kaddo', 'understand.md'))) {
-    return { id: 'understand', phase: 'Discovery', label: 'Run `kaddo understand` to summarize the project context.', command: 'kaddo understand', reason: 'No understand handoff has been generated yet.' }
-  }
 
   // Knowledge refinement — keep the layer order Business → Product → Tech.
+  // VS-083.3: refinement checks run BEFORE the understand fallback so that actionable
+  // recommendations are never masked by "run kaddo understand" — a command that is
+  // already being executed when the user is inside `kaddo understand`.
   const discovery = state === 'pre-ai' || state === 'legacy'
   const resolveAgent = (agent: string) => {
     const file = agent.endsWith('.md') ? agent : `${agent}.md`
@@ -215,6 +215,11 @@ export function resolveNextStep(dir: string, now: Date = new Date()): NextStepRe
   if (qCodebase !== 'useful') {
     const agent = ctx.agents.includes('codebase-agent') ? 'codebase-agent' : 'architecture-agent'
     return refine('refine-codebase', agent, CB, qCodebase)
+  }
+
+  // VS-083.3: understand fallback — only when all knowledge layers are useful and no refinement needed.
+  if (!exists(join(dir, '.kaddo', 'understand.md'))) {
+    return { id: 'understand', phase: 'Discovery', label: 'Run `kaddo understand` to summarize the project context.', command: 'kaddo understand', reason: 'No understand handoff has been generated yet.' }
   }
 
   // Foundational knowledge is useful — now decisions, roadmap and delivery.

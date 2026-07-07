@@ -141,6 +141,21 @@ Cuando el baseline de conocimiento está incompleto (no existen `knowledge/busin
 
 Una vez que ambos archivos baseline existen, el flujo normal phase-aware se reanuda.
 
+## Guard contra auto-recomendación (VS-083.3)
+
+`understand` nunca se recomienda a sí mismo ("ejecutar `kaddo understand`") cuando existen pasos
+de refinamiento accionables. Antes de v3.53.0, la escalera de prioridad verificaba la existencia
+de `understand.md` antes de comprobar la calidad del conocimiento — así que en la primera
+ejecución, `understand` siempre se auto-recomendaba en lugar de apuntar al agente correcto.
+
+Ahora las comprobaciones de refinamiento se ejecutan primero: si `business.md` es un placeholder,
+la recomendación es `refine-business` con `business-agent`, no "ejecutar `kaddo understand`".
+El fallback de `understand` solo se activa cuando todas las capas de conocimiento son útiles y
+no existe `understand.md` todavía.
+
+Esto también corrige `projectRoute.currentStep`: ahora muestra correctamente `define-business`
+en lugar de `scan-repository` cuando el conocimiento de negocio necesita refinamiento.
+
 ## Handoff de refinamiento de conocimiento (VS-083.2)
 
 Después de que el baseline de bootstrap existe pero un archivo de conocimiento sigue siendo un

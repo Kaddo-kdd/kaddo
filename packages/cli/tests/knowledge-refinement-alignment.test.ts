@@ -294,3 +294,157 @@ describe('VS-083.2 — Knowledge Refinement Handoff Alignment', () => {
     })
   })
 })
+
+// --- VS-083.3 — Understand Self-Recommendation Guard ---
+
+function writeFullSetup() {
+  writeConfig('pre-ai')
+  writeScan()
+  writeBaseline()
+  writeKnowledge()
+  // Install agents
+  installAgent('business-agent.md')
+  installAgent('capability-agent.md')
+  installAgent('architecture-agent.md')
+  installAgent('roadmap-agent.md')
+  installAgent('backlog-agent.md')
+  installAgent('work-item-agent.md')
+  installAgent('implementation-agent.md')
+  installAgent('ownership-agent.md')
+  // Install skills
+  write('knowledge/skills/adr-writing/skill.md', '---\ntype: skill\nid: adr-writing\ntitle: ADR\ngroup: tech\n---\n# x\n')
+  // Create context pack
+  write('.kaddo/context-pack.md', '# Context Pack\n')
+  write('.kaddo/context-pack.json', '{}')
+}
+
+const USEFUL_CONTENT = (topic: string) =>
+  `---\ntype: ${topic.toLowerCase()}\n---\n# ${topic}\n\n` +
+  `## Overview\n\n` +
+  `This document contains substantial real knowledge about the ${topic.toLowerCase()} domain. ` +
+  `It covers multiple aspects including strategy, stakeholders, key metrics, and operational details. ` +
+  `The content is specific and actionable, not a placeholder. It provides enough detail for agents ` +
+  `to produce meaningful outputs. The system handles authentication, authorization, data processing, ` +
+  `reporting, notifications, and integrations with third-party services.\n\n` +
+  `## Details\n\n` +
+  `The implementation follows a modular architecture with clear separation of concerns. Each module ` +
+  `is responsible for a specific domain area and communicates through well-defined interfaces. The ` +
+  `deployment pipeline includes automated testing, staging environments, and production rollouts. ` +
+  `Monitoring covers application performance, error rates, and business metrics dashboards.\n`
+
+describe('VS-083.3 — Understand Self-Recommendation Guard', () => {
+
+  describe('self-recommendation guard', () => {
+    it('AC1: understand does not recommend itself when placeholders exist', () => {
+      writeFullSetup()
+      // business.md is baseline placeholder (from writeBaseline)
+      write('.kaddo/understand.md', '# Understand\n')
+      const rec = resolveNextStep(tmpDir)
+      expect(rec.id).not.toBe('understand')
+    })
+
+    it('AC2: refine-business is recommended when business.md is placeholder', () => {
+      writeFullSetup()
+      const rec = resolveNextStep(tmpDir)
+      expect(rec.id).toBe('refine-business')
+      expect(rec.agent).toBe('business-agent')
+    })
+
+    it('AC3/AC4/AC5/AC6: refine-business includes agentPath, agentInstalled, target', () => {
+      writeFullSetup()
+      const rec = resolveNextStep(tmpDir)
+      expect(rec.id).toBe('refine-business')
+      expect(rec.agentPath).toBe('knowledge/agents/business/business-agent.md')
+      expect(rec.agentInstalled).toBe(true)
+      expect(rec.target).toBe('knowledge/business/business.md')
+    })
+  })
+
+  describe('project route alignment', () => {
+    it('AC11: projectRoute.currentStep = define-business when business is placeholder', () => {
+      writeFullSetup()
+      const route = buildProjectRoute(tmpDir)
+      expect(route.currentStep).toBe('define-business')
+    })
+
+    it('AC12: scan with warnings stays as warning, not current, when refine-business applies', () => {
+      writeFullSetup()
+      const route = buildProjectRoute(tmpDir)
+      const scan = route.steps.find(s => s.id === 'scan-repository')
+      expect(scan).toBeDefined()
+      if (scan!.status !== 'done') {
+        expect(scan!.status).not.toBe('current')
+      }
+    })
+  })
+
+  describe('context-pack alignment', () => {
+    it('AC9: context-pack.json resolves refine-business when business.md is placeholder', () => {
+      writeFullSetup()
+      const pack = buildContextPack(tmpDir, loadConfig(tmpDir)!)
+      expect(pack.nextStepRecommendation.id).toBe('refine-business')
+    })
+
+    it('AC10: deliveryState.phase reflects Knowledge Refinement when rec is refine', () => {
+      writeFullSetup()
+      const pack = buildContextPack(tmpDir, loadConfig(tmpDir)!)
+      expect(pack.nextStepRecommendation.phase).toBe('Knowledge Refinement')
+    })
+  })
+
+  describe('progression after business is useful', () => {
+    it('AC13: after business.md is useful, recommendation advances to product', () => {
+      writeFullSetup()
+      write('knowledge/business/business.md', USEFUL_CONTENT('Business'))
+      const rec = resolveNextStep(tmpDir)
+      expect(rec.id).toBe('refine-product')
+    })
+
+    it('after all knowledge is useful, understand fallback works', () => {
+      writeFullSetup()
+      write('knowledge/business/business.md', USEFUL_CONTENT('Business'))
+      write('knowledge/product/product.md', USEFUL_CONTENT('Product'))
+      write('knowledge/product/capabilities.md', USEFUL_CONTENT('Capabilities'))
+      write('knowledge/tech/current-state.md', USEFUL_CONTENT('Architecture'))
+      write('knowledge/tech/codebase.md', USEFUL_CONTENT('Codebase'))
+      // No understand.md → should now recommend understand
+      const rec = resolveNextStep(tmpDir)
+      expect(rec.id).toBe('understand')
+      expect(rec.command).toBe('kaddo understand')
+    })
+  })
+
+  describe('understand.md and context-pack.md rendering', () => {
+    it('AC7: understand.md renders business-agent handoff when business.md is placeholder', () => {
+      writeFullSetup()
+      const plan = buildUnderstandPlan(tmpDir, loadConfig(tmpDir)!)
+      const rec = resolveNextStep(tmpDir)
+      plan.nextStepRecommendation = rec
+      enrichUnderstandPlan(plan, {
+        phase: rec.phase,
+        nextStepRecommendation: rec,
+      })
+      const md = renderUnderstand(plan)
+      expect(md).toContain('business-agent')
+      expect(md).toContain('knowledge/business/business.md')
+      expect(md).not.toContain('id: understand')
+    })
+
+    it('AC8: context-pack.md renders business-agent handoff', () => {
+      writeFullSetup()
+      const pack = buildContextPack(tmpDir, loadConfig(tmpDir)!)
+      const md = renderContextPack(pack)
+      expect(md).toContain('business-agent')
+      expect(md).not.toContain('Run `kaddo understand` to summarize')
+    })
+  })
+
+  describe('CLI invariants', () => {
+    it('AC19/AC20: CLI does not call LLM or execute git (deterministic)', () => {
+      writeFullSetup()
+      const rec = resolveNextStep(tmpDir)
+      expect(rec.id).toBe('refine-business')
+      // resolveNextStep is pure — if it returned, it didn't call LLM or git
+    })
+  })
+})

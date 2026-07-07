@@ -442,7 +442,6 @@ function mapNextStepId(id: string): string {
     'add-skills': 'enable-kaddo',
     scan: 'scan-repository',
     context: 'scan-repository',
-    understand: 'scan-repository',
     'refine-business': 'define-business',
     'refine-product': 'define-product',
     'refine-capabilities': 'discover-capabilities',
