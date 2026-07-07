@@ -2,8 +2,13 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import fs from 'fs'
 import os from 'os'
 import path from 'path'
+import { fileURLToPath } from 'url'
 import { renderAcceptanceCriteria } from '../src/commands/create.js'
 import { buildRoadmapWorkItem } from '../src/commands/create.js'
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+const CLI_ROOT = path.resolve(__dirname, '..')
 
 let tmpDir: string
 
@@ -173,7 +178,7 @@ describe('create — CLI safety', () => {
     // The create command uses only deterministic logic
     // Verify no fetch/http/llm imports in create.ts
     const src = fs.readFileSync(
-      path.join(process.cwd(), 'src/commands/create.ts'),
+      path.join(CLI_ROOT, 'src/commands/create.ts'),
       'utf-8'
     )
     expect(src).not.toContain('fetch(')
@@ -183,7 +188,7 @@ describe('create — CLI safety', () => {
 
   it('AC34: CLI does not execute git', () => {
     const src = fs.readFileSync(
-      path.join(process.cwd(), 'src/commands/create.ts'),
+      path.join(CLI_ROOT, 'src/commands/create.ts'),
       'utf-8'
     )
     expect(src).not.toContain('execSync')
