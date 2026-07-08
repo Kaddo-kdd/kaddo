@@ -205,11 +205,14 @@ function makeCreateRec(): NextStepRecommendation {
 
 function makeInstallAdapterRec(): NextStepRecommendation {
   return {
-    id: 'install-adapter',
+    id: 'prepare-implementation',
     phase: 'Active Delivery',
-    label: 'Install or configure an adapter before implementation (`kaddo adapters list`).',
+    label: 'Prepare implementation for WI-001.',
     command: 'kaddo adapters list',
-    reason: '1 Work Item(s) are ready but no adapter is installed.',
+    agent: 'implementation-agent',
+    skill: 'implementation-planning',
+    target: 'WI-001',
+    reason: 'WI-001 is ready for implementation but no adapter is installed.',
   }
 }
 
@@ -334,7 +337,7 @@ describe('understand markdown — state-aware rendering (VS-079.1)', () => {
       ready_work_items: 1,
     }
     const md = renderUnderstand(enrichedPlanWith(makeInstallAdapterRec(), readyDs))
-    expect(md).toContain('- id: install-adapter')
+    expect(md).toContain('- id: prepare-implementation')
     expect(md).toContain('kaddo adapters list')
   })
 

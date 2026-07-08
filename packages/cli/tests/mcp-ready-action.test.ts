@@ -161,12 +161,12 @@ describe('VS-088 — review-work-item next step', () => {
     expect(rec.reason).toContain('refined draft')
   })
 
-  it('does not return review-work-item when roadmap has candidates', () => {
+  it('returns review-work-item even when roadmap has candidates (VS-090)', () => {
     pastUsefulKnowledge()
     write('knowledge/delivery/roadmap.md', '---\ntype: roadmap\n---\n\n## Candidates\n\n- [ ] Build dashboard\n')
     write('knowledge/delivery/work-items/draft/WI-001.md', REFINED_DRAFT_WI)
     const rec = resolveNextStep(dir)
-    expect(rec.id).not.toBe('review-work-item')
+    expect(rec.id).toBe('review-work-item')
   })
 })
 
@@ -288,5 +288,161 @@ describe('VS-089 — targeted recommendation', () => {
     const json = JSON.stringify(rec)
     expect(json).toContain('"target":"WI-001"')
     expect(json).toContain('"mcpArgs"')
+  })
+})
+
+const READY_WI = `---
+type: bugfix
+id: WI-001
+title: "Listar últimas compras"
+knowledge_level: K2
+status: ready
+phase: now
+work_type: bugfix
+domains:
+  - loyalty
+code:
+  - src/hooks/useAdminMetrics.ts
+  - src/app/dashboard/page.tsx
+source:
+  type: manual
+  inferred: false
+refined_by: work-item-agent
+ready_at: '2026-07-07'
+generated_by: kaddo-create
+template_version: 1
+---
+
+## Problem
+
+Users cannot see recent purchases in the admin dashboard.
+
+## Acceptance criteria
+
+- [ ] Admin page shows recent purchases.
+- [ ] Purchases are sorted by date descending.
+
+## Validation
+
+Run the admin dashboard and verify purchases appear.
+`
+
+const READY_WI_2 = `---
+type: feature
+id: WI-002
+title: "Add metrics"
+status: ready
+phase: now
+work_type: feature
+domains:
+  - observability
+code:
+  - src/metrics.ts
+source:
+  type: manual
+  inferred: false
+refined_by: work-item-agent
+ready_at: '2026-07-07'
+generated_by: kaddo-create
+template_version: 1
+---
+
+## Problem
+
+No metrics.
+
+## Acceptance criteria
+
+- [ ] Metrics endpoint exists.
+
+## Validation
+
+curl metrics.
+`
+
+describe('VS-090 — ready beats empty roadmap', () => {
+  it('ready WI recommends prepare-implementation, not roadmap', () => {
+    pastUsefulKnowledge()
+    write('knowledge/delivery/work-items/ready/WI-001.md', READY_WI)
+    const rec = resolveNextStep(dir)
+    expect(rec.id).toBe('prepare-implementation')
+    expect(rec.agent).toBe('implementation-agent')
+    expect(rec.skill).toBe('implementation-planning')
+    expect(rec.target).toBe('WI-001')
+    expect(rec.id).not.toBe('roadmap')
+  })
+
+  it('ready WI with adapter recommends implement-work-item', () => {
+    pastUsefulKnowledge()
+    write('knowledge/delivery/work-items/ready/WI-001.md', READY_WI)
+    write('AGENTS.md', '# Agents\n\n<!-- BEGIN KADDO ADAPTER -->\nKaddo guidance\n<!-- END KADDO ADAPTER -->\n')
+    const rec = resolveNextStep(dir)
+    expect(rec.id).toBe('implement-work-item')
+    expect(rec.agent).toBe('implementation-agent')
+    expect(rec.skill).toBe('implementation-planning')
+    expect(rec.target).toBe('WI-001')
+    expect(rec.reason).toContain('WI-001')
+    expect(rec.reason).toContain('ready for implementation')
+  })
+
+  it('roadmap empty appears as secondary when ready WI exists', () => {
+    pastUsefulKnowledge()
+    write('knowledge/delivery/work-items/ready/WI-001.md', READY_WI)
+    const rec = resolveNextStep(dir)
+    const roadmapSec = (rec.secondary ?? []).find((s) => s.id === 'roadmap')
+    expect(roadmapSec).toBeTruthy()
+    expect(roadmapSec!.reason).toContain('ready Work Items exist')
+  })
+
+  it('multiple ready WIs expose targets array', () => {
+    pastUsefulKnowledge()
+    write('knowledge/delivery/work-items/ready/WI-001.md', READY_WI)
+    write('knowledge/delivery/work-items/ready/WI-002.md', READY_WI_2)
+    const rec = resolveNextStep(dir)
+    expect(rec.id).toBe('prepare-implementation')
+    expect(rec.targets).toEqual(expect.arrayContaining(['WI-001', 'WI-002']))
+    expect(rec.targets).toHaveLength(2)
+    expect(rec.target).toBeUndefined()
+  })
+
+  it('ready_work_item_ids populated in DeliveryState', () => {
+    config()
+    write('knowledge/delivery/work-items/ready/WI-001.md', READY_WI)
+    write('knowledge/delivery/work-items/ready/WI-002.md', READY_WI_2)
+    const st = buildDeliveryState(dir)
+    expect(st.ready_work_item_ids).toEqual(expect.arrayContaining(['WI-001', 'WI-002']))
+    expect(st.ready_work_item_ids).toHaveLength(2)
+  })
+
+  it('no ready/draft WIs keeps roadmap recommendation when roadmap is empty', () => {
+    pastUsefulKnowledge()
+    const rec = resolveNextStep(dir)
+    expect(rec.id).toBe('roadmap')
+  })
+
+  it('missing adapter produces prepare-implementation, not roadmap', () => {
+    pastUsefulKnowledge()
+    write('knowledge/delivery/work-items/ready/WI-001.md', READY_WI)
+    const rec = resolveNextStep(dir)
+    expect(rec.id).toBe('prepare-implementation')
+    expect(rec.command).toBe('kaddo adapters list')
+    expect(rec.id).not.toBe('roadmap')
+  })
+
+  it('ready WI beats roadmap even when roadmap has candidates', () => {
+    pastUsefulKnowledge()
+    write('knowledge/delivery/roadmap.md', '---\ntype: roadmap\n---\n\n## Candidates\n\n- [ ] Build dashboard\n')
+    write('knowledge/delivery/work-items/ready/WI-001.md', READY_WI)
+    const rec = resolveNextStep(dir)
+    expect(rec.id).toBe('prepare-implementation')
+    expect(rec.agent).toBe('implementation-agent')
+  })
+
+  it('projectRoute and nextStep aligned for ready WI', () => {
+    pastUsefulKnowledge()
+    write('knowledge/delivery/work-items/ready/WI-001.md', READY_WI)
+    const rec = resolveNextStep(dir)
+    expect(rec.phase).toBe('Active Delivery')
+    expect(['prepare-implementation', 'implement-work-item']).toContain(rec.id)
   })
 })

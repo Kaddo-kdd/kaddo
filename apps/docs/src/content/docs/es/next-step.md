@@ -19,14 +19,14 @@ Kaddo evalúa el siguiente paso en orden de prioridad:
 
 1. Conocimiento fundacional faltante (business / product / tech)
 2. Preguntas abiertas bloqueantes
-3. No hay roadmap → **roadmap-agent**
-4. El roadmap tiene candidatos pero **no hay Work Items** → `kaddo create --from roadmap`
-5. Work Item **ready** + sin adapter → instalar un adapter (`kaddo adapters list`)
-6. Work Item **ready** + adapter → **implementation-agent**
-7. Work Item **in-progress** → `kaddo guard`
-8. Work Item **draft refinado** (`refined_by` presente) → `kaddo ready <WI-ID>` (revisión humana)
-9. Work Item **draft** → **work-item-agent** (nunca "crear el primer Work Item")
-10. Work Item **blocked** → resolver el bloqueo con el work-item-agent
+3. Work Item **ready** + sin adapter → preparar implementación (`kaddo adapters list`)
+4. Work Item **ready** + adapter → **implementation-agent**
+5. Work Item **in-progress** → `kaddo guard`
+6. Work Item **draft refinado** (`refined_by` presente) → `kaddo ready <WI-ID>` (revisión humana)
+7. Work Item **draft** → **work-item-agent** (nunca "crear el primer Work Item")
+8. Work Item **blocked** → resolver el bloqueo con el work-item-agent
+9. Sin roadmap y sin Work Items activos → **roadmap-agent**
+10. El roadmap tiene candidatos pero **no hay Work Items** → `kaddo create --from roadmap`
 11. Solo trabajo completed/archived → materializar candidatos restantes o planear la próxima iniciativa
 
 La regla central: **Kaddo recomienda el siguiente paso según el estado real del delivery, no solo según

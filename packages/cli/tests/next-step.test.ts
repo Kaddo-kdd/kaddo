@@ -193,21 +193,26 @@ describe('resolveNextStep — state-aware delivery (VS-079)', () => {
     expect(adr!.command).toBe('kaddo adr')
   })
 
-  it('AC7: a ready Work Item with no adapter → install adapter', () => {
+  it('AC7: a ready Work Item with no adapter → prepare-implementation', () => {
     usefulKnowledge()
     writeWI('ready', 'WI-001', { code: true })
     const rec = resolveNextStep(dir)
-    expect(rec.id).toBe('install-adapter')
+    expect(rec.id).toBe('prepare-implementation')
     expect(rec.command).toBe('kaddo adapters list')
+    expect(rec.agent).toBe('implementation-agent')
+    expect(rec.skill).toBe('implementation-planning')
+    expect(rec.target).toBe('WI-001')
   })
 
-  it('AC8: a ready Work Item with an adapter installed → implementation-agent', () => {
+  it('AC8: a ready Work Item with an adapter installed → implement-work-item', () => {
     usefulKnowledge()
     writeWI('ready', 'WI-001', { code: true })
     write('AGENTS.md', '# Agents\n\n<!-- BEGIN KADDO ADAPTER -->\nKaddo guidance\n<!-- END KADDO ADAPTER -->\n')
     const rec = resolveNextStep(dir)
-    expect(rec.id).toBe('implement')
+    expect(rec.id).toBe('implement-work-item')
     expect(rec.agent).toBe('implementation-agent')
+    expect(rec.skill).toBe('implementation-planning')
+    expect(rec.target).toBe('WI-001')
   })
 
   it('AC9: an in-progress Work Item → guard', () => {

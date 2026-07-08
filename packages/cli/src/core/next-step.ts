@@ -62,6 +62,8 @@ export type DeliveryState = {
   refined_draft_work_items: number
   refined_draft_ids: string[]
   ready_work_items: number
+  /** IDs of Work Items in ready state (VS-090). */
+  ready_work_item_ids: string[]
   in_progress_work_items: number
   blocked_work_items: number
   total_work_items: number
@@ -89,6 +91,7 @@ export function buildDeliveryState(dir: string): DeliveryState {
     refined_draft_work_items: wis.filter((w) => w.lifecycle === 'draft' && w.rawFrontmatter.refined_by).length,
     refined_draft_ids: wis.filter((w) => w.lifecycle === 'draft' && w.rawFrontmatter.refined_by).map((w) => w.id),
     ready_work_items: byState('ready'),
+    ready_work_item_ids: wis.filter((w) => w.lifecycle === 'ready').map((w) => w.id),
     in_progress_work_items: byState('in-progress'),
     blocked_work_items: byState('blocked'),
     total_work_items: total,
@@ -244,76 +247,55 @@ export function resolveNextStep(dir: string, now: Date = new Date()): NextStepRe
 
   const roadmap = roadmapSignal(dir)
 
-  if (roadmap !== 'has-candidates' && st.draft_work_items > 0) {
-    if (st.refined_draft_work_items > 0) {
-      const ids = st.refined_draft_ids
-      const single = ids.length === 1
-      return {
-        id: 'review-work-item',
-        phase: 'Active Delivery',
-        label: single
-          ? `Review ${ids[0]} and mark it ready for implementation.`
-          : 'Review refined draft Work Items and mark one ready for implementation.',
-        command: single ? `kaddo ready ${ids[0]}` : 'kaddo ready <WI-ID>',
-        mcpAction: 'kaddo_mark_work_item_ready',
-        ...(single ? { target: ids[0], mcpArgs: { id: ids[0] } } : { targets: ids }),
-        reason: single
-          ? `${ids[0]} is a refined draft Work Item awaiting human review.`
-          : `There are ${ids.length} refined draft Work Items awaiting human review.`,
-        ...(secondary.length ? { secondary } : {}),
-      }
-    }
-    return {
-      id: 'refine-work-item',
-      phase: 'Active Delivery',
-      label: 'Refine the existing draft Work Item with the work-item-agent.',
-      agent: 'work-item-agent',
-      skill: 'work-item-refinement',
-      reason: `There ${st.draft_work_items === 1 ? 'is' : 'are'} ${st.draft_work_items} draft Work Item${st.draft_work_items === 1 ? '' : 's'}. Refine before defining roadmap candidates.`,
-      ...(secondary.length ? { secondary } : {}),
-    }
-  }
-
-  if (roadmap !== 'has-candidates') {
-    return { id: 'roadmap', phase: 'Planning', label: 'Use roadmap-agent to define roadmap candidates (`kaddo roadmap`).', command: 'kaddo roadmap', agent: 'roadmap-agent', target: 'knowledge/delivery/roadmap.md', reason: 'The roadmap has no candidates yet.' }
-  }
-
-  // Case 1 — roadmap has candidates but no Work Item exists yet.
-  if (st.total_work_items === 0) {
-    return {
-      id: 'create-work-item',
-      phase: 'Delivery Preparation',
-      label: 'Run `kaddo create --from roadmap` to materialize the first Work Item.',
-      command: 'kaddo create --from roadmap',
-      reason: 'The roadmap has candidates but no Work Item exists yet.',
-      ...(secondary.length ? { secondary } : {}),
-    }
-  }
-
+  // VS-090: ready Work Items beat everything except blocked/in-progress. Check early.
   const adapters = st.adapters_installed
-  // Ready Work Items — prepare or start implementation (Cases 5 & 6).
   if (st.ready_work_items > 0) {
+    const ids = st.ready_work_item_ids
+    const single = ids.length === 1
+    const sec = [...secondary]
+    if (roadmap !== 'has-candidates' && st.remaining_work_item_candidates === 0) {
+      sec.push({
+        id: 'roadmap',
+        label: 'Roadmap has no candidates. Consider running `kaddo roadmap` after handling ready Work Items.',
+        command: 'kaddo roadmap',
+        agent: 'roadmap-agent',
+        reason: 'The roadmap has no candidates yet, but ready Work Items exist.',
+      })
+    }
     if (adapters === 0) {
       return {
-        id: 'install-adapter',
+        id: 'prepare-implementation',
         phase: 'Active Delivery',
-        label: 'Install or configure an adapter before implementation (`kaddo adapters list`).',
+        label: single
+          ? `Prepare implementation for ${ids[0]}.`
+          : 'Prepare implementation for ready Work Items.',
         command: 'kaddo adapters list',
-        reason: `${st.ready_work_items} Work Item(s) are ready but no adapter is installed.`,
-        ...(secondary.length ? { secondary } : {}),
+        agent: 'implementation-agent',
+        skill: 'implementation-planning',
+        ...(single ? { target: ids[0] } : { targets: ids }),
+        reason: single
+          ? `${ids[0]} is ready for implementation but no adapter is installed.`
+          : `There are ${ids.length} ready Work Items awaiting implementation but no adapter is installed.`,
+        ...(sec.length ? { secondary: sec } : {}),
       }
     }
     return {
-      id: 'implement',
+      id: 'implement-work-item',
       phase: 'Active Delivery',
-      label: 'Use the implementation-agent or your installed adapter to plan implementation.',
+      label: single
+        ? `Use implementation-agent to implement ${ids[0]}.`
+        : 'Use implementation-agent to implement ready Work Items.',
       agent: 'implementation-agent',
-      reason: `${st.ready_work_items} Work Item(s) are ready and an adapter is installed.`,
-      ...(secondary.length ? { secondary } : {}),
+      skill: 'implementation-planning',
+      ...(single ? { target: ids[0] } : { targets: ids }),
+      reason: single
+        ? `${ids[0]} is ready for implementation.`
+        : `There are ${ids.length} ready Work Items awaiting implementation.`,
+      ...(sec.length ? { secondary: sec } : {}),
     }
   }
 
-  // In-progress Work Items — keep knowledge in sync (Case 7).
+  // In-progress Work Items — keep knowledge in sync.
   if (st.in_progress_work_items > 0) {
     return {
       id: 'guard',
@@ -325,7 +307,27 @@ export function resolveNextStep(dir: string, now: Date = new Date()): NextStepRe
     }
   }
 
-  // Draft Work Items — refine before creating more (Case 2, Rules 1 & 3).
+  // Refined draft Work Items — review before refining unrefined ones.
+  if (st.refined_draft_work_items > 0) {
+    const ids = st.refined_draft_ids
+    const single = ids.length === 1
+    return {
+      id: 'review-work-item',
+      phase: 'Active Delivery',
+      label: single
+        ? `Review ${ids[0]} and mark it ready for implementation.`
+        : 'Review refined draft Work Items and mark one ready for implementation.',
+      command: single ? `kaddo ready ${ids[0]}` : 'kaddo ready <WI-ID>',
+      mcpAction: 'kaddo_mark_work_item_ready',
+      ...(single ? { target: ids[0], mcpArgs: { id: ids[0] } } : { targets: ids }),
+      reason: single
+        ? `${ids[0]} is a refined draft Work Item awaiting human review.`
+        : `There are ${ids.length} refined draft Work Items awaiting human review.`,
+      ...(secondary.length ? { secondary } : {}),
+    }
+  }
+
+  // Draft Work Items — refine before creating more.
   if (st.draft_work_items > 0) {
     return {
       id: 'refine-work-item',
@@ -333,7 +335,7 @@ export function resolveNextStep(dir: string, now: Date = new Date()): NextStepRe
       label: 'Refine the existing draft Work Item with the work-item-agent.',
       agent: 'work-item-agent',
       skill: 'work-item-refinement',
-      reason: `There ${st.draft_work_items === 1 ? 'is' : 'are'} ${st.draft_work_items} draft Work Item${st.draft_work_items === 1 ? '' : 's'} and no Work Item is ready.`,
+      reason: `There ${st.draft_work_items === 1 ? 'is' : 'are'} ${st.draft_work_items} draft Work Item${st.draft_work_items === 1 ? '' : 's'}. Refine before defining roadmap candidates.`,
       ...(secondary.length ? { secondary } : {}),
     }
   }
@@ -346,6 +348,22 @@ export function resolveNextStep(dir: string, now: Date = new Date()): NextStepRe
       label: 'Resolve the blocker on the blocked Work Item with the work-item-agent.',
       agent: 'work-item-agent',
       reason: `${st.blocked_work_items} Work Item(s) are blocked.`,
+      ...(secondary.length ? { secondary } : {}),
+    }
+  }
+
+  // No active Work Items — roadmap and creation.
+  if (roadmap !== 'has-candidates') {
+    return { id: 'roadmap', phase: 'Planning', label: 'Use roadmap-agent to define roadmap candidates (`kaddo roadmap`).', command: 'kaddo roadmap', agent: 'roadmap-agent', target: 'knowledge/delivery/roadmap.md', reason: 'The roadmap has no candidates yet.' }
+  }
+
+  if (st.total_work_items === 0) {
+    return {
+      id: 'create-work-item',
+      phase: 'Delivery Preparation',
+      label: 'Run `kaddo create --from roadmap` to materialize the first Work Item.',
+      command: 'kaddo create --from roadmap',
+      reason: 'The roadmap has candidates but no Work Item exists yet.',
       ...(secondary.length ? { secondary } : {}),
     }
   }

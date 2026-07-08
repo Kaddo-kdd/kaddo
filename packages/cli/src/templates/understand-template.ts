@@ -187,11 +187,11 @@ export function renderUnderstand(plan: UnderstandPlan): string {
           outputs.push('- Refined Work Item content.')
         if (rec.id === 'create-work-item')
           outputs.push('- A new Work Item under `knowledge/delivery/work-items/`.')
-        if (rec.id === 'implement')
+        if (rec.id === 'implement' || rec.id === 'implement-work-item')
           outputs.push('- Implementation plan or code changes guided by the Work Item.')
         if (rec.id === 'guard')
           outputs.push('- Updated knowledge artifacts reflecting recent code changes.')
-        if (rec.id === 'install-adapter')
+        if (rec.id === 'install-adapter' || rec.id === 'prepare-implementation')
           outputs.push('- An adapter configured and injected (`kaddo adapters list`).')
         if (outputs.length > 0) {
           parts.push('The LLM should produce:\n')
