@@ -84,6 +84,24 @@ A ready-to-copy example lives in [`examples/mcp/`](https://github.com/Kaddo-kdd/
 - `kaddo_list_skills` / `kaddo_get_skill` — installed reusable [skills](/skills/).
 - `kaddo_list_graph_hints` — graph hints, filter by `artifact_type` / `severity` / `active_only`.
 
+## Multirepo tools
+
+Tools for agents working with multirepo `core`/`module` projects. All are read-only except
+`kaddo_export_capsule` which writes derived capsule files under `.kaddo/exports/`.
+
+| Tool | Purpose |
+|---|---|
+| `kaddo_modules_list` | List mapped modules and their Kaddo configuration status (core only). |
+| `kaddo_get_module_context` | Get a module's `module-context.md`, tech summaries and warnings. |
+| `kaddo_validate_work_item_modules` | Validate `affected_modules` coherence and cross-repo ownership. |
+| `kaddo_get_work_item_context` | Composite context for implementing a multirepo Work Item. |
+| `kaddo_suggest_branch_strategy` | Suggest branch names, commit messages and checklist. Does NOT execute git. |
+| `kaddo_export_capsule` | Export a capsule (project, system, or module scope) under `.kaddo/exports/`. |
+
+**Security:** none of these tools executes git, deploys, installs dependencies or calls an LLM.
+`kaddo_suggest_branch_strategy` only *suggests* branch names and commit messages — the agent
+or user must create branches and commit manually.
+
 ## Derived tools (write only under `.kaddo/`)
 
 When a derived artifact is missing or stale, these tools regenerate it in place — using the same

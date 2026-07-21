@@ -64,6 +64,8 @@ export type DeliveryState = {
   ready_work_items: number
   /** IDs of Work Items in ready state (VS-090). */
   ready_work_item_ids: string[]
+  /** IDs of ready WIs that have affected_modules (VS-092). */
+  ready_multirepo_wi_ids: string[]
   in_progress_work_items: number
   blocked_work_items: number
   total_work_items: number
@@ -92,6 +94,7 @@ export function buildDeliveryState(dir: string): DeliveryState {
     refined_draft_ids: wis.filter((w) => w.lifecycle === 'draft' && w.rawFrontmatter.refined_by).map((w) => w.id),
     ready_work_items: byState('ready'),
     ready_work_item_ids: wis.filter((w) => w.lifecycle === 'ready').map((w) => w.id),
+    ready_multirepo_wi_ids: wis.filter((w) => w.lifecycle === 'ready' && Array.isArray(w.rawFrontmatter?.affected_modules) && w.rawFrontmatter.affected_modules.length > 0).map((w) => w.id),
     in_progress_work_items: byState('in-progress'),
     blocked_work_items: byState('blocked'),
     total_work_items: total,
@@ -315,6 +318,13 @@ export function resolveNextStep(dir: string, now: Date = new Date()): NextStepRe
         command: 'kaddo roadmap',
         agent: 'roadmap-agent',
         reason: 'The roadmap has no candidates yet, but ready Work Items exist.',
+      })
+    }
+    if (st.ready_multirepo_wi_ids.length > 0) {
+      sec.push({
+        id: 'validate-work-item-modules',
+        label: 'Validate affected modules for multirepo Work Items before implementation.',
+        reason: `${st.ready_multirepo_wi_ids.length} ready Work Item(s) reference affected_modules.`,
       })
     }
     if (adapters === 0) {

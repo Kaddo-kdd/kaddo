@@ -87,6 +87,24 @@ Hay un ejemplo listo para copiar en
 - `kaddo_list_skills` / `kaddo_get_skill` — [skills](/es/skills/) reutilizables instaladas.
 - `kaddo_list_graph_hints` — hints del grafo, filtra por `artifact_type` / `severity` / `active_only`.
 
+## Herramientas multirepo
+
+Herramientas para agentes trabajando con proyectos multirepo `core`/`module`. Todas son de solo
+lectura excepto `kaddo_export_capsule` que escribe cápsulas derivadas bajo `.kaddo/exports/`.
+
+| Herramienta | Propósito |
+|---|---|
+| `kaddo_modules_list` | Lista módulos mapeados y su estado de configuración Kaddo (solo core). |
+| `kaddo_get_module_context` | Obtiene `module-context.md`, resúmenes tech y warnings de un módulo. |
+| `kaddo_validate_work_item_modules` | Valida coherencia de `affected_modules` y ownership cross-repo. |
+| `kaddo_get_work_item_context` | Contexto compuesto para implementar un Work Item multirepo. |
+| `kaddo_suggest_branch_strategy` | Sugiere nombres de rama, mensajes de commit y checklist. NO ejecuta git. |
+| `kaddo_export_capsule` | Exporta una cápsula (proyecto, sistema o módulo) bajo `.kaddo/exports/`. |
+
+**Seguridad:** ninguna de estas herramientas ejecuta git, hace deploy, instala dependencias ni
+llama a un LLM. `kaddo_suggest_branch_strategy` solo *sugiere* nombres de rama y mensajes de
+commit — el agente o usuario debe crear branches y hacer commit manualmente.
+
 ## Derived tools (escriben solo bajo `.kaddo/`)
 
 Cuando un artefacto derivado falta o está desactualizado, estas tools lo regeneran en el sitio —

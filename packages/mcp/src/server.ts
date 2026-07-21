@@ -22,6 +22,14 @@ import {
 } from './tools.js'
 import { listSkills, getSkill } from './skills.js'
 import {
+  modulesListTool,
+  getModuleContextTool,
+  validateWorkItemModulesTool,
+  getWorkItemContextTool,
+  suggestBranchStrategyTool,
+  exportCapsuleTool,
+} from './multirepo.js'
+import {
   generateContext,
   generateExplain,
   generateUnderstand,
@@ -180,6 +188,79 @@ export function createServer(root: string): McpServer {
     'kaddo_get_skill',
     { title: 'Get skill', description: 'Get an installed reusable skill by id.', inputSchema: { id: z.string() } },
     async (args) => toolText(guarded(root, () => getSkillTool(root, args.id)))
+  )
+
+  // --- Multirepo tools (read-only) — VS-092 ---
+  server.registerTool(
+    'kaddo_modules_list',
+    {
+      title: 'List multirepo modules',
+      description: 'List mapped modules and their Kaddo configuration status. Only works from a core repository.',
+      inputSchema: { includeWarnings: z.boolean().optional() },
+    },
+    async (args) => toolText(guarded(root, () => modulesListTool(root, args)))
+  )
+
+  server.registerTool(
+    'kaddo_get_module_context',
+    {
+      title: 'Get module context',
+      description: 'Get the local knowledge context (module-context.md, tech files) for a mapped module.',
+      inputSchema: {
+        module: z.string(),
+        includeTech: z.boolean().optional(),
+        includeWarnings: z.boolean().optional(),
+      },
+    },
+    async (args) => toolText(guarded(root, () => getModuleContextTool(root, args)))
+  )
+
+  server.registerTool(
+    'kaddo_validate_work_item_modules',
+    {
+      title: 'Validate Work Item modules',
+      description: 'Validate that a Work Item has coherent affected_modules and sufficient cross-repo ownership.',
+      inputSchema: { workItemId: z.string() },
+    },
+    async (args) => toolText(guarded(root, () => validateWorkItemModulesTool(root, args)))
+  )
+
+  server.registerTool(
+    'kaddo_get_work_item_context',
+    {
+      title: 'Get Work Item context',
+      description: 'Composite context for implementing a multirepo Work Item: WI details, affected module contexts, ownership, branch strategy.',
+      inputSchema: {
+        workItemId: z.string(),
+        includeModuleContexts: z.boolean().optional(),
+        includeBranchStrategy: z.boolean().optional(),
+        includeGuardExpectations: z.boolean().optional(),
+      },
+    },
+    async (args) => toolText(guarded(root, () => getWorkItemContextTool(root, args)))
+  )
+
+  server.registerTool(
+    'kaddo_suggest_branch_strategy',
+    {
+      title: 'Suggest branch strategy',
+      description: 'Suggest branch names, commit messages, and a checklist for a multirepo Work Item. Does NOT execute git.',
+      inputSchema: { workItemId: z.string() },
+    },
+    async (args) => toolText(guarded(root, () => suggestBranchStrategyTool(root, args)))
+  )
+
+  server.registerTool(
+    'kaddo_export_capsule',
+    {
+      title: 'Export Knowledge Capsule',
+      description: 'Export a Knowledge Capsule as a derived artifact under .kaddo/exports/. Supports scope=system (from core) and module=<id> (from core or module).',
+      inputSchema: {
+        scope: z.string().optional(),
+        module: z.string().optional(),
+      },
+    },
+    async (args) => toolText(guarded(root, () => exportCapsuleTool(root, args)))
   )
 
   // --- Per-skill resources (kaddo://skills/<id>) — VS-059 ---

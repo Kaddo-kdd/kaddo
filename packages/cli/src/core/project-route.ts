@@ -453,6 +453,7 @@ function mapNextStepId(id: string): string {
     'refine-module-context': 'refine-work-item',
     'init-module-context': 'enable-kaddo',
     'module-ready': 'prepare-implementation',
+    'validate-work-item-modules': 'prepare-implementation',
   }
   return MAP[id] ?? id
 }
