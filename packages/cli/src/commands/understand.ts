@@ -207,6 +207,7 @@ export function runUnderstand(): void {
         const s = parseWorkItemSource(w.rawFrontmatter)
         return { type: s.type, ...(s.id ? { id: s.id } : {}) }
       })(),
+      affectedModules: Array.isArray(w.rawFrontmatter?.affected_modules) ? w.rawFrontmatter.affected_modules : undefined,
     }))
 
   const recommendedPaths: string[] = []

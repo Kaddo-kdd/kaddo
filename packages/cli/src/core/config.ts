@@ -7,11 +7,14 @@ export type TeamSize = 'indie' | 'small' | 'medium' | 'enterprise'
 export type RepositoryStructure = 'monorepo' | 'multirepo'
 /** Language of the project KNOWLEDGE (not the CLI, which is always English). VS-051. */
 export type ProjectLanguage = 'en' | 'es'
+/** Role of a repository in a multirepo system (VS-091). */
+export type MultirepoRole = 'core' | 'module'
 
 export const PROJECT_STATES: ProjectState[] = ['new', 'pre-ai', 'legacy']
 export const TEAM_SIZES: TeamSize[] = ['indie', 'small', 'medium', 'enterprise']
 export const REPOSITORY_STRUCTURES: RepositoryStructure[] = ['monorepo', 'multirepo']
 export const PROJECT_LANGUAGES: ProjectLanguage[] = ['en', 'es']
+export const MULTIREPO_ROLES: MultirepoRole[] = ['core', 'module']
 
 /** Safe defaults applied only when optional fields are absent. */
 const DEFAULTS = {
@@ -64,6 +67,8 @@ const languageSchema = z.enum(['en', 'es'], {
   }),
 })
 
+const multirepoRoleSchema = z.enum(['core', 'module']).optional()
+
 const configSchema = z
   .object({
     version: z.union([z.string(), z.number()]).optional(),
@@ -73,6 +78,7 @@ const configSchema = z
         state: projectStateSchema.default(DEFAULTS.state),
         structure: structureSchema.default(DEFAULTS.structure),
         language: languageSchema.default(DEFAULTS.language),
+        role: multirepoRoleSchema,
         domains: z.array(z.string()).optional(),
       })
       .passthrough()
@@ -83,6 +89,20 @@ const configSchema = z
       })
       .passthrough()
       .default({}),
+    multirepo: z
+      .object({
+        role: multirepoRoleSchema,
+        modules_file: z.string().optional(),
+        parent_system: z.string().optional(),
+      })
+      .passthrough()
+      .optional(),
+    module: z
+      .object({
+        id: z.string().optional(),
+      })
+      .passthrough()
+      .optional(),
     knowledge: z.unknown().optional(),
     guard: z.unknown().optional(),
     scan: z.unknown().optional(),
@@ -178,5 +198,32 @@ export function createGuidanceForState(state: ProjectState): string {
 export function describeProject(config: KaddoConfig): string {
   const state = config.project.state
   const stateLabel = state === 'pre-ai' ? 'pre-AI' : state
-  return `${stateLabel} ${config.project.structure}`
+  const role = projectRole(config)
+  const roleSuffix = role ? ` (${role})` : ''
+  return `${stateLabel} ${config.project.structure}${roleSuffix}`
+}
+
+/** The multirepo role of the project: 'core', 'module', or undefined (VS-091). */
+export function projectRole(config: KaddoConfig): MultirepoRole | undefined {
+  return (config.project as { role?: MultirepoRole }).role ?? config.multirepo?.role
+}
+
+/** Whether this project is a multirepo module (VS-091). */
+export function isModule(config: KaddoConfig): boolean {
+  return projectRole(config) === 'module'
+}
+
+/** Whether this project is a multirepo core (VS-091). */
+export function isCore(config: KaddoConfig): boolean {
+  return projectRole(config) === 'core'
+}
+
+/** The module ID for a module repo, from config (VS-091). */
+export function moduleId(config: KaddoConfig): string | undefined {
+  return config.module?.id
+}
+
+/** The parent system name for a module repo (VS-091). */
+export function parentSystem(config: KaddoConfig): string | undefined {
+  return config.multirepo?.parent_system
 }

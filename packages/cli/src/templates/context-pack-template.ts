@@ -237,6 +237,27 @@ export function renderContextPack(pack: ContextPack): string {
       'Note: Kaddo does not scan secondary repositories during `context`. Mapped modules ' +
         'come from `.kaddo/modules.yml` and module artifacts only.\n'
     )
+    // VS-091: module configuration status warnings.
+    const statuses = pack.moduleStatuses ?? {}
+    const warnings = Object.entries(statuses).filter(([, s]) => s.warning)
+    if (warnings.length > 0) {
+      parts.push('### Module Warnings\n')
+      for (const [id, s] of warnings) {
+        parts.push(`- **${id}** (${s.status}): ${s.warning}\n`)
+      }
+    }
+  }
+
+  // VS-091: affected module contexts for active Work Items.
+  const affectedCtx = pack.affectedModuleContexts ?? {}
+  const affectedIds = Object.keys(affectedCtx)
+  if (affectedIds.length > 0) {
+    parts.push('## Affected Module Contexts\n')
+    parts.push('The following module contexts are included because active Work Items reference them via `affected_modules`.\n')
+    for (const id of affectedIds) {
+      parts.push(`### Module: ${id}\n`)
+      parts.push(affectedCtx[id] + '\n')
+    }
   }
 
   // 6c. External Knowledge — imported Knowledge Capsules (VS-054).

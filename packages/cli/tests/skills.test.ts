@@ -26,7 +26,7 @@ beforeEach(() => {
 afterEach(() => fs.rmSync(tmp, { recursive: true, force: true }))
 
 describe('Skills layer (VS-059)', () => {
-  it('AC7/AC8: the seven initial skills exist with standard front matter', () => {
+  it('AC7/AC8: the initial skills exist with standard front matter', () => {
     const ids = SKILLS.map((s) => s.id).sort()
     expect(ids).toEqual(
       [
@@ -35,6 +35,7 @@ describe('Skills layer (VS-059)', () => {
         'graph-metadata-review',
         'implementation-planning',
         'learning-capture',
+        'module-context-refinement',
         'ownership-suggestion',
         'work-item-refinement',
       ].sort()

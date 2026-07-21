@@ -450,6 +450,9 @@ function mapNextStepId(id: string): string {
     'review-work-item': 'refine-work-item',
     'prepare-implementation': 'prepare-implementation',
     'implement-work-item': 'prepare-implementation',
+    'refine-module-context': 'refine-work-item',
+    'init-module-context': 'enable-kaddo',
+    'module-ready': 'prepare-implementation',
   }
   return MAP[id] ?? id
 }

@@ -6,7 +6,7 @@
 // conservative and never recommends `create --from roadmap` with an empty roadmap.
 
 import { exists, readFile, join, isFile } from '../utils/fs.js'
-import { loadConfig } from './config.js'
+import { loadConfig, isModule } from './config.js'
 import { agentInstallPath, agentGroupOf } from '../agents/groups.js'
 import { analyzeKnowledgeArtifact } from './artifact-quality.js'
 import { buildOpenQuestionsReport } from './open-questions.js'
@@ -169,6 +169,61 @@ export function resolveNextStep(dir: string, now: Date = new Date()): NextStepRe
   const state = config.project.state
 
   const q = (rel: string) => analyzeKnowledgeArtifact(dir, rel)
+  const moduleRepo = isModule(config)
+  const MC = 'knowledge/module/module-context.md'
+
+  // VS-091: module repos skip business/product and agents/skills checks.
+  if (moduleRepo) {
+    const qMC = q(MC)
+    if (qMC === 'missing') {
+      return { id: 'init-module-context', phase: 'Setup', label: 'Create `knowledge/module/module-context.md` for this module.', command: 'kaddo init', reason: 'Module context file is missing. Re-run `kaddo init` as a multirepo module.' }
+    }
+
+    if ((state === 'pre-ai' || state === 'legacy') && !exists(join(dir, '.kaddo', 'scan.json'))) {
+      return { id: 'scan', phase: 'Discovery', label: 'Run `kaddo scan` to capture deterministic signals from the existing code.', command: 'kaddo scan', reason: 'No scan baseline exists for this existing project yet.' }
+    }
+    if (!exists(join(dir, '.kaddo', 'context-pack.md'))) {
+      return { id: 'context', phase: 'Discovery', label: 'Run `kaddo context` to prepare the LLM context pack.', command: 'kaddo context', reason: 'No context pack has been generated yet.' }
+    }
+
+    if (qMC !== 'useful') {
+      return {
+        id: 'refine-module-context', phase: 'Knowledge Refinement',
+        label: 'Use module-context-agent to refine `knowledge/module/module-context.md`.',
+        agent: 'module-context-agent', skill: 'module-context-refinement', target: MC,
+        reason: 'Module context is still a placeholder.',
+        instructions: ['Refine the module context with real knowledge about this module.', 'Do not create business.md or product.md.', 'Do not write code.'],
+      }
+    }
+
+    const qCurrentState = q(CS), qCodebase = q(CB)
+    if (qCurrentState !== 'useful') {
+      return {
+        id: 'refine-current-state', phase: 'Knowledge Refinement',
+        label: 'Use architecture-agent to complete `knowledge/tech/current-state.md`.',
+        agent: 'architecture-agent', target: CS,
+        reason: `${CS} is still a bootstrap placeholder or too thin.`,
+        instructions: ['Describe the module\'s local architecture.', 'Do not write code.'],
+      }
+    }
+    if (qCodebase !== 'useful') {
+      return {
+        id: 'refine-codebase', phase: 'Knowledge Refinement',
+        label: 'Use architecture-agent to complete `knowledge/tech/codebase.md`.',
+        agent: 'architecture-agent', target: CB,
+        reason: `${CB} is still a bootstrap placeholder or too thin.`,
+        instructions: ['Map the module\'s local codebase structure.', 'Do not write code.'],
+      }
+    }
+
+    if (!exists(join(dir, '.kaddo', 'understand.md'))) {
+      return { id: 'understand', phase: 'Discovery', label: 'Run `kaddo understand` to summarize the project context.', command: 'kaddo understand', reason: 'No understand handoff has been generated yet.' }
+    }
+
+    return { id: 'module-ready', phase: 'Active Delivery', label: 'Module context is complete. Create and manage Work Items from the core repository.', reason: 'This module\'s knowledge is ready. Work Items are created and tracked in the core.' }
+  }
+
+  // Non-module (core or single repo) flow.
   const qBusiness = q(B), qProduct = q(P), qCap = q(CAP), qCurrentState = q(CS), qCodebase = q(CB)
 
   // Baseline "exists" once bootstrap has created business + product (any quality).

@@ -395,6 +395,59 @@ A numbered plan covering the sections above, ending with a request to confirm be
 `
 )
 
+const MODULE_CONTEXT_REFINEMENT = skill(
+  'module-context-refinement',
+  'Module Context Refinement Skill',
+  'tech',
+  ['module-context-agent', 'architecture-agent'],
+  `
+# Module Context Refinement Skill
+
+## Purpose
+
+Standardize how a multirepo module's context is refined without duplicating global knowledge.
+
+## When to use
+
+When refining \`knowledge/module/module-context.md\` in a multirepo module repository.
+
+## Inputs
+
+The module's \`module-context.md\`, local tech knowledge (\`current-state.md\`, \`codebase.md\`),
+and — optionally — the core system's context pack.
+
+## Output
+
+A refined \`module-context.md\` with real, project-specific content in all sections.
+
+## Rules
+
+- Use module responsibility, not full product strategy.
+- Identify boundaries and dependencies from the local code.
+- Keep business/product context in the core/system repository.
+- Document local risks and exposed interfaces.
+- Preserve frontmatter (\`type\`, \`module_id\`, \`parent_system\`).
+- Mark unknowns as open questions.
+- Do not create \`business.md\` or \`product.md\` in the module.
+- Do not install agents or skills in the module.
+- Do not create Work Items in the module.
+
+## Quality checklist
+
+- Module identity and purpose are clear.
+- Responsibility and boundaries are non-overlapping with other modules.
+- Exposed interfaces are real, not invented.
+- Dependencies and consumers are listed.
+- Local rules are documented.
+- Risks are honest and specific.
+- Open questions are surfaced.
+
+## Example output
+
+A \`module-context.md\` with all placeholder sections filled in.
+`
+)
+
 export const SKILLS: SkillDef[] = [
   ADR_WRITING,
   WORK_ITEM_REFINEMENT,
@@ -403,11 +456,12 @@ export const SKILLS: SkillDef[] = [
   CAPSULE_WRITING,
   LEARNING_CAPTURE,
   IMPLEMENTATION_PLANNING,
+  MODULE_CONTEXT_REFINEMENT,
 ]
 
 export const SKILL_GROUPS: Record<SkillGroup, string[]> = {
   delivery: ['work-item-refinement', 'implementation-planning', 'learning-capture'],
-  tech: ['adr-writing', 'ownership-suggestion', 'graph-metadata-review'],
+  tech: ['adr-writing', 'ownership-suggestion', 'graph-metadata-review', 'module-context-refinement'],
   integration: ['capsule-writing'],
 }
 

@@ -4,6 +4,8 @@ import { requireConfig } from '../core/config.js'
 import { printCommandFooter } from '../core/command-help.js'
 import {
   buildCapsule,
+  buildSystemCapsule,
+  buildModuleCapsule,
   renderCapsuleMarkdown,
   serializeCapsuleJson,
   addExternalCapsule,
@@ -13,14 +15,32 @@ function slug(s: string): string {
   return s.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'project'
 }
 
+export type CapsuleExportOptions = { scope?: string; module?: string }
+
 /** `kaddo capsule export` — write a Knowledge Capsule about this project. */
-export function runCapsuleExport(): void {
+export function runCapsuleExport(opts: CapsuleExportOptions = {}): void {
   const dir = cwd()
   const config = requireConfig(dir)
   intro('kaddo capsule export')
 
-  const capsule = buildCapsule(dir, config)
-  const name = slug(config.project.name)
+  let capsule
+  let name: string
+
+  if (opts.module) {
+    capsule = buildModuleCapsule(dir, opts.module, config)
+    if (!capsule) {
+      console.error(`Module "${opts.module}" not found in .kaddo/modules.yml.`)
+      process.exit(1)
+    }
+    name = `${slug(config.project.name)}-${slug(opts.module)}`
+  } else if (opts.scope === 'system') {
+    capsule = buildSystemCapsule(dir, config)
+    name = `${slug(config.project.name)}-system`
+  } else {
+    capsule = buildCapsule(dir, config)
+    name = slug(config.project.name)
+  }
+
   const mdPath = join('.kaddo', 'exports', `${name}.capsule.md`)
   const jsonPath = join('.kaddo', 'exports', `${name}.capsule.json`)
 

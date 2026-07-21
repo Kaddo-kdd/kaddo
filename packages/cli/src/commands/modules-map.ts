@@ -2,6 +2,7 @@ import { cwd, exists, join, writeFile, readFile, ensureDir } from '../utils/fs.j
 import { intro, outro, log, text, select } from '../utils/ui.js'
 import { parse as parseYaml, stringify as stringifyYaml } from 'yaml'
 import { getTemplate } from '../templates/registry.js'
+import { detectModuleStatus } from '../services/mapped-modules.js'
 
 const DESCRIPTOR_PATH = '.kaddo/modules.yml'
 const CONFIG_PATH = '.kaddo/config.yml'
@@ -315,7 +316,13 @@ export function runModulesList(dir: string = cwd()): void {
   console.log('')
   console.log('Mapped modules:')
   for (const m of descriptor.modules) {
-    console.log(`  ${m.id.padEnd(16)} ${m.type.padEnd(14)} ${m.repoPath}`)
+    const st = detectModuleStatus(dir, m.repoPath)
+    const statusLabel =
+      st.status === 'configured' ? '✓ configured' :
+      st.status === 'not_configured' ? '○ not configured' :
+      '✗ invalid'
+    console.log(`  ${m.id.padEnd(16)} ${m.type.padEnd(14)} ${statusLabel.padEnd(18)} ${m.repoPath}`)
+    if (st.warning) console.log(`    ⚠ ${st.warning}`)
   }
   console.log('')
 }

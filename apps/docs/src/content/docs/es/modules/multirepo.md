@@ -120,6 +120,85 @@ de módulo se mantienen consistentes con el resto de Kaddo.
 - **Por módulo** (por repo): `knowledge/tech/modules/<id>/*.md`, generados por
   `kaddo modules map`.
 
+## Roles core y module
+
+Al inicializar un proyecto multirepo, `kaddo init` pregunta por un **rol**:
+
+- **core**: el repo de arquitectura/orquestador — recibe la estructura completa de
+  conocimiento (business, product, roadmap, agents, skills) más `system-context.md`
+  y un mapa `modules.md`.
+- **module**: un repo secundario que pertenece a un sistema — recibe solo
+  `module-context.md`, `tech/current-state.md`, `tech/codebase.md` y
+  `delivery/work-items/`. Sin `business.md`, `product.md`, agentes ni skills.
+
+El rol se guarda en `project.role` (y `multirepo.role`) en `.kaddo/config.yml`:
+
+```yaml
+# Repo core
+project:
+  role: core
+multirepo:
+  role: core
+  modules_file: knowledge/modules/modules.md
+
+# Repo module
+project:
+  role: module
+multirepo:
+  role: module
+  parent_system: dotear-platform
+module:
+  id: loyalty
+```
+
+## Contexto de módulo
+
+Cada repo módulo tiene un `knowledge/module/module-context.md` con 9 secciones:
+
+1. Module identity
+2. Responsibility
+3. Boundaries
+4. Exposed interfaces
+5. Dependencies
+6. Consumers
+7. Local rules
+8. Risks
+9. Open questions
+
+El `module-context-agent` refina este artefacto; el skill
+`module-context-refinement` guía la refinación.
+
+## Detección de estado de módulos
+
+`kaddo modules list` enriquece cada módulo mapeado con un estado:
+
+- **configured**: el repo del módulo tiene `.kaddo/config.yml` con `role: module`.
+- **not configured**: el repo existe pero Kaddo no está inicializado — ejecuta
+  `kaddo init` en el repo del módulo.
+- **invalid**: el repo tiene Kaddo inicializado pero `project.role` no es `module`.
+
+## Work Items y módulos afectados
+
+El front matter de los Work Items incluye `affected_modules: []`. Cuando un WI
+apunta a módulos específicos, se listan:
+
+```yaml
+affected_modules:
+  - loyalty
+  - billing
+```
+
+El context pack incluye el module-context de los módulos afectados, y el handoff de
+understand sugiere una estrategia de branch por módulo.
+
+## Alcances de exportación de Capsule
+
+```bash
+kaddo capsule export                  # capsule a nivel de proyecto (por defecto)
+kaddo capsule export --scope system   # incluye resúmenes de todos los módulos mapeados
+kaddo capsule export --module loyalty # capsule para un módulo específico
+```
+
 > Kaddo nunca escanea los repos secundarios, nunca llama a una API de Git/GitHub y
 > nunca ejecuta un escaneo de seguridad. Mapea estructura de forma determinista; tus
 > agentes LLM hacen la interpretación.

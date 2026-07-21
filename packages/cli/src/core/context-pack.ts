@@ -3,7 +3,7 @@ import { exists, readFile, join } from '../utils/fs.js'
 import { loadConfig, languageLabel, projectLanguage, type KaddoConfig, type ProjectState } from './config.js'
 import { type Artifact } from '../services/artifact-reader.js'
 import { discoverKnowledge } from '../services/knowledge-artifacts.js'
-import { loadMappedModules, type MappedModuleWithCoverage } from '../services/mapped-modules.js'
+import { loadMappedModules, readModuleContext, detectModuleStatus, type MappedModuleWithCoverage, type ModuleStatusInfo } from '../services/mapped-modules.js'
 import { knowledgeLayers, type LayerStatus } from './layers.js'
 import { analyzeKnowledgeArtifact, type ArtifactQuality } from './artifact-quality.js'
 import { resolveNextStep, buildDeliveryState, type NextStepRecommendation, type DeliveryState } from './next-step.js'
@@ -113,6 +113,10 @@ export type ContextPack = {
   /** Knowledge file metadata health — frontmatter drift detection (VS-084). */
   metadataHealth: MetadataHealth
   mappedModules: MappedModuleWithCoverage[]
+  /** Per-module Kaddo configuration status (VS-091). */
+  moduleStatuses: Record<string, ModuleStatusInfo>
+  /** Module context content for modules affected by active Work Items (VS-091). */
+  affectedModuleContexts: Record<string, string>
   missing: string[]
   handoff: {
     recommendedAgents: string[]
@@ -449,6 +453,32 @@ export function buildContextPack(
     projectRoute: buildProjectRoute(dir),
     metadataHealth: analyzeMetadataHealth(dir),
     mappedModules,
+    moduleStatuses: (() => {
+      const statuses: Record<string, ModuleStatusInfo> = {}
+      for (const m of mappedModules) {
+        if (m.repoPath) statuses[m.id] = detectModuleStatus(dir, m.repoPath)
+      }
+      return statuses
+    })(),
+    affectedModuleContexts: (() => {
+      const contexts: Record<string, string> = {}
+      const activeWIs = allArtifacts.filter((a) =>
+        a.filePath.replace(/\\/g, '/').includes('/delivery/work-items/') &&
+        isActiveState(lifecycleStateOf({ status: a.status, filePath: a.filePath }))
+      )
+      const affectedIds = new Set<string>()
+      for (const wi of activeWIs) {
+        const am = wi.rawFrontmatter?.affected_modules
+        if (Array.isArray(am)) am.forEach((id) => affectedIds.add(String(id)))
+      }
+      for (const id of affectedIds) {
+        const mod = mappedModules.find((m) => m.id === id)
+        if (!mod?.repoPath) continue
+        const ctx = readModuleContext(dir, mod.repoPath)
+        if (ctx) contexts[id] = ctx
+      }
+      return contexts
+    })(),
     missing,
     // VS-052/VS-073.2: the handoff is driven by the unified next step, so the pack never contradicts
     // the Current Phase block above it.

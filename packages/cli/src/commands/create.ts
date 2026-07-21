@@ -3,7 +3,7 @@ import { findWorkItemType } from '../modules/registry.js'
 import type { ModuleWorkItemType } from '../modules/types.js'
 import { exists, readFile, readDir, writeFile, join, cwd, isFile, ensureDir } from '../utils/fs.js'
 import { intro, outro, log, text, select, confirm } from '../utils/ui.js'
-import { loadConfig, createGuidanceForState, ConfigError } from '../core/config.js'
+import { loadConfig, createGuidanceForState, ConfigError, isCore } from '../core/config.js'
 import {
   parseRoadmapCandidates,
   normalizeCapabilityList,
@@ -155,6 +155,7 @@ function buildFrontMatter(
     `generated_by: kaddo-create`,
     `template_version: 1`,
     `summary: "${answers.problem?.split('.')[0] ?? title}"`,
+    `affected_modules: []`,
     '---',
   ]
   return lines.join('\n')

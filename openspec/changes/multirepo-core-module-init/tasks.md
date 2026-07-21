@@ -1,0 +1,22 @@
+# Tasks — Multirepo Core/Module Initialization (VS-091)
+
+- [x] Add `MultirepoRole` type and config schema extensions
+- [x] Extend `kaddo init` with core/module flow
+- [x] Generate `module-context.md` template (9 sections)
+- [x] Generate `system-context.md` and `modules.md` for core repos
+- [x] Module repos skip business/product/agents/skills in init
+- [x] Add `module-context-agent` and `module-context-refinement` skill
+- [x] Module-aware `resolveNextStep()` branch
+- [x] Context-pack module status detection and affected module contexts
+- [x] Context-pack template rendering for modules
+- [x] `kaddo modules list` with status detection
+- [x] `affected_modules` field in Work Item front matter
+- [x] Branch strategy section in understand handoff
+- [x] `kaddo capsule export --scope system` and `--module <id>`
+- [x] Write VS-091 tests (24 tests)
+- [x] Update docs EN/ES for multirepo
+- [x] Typecheck CLI + MCP
+- [x] Build CLI + MCP + docs
+- [x] Create openspec
+- [x] Version bump to 3.61.0
+- [x] Commit, push, tag

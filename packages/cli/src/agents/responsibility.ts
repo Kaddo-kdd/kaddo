@@ -101,6 +101,14 @@ export const RESPONSIBILITY_MATRIX: Record<string, AgentResponsibility> = {
     cannotSuggest: ['Git', 'branches', 'code'],
     next: ['architecture-agent'],
   },
+  'module-context-agent': {
+    agent: 'module-context-agent',
+    responsibleFor: ['Module context', 'Responsibility', 'Boundaries', 'Interfaces', 'Dependencies'],
+    produces: ['knowledge/module/module-context.md'],
+    canSuggest: ['architecture-agent'],
+    cannotSuggest: ['Git', 'branches', 'code', 'business.md', 'product.md', 'Work Items'],
+    next: ['architecture-agent'],
+  },
   'architecture-agent': {
     agent: 'architecture-agent',
     responsibleFor: ['Architecture', 'Technical state', 'Risks'],
@@ -354,6 +362,7 @@ const KNOWLEDGE_REFINING_AGENTS: Record<string, string> = {
   'backlog-agent': 'backlog-agent',
   'adr-agent': 'adr-agent',
   'implementation-agent': 'implementation-agent',
+  'module-context-agent': 'module-context-agent',
 }
 
 /**

@@ -19,6 +19,7 @@ export const AGENT_GROUPS: Record<AgentGroup, string[]> = {
     'security-agent.md',
     'standards-agent.md',
     'module-design-agent.md',
+    'module-context-agent.md',
     'adr-agent.md',
     'capsule-agent.md',
     'graph-agent.md',

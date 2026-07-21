@@ -11,6 +11,8 @@ import { parse as parseYaml, stringify as stringifyYaml } from 'yaml'
 import { discoverKnowledge } from '../services/knowledge-artifacts.js'
 import { loadOwners } from '../services/owners.js'
 import type { KaddoConfig } from './config.js'
+import { readModuleContext } from '../services/mapped-modules.js'
+import { readModulesDescriptor } from '../commands/modules-map.js'
 
 const KNOWLEDGE = 'knowledge'
 
@@ -95,6 +97,50 @@ export function buildCapsule(dir: string, config: KaddoConfig): KnowledgeCapsule
     knownRisks: risksMd ? headings(risksMd) : [],
     adrs,
     owners,
+    outOfScope: [],
+    usageNotes: [],
+  }
+}
+
+/**
+ * Build a system-scope capsule: includes the main capsule plus summaries of all mapped modules.
+ */
+export function buildSystemCapsule(dir: string, config: KaddoConfig): KnowledgeCapsule {
+  const capsule = buildCapsule(dir, config)
+  const descriptor = readModulesDescriptor(dir)
+  for (const m of descriptor.modules) {
+    const ctx = readModuleContext(dir, m.repoPath)
+    if (ctx) {
+      capsule.responsibilities.push(`[${m.id}] ${firstParagraph(ctx) || m.name}`)
+    } else {
+      capsule.responsibilities.push(`[${m.id}] ${m.name} (no module-context)`)
+    }
+  }
+  return capsule
+}
+
+/**
+ * Build a module-scope capsule from a mapped module's knowledge.
+ */
+export function buildModuleCapsule(dir: string, moduleId: string, config: KaddoConfig): KnowledgeCapsule | null {
+  const descriptor = readModulesDescriptor(dir)
+  const mod = descriptor.modules.find((m) => m.id === moduleId)
+  if (!mod) return null
+  const ctx = readModuleContext(dir, mod.repoPath)
+  return {
+    system: `${config.project.name}/${moduleId}`,
+    version: 1,
+    updatedAt: today(),
+    owner: mod.owner || 'unknown',
+    sourceProject: config.project.name,
+    purpose: ctx ? firstParagraph(ctx) : '',
+    responsibilities: [],
+    capabilities: mod.capabilities,
+    contracts: [],
+    dependencies: [],
+    knownRisks: [],
+    adrs: [],
+    owners: mod.owner ? [mod.owner] : [],
     outOfScope: [],
     usageNotes: [],
   }

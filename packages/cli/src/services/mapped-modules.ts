@@ -86,6 +86,85 @@ export function loadMappedModules(dir: string): MappedModuleWithCoverage[] {
   return modules
 }
 
+export type ModuleKaddoStatus = 'configured' | 'not_configured' | 'invalid'
+
+export type ModuleStatusInfo = {
+  status: ModuleKaddoStatus
+  configured: boolean
+  role?: string
+  moduleContext: boolean
+  currentState: boolean
+  codebase: boolean
+  warning?: string
+}
+
+/**
+ * Detect the Kaddo configuration status of a mapped module's repository (VS-091).
+ * Checks whether the module repo has a config, the correct role, and required files.
+ */
+export function detectModuleStatus(coreDir: string, repoPath: string): ModuleStatusInfo {
+  const moduleDir = join(coreDir, repoPath)
+  const configPath = join(moduleDir, '.kaddo', 'config.yml')
+  const hasConfig = exists(configPath)
+
+  if (!hasConfig) {
+    return {
+      status: 'not_configured',
+      configured: false,
+      moduleContext: false,
+      currentState: false,
+      codebase: false,
+      warning: `Run \`kaddo init\` inside \`${repoPath}\` and select multirepo → module.`,
+    }
+  }
+
+  let parsed: Record<string, unknown> | null = null
+  try {
+    parsed = parseYaml(readFile(configPath)) as Record<string, unknown>
+  } catch {
+    // invalid yaml
+  }
+
+  const project = parsed?.project as Record<string, unknown> | undefined
+  const multirepo = parsed?.multirepo as Record<string, unknown> | undefined
+  const role = (project?.role as string) ?? (multirepo?.role as string)
+
+  if (role !== 'module') {
+    return {
+      status: 'invalid',
+      configured: true,
+      role,
+      moduleContext: false,
+      currentState: false,
+      codebase: false,
+      warning: `Repository has Kaddo configured but project.role is not module.`,
+    }
+  }
+
+  return {
+    status: 'configured',
+    configured: true,
+    role: 'module',
+    moduleContext: exists(join(moduleDir, 'knowledge', 'module', 'module-context.md')),
+    currentState: exists(join(moduleDir, 'knowledge', 'tech', 'current-state.md')),
+    codebase: exists(join(moduleDir, 'knowledge', 'tech', 'codebase.md')),
+  }
+}
+
+/**
+ * Read the module-context.md content from a mapped module's repo (VS-091).
+ * Returns null if the file doesn't exist.
+ */
+export function readModuleContext(coreDir: string, repoPath: string): string | null {
+  const p = join(coreDir, repoPath, 'knowledge', 'module', 'module-context.md')
+  if (!exists(p)) return null
+  try {
+    return readFile(p)
+  } catch {
+    return null
+  }
+}
+
 /** Human-readable list of the present artifacts for a module's coverage. */
 export function presentArtifacts(coverage: ModuleArtifactCoverage): string[] {
   const present: string[] = []

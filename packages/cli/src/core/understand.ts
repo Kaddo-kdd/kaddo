@@ -32,6 +32,7 @@ export type UnderstandWorkItem = {
   hasOwnership: boolean
   /** Source metadata (VS-082). */
   source?: { type: string; id?: string }
+  affectedModules?: string[]
 }
 
 export type UnderstandPlan = {

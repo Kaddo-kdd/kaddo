@@ -189,6 +189,8 @@ export function renderUnderstand(plan: UnderstandPlan): string {
           outputs.push('- A new Work Item under `knowledge/delivery/work-items/`.')
         if (rec.id === 'implement' || rec.id === 'implement-work-item')
           outputs.push('- Implementation plan or code changes guided by the Work Item.')
+        if (rec.id === 'refine-module-context')
+          outputs.push('- A refined `knowledge/module/module-context.md` with real, project-specific content.')
         if (rec.id === 'guard')
           outputs.push('- Updated knowledge artifacts reflecting recent code changes.')
         if (rec.id === 'install-adapter' || rec.id === 'prepare-implementation')
@@ -260,6 +262,20 @@ export function renderUnderstand(plan: UnderstandPlan): string {
     )
   } else {
     parts.push('Re-run `kaddo understand` any time to see this plan again.\n')
+  }
+
+  // Branch Strategy (VS-091): when active WIs reference affected_modules, suggest per-repo branches.
+  const moduledWIs = (plan.activeWorkItems ?? []).filter((w) => w.affectedModules && w.affectedModules.length > 0)
+  if (moduledWIs.length > 0) {
+    parts.push('## Branch Strategy\n')
+    for (const w of moduledWIs) {
+      const branch = `${w.id.toLowerCase()}/${w.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 40)}`
+      parts.push(`**${w.id}** affects: ${w.affectedModules!.join(', ')}\n`)
+      for (const mod of w.affectedModules!) {
+        parts.push(`- \`${mod}\`: branch \`${branch}\``)
+      }
+      parts.push('')
+    }
   }
 
   // Metadata health warnings (VS-084).

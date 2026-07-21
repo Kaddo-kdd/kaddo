@@ -87,8 +87,10 @@ const capsuleCmd = program
 capsuleCmd
   .command('export')
   .description('Write a Knowledge Capsule about this project to .kaddo/exports/')
-  .action(() => {
-    runCapsuleExport()
+  .option('--scope <scope>', 'Export scope: "system" includes all mapped modules')
+  .option('--module <id>', 'Export a capsule for a specific mapped module')
+  .action((opts: { scope?: string; module?: string }) => {
+    runCapsuleExport(opts)
   })
 
 capsuleCmd
