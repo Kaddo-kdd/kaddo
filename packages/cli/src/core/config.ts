@@ -89,11 +89,18 @@ const configSchema = z
       })
       .passthrough()
       .default({}),
+    system: z
+      .object({
+        name: z.string().optional(),
+      })
+      .passthrough()
+      .optional(),
     multirepo: z
       .object({
         role: multirepoRoleSchema,
         modules_file: z.string().optional(),
         parent_system: z.string().optional(),
+        workspace_roots: z.array(z.string()).optional(),
       })
       .passthrough()
       .optional(),
@@ -226,4 +233,14 @@ export function moduleId(config: KaddoConfig): string | undefined {
 /** The parent system name for a module repo (VS-091). */
 export function parentSystem(config: KaddoConfig): string | undefined {
   return config.multirepo?.parent_system
+}
+
+/** The system name defined by a core repo (VS-093). */
+export function systemName(config: KaddoConfig): string | undefined {
+  return config.system?.name
+}
+
+/** The workspace roots for module discovery (VS-093). */
+export function workspaceRoots(config: KaddoConfig): string[] {
+  return config.multirepo?.workspace_roots ?? ['..']
 }

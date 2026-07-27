@@ -6,7 +6,8 @@
 // conservative and never recommends `create --from roadmap` with an empty roadmap.
 
 import { exists, readFile, join, isFile } from '../utils/fs.js'
-import { loadConfig, isModule } from './config.js'
+import { loadConfig, isModule, isCore, systemName } from './config.js'
+import { parse as parseYaml } from 'yaml'
 import { agentInstallPath, agentGroupOf } from '../agents/groups.js'
 import { analyzeKnowledgeArtifact } from './artifact-quality.js'
 import { buildOpenQuestionsReport } from './open-questions.js'
@@ -106,6 +107,15 @@ export function buildDeliveryState(dir: string): DeliveryState {
   }
 }
 
+function hasRegisteredModules(modulesYmlPath: string): boolean {
+  try {
+    const parsed = parseYaml(readFile(modulesYmlPath)) as { modules?: unknown[] }
+    return Array.isArray(parsed?.modules) && parsed.modules.length > 0
+  } catch {
+    return false
+  }
+}
+
 function safeRead(p: string): string | null {
   try {
     return readFile(p)
@@ -173,13 +183,17 @@ export function resolveNextStep(dir: string, now: Date = new Date()): NextStepRe
 
   const q = (rel: string) => analyzeKnowledgeArtifact(dir, rel)
   const moduleRepo = isModule(config)
-  const MC = 'knowledge/module/module-context.md'
+  const coreRepo = isCore(config)
+  // VS-093: module-context.md moved to knowledge/tech/module/; support legacy path.
+  const MC = exists(join(dir, 'knowledge/tech/module/module-context.md'))
+    ? 'knowledge/tech/module/module-context.md'
+    : 'knowledge/module/module-context.md'
 
   // VS-091: module repos skip business/product and agents/skills checks.
   if (moduleRepo) {
     const qMC = q(MC)
     if (qMC === 'missing') {
-      return { id: 'init-module-context', phase: 'Setup', label: 'Create `knowledge/module/module-context.md` for this module.', command: 'kaddo init', reason: 'Module context file is missing. Re-run `kaddo init` as a multirepo module.' }
+      return { id: 'init-module-context', phase: 'Setup', label: 'Create `knowledge/tech/module/module-context.md` for this module.', command: 'kaddo init', reason: 'Module context file is missing. Re-run `kaddo init` as a multirepo module.' }
     }
 
     if ((state === 'pre-ai' || state === 'legacy') && !exists(join(dir, '.kaddo', 'scan.json'))) {
@@ -229,9 +243,17 @@ export function resolveNextStep(dir: string, now: Date = new Date()): NextStepRe
   // Non-module (core or single repo) flow.
   const qBusiness = q(B), qProduct = q(P), qCap = q(CAP), qCurrentState = q(CS), qCodebase = q(CB)
 
-  // Baseline "exists" once bootstrap has created business + product (any quality).
-  if (qBusiness === 'missing' || qProduct === 'missing') {
+  // VS-093: core multirepo repos skip Business/Product baseline requirement.
+  if (!coreRepo && (qBusiness === 'missing' || qProduct === 'missing')) {
     return { id: 'bootstrap', phase: 'Setup', label: 'Run `kaddo bootstrap` to create the project knowledge baseline.', command: 'kaddo bootstrap', reason: 'The knowledge baseline is incomplete.' }
+  }
+
+  // VS-093: core repos recommend modules discover before agents/skills.
+  if (coreRepo) {
+    const modulesYmlPath = join(dir, '.kaddo', 'modules.yml')
+    if (!exists(modulesYmlPath) || !hasRegisteredModules(modulesYmlPath)) {
+      return { id: 'modules-discover', phase: 'Setup', label: 'Run `kaddo modules discover` to find sibling module repositories.', command: 'kaddo modules discover', reason: 'No modules are mapped for this core repository.' }
+    }
   }
 
   const ctx = buildCodexAdapterContext(dir)

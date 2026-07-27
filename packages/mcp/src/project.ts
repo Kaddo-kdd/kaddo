@@ -111,6 +111,7 @@ const DERIVED_WRITE_FILES = new Set([
   '.kaddo/graph.mmd',
   '.kaddo/graph-hints.md',
   '.kaddo/graph-hints.json',
+  '.kaddo/modules.yml',
 ])
 
 const DERIVED_EXPORTS_RE = /^\.kaddo\/exports\/[^/]+\.capsule\.(md|json)$/

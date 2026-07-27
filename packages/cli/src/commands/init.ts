@@ -29,6 +29,7 @@ interface ProjectMeta {
   structure: string
   language: string
   role?: string
+  systemName?: string
   parentSystem?: string
   moduleId?: string
 }
@@ -49,7 +50,8 @@ guard:
   silent_without_ownership: true
 `
   if (meta.role === 'core') {
-    yml += `\nmultirepo:\n  role: core\n  modules_file: knowledge/modules/modules.md\n`
+    yml += `\nsystem:\n  name: ${meta.systemName ?? meta.name}\n`
+    yml += `\nmultirepo:\n  role: core\n  modules_file: .kaddo/modules.yml\n  workspace_roots:\n    - ..\n`
   }
   if (meta.role === 'module') {
     yml += `\nmultirepo:\n  role: module${meta.parentSystem ? `\n  parent_system: ${meta.parentSystem}` : ''}\n`
@@ -140,21 +142,28 @@ _Auth, observability, error handling, compliance, and other shared concerns._
 `
 }
 
-function buildModulesFile(projectName: string): string {
+function buildModulesFile(systemName: string): string {
   return `---
 type: modules-map
-system: ${projectName}
+system: ${systemName}
 generated_by: kaddo-init
-template_version: 1
+template_version: 2
 ---
 
-# ${projectName} — Modules
+# ${systemName} — Modules
 
-_List the modules that compose this system. Each module is a repository with its own \`kaddo init\` as a multirepo module._
+_No modules mapped yet. Run \`kaddo modules discover\` to find sibling modules, or \`kaddo modules map <path>\` to register one manually._
+`
+}
 
-## Modules
+function buildModulesYml(systemName: string): string {
+  return `version: 1
+system: ${systemName}
 
-_No modules mapped yet. Run \`kaddo modules map\` to register one._
+workspace_roots:
+  - ..
+
+modules: []
 `
 }
 
@@ -239,6 +248,53 @@ export async function runInit(): Promise<void> {
     validate: (v) => (v.trim().length === 0 ? 'Project name is required.' : undefined),
   })
 
+  // VS-093: structure is asked early so role-specific questions follow immediately.
+  const structure = await select<string>({
+    message: 'Repository structure',
+    options: [
+      { value: 'monorepo', label: 'Monorepo' },
+      { value: 'multirepo', label: 'Multirepo' },
+    ],
+    initialValue: 'monorepo',
+  })
+
+  // VS-093: multirepo role appears immediately after selecting multirepo.
+  let role: string | undefined
+  let systemName: string | undefined
+  let parentSystem: string | undefined
+  let modId: string | undefined
+
+  if (structure === 'multirepo') {
+    role = await select<string>({
+      message: 'What is the role of this repository?',
+      options: [
+        { value: 'core', label: 'Core / system orchestrator' },
+        { value: 'module', label: 'Module of an existing system' },
+      ],
+    })
+
+    if (role === 'core') {
+      systemName = await text({
+        message: 'System name',
+        placeholder: 'e.g. tryckers',
+        validate: (v) => (v.trim().length === 0 ? 'System name is required.' : undefined),
+      })
+    }
+
+    if (role === 'module') {
+      parentSystem = await text({
+        message: 'Parent system name',
+        placeholder: 'e.g. tryckers',
+        validate: (v) => (v.trim().length === 0 ? 'Parent system name is required.' : undefined),
+      })
+      modId = await text({
+        message: 'Module ID',
+        placeholder: 'e.g. frontend',
+        validate: (v) => (v.trim().length === 0 ? 'Module ID is required.' : undefined),
+      })
+    }
+  }
+
   const state = await select<string>({
     message: 'What kind of project is this?',
     options: [
@@ -247,6 +303,16 @@ export async function runInit(): Promise<void> {
       { value: 'legacy', label: 'Legacy', hint: 'Knowledge lives in people\'s heads' },
     ],
     initialValue: 'pre-ai',
+  })
+
+  // Knowledge language (VS-051) — the CLI stays in English; this only affects generated knowledge.
+  const language = await select<string>({
+    message: 'Project knowledge language (the CLI stays in English)',
+    options: [
+      { value: 'en', label: 'English' },
+      { value: 'es', label: 'Spanish' },
+    ],
+    initialValue: 'en',
   })
 
   const teamSize = await select<string>({
@@ -260,53 +326,6 @@ export async function runInit(): Promise<void> {
     initialValue: 'small',
   })
 
-  const structure = await select<string>({
-    message: 'Repository structure',
-    options: [
-      { value: 'monorepo', label: 'Monorepo' },
-      { value: 'multirepo', label: 'Multirepo' },
-    ],
-    initialValue: 'monorepo',
-  })
-
-  // Knowledge language (VS-051) — the CLI stays in English; this only affects generated knowledge.
-  const language = await select<string>({
-    message: 'Project knowledge language (the CLI stays in English)',
-    options: [
-      { value: 'en', label: 'English' },
-      { value: 'es', label: 'Spanish' },
-    ],
-    initialValue: 'en',
-  })
-
-  // VS-091: multirepo core/module distinction.
-  let role: string | undefined
-  let parentSystem: string | undefined
-  let modId: string | undefined
-
-  if (structure === 'multirepo') {
-    role = await select<string>({
-      message: 'Is this repository the core or a module?',
-      options: [
-        { value: 'core', label: 'Core / system orchestrator' },
-        { value: 'module', label: 'Module of an existing system' },
-      ],
-    })
-
-    if (role === 'module') {
-      parentSystem = await text({
-        message: 'Parent system name',
-        placeholder: 'e.g. dotear-platform',
-        validate: (v) => (v.trim().length === 0 ? 'Parent system name is required.' : undefined),
-      })
-      modId = await text({
-        message: 'Module ID',
-        placeholder: 'e.g. loyalty',
-        validate: (v) => (v.trim().length === 0 ? 'Module ID is required.' : undefined),
-      })
-    }
-  }
-
   const meta: ProjectMeta = {
     name: projectName.trim(),
     state,
@@ -314,6 +333,7 @@ export async function runInit(): Promise<void> {
     structure,
     language,
     role,
+    systemName: systemName?.trim(),
     parentSystem: parentSystem?.trim(),
     moduleId: modId?.trim(),
   }
@@ -324,38 +344,41 @@ export async function runInit(): Promise<void> {
   log.success('Created .kaddo/config.yml')
 
   if (role === 'module') {
-    // Module: module-context + tech stubs + work-items dir (no business/product/agents/skills).
-    ensureDir(join(dir, ARCH_DIR, 'module'))
+    // Module: module-context + tech stubs only (no business/product/agents/skills/delivery).
+    ensureDir(join(dir, ARCH_DIR, 'tech', 'module'))
     writeFile(
-      join(dir, ARCH_DIR, 'module', 'module-context.md'),
+      join(dir, ARCH_DIR, 'tech', 'module', 'module-context.md'),
       buildModuleContext(modId!.trim(), parentSystem!.trim()),
     )
-    ensureDir(join(dir, ARCH_DIR, 'tech'))
     if (!exists(join(dir, ARCH_DIR, 'tech', 'current-state.md'))) {
       writeFile(join(dir, ARCH_DIR, 'tech', 'current-state.md'), buildKnowledge(projectName.trim()))
     }
     if (!exists(join(dir, ARCH_DIR, 'tech', 'codebase.md'))) {
       writeFile(join(dir, ARCH_DIR, 'tech', 'codebase.md'), buildKnowledge(projectName.trim()))
     }
-    ensureDir(join(dir, ARCH_DIR, 'delivery', 'work-items'))
-    log.success('Created knowledge/module/module-context.md')
+    log.success('Created knowledge/tech/module/module-context.md')
     log.success('Created knowledge/tech/current-state.md')
     log.success('Created knowledge/tech/codebase.md')
     log.info('Next: run `kaddo scan` to detect your stack, then use module-context-agent to refine module-context.md.')
   } else if (role === 'core') {
-    // Core: full knowledge structure + system context + modules map.
+    // Core: delivery structure + system context + modules map + modules.yml.
+    const sysName = systemName?.trim() ?? projectName.trim()
     ensureDir(join(dir, ARCH_DIR, 'delivery', 'work-items'))
-    ensureDir(join(dir, ARCH_DIR, 'system'))
-    ensureDir(join(dir, ARCH_DIR, 'modules'))
+    ensureDir(join(dir, ARCH_DIR, 'tech', 'system'))
+    ensureDir(join(dir, ARCH_DIR, 'tech', 'modules'))
+    ensureDir(join(dir, ARCH_DIR, 'agents'))
+    ensureDir(join(dir, ARCH_DIR, 'skills'))
     writeFile(join(dir, ARCH_DIR, 'knowledge.md'), buildKnowledge(projectName.trim()))
     writeFile(join(dir, ARCH_DIR, 'delivery', 'roadmap.md'), buildRoadmap(projectName.trim()))
-    writeFile(join(dir, ARCH_DIR, 'system', 'system-context.md'), buildSystemContext(projectName.trim()))
-    writeFile(join(dir, ARCH_DIR, 'modules', 'modules.md'), buildModulesFile(projectName.trim()))
+    writeFile(join(dir, ARCH_DIR, 'tech', 'system', 'system-context.md'), buildSystemContext(sysName))
+    writeFile(join(dir, ARCH_DIR, 'tech', 'modules', 'modules.md'), buildModulesFile(sysName))
+    writeFile(join(dir, KADDO_DIR, 'modules.yml'), buildModulesYml(sysName))
     log.success('Created knowledge/knowledge.md')
     log.success('Created knowledge/delivery/roadmap.md')
-    log.success('Created knowledge/system/system-context.md')
-    log.success('Created knowledge/modules/modules.md')
-    log.info('Next: run `kaddo scan` then `kaddo add agents` and `kaddo add skills`.')
+    log.success('Created knowledge/tech/system/system-context.md')
+    log.success('Created knowledge/tech/modules/modules.md')
+    log.success('Created .kaddo/modules.yml')
+    log.info('Next: run `kaddo scan` then `kaddo modules discover` to find sibling modules.')
   } else {
     // Single repo or plain multirepo without role.
     ensureDir(join(dir, ARCH_DIR, 'delivery', 'work-items'))

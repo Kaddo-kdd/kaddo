@@ -73,7 +73,7 @@ export function loadMappedModules(dir: string): MappedModuleWithCoverage[] {
     modules.push({
       id,
       name: typeof m.name === 'string' ? m.name : undefined,
-      repoPath: typeof m.repoPath === 'string' ? m.repoPath : '',
+      repoPath: typeof m.repoPath === 'string' ? m.repoPath : (typeof m.path === 'string' ? m.path : ''),
       type: typeof m.type === 'string' ? m.type : undefined,
       mainTechnology: typeof m.mainTechnology === 'string' ? m.mainTechnology : undefined,
       owner: typeof m.owner === 'string' ? m.owner : undefined,
@@ -145,7 +145,8 @@ export function detectModuleStatus(coreDir: string, repoPath: string): ModuleSta
     status: 'configured',
     configured: true,
     role: 'module',
-    moduleContext: exists(join(moduleDir, 'knowledge', 'module', 'module-context.md')),
+    moduleContext: exists(join(moduleDir, 'knowledge', 'tech', 'module', 'module-context.md')) ||
+      exists(join(moduleDir, 'knowledge', 'module', 'module-context.md')),
     currentState: exists(join(moduleDir, 'knowledge', 'tech', 'current-state.md')),
     codebase: exists(join(moduleDir, 'knowledge', 'tech', 'codebase.md')),
   }
@@ -156,7 +157,10 @@ export function detectModuleStatus(coreDir: string, repoPath: string): ModuleSta
  * Returns null if the file doesn't exist.
  */
 export function readModuleContext(coreDir: string, repoPath: string): string | null {
-  const p = join(coreDir, repoPath, 'knowledge', 'module', 'module-context.md')
+  // VS-093: new path under knowledge/tech/module/, legacy under knowledge/module/.
+  const newPath = join(coreDir, repoPath, 'knowledge', 'tech', 'module', 'module-context.md')
+  const legacyPath = join(coreDir, repoPath, 'knowledge', 'module', 'module-context.md')
+  const p = exists(newPath) ? newPath : legacyPath
   if (!exists(p)) return null
   try {
     return readFile(p)

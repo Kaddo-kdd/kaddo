@@ -7,7 +7,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import matter from 'gray-matter'
-import { parse as parseYaml } from 'yaml'
+import { parse as parseYaml, stringify as stringifyYaml } from 'yaml'
 import { readYaml, readText, writeDerived, assertMcpDerivedWritePath } from './project.js'
 import { listWorkItems, type WorkItemSummary } from './workitems.js'
 import type { ToolResult } from './tools.js'
@@ -19,17 +19,26 @@ const fail = (message: string): ToolResult => ({ ok: false, message })
 
 type ModulesDescriptor = {
   version?: number
+  system?: string
+  workspace_roots?: string[]
   modules?: Array<{
     id: string
     name?: string
-    repoPath: string
+    path?: string
+    repoPath?: string
+    parent_system?: string
     type?: string
     mainTechnology?: string
     owner?: string
     capabilities?: string[]
     code?: string[]
     status?: string
+    context?: Record<string, string>
   }>
+}
+
+function moduleRepoPath(m: { path?: string; repoPath?: string }): string {
+  return m.path ?? m.repoPath ?? ''
 }
 
 type ConfigYaml = {
@@ -93,10 +102,19 @@ function detectModuleStatus(root: string, repoPath: string): ModuleStatusDetail 
   }
   return {
     status: 'configured', configured: true, role: 'module',
-    moduleContext: fs.existsSync(path.join(moduleDir, 'knowledge', 'module', 'module-context.md')),
+    moduleContext: fs.existsSync(path.join(moduleDir, 'knowledge', 'tech', 'module', 'module-context.md')) ||
+      fs.existsSync(path.join(moduleDir, 'knowledge', 'module', 'module-context.md')),
     currentState: fs.existsSync(path.join(moduleDir, 'knowledge', 'tech', 'current-state.md')),
     codebase: fs.existsSync(path.join(moduleDir, 'knowledge', 'tech', 'codebase.md')),
   }
+}
+
+function resolveModuleContextPath(root: string, repoPath: string): string {
+  const moduleDir = path.resolve(root, repoPath)
+  if (fs.existsSync(path.join(moduleDir, 'knowledge', 'tech', 'module', 'module-context.md'))) {
+    return 'knowledge/tech/module/module-context.md'
+  }
+  return 'knowledge/module/module-context.md'
 }
 
 function isPlaceholder(content: string): boolean {
@@ -126,10 +144,11 @@ export function modulesListTool(root: string, args: { includeWarnings?: boolean 
 
   const descriptor = loadModulesDescriptor(root)
   const modules = (descriptor.modules ?? []).map((m) => {
-    const st = detectModuleStatus(root, m.repoPath)
+    const rp = moduleRepoPath(m)
+    const st = detectModuleStatus(root, rp)
     const entry: Record<string, unknown> = {
       id: m.id,
-      repo: m.repoPath,
+      repo: rp,
       status: st.status,
       kaddo: {
         configured: st.configured,
@@ -159,7 +178,8 @@ export function getModuleContextTool(root: string, args: { module: string; inclu
   const mod = (descriptor.modules ?? []).find((m) => m.id === args.module)
   if (!mod) return fail(`Module "${args.module}" not found in .kaddo/modules.yml.`)
 
-  const st = detectModuleStatus(root, mod.repoPath)
+  const rp = moduleRepoPath(mod)
+  const st = detectModuleStatus(root, rp)
   const warnings: string[] = []
 
   if (st.status !== 'configured') {
@@ -172,9 +192,10 @@ export function getModuleContextTool(root: string, args: { module: string; inclu
     })
   }
 
-  const mcContent = readModuleFile(root, mod.repoPath, 'knowledge/module/module-context.md')
+  const mcRelPath = resolveModuleContextPath(root, rp)
+  const mcContent = readModuleFile(root, rp, mcRelPath)
   const context: Record<string, unknown> = {
-    moduleContextPath: `${mod.repoPath}/knowledge/module/module-context.md`,
+    moduleContextPath: `${rp}/${mcRelPath}`,
     moduleContext: mcContent ?? null,
   }
 
@@ -183,18 +204,18 @@ export function getModuleContextTool(root: string, args: { module: string; inclu
   }
 
   if (args.includeTech) {
-    const cs = readModuleFile(root, mod.repoPath, 'knowledge/tech/current-state.md')
-    const cb = readModuleFile(root, mod.repoPath, 'knowledge/tech/codebase.md')
-    context.currentStatePath = `${mod.repoPath}/knowledge/tech/current-state.md`
+    const cs = readModuleFile(root, rp, 'knowledge/tech/current-state.md')
+    const cb = readModuleFile(root, rp, 'knowledge/tech/codebase.md')
+    context.currentStatePath = `${rp}/knowledge/tech/current-state.md`
     context.currentStateSummary = cs ? firstParagraph(cs) : null
-    context.codebasePath = `${mod.repoPath}/knowledge/tech/codebase.md`
+    context.codebasePath = `${rp}/knowledge/tech/codebase.md`
     context.codebaseSummary = cb ? firstParagraph(cb) : null
     if (!cs) warnings.push('current-state.md not found in module repository.')
     if (!cb) warnings.push('codebase.md not found in module repository.')
   }
 
   return ok({
-    module: { id: mod.id, repo: mod.repoPath, status: 'configured' },
+    module: { id: mod.id, repo: rp, status: 'configured' },
     context,
     warnings: args.includeWarnings ? warnings : [],
   })
@@ -231,15 +252,17 @@ export function validateWorkItemModulesTool(root: string, args: { workItemId: st
       return { id: modId, status: 'not_mapped' as const, hasModuleContext: false, hasCurrentState: false, hasCodebase: false, hasOwnership: false }
     }
     const mod = (descriptor.modules ?? []).find((m) => m.id === modId)!
-    const st = detectModuleStatus(root, mod.repoPath)
+    const rp = moduleRepoPath(mod)
+    const st = detectModuleStatus(root, rp)
     if (st.status !== 'configured') {
       warnings.push(`Module "${modId}" is ${st.status}.`)
     }
-    const mcContent = st.moduleContext ? readModuleFile(root, mod.repoPath, 'knowledge/module/module-context.md') : null
+    const mcRelPath = resolveModuleContextPath(root, rp)
+    const mcContent = st.moduleContext ? readModuleFile(root, rp, mcRelPath) : null
     if (mcContent && isPlaceholder(mcContent)) {
       warnings.push(`Module "${modId}" has placeholder module-context.`)
     }
-    const hasOwnership = codeEntries.some((c) => c.repo && (c.repo === mod.repoPath || c.repo.endsWith(`/${modId}`) || c.repo.includes(modId)))
+    const hasOwnership = codeEntries.some((c) => c.repo && (c.repo === rp || c.repo.endsWith(`/${modId}`) || c.repo.includes(modId)))
     return { id: modId, status: st.status, hasModuleContext: st.moduleContext, hasCurrentState: st.currentState, hasCodebase: st.codebase, hasOwnership }
   })
 
@@ -288,13 +311,15 @@ export function getWorkItemContextTool(root: string, args: { workItemId: string;
       warnings.push(`Module "${modId}" not in modules.yml.`)
       return { id: modId, repo: null, moduleContext: null, currentStateSummary: null, codebaseSummary: null }
     }
-    const st = detectModuleStatus(root, mod.repoPath)
+    const rp = moduleRepoPath(mod)
+    const st = detectModuleStatus(root, rp)
     if (st.status !== 'configured') warnings.push(`Module "${modId}" is ${st.status}.`)
 
-    const mc = args.includeModuleContexts !== false ? readModuleFile(root, mod.repoPath, 'knowledge/module/module-context.md') : null
-    const cs = readModuleFile(root, mod.repoPath, 'knowledge/tech/current-state.md')
-    const cb = readModuleFile(root, mod.repoPath, 'knowledge/tech/codebase.md')
-    return { id: modId, repo: mod.repoPath, moduleContext: mc, currentStateSummary: cs ? firstParagraph(cs) : null, codebaseSummary: cb ? firstParagraph(cb) : null }
+    const mcRelPath = resolveModuleContextPath(root, rp)
+    const mc = args.includeModuleContexts !== false ? readModuleFile(root, rp, mcRelPath) : null
+    const cs = readModuleFile(root, rp, 'knowledge/tech/current-state.md')
+    const cb = readModuleFile(root, rp, 'knowledge/tech/codebase.md')
+    return { id: modId, repo: rp, moduleContext: mc, currentStateSummary: cs ? firstParagraph(cs) : null, codebaseSummary: cb ? firstParagraph(cb) : null }
   })
 
   const ownership = { crossRepo: codeEntries.length > 1, items: codeEntries.filter((c) => c.repo).map((c) => ({ repo: c.repo!, paths: c.paths ?? [] })) }
@@ -347,7 +372,7 @@ function buildBranchStrategy(wi: WorkItemSummary, affectedModules: string[], cod
 
   for (const modId of affectedModules) {
     const mod = (descriptor.modules ?? []).find((m) => m.id === modId)
-    const repo = mod?.repoPath ?? modId
+    const repo = mod ? moduleRepoPath(mod) || modId : modId
     moduleBranches[repo] = `feature/${wiLower}-${modId}-${slug.slice(0, 20)}`
     commitMessages[repo] = `fix(${wiLower}): update ${modId}`
   }
@@ -409,7 +434,9 @@ export function exportCapsuleTool(root: string, args: { scope?: string; module?:
       const descriptor = loadModulesDescriptor(root)
       const mod = (descriptor.modules ?? []).find((m) => m.id === args.module)
       if (!mod) return fail(`Module "${args.module}" not found in .kaddo/modules.yml.`)
-      const mc = readModuleFile(root, mod.repoPath, 'knowledge/module/module-context.md')
+      const rp = moduleRepoPath(mod)
+      const mcRelPath = resolveModuleContextPath(root, rp)
+      const mc = readModuleFile(root, rp, mcRelPath)
       if (!mc) warnings.push('module-context.md not found for this module.')
       if (mc && isPlaceholder(mc)) warnings.push('module-context.md contains placeholder sections.')
       capsuleType = 'module'
@@ -430,7 +457,7 @@ export function exportCapsuleTool(root: string, args: { scope?: string; module?:
         owners: mod.owner ? [mod.owner] : [],
       }
     } else if (role === 'module') {
-      const mc = readText(root, 'knowledge/module/module-context.md')
+      const mc = readText(root, 'knowledge/tech/module/module-context.md') ?? readText(root, 'knowledge/module/module-context.md')
       if (!mc) warnings.push('module-context.md not found.')
       if (mc && isPlaceholder(mc)) warnings.push('module-context.md contains placeholder sections.')
       const modId = config.module?.id ?? args.module
@@ -457,7 +484,9 @@ export function exportCapsuleTool(root: string, args: { scope?: string; module?:
     const descriptor = loadModulesDescriptor(root)
     const responsibilities: string[] = []
     for (const m of (descriptor.modules ?? [])) {
-      const mc = readModuleFile(root, m.repoPath, 'knowledge/module/module-context.md')
+      const rp = moduleRepoPath(m)
+      const mcRelPath = resolveModuleContextPath(root, rp)
+      const mc = readModuleFile(root, rp, mcRelPath)
       responsibilities.push(mc ? `[${m.id}] ${firstParagraph(mc) || m.name || m.id}` : `[${m.id}] ${m.name || m.id} (no module-context)`)
     }
     capsuleType = 'system'
@@ -477,7 +506,7 @@ export function exportCapsuleTool(root: string, args: { scope?: string; module?:
     }
   } else {
     if (role === 'module') {
-      const mc = readText(root, 'knowledge/module/module-context.md')
+      const mc = readText(root, 'knowledge/tech/module/module-context.md') ?? readText(root, 'knowledge/module/module-context.md')
       if (!mc) warnings.push('module-context.md not found.')
       if (mc && isPlaceholder(mc)) warnings.push('module-context.md contains placeholder sections.')
       const modId = config.module?.id ?? 'module'
@@ -524,6 +553,73 @@ export function exportCapsuleTool(root: string, args: { scope?: string; module?:
   writeDerived(root, mdPath, mdContent)
 
   return ok({ exported: true, type: capsuleType, module: args.module ?? undefined, paths: { json: jsonPath, md: mdPath }, warnings })
+}
+
+// --- Tool 7: kaddo_modules_discover ------------------------------------------
+
+export function modulesDiscoverTool(root: string, args: { apply?: boolean; confirm?: boolean }): ToolResult {
+  const config = loadConfig(root)
+  if (!config) return fail('No Kaddo config found.')
+  if (!isCore(config)) return fail('Module discovery is only available from a core repository.')
+
+  const sysName = (config as { system?: { name?: string } }).system?.name ?? config.project?.name ?? ''
+  const workspaceRoots: string[] = (config as { multirepo?: { workspace_roots?: string[] } }).multirepo?.workspace_roots ?? ['..']
+
+  const IGNORED = new Set(['.git', 'node_modules', 'dist', 'build', 'coverage', 'vendor', '.next', 'out', 'tmp', 'temp', '.kaddo'])
+  const coreAbs = path.resolve(root)
+  const discovered: Array<{ id: string; path: string; status: string; eligibleForMapping: boolean; parentSystem?: string; warning?: string }> = []
+
+  for (const wr of workspaceRoots) {
+    const rootAbs = path.resolve(root, wr)
+    if (!fs.existsSync(rootAbs) || !fs.statSync(rootAbs).isDirectory()) continue
+    let entries: string[]
+    try { entries = fs.readdirSync(rootAbs) } catch { continue }
+
+    for (const entry of entries) {
+      if (IGNORED.has(entry)) continue
+      const candidateAbs = path.resolve(rootAbs, entry)
+      if (!fs.statSync(candidateAbs).isDirectory()) continue
+      if (candidateAbs === coreAbs) continue
+
+      const relPath = path.relative(root, candidateAbs).replace(/\\/g, '/')
+      const cfgPath = path.join(candidateAbs, '.kaddo', 'config.yml')
+      if (!fs.existsSync(cfgPath)) {
+        discovered.push({ id: entry, path: relPath, status: 'not_configured', eligibleForMapping: false })
+        continue
+      }
+      let parsed: ConfigYaml | null = null
+      try { parsed = parseYaml(fs.readFileSync(cfgPath, 'utf-8')) as ConfigYaml } catch { /* */ }
+      const role = parsed?.project?.role ?? parsed?.multirepo?.role
+      if (role !== 'module') {
+        discovered.push({ id: entry, path: relPath, status: 'invalid', eligibleForMapping: false, warning: 'Not configured as module.' })
+        continue
+      }
+      const modParent = parsed?.multirepo?.parent_system ?? ''
+      if (modParent && modParent !== sysName) {
+        discovered.push({ id: parsed?.module?.id ?? entry, path: relPath, status: 'foreign_system', eligibleForMapping: false, parentSystem: modParent })
+        continue
+      }
+      discovered.push({ id: parsed?.module?.id ?? entry, path: relPath, status: 'configured', eligibleForMapping: true })
+    }
+  }
+
+  if (args.apply) {
+    if (!args.confirm) {
+      return ok({ discovered, applied: false, message: 'Set confirm: true to apply discovered modules.' })
+    }
+    const descriptor = loadModulesDescriptor(root)
+    for (const d of discovered.filter((dd) => dd.eligibleForMapping)) {
+      if (!(descriptor.modules ?? []).some((m) => m.id === d.id)) {
+        if (!descriptor.modules) descriptor.modules = []
+        descriptor.modules.push({ id: d.id, name: d.id, path: d.path, parent_system: sysName, status: 'configured' })
+      }
+    }
+    const ymlContent = stringifyYaml({ version: descriptor.version ?? 1, system: sysName, workspace_roots: workspaceRoots, modules: descriptor.modules ?? [] })
+    writeDerived(root, '.kaddo/modules.yml', ymlContent)
+    return ok({ discovered, applied: true })
+  }
+
+  return ok({ discovered, applied: false })
 }
 
 function renderCapsuleMd(data: Record<string, unknown>): string {

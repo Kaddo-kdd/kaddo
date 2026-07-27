@@ -16,6 +16,7 @@ import { runAdd } from './commands/add.js'
 import { runOwners, runOwnersSuggest } from './commands/owners.js'
 import { runModuleDescriptor } from './commands/module-descriptor.js'
 import { runModulesMap, runModulesList } from './commands/modules-map.js'
+import { runModulesDiscover, runModulesValidate } from './commands/modules-discover.js'
 import { runBootstrap } from './commands/bootstrap.js'
 import { runCapsuleExport, runCapsuleAdd } from './commands/capsule.js'
 import { runGraphExport } from './commands/graph.js'
@@ -397,26 +398,40 @@ program
     }
   })
 
+// VS-093: singular `kaddo module` redirects to `kaddo modules`.
 program
   .command('module')
-  .description('Show or initialize the multirepo module descriptor (knowledge/module.yml)')
-  .option('--init', 'Create the module descriptor interactively')
-  .option('--show', 'Print the current module descriptor')
-  .action(async (opts: { init?: boolean; show?: boolean }) => { await runModuleDescriptor(opts) })
+  .description('(deprecated) Use `kaddo modules` instead')
+  .allowUnknownOption()
+  .action(() => {
+    console.log('Unknown command `module`.')
+    console.log('Did you mean `kaddo modules list`?')
+  })
 
 const modulesCmd = program
   .command('modules')
-  .description('Map and list secondary repositories as modules of the system (multirepo)')
+  .description('Discover, map, list and validate multirepo modules')
 
 modulesCmd
-  .command('map')
-  .description('Register a secondary repository as a module and generate its knowledge structure')
-  .action(async () => { await runModulesMap() })
+  .command('discover')
+  .description('Discover sibling repositories configured as Kaddo modules')
+  .option('--apply', 'Persist discovered modules to .kaddo/modules.yml')
+  .action(async (opts: { apply?: boolean }) => { await runModulesDiscover(opts) })
+
+modulesCmd
+  .command('map [path]')
+  .description('Register a repository as a module manually')
+  .action(async (modulePath: string | undefined) => { await runModulesMap(undefined, modulePath) })
 
 modulesCmd
   .command('list')
-  .description('List mapped modules')
+  .description('List mapped modules from .kaddo/modules.yml')
   .action(() => { runModulesList() })
+
+modulesCmd
+  .command('validate')
+  .description('Validate registered modules against their current configuration')
+  .action(() => { runModulesValidate() })
 
 program
   .command('add [module]')

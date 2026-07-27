@@ -28,6 +28,7 @@ import {
   getWorkItemContextTool,
   suggestBranchStrategyTool,
   exportCapsuleTool,
+  modulesDiscoverTool,
 } from './multirepo.js'
 import {
   generateContext,
@@ -261,6 +262,19 @@ export function createServer(root: string): McpServer {
       },
     },
     async (args) => toolText(guarded(root, () => exportCapsuleTool(root, args)))
+  )
+
+  server.registerTool(
+    'kaddo_modules_discover',
+    {
+      title: 'Discover multirepo modules',
+      description: 'Discover sibling repositories configured as Kaddo modules. Does not persist without apply+confirm. Core only.',
+      inputSchema: {
+        apply: z.boolean().optional(),
+        confirm: z.boolean().optional(),
+      },
+    },
+    async (args) => toolText(guarded(root, () => modulesDiscoverTool(root, args)))
   )
 
   // --- Per-skill resources (kaddo://skills/<id>) — VS-059 ---

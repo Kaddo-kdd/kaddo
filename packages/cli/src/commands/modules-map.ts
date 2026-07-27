@@ -3,6 +3,7 @@ import { intro, outro, log, text, select } from '../utils/ui.js'
 import { parse as parseYaml, stringify as stringifyYaml } from 'yaml'
 import { getTemplate } from '../templates/registry.js'
 import { detectModuleStatus } from '../services/mapped-modules.js'
+import { readModulesYml } from './modules-discover.js'
 
 const DESCRIPTOR_PATH = '.kaddo/modules.yml'
 const CONFIG_PATH = '.kaddo/config.yml'
@@ -241,7 +242,7 @@ export function mapModule(dir: string, input: MappedModuleInput): MapModuleResul
   return { module: mod, written, skipped, alreadyRegistered }
 }
 
-export async function runModulesMap(dir: string = cwd()): Promise<void> {
+export async function runModulesMap(dir: string = cwd(), modulePath?: string): Promise<void> {
   intro('kaddo modules map')
 
   if (!exists(join(dir, CONFIG_PATH))) {
@@ -250,7 +251,29 @@ export async function runModulesMap(dir: string = cwd()): Promise<void> {
     process.exit(1)
   }
 
-  log.info('Register a secondary repository as a module of this system.')
+  let repoPath: string
+  if (modulePath) {
+    repoPath = modulePath
+  } else {
+    repoPath = await text({
+      message: 'Repository path (relative to this repo)',
+      placeholder: 'e.g. ../frontend',
+      validate: (v) => (v.trim().length === 0 ? 'Repository path is required.' : undefined),
+    })
+  }
+
+  // VS-093: validate the target repo has Kaddo module config.
+  const targetDir = join(dir, repoPath.trim())
+  if (!exists(targetDir)) {
+    log.warn(`Path "${repoPath.trim()}" does not exist.`)
+  } else {
+    const st = detectModuleStatus(dir, repoPath.trim())
+    if (st.status === 'not_configured') {
+      log.warn(`${repoPath.trim()} does not have Kaddo configured. Run \`kaddo init\` inside that repository first.`)
+    } else if (st.status === 'invalid') {
+      log.warn(`${repoPath.trim()} has Kaddo but is not configured as a module.`)
+    }
+  }
 
   const name = await text({
     message: 'Module name',
@@ -258,70 +281,54 @@ export async function runModulesMap(dir: string = cwd()): Promise<void> {
     validate: (v) => (v.trim().length === 0 ? 'Name is required.' : undefined),
   })
 
-  const repoPath = await text({
-    message: 'Repository path (relative to this repo)',
-    placeholder: 'e.g. ../frontend',
-    validate: (v) => (v.trim().length === 0 ? 'Repository path is required.' : undefined),
-  })
-
   const type = await select<ModuleType>({
     message: 'Module type',
     options: MODULE_TYPES.map((t) => ({ value: t, label: t })),
   })
 
-  const mainTechnology = await text({
-    message: 'Main technology (optional)',
-    placeholder: 'e.g. Next.js',
-  })
-
-  const owner = await text({
-    message: 'Owner (optional)',
-    placeholder: 'e.g. web-team',
-  })
-
-  const capabilitiesRaw = await text({
-    message: 'Related capabilities (comma-separated, optional)',
-    placeholder: 'e.g. customer-dashboard, loyalty-portal',
-  })
-
-  if (!exists(join(dir, repoPath.trim()))) {
-    log.warn(`Path "${repoPath.trim()}" does not exist yet — registering anyway.`)
-  }
-
   const result = mapModule(dir, {
     name,
     repoPath,
     type,
-    mainTechnology,
-    owner,
-    capabilities: capabilitiesRaw.split(',').map((c) => c.trim()).filter(Boolean),
   })
 
   for (const p of result.written) log.success(`Created ${p}`)
   for (const p of result.skipped) log.info(`Kept existing ${p}`)
   log.success(`Module "${result.module.id}" recorded in ${DESCRIPTOR_PATH}`)
 
-  outro(
-    'Module mapped. Use the `module-design-agent` in your LLM with `.kaddo/context-pack.md` ' +
-      'to fill in module-design.md.'
-  )
+  outro('Module mapped.')
 }
 
+/**
+ * VS-093: list only reads from .kaddo/modules.yml.
+ * No discovery, no prompts, no metadata questions, no file creation.
+ */
 export function runModulesList(dir: string = cwd()): void {
-  const descriptor = readModulesDescriptor(dir)
-  if (descriptor.modules.length === 0) {
-    console.log('No modules mapped. Run `kaddo modules map` to register one.')
+  const yml = readModulesYml(dir)
+
+  if (yml.modules.length === 0) {
+    console.log('')
+    console.log('No modules are mapped for this core repository.')
+    console.log('')
+    console.log('Run:')
+    console.log('  kaddo modules discover')
+    console.log('')
+    console.log('Or map one manually:')
+    console.log('  kaddo modules map <path>')
+    console.log('')
     return
   }
+
   console.log('')
   console.log('Mapped modules:')
-  for (const m of descriptor.modules) {
-    const st = detectModuleStatus(dir, m.repoPath)
+  for (const m of yml.modules) {
+    const mPath = (m as Record<string, unknown>).path as string ?? (m as Record<string, unknown>).repoPath as string ?? ''
+    const st = detectModuleStatus(dir, mPath)
     const statusLabel =
       st.status === 'configured' ? '✓ configured' :
       st.status === 'not_configured' ? '○ not configured' :
       '✗ invalid'
-    console.log(`  ${m.id.padEnd(16)} ${m.type.padEnd(14)} ${statusLabel.padEnd(18)} ${m.repoPath}`)
+    console.log(`  ${m.id.padEnd(16)} ${statusLabel.padEnd(18)} ${mPath}`)
     if (st.warning) console.log(`    ⚠ ${st.warning}`)
   }
   console.log('')
