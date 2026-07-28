@@ -182,6 +182,13 @@ export function resolveNextStep(dir: string, now: Date = new Date()): NextStepRe
   const state = config.project.state
 
   const q = (rel: string) => analyzeKnowledgeArtifact(dir, rel)
+  const resolveAgent = (agent: string) => {
+    const file = agent.endsWith('.md') ? agent : `${agent}.md`
+    const path = agentInstallPath(file)
+    const installed = isFile(join(dir, path))
+    const group = agentGroupOf(file)
+    return { agentPath: path, agentInstalled: installed, installCommand: installed ? undefined : `kaddo add agents --group ${group}` }
+  }
   const moduleRepo = isModule(config)
   const coreRepo = isCore(config)
   // VS-093: module-context.md moved to knowledge/tech/module/; support legacy path.
@@ -204,12 +211,21 @@ export function resolveNextStep(dir: string, now: Date = new Date()): NextStepRe
     }
 
     if (qMC !== 'useful') {
+      const ar = resolveAgent('module-context-agent')
       return {
         id: 'refine-module-context', phase: 'Knowledge Refinement',
-        label: 'Use module-context-agent to refine `knowledge/module/module-context.md`.',
+        label: 'Use module-context-agent to refine `knowledge/tech/module/module-context.md`.',
         agent: 'module-context-agent', skill: 'module-context-refinement', target: MC,
+        agentPath: ar.agentPath, agentInstalled: ar.agentInstalled, installCommand: ar.installCommand,
         reason: 'Module context is still a placeholder.',
-        instructions: ['Refine the module context with real knowledge about this module.', 'Do not create business.md or product.md.', 'Do not write code.'],
+        instructions: [
+          'Refine the module context using evidence from this repository.',
+          'Use the parent system context when available.',
+          'Do not create business, product, roadmap or Work Items in this module.',
+          'Do not install agents or skills in this module.',
+          'Do not write application code.',
+          'Preserve frontmatter and record unknowns as open questions.',
+        ],
       }
     }
 
@@ -237,7 +253,7 @@ export function resolveNextStep(dir: string, now: Date = new Date()): NextStepRe
       return { id: 'understand', phase: 'Discovery', label: 'Run `kaddo understand` to summarize the project context.', command: 'kaddo understand', reason: 'No understand handoff has been generated yet.' }
     }
 
-    return { id: 'module-ready', phase: 'Active Delivery', label: 'Module context is complete. Create and manage Work Items from the core repository.', reason: 'This module\'s knowledge is ready. Work Items are created and tracked in the core.' }
+    return { id: 'module-ready', phase: 'Ready for Core Orchestration', label: 'Module knowledge is complete. Create and manage Work Items from the core repository.', reason: 'This module\'s knowledge is ready for core orchestration. Work Items are created and tracked in the core.' }
   }
 
   // Non-module (core or single repo) flow.
@@ -276,13 +292,6 @@ export function resolveNextStep(dir: string, now: Date = new Date()): NextStepRe
   // recommendations are never masked by "run kaddo understand" — a command that is
   // already being executed when the user is inside `kaddo understand`.
   const discovery = state === 'pre-ai' || state === 'legacy'
-  const resolveAgent = (agent: string) => {
-    const file = agent.endsWith('.md') ? agent : `${agent}.md`
-    const path = agentInstallPath(file)
-    const installed = isFile(join(dir, path))
-    const group = agentGroupOf(file)
-    return { agentPath: path, agentInstalled: installed, installCommand: installed ? undefined : `kaddo add agents --group ${group}` }
-  }
   const refine = (id: string, agent: string, target: string, quality: string, verb = 'complete'): NextStepRecommendation => {
     const ar = resolveAgent(agent)
     return {

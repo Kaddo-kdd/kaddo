@@ -5,7 +5,7 @@
 // knowledge layers, roadmap, work items, ownership, decisions, adapters).
 
 import { exists, join } from '../utils/fs.js'
-import { loadConfig, type ProjectState } from './config.js'
+import { loadConfig, isModule, type ProjectState } from './config.js'
 import { analyzeKnowledgeArtifact, type ArtifactQuality } from './artifact-quality.js'
 import { hasWarnings as hasScanSignalWarnings } from './scan-signals.js'
 import { parseWorkItemSource } from './work-item-source.js'
@@ -303,6 +303,75 @@ const identifyRisks: StepDef = {
   },
 }
 
+// --- Module-specific steps (VS-093.1) ---
+
+const refineModuleContext: StepDef = {
+  id: 'refine-module-context',
+  label: 'Refine module context',
+  evaluate: (ctx) => {
+    const newPath = join(ctx.dir, 'knowledge/tech/module/module-context.md')
+    const legacyPath = join(ctx.dir, 'knowledge/module/module-context.md')
+    const mcPath = exists(newPath) ? 'knowledge/tech/module/module-context.md' : (exists(legacyPath) ? 'knowledge/module/module-context.md' : null)
+    if (!mcPath) return { status: 'pending', agent: 'module-context-agent', skill: 'module-context-refinement' }
+    const q = analyzeKnowledgeArtifact(ctx.dir, mcPath)
+    if (q === 'useful') return { status: 'done', evidence: [mcPath] }
+    return { status: 'current', agent: 'module-context-agent', skill: 'module-context-refinement', evidence: [mcPath], reason: 'Module context is still a placeholder.' }
+  },
+}
+
+const describeModuleCurrentState: StepDef = {
+  id: 'describe-current-state',
+  label: 'Describe current state',
+  evaluate: (ctx) => ({
+    status: isUseful(ctx.qCurrentState) ? 'done' : 'pending',
+    evidence: isUseful(ctx.qCurrentState) ? ['knowledge/tech/current-state.md'] : undefined,
+    agent: isUseful(ctx.qCurrentState) ? undefined : 'architecture-agent',
+  }),
+}
+
+const mapModuleCodebase: StepDef = {
+  id: 'map-codebase',
+  label: 'Map codebase',
+  evaluate: (ctx) => ({
+    status: isUseful(ctx.qCodebase) ? 'done' : 'pending',
+    evidence: isUseful(ctx.qCodebase) ? ['knowledge/tech/codebase.md'] : undefined,
+    agent: isUseful(ctx.qCodebase) ? undefined : 'architecture-agent',
+  }),
+}
+
+const validateModuleKnowledge: StepDef = {
+  id: 'validate-module-knowledge',
+  label: 'Validate module knowledge',
+  evaluate: (ctx) => {
+    const hasUnderstand = exists(join(ctx.dir, '.kaddo/understand.md'))
+    if (hasUnderstand) return { status: 'done', evidence: ['.kaddo/understand.md'] }
+    return { status: 'pending', command: 'kaddo understand' }
+  },
+}
+
+const readyForCoreOrchestration: StepDef = {
+  id: 'ready-for-core-orchestration',
+  label: 'Ready for core orchestration',
+  evaluate: (ctx) => {
+    const newPath = join(ctx.dir, 'knowledge/tech/module/module-context.md')
+    const legacyPath = join(ctx.dir, 'knowledge/module/module-context.md')
+    const mcPath = exists(newPath) ? 'knowledge/tech/module/module-context.md' : (exists(legacyPath) ? 'knowledge/module/module-context.md' : null)
+    const mcUseful = mcPath ? analyzeKnowledgeArtifact(ctx.dir, mcPath) === 'useful' : false
+    const allDone = mcUseful && isUseful(ctx.qCurrentState) && isUseful(ctx.qCodebase)
+    return { status: allDone ? 'done' : 'pending', reason: allDone ? undefined : 'Module knowledge is not yet complete.' }
+  },
+}
+
+const MODULE_STEPS: StepDef[] = [
+  enableKaddo,
+  scanRepository,
+  refineModuleContext,
+  describeModuleCurrentState,
+  mapModuleCodebase,
+  validateModuleKnowledge,
+  readyForCoreOrchestration,
+]
+
 // --- Route definitions ---
 
 const NEW_STEPS: StepDef[] = [
@@ -450,10 +519,10 @@ function mapNextStepId(id: string): string {
     'review-work-item': 'refine-work-item',
     'prepare-implementation': 'prepare-implementation',
     'implement-work-item': 'prepare-implementation',
-    'refine-module-context': 'refine-work-item',
+    'refine-module-context': 'refine-module-context',
     'init-module-context': 'enable-kaddo',
-    'module-ready': 'prepare-implementation',
-    'validate-work-item-modules': 'prepare-implementation',
+    'module-ready': 'ready-for-core-orchestration',
+    'validate-work-item-modules': 'validate-module-knowledge',
     'modules-discover': 'enable-kaddo',
   }
   return MAP[id] ?? id
@@ -462,7 +531,7 @@ function mapNextStepId(id: string): string {
 export function buildProjectRoute(dir: string): ProjectRoute {
   const config = loadConfig(dir)
   const state: ProjectState = config?.project.state ?? 'pre-ai'
-  const defs = stepsForState(state)
+  const defs = config && isModule(config) ? MODULE_STEPS : stepsForState(state)
   const ctx = buildRouteContext(dir)
 
   const steps: RouteStep[] = defs.map((d) => {

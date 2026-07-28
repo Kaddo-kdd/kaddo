@@ -133,7 +133,35 @@ Cada repo módulo tiene un `knowledge/tech/module/module-context.md` con 9 secci
 9. Open questions
 
 El `module-context-agent` refina este artefacto; el skill
-`module-context-refinement` guía la refinación.
+`module-context-refinement` guía la refinación. Instala el agente en el repo
+**core** con `kaddo add agents` — los repos módulo no instalan agentes ni skills
+directamente.
+
+### Ruta de proyecto del módulo
+
+Los repos módulo siguen una ruta de 7 pasos (en lugar de la ruta completa de 16 pasos del core):
+
+1. Habilitar Kaddo
+2. Escanear repositorio
+3. Refinar contexto de módulo
+4. Describir estado actual
+5. Mapear codebase
+6. Validar conocimiento del módulo
+7. Listo para orquestación del core
+
+### Capas de conocimiento en módulos
+
+Para repos módulo, las capas de conocimiento se evalúan diferente:
+
+| Capa | Estado |
+|---|---|
+| Business | No aplica — gestionado por el core |
+| Product | No aplica — gestionado por el core |
+| Tech | Se evalúa normalmente (module-context + current-state + codebase) |
+| Delivery | Gestionado por el core |
+
+Los repos módulo nunca crean business, product, roadmap ni Work Items.
+`kaddo add agents` y `kaddo add skills` están bloqueados en repos módulo.
 
 > **Soporte de rutas legacy.** Kaddo también lee `knowledge/module/module-context.md`
 > (la ruta pre-VS-093) si la nueva ruta no existe. Ejecuta `kaddo modules validate`

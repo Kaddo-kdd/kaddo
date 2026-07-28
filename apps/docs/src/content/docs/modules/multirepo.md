@@ -131,7 +131,34 @@ Each module repo has a `knowledge/tech/module/module-context.md` with 9 sections
 9. Open questions
 
 The `module-context-agent` refines this artifact; the `module-context-refinement`
-skill guides the refinement.
+skill guides the refinement. Install the agent in the **core** repo with
+`kaddo add agents` — module repos do not install agents or skills directly.
+
+### Module project route
+
+Module repos follow a 7-step project route (instead of the full 16-step core route):
+
+1. Enable Kaddo
+2. Scan repository
+3. Refine module context
+4. Describe current state
+5. Map codebase
+6. Validate module knowledge
+7. Ready for core orchestration
+
+### Knowledge layers in modules
+
+For module repos, knowledge layers are evaluated differently:
+
+| Layer | Status |
+|---|---|
+| Business | Not applicable — managed by core |
+| Product | Not applicable — managed by core |
+| Tech | Evaluated normally (module-context + current-state + codebase) |
+| Delivery | Managed by core |
+
+Module repos never create business, product, roadmap, or Work Items.
+`kaddo add agents` and `kaddo add skills` are blocked on module repos.
 
 > **Legacy path support.** Kaddo also reads `knowledge/module/module-context.md`
 > (the pre-VS-093 path) if the new path does not exist. Run `kaddo modules validate`

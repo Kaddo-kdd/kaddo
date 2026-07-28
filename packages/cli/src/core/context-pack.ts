@@ -1,6 +1,6 @@
 import matter from 'gray-matter'
 import { exists, readFile, join } from '../utils/fs.js'
-import { loadConfig, languageLabel, projectLanguage, type KaddoConfig, type ProjectState } from './config.js'
+import { loadConfig, isModule, languageLabel, projectLanguage, type KaddoConfig, type ProjectState } from './config.js'
 import { type Artifact } from '../services/artifact-reader.js'
 import { discoverKnowledge } from '../services/knowledge-artifacts.js'
 import { loadMappedModules, readModuleContext, detectModuleStatus, type MappedModuleWithCoverage, type ModuleStatusInfo } from '../services/mapped-modules.js'
@@ -276,8 +276,10 @@ export function buildContextPack(
     missing.push('No project knowledge summary found yet.')
   }
 
+  const moduleRepo = config != null && isModule(config)
+
   const roadmapSummary = readMarkdownSummary(dir, 'delivery/roadmap.md') ?? ''
-  if (!roadmapSummary) {
+  if (!roadmapSummary && !moduleRepo) {
     missing.push('No roadmap baseline found.')
   }
 
@@ -293,7 +295,7 @@ export function buildContextPack(
       isDeliveryWorkItem(a) &&
       isActiveState(lifecycleStateOf({ status: a.status, filePath: a.filePath }))
   )
-  if (workItems.length === 0) {
+  if (workItems.length === 0 && !moduleRepo) {
     missing.push('No work items found.')
   }
 
@@ -336,8 +338,8 @@ export function buildContextPack(
     tech: { status: layerStatusOf('Tech'), artifacts: { 'knowledge/tech/codebase.md': qCodebase, 'knowledge/tech/current-state.md': qCurrentState } },
     delivery: { status: layerStatusOf('Delivery'), artifacts: { 'knowledge/delivery/roadmap.md': qRoadmap } },
   }
-  if (qBusiness === 'placeholder') missing.push('Business context exists but still looks like a bootstrap placeholder.')
-  if (qProduct === 'placeholder' || qCapabilities === 'placeholder') missing.push('Product capabilities exist but still look like a bootstrap placeholder.')
+  if (qBusiness === 'placeholder' && !moduleRepo) missing.push('Business context exists but still looks like a bootstrap placeholder.')
+  if ((qProduct === 'placeholder' || qCapabilities === 'placeholder') && !moduleRepo) missing.push('Product capabilities exist but still look like a bootstrap placeholder.')
   if (qCurrentState === 'placeholder') missing.push('Current state exists but still looks like a bootstrap placeholder.')
   if (qCodebase === 'placeholder') missing.push('Codebase map exists but still looks like a bootstrap placeholder.')
 
@@ -363,6 +365,7 @@ export function buildContextPack(
       workItemsWithOwnership: wiWithOwnership,
       workItemsMissingOwnership: allWorkItems.length - wiWithOwnership,
     },
+    isModuleRepo: config != null && isModule(config),
   })
 
   // Unified next step (VS-073.2): the phase's next step + recommended agents are driven by the shared

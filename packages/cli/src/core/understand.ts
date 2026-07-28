@@ -1,5 +1,6 @@
 import { exists, join } from '../utils/fs.js'
 import type { KaddoConfig, ProjectState } from './config.js'
+import { isModule } from './config.js'
 import { agentInstallPath } from '../agents/groups.js'
 import type { NextStepRecommendation, DeliveryState } from './next-step.js'
 import type { ProjectRoute } from './project-route.js'
@@ -95,6 +96,16 @@ function flowForState(state: ProjectState): { agent: string; output: string }[] 
  */
 export function buildUnderstandPlan(dir: string, config: KaddoConfig): UnderstandPlan {
   const state = config.project.state
+  if (isModule(config)) {
+    return {
+      project: { name: config.project.name, state, teamSize: config.team.size, structure: config.project.structure, language: 'English' },
+      steps: [],
+      missingAgents: [],
+      agentsInstalled: true,
+      scanAvailable: exists(join(dir, '.kaddo', 'scan.json')),
+      contextPackPath: '.kaddo/context-pack.md',
+    }
+  }
   // Knowledge-aware (VS-047): drop foundational steps whose output already exists, so the plan
   // never recommends re-generating a roadmap/architecture/capabilities that are already present.
   const flow = flowForState(state).filter((s) => !exists(join(dir, s.output)))

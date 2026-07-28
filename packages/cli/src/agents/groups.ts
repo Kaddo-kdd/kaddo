@@ -63,6 +63,7 @@ const RECOMMENDED_BY_STATE: Record<ProjectState, string[]> = {
     'work-item-agent.md',
     'implementation-agent.md',
     'adr-agent.md',
+    'module-context-agent.md',
   ],
   'pre-ai': [
     'business-agent.md',
@@ -73,6 +74,7 @@ const RECOMMENDED_BY_STATE: Record<ProjectState, string[]> = {
     'work-item-agent.md',
     'implementation-agent.md',
     'ownership-agent.md',
+    'module-context-agent.md',
   ],
   legacy: [
     'legacy-agent.md',

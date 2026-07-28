@@ -25,6 +25,7 @@ export type PhaseInput = {
     items: { id: string; title: string; lifecycle: LifecycleState }[]
   }
   ownership: { workItemsTotal: number; workItemsWithOwnership: number; workItemsMissingOwnership: number }
+  isModuleRepo?: boolean
 }
 
 export type PhaseAssessment = {
@@ -122,6 +123,35 @@ function firstUnrefinedLayerAgent(layers: LayerStatus[]): { agent: string; step:
  * Recommend the next agent(s) and a concrete next step from the real knowledge state.
  */
 export function assessPhase(input: PhaseInput): PhaseAssessment {
+  if (input.isModuleRepo) {
+    const techStatus = layer(input.layers, 'Tech')
+    const techReady = !NOT_READY_LAYER.includes(techStatus)
+    if (techReady) {
+      return {
+        phase: 'Active Delivery',
+        reasons: ['Module repo — Tech layer ready', 'Business/Product managed by core'],
+        recommendedAgents: [],
+        nextStep: 'Module knowledge is ready for core orchestration.',
+        llmInstructions: [
+          'This is a module repo. Business, Product, and Delivery are managed by the core repo.',
+          'Do not create business, product, roadmap or Work Items here.',
+        ],
+      }
+    }
+    return {
+      phase: 'Knowledge Refinement',
+      reasons: ['Module repo — Tech layer incomplete', 'Business/Product managed by core'],
+      recommendedAgents: ['module-context-agent'],
+      nextStep: 'Use module-context-agent to refine knowledge/tech/module/module-context.md',
+      llmInstructions: [
+        'Use the module-context-agent to refine the module context.',
+        'Do not create business, product, roadmap or Work Items in this module.',
+        'Do not install agents or skills.',
+        'Do not write application code.',
+      ],
+    }
+  }
+
   const phase = determinePhase(input)
   const reasons = buildReasons(input)
   const bs = input.workItems.byState

@@ -5,7 +5,7 @@
 // what is missing plus actionable next steps. No LLM, no inference — pure file reads.
 
 import { exists, readFile, readDir, join, isFile } from '../utils/fs.js'
-import { loadConfig, languageLabel, projectLanguage } from './config.js'
+import { loadConfig, isModule, languageLabel, projectLanguage } from './config.js'
 import { discoverWorkItems } from '../services/knowledge-artifacts.js'
 import { assessPhase } from './delivery-phase.js'
 import { loadExternalCapsules, type ConsumedCapsule } from './capsule.js'
@@ -128,6 +128,8 @@ export type ProjectExplanation = {
   scanSignals: ScanSignals | null
   /** Knowledge file metadata health (VS-084). */
   metadataHealth: MetadataHealth
+  /** Whether this is a module repo (VS-093.1). */
+  isModuleRepo: boolean
 }
 
 function normalizeTitle(t: string): string {
@@ -461,6 +463,7 @@ export function buildProjectExplanation(dir: string): ProjectExplanation {
     projectRoute: buildProjectRoute(dir),
     scanSignals: loadScanSignals(dir),
     metadataHealth: analyzeMetadataHealth(dir),
+    isModuleRepo: config != null && isModule(config),
   }
 }
 

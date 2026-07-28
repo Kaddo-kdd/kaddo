@@ -12,6 +12,7 @@ import {
   type LayerStatus,
 } from './knowledge-discovery.js'
 import { analyzeKnowledgeArtifact, type ArtifactQuality } from './artifact-quality.js'
+import { loadConfig, isModule } from './config.js'
 
 export type { LayerName, LayerMaturity, LayerStatus }
 
@@ -41,6 +42,21 @@ function layerQuality(dir: string, layer: LayerName): ArtifactQuality | null {
  * files are still bootstrap placeholders or too thin (VS-073.1). A file existing ≠ knowledge ready.
  */
 export function knowledgeLayers(dir: string): LayerStatus[] {
+  const config = loadConfig(dir)
+  if (config && isModule(config)) {
+    return [
+      { layer: 'Business', status: 'Not applicable' as LayerMaturity, detected: [] },
+      { layer: 'Product', status: 'Not applicable' as LayerMaturity, detected: [] },
+      ...discoverLayers(dir).filter((l) => l.layer === 'Tech').map((l) => {
+        if (l.status !== 'Consolidated' && l.status !== 'Structured') return l
+        const q = layerQuality(dir, l.layer)
+        if (q === 'placeholder') return { ...l, status: 'Placeholder' as LayerMaturity }
+        if (q === 'weak') return { ...l, status: 'Weak' as LayerMaturity }
+        return l
+      }),
+      { layer: 'Delivery', status: 'Managed by core' as LayerMaturity, detected: [] },
+    ]
+  }
   return discoverLayers(dir).map((l) => {
     // Only downgrade "positive" maturities; never touch Missing/Partial/Traceable/Placeholder/Weak.
     if (l.status !== 'Consolidated' && l.status !== 'Structured') return l

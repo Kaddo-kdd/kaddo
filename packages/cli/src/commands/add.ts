@@ -1,4 +1,5 @@
 import { getModule, listModules } from '../modules/registry.js'
+import { loadConfig, isModule } from '../core/config.js'
 import { exists, writeFile, ensureDir, join, cwd, readFile } from '../utils/fs.js'
 import { log, intro, outro } from '../utils/ui.js'
 import { parse as parseYaml, stringify as stringifyYaml } from 'yaml'
@@ -104,6 +105,12 @@ export function runAdd(moduleName: string, opts: AddOptions = {}, dir: string = 
   if (!exists(join(dir, CONFIG_PATH))) {
     console.error('Kaddo is not initialized in this project.')
     console.error('Run `kaddo init` first.')
+    process.exit(1)
+  }
+
+  const addConfig = loadConfig(dir)
+  if ((mod.name === 'agents' || mod.name === 'skills') && addConfig && isModule(addConfig)) {
+    console.error(`Module repos do not use ${mod.name}. ${mod.name === 'agents' ? 'Agents' : 'Skills'} are managed by the core repo.`)
     process.exit(1)
   }
 
