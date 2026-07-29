@@ -59,7 +59,9 @@ type RouteContext = {
   draftWorkItems: number
   readyWorkItems: number
   inProgressWorkItems: number
+  blockedWorkItems: number
   completedWorkItems: number
+  archivedWorkItems: number
   ownershipCoverage: string
   ownershipComplete: boolean
   decisionCandidates: number
@@ -203,7 +205,7 @@ const refineWorkItem: StepDef = {
   id: 'refine-work-item',
   label: 'Refine Work Item',
   evaluate: (ctx) => {
-    if (ctx.readyWorkItems > 0 || ctx.inProgressWorkItems > 0) return { status: 'done' }
+    if (ctx.readyWorkItems > 0 || ctx.inProgressWorkItems > 0 || ctx.blockedWorkItems > 0 || ctx.completedWorkItems > 0 || ctx.archivedWorkItems > 0) return { status: 'done' }
     if (ctx.draftWorkItems > 0) {
       return {
         status: 'current',
@@ -476,7 +478,9 @@ function buildRouteContext(dir: string): RouteContext {
     draftWorkItems: byState('draft'),
     readyWorkItems: byState('ready'),
     inProgressWorkItems: byState('in-progress'),
+    blockedWorkItems: byState('blocked'),
     completedWorkItems: byState('completed'),
+    archivedWorkItems: byState('archived'),
     ownershipCoverage: `${withOwnership}/${total}`,
     ownershipComplete: total > 0 && withOwnership >= total,
     decisionCandidates: td.candidates,

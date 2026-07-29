@@ -19,6 +19,8 @@ import {
   type RoadmapSignal,
   type WorkItemsSignal,
 } from './next-step.js'
+import { discoverWorkItems } from '../services/knowledge-artifacts.js'
+import { lifecycleStateOf } from './lifecycle.js'
 
 export type ReadinessStatus =
   | 'not-initialized'
@@ -35,6 +37,11 @@ export type ReadinessStatus =
   | 'ready-for-work-item'
   | 'ready-for-implementation'
   | 'ready-for-core-orchestration'
+  | 'delivery-completed'
+  | 'delivery-completed-release-ready'
+  | 'delivery-completed-release-blocked'
+  | 'active-implementation'
+  | 'implementation-blocked'
 
 export type Presence = ArtifactQuality
 export type { RoadmapSignal, WorkItemsSignal }
@@ -177,6 +184,8 @@ export function buildReadinessReport(dir: string, now: Date = new Date()): Readi
   else if (understand === 'missing') overall = 'scanned'
   else if (firstWeak) overall = 'knowledge-incomplete'
   else if (oq.summary.blocking_open > 0) overall = 'needs-decisions'
+  else if (work_items === 'in-progress') overall = 'active-implementation'
+  else if (work_items === 'completed-only') overall = deriveDeliveryCompletedStatus(dir)
   else if (roadmap !== 'has-candidates') overall = 'ready-for-roadmap'
   else if (work_items === 'none' || work_items === 'none-ready') overall = 'ready-for-work-item'
   else overall = 'ready-for-implementation'
@@ -189,4 +198,15 @@ export function buildReadinessReport(dir: string, now: Date = new Date()): Readi
     recommended_next_step: { label: rec.label, ...(rec.command ? { command: rec.command } : {}) },
     nextStepRecommendation: rec,
   }
+}
+
+function deriveDeliveryCompletedStatus(dir: string): ReadinessStatus {
+  const wis = discoverWorkItems(dir)
+  const completed = wis.filter((w) => lifecycleStateOf({ status: w.status, filePath: w.filePath }) === 'completed')
+  if (completed.length === 0) return 'delivery-completed'
+  const hasReleaseBlocked = completed.some((w) => w.releaseStatus === 'blocked')
+  const hasReleaseReady = completed.some((w) => w.releaseStatus === 'ready' || w.releaseStatus === 'released')
+  if (hasReleaseBlocked) return 'delivery-completed-release-blocked'
+  if (hasReleaseReady) return 'delivery-completed-release-ready'
+  return 'delivery-completed'
 }

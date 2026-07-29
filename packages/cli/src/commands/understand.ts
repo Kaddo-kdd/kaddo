@@ -92,6 +92,17 @@ export function runUnderstand(): void {
     } else if (rec.agentPath) {
       console.log(`  Agent prompt: ${rec.agentPath}`)
     }
+    if (exp.deliverySummary) {
+      const ds = exp.deliverySummary
+      console.log('')
+      console.log('Previous delivery:')
+      console.log(`  - Completed Work Items: ${ds.completedWorkItems}`)
+      if (ds.implementationCompleted > 0) console.log(`  - Implementation completed: ${ds.implementationCompleted}`)
+      if (ds.releaseBlocked > 0) console.log(`  - Release blocked: ${ds.releaseBlocked}`)
+      if (ds.releaseReady > 0) console.log(`  - Release ready: ${ds.releaseReady}`)
+      console.log(`  - Current active work: ${ds.activeWorkItems > 0 ? ds.activeWorkItems : 'none'}`)
+    }
+
     if (rec.skill) console.log(`Recommended skill: ${rec.skill}`)
     console.log(`Next step: ${rec.label}`)
     if (rec.reason) console.log(`Why: ${rec.reason}`)

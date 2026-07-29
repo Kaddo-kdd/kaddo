@@ -28,6 +28,7 @@ import {
   lifecycleStateOf,
   lifecycleCounts,
   emptyLifecycleCounts,
+  isActiveState,
   type LifecycleState,
 } from './lifecycle.js'
 import { buildProjectRoute, renderRouteMarkdown, type ProjectRoute } from './project-route.js'
@@ -130,6 +131,15 @@ export type ProjectExplanation = {
   metadataHealth: MetadataHealth
   /** Whether this is a module repo (VS-093.1). */
   isModuleRepo: boolean
+  /** Delivery summary for maintenance phase (VS-094.1). */
+  deliverySummary: {
+    completedWorkItems: number
+    archivedWorkItems: number
+    activeWorkItems: number
+    implementationCompleted: number
+    releaseBlocked: number
+    releaseReady: number
+  } | null
   /** Cross-repo implementation evidence for WIs with affected_modules (VS-094). */
   implementationEvidence: {
     id: string
@@ -499,6 +509,20 @@ export function buildProjectExplanation(dir: string): ProjectExplanation {
     scanSignals: loadScanSignals(dir),
     metadataHealth: analyzeMetadataHealth(dir),
     isModuleRepo: config != null && isModule(config),
+    deliverySummary: (() => {
+      const completed = workItemArtifacts.filter((a) => lifecycleStateOf({ status: a.status, filePath: a.filePath }) === 'completed')
+      const archived = workItemArtifacts.filter((a) => lifecycleStateOf({ status: a.status, filePath: a.filePath }) === 'archived')
+      const active = workItemArtifacts.filter((a) => isActiveState(lifecycleStateOf({ status: a.status, filePath: a.filePath })))
+      if (completed.length === 0 && archived.length === 0) return null
+      return {
+        completedWorkItems: completed.length,
+        archivedWorkItems: archived.length,
+        activeWorkItems: active.length,
+        implementationCompleted: completed.filter((a) => a.implementationStatus === 'completed').length,
+        releaseBlocked: completed.filter((a) => a.releaseStatus === 'blocked').length,
+        releaseReady: completed.filter((a) => a.releaseStatus === 'ready' || a.releaseStatus === 'released').length,
+      }
+    })(),
     implementationEvidence: workItemArtifacts
       .filter((a) => a.affectedModules.length > 0)
       .map((a) => {
@@ -512,11 +536,13 @@ export function buildProjectExplanation(dir: string): ProjectExplanation {
             status: String(data.status ?? 'unknown'),
           }
         }
+        const lc = lifecycleStateOf({ status: a.status, filePath: a.filePath })
+        const historicalDefault = lc === 'completed' || lc === 'archived' ? 'not-assessed' : 'not-started'
         return {
           id: a.id || a.title,
-          lifecycle: lifecycleStateOf({ status: a.status, filePath: a.filePath }),
-          implementationStatus: a.implementationStatus || 'not-started',
-          validationStatus: a.validationStatus || 'not-started',
+          lifecycle: lc,
+          implementationStatus: a.implementationStatus || historicalDefault,
+          validationStatus: a.validationStatus || historicalDefault,
           releaseStatus: a.releaseStatus || 'not-assessed',
           affectedModules: a.affectedModules,
           releaseGates: (Array.isArray(fm.release_gates) ? fm.release_gates : []) as { id: string; status: string; reason?: string }[],
@@ -799,6 +825,19 @@ export function renderExplanationHuman(exp: ProjectExplanation): string {
   lines.push(`- Next step: ${exp.readiness.recommended_next_step.label}`)
   lines.push('')
 
+  // Delivery Summary (VS-094.1): show previous delivery when in maintenance.
+  if (exp.deliverySummary) {
+    const ds = exp.deliverySummary
+    lines.push('## Delivery Summary')
+    lines.push(`- Completed Work Items: ${ds.completedWorkItems}`)
+    if (ds.archivedWorkItems > 0) lines.push(`- Archived Work Items: ${ds.archivedWorkItems}`)
+    lines.push(`- Active Work Items: ${ds.activeWorkItems}`)
+    if (ds.implementationCompleted > 0) lines.push(`- Implementation completed: ${ds.implementationCompleted}`)
+    if (ds.releaseBlocked > 0) lines.push(`- Release blocked: ${ds.releaseBlocked}`)
+    if (ds.releaseReady > 0) lines.push(`- Release ready: ${ds.releaseReady}`)
+    lines.push('')
+  }
+
   // Suggested Next Steps (VS-079): in a delivery phase, lead with the state-aware primary step and its
   // parallel (secondary) recommendations; otherwise fall back to the early-phase guidance list.
   const rec = exp.nextStepRecommendation
@@ -840,6 +879,10 @@ export function renderExplanationHuman(exp: ProjectExplanation): string {
     if (!exp.isModuleRepo) {
       lines.push(`- roadmap: ${s.roadmap}`)
       lines.push(`- work-items: ${s.work_items}`)
+      if (exp.deliverySummary) {
+        lines.push(`- work-items completed: ${exp.deliverySummary.completedWorkItems}`)
+        lines.push(`- work-items active: ${exp.deliverySummary.activeWorkItems}`)
+      }
       lines.push(`- adapters: ${s.adapters.length > 0 ? s.adapters.join(', ') + ' installed' : 'none installed'}`)
     } else {
       lines.push('- roadmap: managed-by-core')

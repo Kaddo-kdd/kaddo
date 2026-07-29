@@ -24,6 +24,7 @@ type ExplainJson = {
   layers?: { layer: string; status: string }[]
   isModuleRepo?: boolean
   readiness?: { overall?: string; project_role?: string; signals?: Record<string, unknown> }
+  deliverySummary?: { completedWorkItems?: number; archivedWorkItems?: number; activeWorkItems?: number; implementationCompleted?: number; releaseBlocked?: number; releaseReady?: number }
 }
 
 type GraphHintsJson = { quality?: string; scope?: string; scope_reason?: string; summary?: { hints?: number } }
@@ -68,6 +69,14 @@ export function projectStatus(root: string): ToolResult {
       agents: 'managed-by-core',
       skills: 'managed-by-core',
     }
+  } else {
+    result.readiness = {
+      overall: explain.readiness?.overall ?? 'unknown',
+    }
+  }
+
+  if (explain.deliverySummary) {
+    result.deliverySummary = explain.deliverySummary
   }
 
   return ok(result)

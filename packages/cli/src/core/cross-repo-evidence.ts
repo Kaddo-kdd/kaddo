@@ -127,6 +127,18 @@ export function analyzeCrossRepoEvidence(input: CrossRepoInput): WIEvidenceSumma
     }
   }
 
+  // AC24-26: accepted-with-exceptions must have structured evidence
+  if (validationStatus === 'accepted-with-exceptions') {
+    const hasExceptions = exceptions.length > 0
+    const hasValidationGate = releaseGates.some((g) =>
+      (g.status === 'pending' || g.status === 'blocked') &&
+      (g.id.includes('validation') || g.id.includes('test'))
+    )
+    if (!hasExceptions && !hasValidationGate) {
+      findings.push({ id, severity: 'warning', message: 'Validation status is accepted-with-exceptions, but no exception evidence was found.' })
+    }
+  }
+
   // Legacy status warning
   if (raw.status === 'done') {
     findings.push({ id, severity: 'warning', message: 'Legacy status `done` detected. Canonical status is `completed`.' })
@@ -137,11 +149,12 @@ export function analyzeCrossRepoEvidence(input: CrossRepoInput): WIEvidenceSumma
     findings.push({ id, severity: 'fyi', message: 'refined_by and implemented_by point to the same agent.' })
   }
 
+  const historicalDefault = lifecycle === 'completed' || lifecycle === 'archived' ? 'not-assessed' : 'not-started'
   return {
     id,
     lifecycle,
-    implementationStatus: implementationStatus || 'not-started',
-    validationStatus: validationStatus || 'not-started',
+    implementationStatus: implementationStatus || historicalDefault,
+    validationStatus: validationStatus || historicalDefault,
     releaseStatus: releaseStatus || 'not-assessed',
     affectedModules,
     findings,

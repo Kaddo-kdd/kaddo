@@ -72,7 +72,12 @@ export type ContextPack = {
     summary: string
     roadmapSummary: string
     inventoryAvailable: boolean
+    /** Active Work Items only (draft/ready/in-progress/blocked). Legacy alias for activeWorkItems. */
     workItems: ContextWorkItem[]
+    activeWorkItems: ContextWorkItem[]
+    completedWorkItems: ContextWorkItem[]
+    archivedWorkItems: ContextWorkItem[]
+    allWorkItems: ContextWorkItem[]
     artifacts: ContextArtifact[]
   }
   layers: LayerStatus[]
@@ -99,6 +104,18 @@ export type ContextPack = {
     version: string
     agents: { total: number; installed: number; outdated: number; unknown_version: number; modified: number }
     skills: { total: number; installed: number; outdated: number; unknown_version: number; modified: number }
+  }
+  /** Aggregated Work Item counts by lifecycle state (VS-094.1). */
+  workItemSummary: {
+    total: number
+    active: number
+    draft: number
+    ready: number
+    in_progress: number
+    blocked: number
+    completed: number
+    archived: number
+    summary: string
   }
   /** Active Work Items distribution by type (feature/bugfix/hotfix/spike/chore/…). */
   deliveryMix: Record<string, number>
@@ -235,19 +252,21 @@ const OPERATING_RULES = [
 ]
 
 function toContextWorkItem(a: Artifact): ContextWorkItem {
+  const lifecycle = lifecycleStateOf({ status: a.status, filePath: a.filePath })
+  const isHistorical = lifecycle === 'completed' || lifecycle === 'archived'
   const wi: ContextWorkItem = {
     id: a.id,
     type: a.type,
     title: a.title,
     status: a.status,
-    lifecycle: lifecycleStateOf({ status: a.status, filePath: a.filePath }),
+    lifecycle,
     knowledgeLevel: a.knowledgeLevel,
     domains: a.domains,
     source: parseWorkItemSource(a.rawFrontmatter),
   }
-  if (a.implementationStatus) wi.implementationStatus = a.implementationStatus
-  if (a.validationStatus) wi.validationStatus = a.validationStatus
-  if (a.releaseStatus) wi.releaseStatus = a.releaseStatus
+  wi.implementationStatus = a.implementationStatus || (isHistorical ? 'not-assessed' : undefined)
+  wi.validationStatus = a.validationStatus || (isHistorical ? 'not-assessed' : undefined)
+  wi.releaseStatus = a.releaseStatus || (isHistorical ? 'not-assessed' : undefined)
   if (a.affectedModules.length > 0) wi.affectedModules = a.affectedModules
   return wi
 }
@@ -301,12 +320,17 @@ export function buildContextPack(
   // (draft/ready/in-progress/blocked). Completed and archived items are historical and would
   // only add noise/tokens to the agent handoff, so they are excluded by default. Other typed
   // knowledge artifacts (ADRs, etc.) are kept as-is.
-  const workItems = allArtifacts.filter(
-    (a) =>
-      isDeliveryWorkItem(a) &&
-      isActiveState(lifecycleStateOf({ status: a.status, filePath: a.filePath }))
+  const allWorkItemArtifacts = allArtifacts.filter((a) => isDeliveryWorkItem(a))
+  const workItems = allWorkItemArtifacts.filter(
+    (a) => isActiveState(lifecycleStateOf({ status: a.status, filePath: a.filePath }))
   )
-  if (workItems.length === 0 && !moduleRepo) {
+  const completedWorkItems = allWorkItemArtifacts.filter(
+    (a) => lifecycleStateOf({ status: a.status, filePath: a.filePath }) === 'completed'
+  )
+  const archivedWorkItems = allWorkItemArtifacts.filter(
+    (a) => lifecycleStateOf({ status: a.status, filePath: a.filePath }) === 'archived'
+  )
+  if (allWorkItemArtifacts.length === 0 && !moduleRepo) {
     missing.push('No work items found.')
   }
 
@@ -442,6 +466,10 @@ export function buildContextPack(
       roadmapSummary,
       inventoryAvailable,
       workItems: workItems.map(toContextWorkItem),
+      activeWorkItems: workItems.map(toContextWorkItem),
+      completedWorkItems: completedWorkItems.map(toContextWorkItem),
+      archivedWorkItems: archivedWorkItems.map(toContextWorkItem),
+      allWorkItems: allWorkItemArtifacts.map(toContextWorkItem),
       artifacts: allArtifacts.filter((a) => a.codeGlobs.length > 0).map(toContextArtifact),
     },
     layers,
@@ -457,6 +485,30 @@ export function buildContextPack(
       const s = installedAssetsSummary(dir)
       const compact = (a: typeof s.agents) => ({ total: a.total, installed: a.total - a.missing, outdated: a.outdated, unknown_version: a.unknown_version, modified: a.modified })
       return { version: s.version, agents: compact(s.agents), skills: compact(s.skills) }
+    })(),
+    workItemSummary: (() => {
+      const lc = (s: string) => allWorkItemArtifacts.filter(
+        (a) => lifecycleStateOf({ status: a.status, filePath: a.filePath }) === s
+      ).length
+      const draft = lc('draft')
+      const ready = lc('ready')
+      const inProgress = lc('in-progress')
+      const blocked = lc('blocked')
+      const completed = lc('completed')
+      const archived = lc('archived')
+      const active = draft + ready + inProgress + blocked
+      const total = allWorkItemArtifacts.length
+      let summary = 'none'
+      if (total === 0) summary = 'none'
+      else if (active === 0 && completed > 0 && archived === 0) summary = 'completed-only'
+      else if (active === 0 && archived > 0 && completed === 0) summary = 'archived-only'
+      else if (active === 0 && completed + archived > 0) summary = 'historical-only'
+      else if (inProgress > 0) summary = 'active'
+      else if (blocked > 0 && ready === 0 && inProgress === 0) summary = 'blocked'
+      else if (ready > 0) summary = 'ready'
+      else if (draft > 0 && ready === 0) summary = 'draft-only'
+      else summary = 'mixed-active'
+      return { total, active, draft, ready, in_progress: inProgress, blocked, completed, archived, summary }
     })(),
     deliveryMix,
     external: loadExternalCapsules(dir),

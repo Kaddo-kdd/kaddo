@@ -18,7 +18,7 @@ import { roadmapStats } from './roadmap.js'
 import { type LifecycleState } from './lifecycle.js'
 
 export type RoadmapSignal = 'missing' | 'empty' | 'has-candidates'
-export type WorkItemsSignal = 'none' | 'none-ready' | 'ready' | 'in-progress'
+export type WorkItemsSignal = 'none' | 'none-ready' | 'ready' | 'in-progress' | 'completed-only'
 
 /** A parallel, non-primary recommendation (ownership, ADRs, remaining candidates). VS-079. */
 export type SecondaryRecommendation = {
@@ -149,6 +149,8 @@ export function workItemsSignal(dir: string): WorkItemsSignal {
   if (wis.length === 0) return 'none'
   if (wis.some((w) => w.lifecycle === 'in-progress')) return 'in-progress'
   if (wis.some((w) => w.lifecycle === 'ready')) return 'ready'
+  const hasActive = wis.some((w) => w.lifecycle === 'draft' || w.lifecycle === 'blocked')
+  if (!hasActive && wis.some((w) => w.lifecycle === 'completed' || w.lifecycle === 'archived')) return 'completed-only'
   return 'none-ready'
 }
 

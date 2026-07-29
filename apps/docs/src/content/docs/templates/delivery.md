@@ -30,6 +30,24 @@ maintenance / tooling work). See [create](/commands/create/#work-item-types).
 
 > Declare `code:` globs so Guard can relate changes to the work item.
 
+### Completed delivery state
+
+A project with all Work Items completed enters **Maintenance** phase. Kaddo distinguishes
+the absence of active work from the absence of any work:
+
+- `No work items found` only appears in Missing Context when **zero** Work Items exist.
+- Completed or archived Work Items prevent the missing-context warning.
+- The project route marks `Refine Work Item: done` for any WI that reached `ready`,
+  `in-progress`, `blocked`, `completed`, or `archived`.
+- Readiness reflects the delivery state: `delivery-completed`, `delivery-completed-release-ready`,
+  or `delivery-completed-release-blocked` — independent of the recommended next step.
+- `kaddo explain` and `kaddo understand` show a **Delivery Summary** with completed/active
+  counts, implementation completions, and release gate status.
+- Context JSON exposes `activeWorkItems`, `completedWorkItems`, `archivedWorkItems`, and
+  `allWorkItems`. The legacy `workItems` field aliases `activeWorkItems`.
+- Completed legacy Work Items (without `implementation_status` / `validation_status` /
+  `release_status`) default to `not-assessed`, not `not-started`.
+
 ### Independent status dimensions
 
 Beyond the lifecycle state, Work Items can declare three independent status dimensions
