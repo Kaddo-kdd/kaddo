@@ -511,7 +511,7 @@ describe('VS-094 — safety', () => {
       'packages/cli/src/core/lifecycle.ts',
     ]
     for (const f of newFiles) {
-      const content = fs.readFileSync(path.join('C:/Users/Admin/Documents/repos/kaddo', f), 'utf8')
+      const content = fs.readFileSync(path.join(__dirname, '..', '..', '..', f), 'utf8')
       expect(content).not.toMatch(/openai|anthropic|execSync|child_process/)
     }
   })
