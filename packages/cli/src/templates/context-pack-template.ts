@@ -350,7 +350,11 @@ export function renderContextPack(pack: ContextPack): string {
   // 8. Recommended Agent Handoff — driven by the real phase (VS-052), so it agrees with the
   // Current Phase block above instead of recommending early-stage agents by project.state.
   parts.push('## Recommended Agent Handoff\n')
-  if (isBootstrapIncomplete) {
+  if (pack.isModuleRepo && handoff.recommendedAgents.length === 0) {
+    parts.push('No local agent action is required.\n')
+    parts.push('This module is ready for core orchestration.\n')
+    parts.push('Business, Product, Delivery, Agents and Skills are managed by the core repository.\n')
+  } else if (isBootstrapIncomplete) {
     parts.push('No agent handoff yet.\n')
     parts.push('Run `kaddo bootstrap` first to create the baseline files.\n')
   } else if (rec.agent && rec.agentInstalled === false) {

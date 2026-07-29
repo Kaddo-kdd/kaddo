@@ -367,52 +367,75 @@ export function buildProjectExplanation(dir: string): ProjectExplanation {
   // installed with `kaddo add`). Secondary repos are never scanned.
   const mappedModules = loadMappedModules(dir)
 
+  const moduleRepo = config != null && isModule(config)
+
   const missingKnowledge: string[] = []
-  if (!knowledge.hasScan) missingKnowledge.push('Scan baseline (.kaddo/scan.json)')
-  if (!knowledge.hasContextPack) missingKnowledge.push('Context pack (.kaddo/context-pack.md)')
-  if (!knowledge.hasInventory) missingKnowledge.push('Inventory (knowledge/inventory.md)')
-  if (!knowledge.hasCapabilities) missingKnowledge.push('Product knowledge (knowledge/product/)')
-  if (!knowledge.hasArchitecture) missingKnowledge.push('Tech knowledge (knowledge/tech/)')
-  if (!knowledge.hasRoadmap) missingKnowledge.push('Roadmap (knowledge/delivery/roadmap.md)')
-  if (!knowledge.hasAgents) missingKnowledge.push('Agents (knowledge/agents/)')
-  if (items.length === 0) missingKnowledge.push('Work items (knowledge/delivery/work-items/)')
+  if (moduleRepo) {
+    if (!knowledge.hasScan) missingKnowledge.push('Scan baseline (.kaddo/scan.json)')
+    if (!knowledge.hasContextPack) missingKnowledge.push('Context pack (.kaddo/context-pack.md)')
+    if (!knowledge.hasArchitecture) missingKnowledge.push('Tech knowledge (knowledge/tech/)')
+  } else {
+    if (!knowledge.hasScan) missingKnowledge.push('Scan baseline (.kaddo/scan.json)')
+    if (!knowledge.hasContextPack) missingKnowledge.push('Context pack (.kaddo/context-pack.md)')
+    if (!knowledge.hasInventory) missingKnowledge.push('Inventory (knowledge/inventory.md)')
+    if (!knowledge.hasCapabilities) missingKnowledge.push('Product knowledge (knowledge/product/)')
+    if (!knowledge.hasArchitecture) missingKnowledge.push('Tech knowledge (knowledge/tech/)')
+    if (!knowledge.hasRoadmap) missingKnowledge.push('Roadmap (knowledge/delivery/roadmap.md)')
+    if (!knowledge.hasAgents) missingKnowledge.push('Agents (knowledge/agents/)')
+    if (items.length === 0) missingKnowledge.push('Work items (knowledge/delivery/work-items/)')
+  }
 
   const suggestedNextSteps: string[] = []
-  const baselineIncomplete = !knowledge.hasBusiness || !knowledge.hasProduct
-  if (baselineIncomplete) {
-    suggestedNextSteps.push('Run `kaddo bootstrap` to create the project knowledge baseline.')
-    if (!knowledge.hasAgents) suggestedNextSteps.push('Then run `kaddo add agents`.')
-    if (!knowledge.hasSkills) suggestedNextSteps.push('Then run `kaddo add skills`.')
-    suggestedNextSteps.push('Then run `kaddo context`.')
-    suggestedNextSteps.push('Then run `kaddo understand`.')
-  } else {
+  if (moduleRepo) {
     if (!knowledge.hasScan) {
       suggestedNextSteps.push('Run `kaddo scan` to detect the technical stack.')
     } else if (!knowledge.hasContextPack) {
       suggestedNextSteps.push('Run `kaddo context` to prepare an LLM context pack.')
+    } else if (!knowledge.hasArchitecture) {
+      suggestedNextSteps.push('Use module-context-agent to refine knowledge/tech/module/module-context.md.')
+    } else {
+      suggestedNextSteps.push('Return to the core repository.')
+      suggestedNextSteps.push('Create or continue the Work Item from the core.')
+      suggestedNextSteps.push('Add this module to `affected_modules` when the change touches it.')
+      suggestedNextSteps.push('Re-run `kaddo context` and `kaddo understand` from the core.')
     }
-    if (!knowledge.hasAgents) {
-      suggestedNextSteps.push('Run `kaddo add agents` to install knowledge agents.')
-    }
-    if (!knowledge.hasCapabilities) {
-      suggestedNextSteps.push('Use capability-agent to generate knowledge/product/capabilities.md.')
-    }
-    if (!knowledge.hasArchitecture) {
-      suggestedNextSteps.push('Use architecture-agent to generate knowledge/tech/current-state.md.')
-    }
-    if (!knowledge.hasRoadmap) {
-      suggestedNextSteps.push('Use roadmap-agent to generate knowledge/delivery/roadmap.md.')
-    } else if (roadmap.remaining > 0) {
-      suggestedNextSteps.push(
-        `Materialize ${roadmap.remaining} roadmap candidate(s) with \`kaddo create --from roadmap\`.`
-      )
-    }
-    if (items.length === 0 && !roadmap.present) {
-      suggestedNextSteps.push('Create your first Work Item with `kaddo create`.')
-    } else if (ownership.workItemsMissingOwnership > 0) {
-      suggestedNextSteps.push(
-        'Run `kaddo owners suggest` for Work Items without code ownership.'
-      )
+  } else {
+    const baselineIncomplete = !knowledge.hasBusiness || !knowledge.hasProduct
+    if (baselineIncomplete) {
+      suggestedNextSteps.push('Run `kaddo bootstrap` to create the project knowledge baseline.')
+      if (!knowledge.hasAgents) suggestedNextSteps.push('Then run `kaddo add agents`.')
+      if (!knowledge.hasSkills) suggestedNextSteps.push('Then run `kaddo add skills`.')
+      suggestedNextSteps.push('Then run `kaddo context`.')
+      suggestedNextSteps.push('Then run `kaddo understand`.')
+    } else {
+      if (!knowledge.hasScan) {
+        suggestedNextSteps.push('Run `kaddo scan` to detect the technical stack.')
+      } else if (!knowledge.hasContextPack) {
+        suggestedNextSteps.push('Run `kaddo context` to prepare an LLM context pack.')
+      }
+      if (!knowledge.hasAgents) {
+        suggestedNextSteps.push('Run `kaddo add agents` to install knowledge agents.')
+      }
+      if (!knowledge.hasCapabilities) {
+        suggestedNextSteps.push('Use capability-agent to generate knowledge/product/capabilities.md.')
+      }
+      if (!knowledge.hasArchitecture) {
+        suggestedNextSteps.push('Use architecture-agent to generate knowledge/tech/current-state.md.')
+      }
+      if (!knowledge.hasRoadmap) {
+        suggestedNextSteps.push('Use roadmap-agent to generate knowledge/delivery/roadmap.md.')
+      } else if (roadmap.remaining > 0) {
+        suggestedNextSteps.push(
+          `Materialize ${roadmap.remaining} roadmap candidate(s) with \`kaddo create --from roadmap\`.`
+        )
+      }
+      if (items.length === 0 && !roadmap.present) {
+        suggestedNextSteps.push('Create your first Work Item with `kaddo create`.')
+      } else if (ownership.workItemsMissingOwnership > 0) {
+        suggestedNextSteps.push(
+          'Run `kaddo owners suggest` for Work Items without code ownership.'
+        )
+      }
     }
   }
 
@@ -527,11 +550,19 @@ export function renderExplanationHuman(exp: ProjectExplanation): string {
   lines.push('## Knowledge Status')
   lines.push(`- Inventory: ${exp.knowledge.hasInventory ? 'available' : 'missing'}`)
   lines.push(`- Context pack: ${exp.knowledge.hasContextPack ? 'available' : 'missing'}`)
-  lines.push(`- Business: ${ls('Business')}`)
-  lines.push(`- Product: ${ls('Product')}`)
-  lines.push(`- Tech: ${ls('Tech')}`)
-  lines.push(`- Delivery: ${ls('Delivery')}`)
-  lines.push(`- Agents: ${exp.knowledge.hasAgents ? 'available' : 'missing'}`)
+  if (exp.isModuleRepo) {
+    lines.push('- Business: Not applicable')
+    lines.push('- Product: Not applicable')
+    lines.push(`- Tech: ${ls('Tech')}`)
+    lines.push('- Delivery: Managed by core')
+    lines.push('- Agents: Managed by core')
+  } else {
+    lines.push(`- Business: ${ls('Business')}`)
+    lines.push(`- Product: ${ls('Product')}`)
+    lines.push(`- Tech: ${ls('Tech')}`)
+    lines.push(`- Delivery: ${ls('Delivery')}`)
+    lines.push(`- Agents: ${exp.knowledge.hasAgents ? 'available' : 'missing'}`)
+  }
   if (exp.roadmap.present) {
     lines.push(`- Roadmap initiatives: ${exp.roadmap.initiatives}`)
     lines.push(`- Work Item candidates: ${exp.roadmap.work_item_candidates}`)
@@ -724,14 +755,27 @@ export function renderExplanationHuman(exp: ProjectExplanation): string {
     lines.push(`- understand: ${s.understand}`)
     lines.push(`- agents: ${s.agents}`)
     lines.push(`- skills: ${s.skills}`)
-    lines.push(`- business: ${s.business}`)
-    lines.push(`- product: ${s.product}`)
+    if (exp.isModuleRepo) {
+      lines.push('- business: not-applicable')
+      lines.push('- product: not-applicable')
+    } else {
+      lines.push(`- business: ${s.business}`)
+      lines.push(`- product: ${s.product}`)
+    }
     lines.push(`- capabilities: ${s.capabilities}`)
     lines.push(`- current-state: ${s.current_state}`)
     lines.push(`- codebase: ${s.codebase}`)
-    lines.push(`- roadmap: ${s.roadmap}`)
-    lines.push(`- work-items: ${s.work_items}`)
-    lines.push(`- adapters: ${s.adapters.length > 0 ? s.adapters.join(', ') + ' installed' : 'none installed'}`)
+    if (s.module_context != null) {
+      lines.push(`- module-context: ${s.module_context}`)
+    }
+    if (!exp.isModuleRepo) {
+      lines.push(`- roadmap: ${s.roadmap}`)
+      lines.push(`- work-items: ${s.work_items}`)
+      lines.push(`- adapters: ${s.adapters.length > 0 ? s.adapters.join(', ') + ' installed' : 'none installed'}`)
+    } else {
+      lines.push('- roadmap: managed-by-core')
+      lines.push('- work-items: managed-by-core')
+    }
     lines.push(`- blocking open questions: ${s.blocking_open_questions}`)
     lines.push(`- assumptions: ${s.assumed_questions}`)
     lines.push(`- deferred: ${s.deferred_questions}`)

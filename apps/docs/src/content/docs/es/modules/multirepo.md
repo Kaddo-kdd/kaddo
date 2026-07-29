@@ -227,6 +227,29 @@ kaddo capsule export --scope system   # incluye resúmenes de todos los módulos
 kaddo capsule export --module loyalty # capsule para un módulo específico
 ```
 
+## Readiness del módulo
+
+Cuando un repo módulo completa su conocimiento técnico (module-context,
+current-state, codebase con calidad **useful**), `kaddo explain` reporta:
+
+| Señal        | Valor                        |
+|-------------|------------------------------|
+| overall      | `ready-for-core-orchestration` |
+| agents       | `managed-by-core`            |
+| skills       | `managed-by-core`            |
+| business     | `not-applicable`             |
+| product      | `not-applicable`             |
+| roadmap      | `managed-by-core`            |
+| work_items   | `managed-by-core`            |
+
+La fase de delivery muestra **Ready for Core Orchestration** sin agentes
+recomendados. El context pack muestra "No local agent action is required" en la
+sección de handoff, y los pasos sugeridos dirigen de vuelta al repositorio core.
+
+Las señales `managed-by-core` significan que Kaddo nunca recomendará crear esos
+artefactos localmente — pertenecen al repo core. `not-applicable` significa que
+el concepto no aplica a repos módulo.
+
 > Kaddo nunca escanea los repos secundarios, nunca llama a una API de Git/GitHub y
 > nunca ejecuta un escaneo de seguridad. Mapea estructura de forma determinista; tus
 > agentes LLM hacen la interpretación.

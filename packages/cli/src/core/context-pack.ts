@@ -117,6 +117,8 @@ export type ContextPack = {
   moduleStatuses: Record<string, ModuleStatusInfo>
   /** Module context content for modules affected by active Work Items (VS-091). */
   affectedModuleContexts: Record<string, string>
+  /** Whether this is a module repo (VS-093.2). */
+  isModuleRepo: boolean
   missing: string[]
   handoff: {
     recommendedAgents: string[]
@@ -271,12 +273,12 @@ export function buildContextPack(
     missing.push('No technical inventory found. Run `kaddo scan` to generate it.')
   }
 
+  const moduleRepo = config != null && isModule(config)
+
   const knowledgeSummary = readMarkdownSummary(dir, 'knowledge.md') ?? ''
-  if (!knowledgeSummary) {
+  if (!knowledgeSummary && !moduleRepo) {
     missing.push('No project knowledge summary found yet.')
   }
-
-  const moduleRepo = config != null && isModule(config)
 
   const roadmapSummary = readMarkdownSummary(dir, 'delivery/roadmap.md') ?? ''
   if (!roadmapSummary && !moduleRepo) {
@@ -482,13 +484,14 @@ export function buildContextPack(
       }
       return contexts
     })(),
+    isModuleRepo: moduleRepo,
     missing,
     // VS-052/VS-073.2: the handoff is driven by the unified next step, so the pack never contradicts
     // the Current Phase block above it.
     handoff: {
       recommendedAgents: isBootstrap ? [] : (unifiedPhase.recommendedAgents.length > 0
         ? unifiedPhase.recommendedAgents
-        : recommendedAgentsForState(state)),
+        : moduleRepo ? [] : recommendedAgentsForState(state)),
       nextSteps: [nextStepRecommendation.label],
       instructions: isBootstrap
         ? ['No agent handoff yet.', 'Run `kaddo bootstrap` first to create the baseline files.']

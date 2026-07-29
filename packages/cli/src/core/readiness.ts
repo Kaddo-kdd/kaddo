@@ -6,7 +6,7 @@
 // edits knowledge, no git, no LLM. Surfaced inside `kaddo explain`.
 
 import { exists, join } from '../utils/fs.js'
-import { loadConfig } from './config.js'
+import { loadConfig, isModule } from './config.js'
 import { buildOpenQuestionsReport } from './open-questions.js'
 import { buildCodexAdapterContext } from './codex-adapter.js'
 import { analyzeKnowledgeArtifact, type ArtifactQuality } from './artifact-quality.js'
@@ -34,6 +34,7 @@ export type ReadinessStatus =
   | 'ready-for-roadmap'
   | 'ready-for-work-item'
   | 'ready-for-implementation'
+  | 'ready-for-core-orchestration'
 
 export type Presence = ArtifactQuality
 export type { RoadmapSignal, WorkItemsSignal }
@@ -41,20 +42,22 @@ export type { RoadmapSignal, WorkItemsSignal }
 export type ReadinessReport = {
   project_name: string
   project_type: string
+  project_role?: 'core' | 'module'
   overall: ReadinessStatus
   signals: {
     scan: 'available' | 'missing'
     understand: 'available' | 'missing'
     bootstrap_baseline: 'complete' | 'incomplete'
-    agents: 'present' | 'missing'
-    skills: 'present' | 'missing'
-    current_state: Presence
-    codebase: Presence
-    capabilities: Presence
-    product: Presence
-    business: Presence
-    roadmap: RoadmapSignal
-    work_items: WorkItemsSignal
+    agents: 'present' | 'missing' | 'managed-by-core'
+    skills: 'present' | 'missing' | 'managed-by-core'
+    current_state: Presence | 'managed-by-core'
+    codebase: Presence | 'managed-by-core'
+    module_context?: Presence
+    capabilities: Presence | 'managed-by-core'
+    product: Presence | 'not-applicable'
+    business: Presence | 'not-applicable'
+    roadmap: RoadmapSignal | 'managed-by-core'
+    work_items: WorkItemsSignal | 'managed-by-core'
     adapters: string[]
     blocking_open_questions: number
     assumed_questions: number
@@ -98,14 +101,56 @@ export function buildReadinessReport(dir: string, now: Date = new Date()): Readi
   if (config.project.state === 'new') return stub('not-applicable', 'This project uses the standard new-project Kaddo flow.')
   if (config.project.state === 'legacy') return stub('legacy-project', 'Use the legacy project flow.')
 
+  // Module repos have a completely different readiness model (VS-093.2).
+  if (isModule(config)) {
+    const scan = exists(join(dir, '.kaddo', 'scan.json')) ? 'available' as const : 'missing' as const
+    const understand = exists(join(dir, '.kaddo', 'understand.md')) ? 'available' as const : 'missing' as const
+    const mcNew = 'knowledge/tech/module/module-context.md'
+    const mcLegacy = 'knowledge/module/module-context.md'
+    const mcPath = exists(join(dir, mcNew)) ? mcNew : mcLegacy
+    const qMC = analyzeKnowledgeArtifact(dir, mcPath)
+    const qCS = analyzeKnowledgeArtifact(dir, 'knowledge/tech/current-state.md')
+    const qCB = analyzeKnowledgeArtifact(dir, 'knowledge/tech/codebase.md')
+    const moduleBaseline = qMC !== 'missing' && qCS !== 'missing' && qCB !== 'missing' ? 'complete' as const : 'incomplete' as const
+    const moduleReady = qMC === 'useful' && qCS === 'useful' && qCB === 'useful'
+    const overall: ReadinessStatus = moduleReady ? 'ready-for-core-orchestration' : moduleBaseline === 'incomplete' ? 'bootstrap-incomplete' : 'knowledge-incomplete'
+
+    return {
+      project_name: config.project.name,
+      project_type: config.project.state,
+      project_role: 'module' as const,
+      overall,
+      signals: {
+        scan,
+        understand,
+        bootstrap_baseline: moduleBaseline,
+        agents: 'managed-by-core' as any,
+        skills: 'managed-by-core' as any,
+        current_state: qCS,
+        codebase: qCB,
+        module_context: qMC,
+        capabilities: 'managed-by-core' as any,
+        product: 'not-applicable' as any,
+        business: 'not-applicable' as any,
+        roadmap: 'managed-by-core' as any,
+        work_items: 'managed-by-core' as any,
+        adapters: [] as string[],
+        blocking_open_questions: 0,
+        assumed_questions: 0,
+        resolved_questions: 0,
+        deferred_questions: 0,
+      },
+      recommended_next_step: { label: rec.label, ...(rec.command ? { command: rec.command } : {}) },
+      nextStepRecommendation: rec,
+    }
+  }
+
   const scan = exists(join(dir, '.kaddo', 'scan.json')) ? 'available' : 'missing'
   const understand = exists(join(dir, '.kaddo', 'understand.md')) ? 'available' : 'missing'
   const presence = Object.fromEntries(KNOWLEDGE_FILES.map((f) => [f.key, analyzeKnowledgeArtifact(dir, f.path)])) as Record<typeof KNOWLEDGE_FILES[number]['key'], Presence>
   const ctx = buildCodexAdapterContext(dir)
   const agents = ctx.hasAgents ? 'present' : 'missing'
   const skills = ctx.hasSkills ? 'present' : 'missing'
-  // Bootstrap baseline "complete" = the core files exist (bootstrap has run). Placeholder/weak content
-  // does not block this gate — it is handled later as `knowledge-incomplete` (refine, not re-bootstrap).
   const bootstrapBaseline = presence.business !== 'missing' && presence.product !== 'missing' ? 'complete' : 'incomplete'
   const roadmap = roadmapSignal(dir)
   const work_items = workItemsSignal(dir)
@@ -123,8 +168,6 @@ export function buildReadinessReport(dir: string, now: Date = new Date()): Readi
     deferred_questions: oq.summary.resolution.deferred,
   }
 
-  // `overall` is the readiness status label; the actual next step comes from the unified resolver
-  // (VS-073.2) so explain/context/understand never diverge.
   const firstWeak = KNOWLEDGE_FILES.find((f) => presence[f.key] !== 'useful')
   let overall: ReadinessStatus
   if (scan === 'missing') overall = 'initialized'

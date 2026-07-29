@@ -14,6 +14,7 @@ export type DeliveryPhase =
   | 'Delivery Preparation'
   | 'Active Delivery'
   | 'Maintenance'
+  | 'Ready for Core Orchestration'
 
 /** Minimal structural input so both explain and context can reuse this without coupling. */
 export type PhaseInput = {
@@ -128,7 +129,7 @@ export function assessPhase(input: PhaseInput): PhaseAssessment {
     const techReady = !NOT_READY_LAYER.includes(techStatus)
     if (techReady) {
       return {
-        phase: 'Active Delivery',
+        phase: 'Ready for Core Orchestration',
         reasons: ['Module repo — Tech layer ready', 'Business/Product managed by core'],
         recommendedAgents: [],
         nextStep: 'Module knowledge is ready for core orchestration.',

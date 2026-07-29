@@ -249,7 +249,8 @@ describe('VS-093.1 — module delivery phase', () => {
       ownership: { workItemsTotal: 0, workItemsWithOwnership: 0, workItemsMissingOwnership: 0 },
       isModuleRepo: true,
     })
-    expect(result.phase).toBe('Active Delivery')
+    expect(result.phase).toBe('Ready for Core Orchestration')
+    expect(result.recommendedAgents).toEqual([])
     expect(result.recommendedAgents).not.toContain('business-agent')
     expect(result.recommendedAgents).not.toContain('roadmap-agent')
     expect(result.llmInstructions.some((i) => i.includes('Do not create business'))).toBe(true)

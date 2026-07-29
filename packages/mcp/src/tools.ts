@@ -22,6 +22,8 @@ type ExplainJson = {
   workItems?: { total?: number; byState?: Record<string, number>; byType?: Record<string, number> }
   ownership?: { workItemsWithOwnership?: number; workItemsTotal?: number }
   layers?: { layer: string; status: string }[]
+  isModuleRepo?: boolean
+  readiness?: { overall?: string; project_role?: string; signals?: Record<string, unknown> }
 }
 
 type GraphHintsJson = { quality?: string; scope?: string; scope_reason?: string; summary?: { hints?: number } }
@@ -36,7 +38,7 @@ export function projectStatus(root: string): ToolResult {
   }
 
   const maturity = (explain.layers ?? []).map((l) => `${l.layer}: ${l.status}`)
-  return ok({
+  const result: Record<string, unknown> = {
     project: explain.project?.name ?? 'unknown',
     state: explain.project?.state ?? 'unknown',
     knowledgeMaturity: maturity,
@@ -56,7 +58,19 @@ export function projectStatus(root: string): ToolResult {
       hints: hints?.summary?.hints ?? 0,
     },
     capsules: capsules.length,
-  })
+  }
+
+  if (explain.isModuleRepo) {
+    result.isModuleRepo = true
+    result.readiness = {
+      overall: explain.readiness?.overall ?? 'unknown',
+      project_role: explain.readiness?.project_role ?? 'module',
+      agents: 'managed-by-core',
+      skills: 'managed-by-core',
+    }
+  }
+
+  return ok(result)
 }
 
 // --- Work Items -----------------------------------------------------------
