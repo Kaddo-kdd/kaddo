@@ -18,8 +18,7 @@ function updateWorkItemFile(filePath: string, learning: string): void {
   const raw = readFile(filePath)
   const { data, content } = matter(raw)
 
-  // Update status to done
-  data.status = 'done'
+  data.status = 'completed'
   data.completed_at = new Date().toISOString().split('T')[0]
 
   // Replace learning section placeholder
@@ -53,12 +52,15 @@ export async function runLearn(artifactId?: string): Promise<void> {
   intro('kaddo learn')
 
   const artifacts = readArtifacts(join(dir, ARCH_DIR))
-  const inProgress = artifacts.filter(
-    (a) => a.status === 'in-progress' && a.type !== 'current-state' && a.type !== 'roadmap'
+  const closable = artifacts.filter(
+    (a) =>
+      (a.status === 'in-progress' || a.status === 'completed' || a.status === 'done') &&
+      a.type !== 'current-state' &&
+      a.type !== 'roadmap'
   )
 
-  if (inProgress.length === 0) {
-    log.warn('No in-progress work items found.')
+  if (closable.length === 0) {
+    log.warn('No in-progress or completed work items found.')
     outro('Nothing to close.')
     return
   }
@@ -68,13 +70,13 @@ export async function runLearn(artifactId?: string): Promise<void> {
 
   if (artifactId) {
     targetId = artifactId
-  } else if (inProgress.length === 1) {
-    targetId = inProgress[0].id || inProgress[0].title
-    log.info(`Closing: ${targetId} — ${inProgress[0].summary || inProgress[0].title}`)
+  } else if (closable.length === 1) {
+    targetId = closable[0].id || closable[0].title
+    log.info(`Closing: ${targetId} — ${closable[0].summary || closable[0].title}`)
   } else {
     const chosen = await select<string>({
       message: 'Which work item are you closing?',
-      options: inProgress.map((a) => ({
+      options: closable.map((a) => ({
         value: a.id || a.title,
         label: `${a.id || a.title} — ${a.summary || a.title}`,
       })),
@@ -94,10 +96,36 @@ export async function runLearn(artifactId?: string): Promise<void> {
     validate: (v) => (v.trim().length === 0 ? 'Learning is required.' : undefined),
   })
 
-  updateWorkItemFile(filePath, learning.trim())
+  const wiRaw = readFile(filePath)
+  const wiData = matter(wiRaw).data as Record<string, unknown>
+  const hasExceptions = wiData.validation_status === 'accepted-with-exceptions' ||
+    (Array.isArray(wiData.completion_exceptions) && wiData.completion_exceptions.length > 0)
+  const releaseBlocked = wiData.release_status === 'blocked'
 
-  log.success(`${targetId} marked as done`)
+  let enrichedLearning = learning.trim()
+  if (hasExceptions || releaseBlocked) {
+    const notes: string[] = []
+    if (hasExceptions) notes.push('Validation exceptions were accepted for this Work Item.')
+    if (releaseBlocked) {
+      const gates = Array.isArray(wiData.release_gates)
+        ? (wiData.release_gates as { id: string; status: string }[])
+          .filter((g) => g.status === 'blocked' || g.status === 'pending')
+          .map((g) => g.id)
+        : []
+      notes.push(gates.length > 0
+        ? `Release gates remain: ${gates.join(', ')}.`
+        : 'Production release remains blocked.')
+    }
+    enrichedLearning += '\n\n> ' + notes.join(' ')
+  }
+
+  updateWorkItemFile(filePath, enrichedLearning)
+
+  log.success(`${targetId} marked as completed`)
   log.success(`Learning recorded in ${filePath.replace(dir + '/', '')}`)
+  if (hasExceptions) {
+    log.warn('Learning captured from a Work Item completed with validation exceptions.')
+  }
   log.info('Consider updating knowledge/knowledge.md if this changes the current state.')
 
   outro('Work item closed.')

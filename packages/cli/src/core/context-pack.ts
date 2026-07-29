@@ -33,6 +33,10 @@ export type ContextWorkItem = {
   knowledgeLevel: string
   domains: string[]
   source: WorkItemSource
+  implementationStatus?: string
+  validationStatus?: string
+  releaseStatus?: string
+  affectedModules?: string[]
 }
 
 export type ContextArtifact = {
@@ -231,7 +235,7 @@ const OPERATING_RULES = [
 ]
 
 function toContextWorkItem(a: Artifact): ContextWorkItem {
-  return {
+  const wi: ContextWorkItem = {
     id: a.id,
     type: a.type,
     title: a.title,
@@ -241,6 +245,11 @@ function toContextWorkItem(a: Artifact): ContextWorkItem {
     domains: a.domains,
     source: parseWorkItemSource(a.rawFrontmatter),
   }
+  if (a.implementationStatus) wi.implementationStatus = a.implementationStatus
+  if (a.validationStatus) wi.validationStatus = a.validationStatus
+  if (a.releaseStatus) wi.releaseStatus = a.releaseStatus
+  if (a.affectedModules.length > 0) wi.affectedModules = a.affectedModules
+  return wi
 }
 
 function toContextArtifact(a: Artifact): ContextArtifact {

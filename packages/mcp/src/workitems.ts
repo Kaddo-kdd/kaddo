@@ -36,6 +36,15 @@ export type WorkItemSummary = {
   source: WorkItemSourceMeta
   domains: string[]
   readiness?: WorkItemReadiness
+  implementation_status?: string
+  validation_status?: string
+  release_status?: string
+  affected_modules?: string[]
+  refined_by?: string
+  implemented_by?: string
+  closed_by?: string
+  release_gates?: { id: string; status: string; reason?: string }[]
+  completion_exceptions?: { id: string; status: string; reason?: string }[]
 }
 
 const VALID_SOURCES = new Set(['manual', 'roadmap', 'jira', 'github', 'notion', 'xlsx', 'csv', 'api', 'external', 'unknown'])
@@ -122,6 +131,18 @@ export function listWorkItems(root: string): WorkItemSummary[] {
       source,
       domains,
       readiness,
+      ...(data.implementation_status ? { implementation_status: String(data.implementation_status) } : {}),
+      ...(data.validation_status ? { validation_status: String(data.validation_status) } : {}),
+      ...(data.release_status ? { release_status: String(data.release_status) } : {}),
+      ...(Array.isArray(data.affected_modules) && data.affected_modules.length > 0
+        ? { affected_modules: data.affected_modules.map(String) } : {}),
+      ...(data.refined_by ? { refined_by: String(data.refined_by) } : {}),
+      ...(data.implemented_by ? { implemented_by: String(data.implemented_by) } : {}),
+      ...(data.closed_by ? { closed_by: String(data.closed_by) } : {}),
+      ...(Array.isArray(data.release_gates) && data.release_gates.length > 0
+        ? { release_gates: data.release_gates as { id: string; status: string; reason?: string }[] } : {}),
+      ...(Array.isArray(data.completion_exceptions) && data.completion_exceptions.length > 0
+        ? { completion_exceptions: data.completion_exceptions as { id: string; status: string; reason?: string }[] } : {}),
     })
   }
   return items.sort((a, b) => a.id.localeCompare(b.id))

@@ -5,7 +5,7 @@
 // still useful. Metadata health is a separate, complementary signal.
 
 import matter from 'gray-matter'
-import { exists, readFile, join } from '../utils/fs.js'
+import { exists, readFile, readDir, join, isFile } from '../utils/fs.js'
 
 export type MetadataFinding = {
   file: string
@@ -72,6 +72,34 @@ export function analyzeMetadataHealth(dir: string): MetadataHealth {
 
     if (fileDrifted) drifted++
     else healthy++
+  }
+
+  // Work Item legacy status detection: `done` → `completed` (VS-094).
+  const wiDir = join(dir, 'knowledge/delivery/work-items')
+  if (exists(wiDir)) {
+    const walkWIs = (d: string) => {
+      for (const entry of readDir(d)) {
+        const p = join(d, entry)
+        if (isFile(p) && entry.endsWith('.md')) {
+          try {
+            const raw = readFile(p)
+            const fm = matter(raw).data as Record<string, unknown>
+            if (fm.status === 'done') {
+              const rel = p.replace(dir + '/', '').replace(dir + '\\', '').replace(/\\/g, '/')
+              findings.push({
+                file: rel,
+                field: 'status',
+                issue: 'inconsistent',
+                detail: 'Legacy status `done` detected. Canonical status is `completed`.',
+              })
+            }
+          } catch { /* skip */ }
+        } else if (!isFile(p) && !entry.startsWith('.')) {
+          walkWIs(p)
+        }
+      }
+    }
+    walkWIs(wiDir)
   }
 
   return { findings, healthy, drifted }

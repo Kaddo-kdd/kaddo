@@ -4,6 +4,8 @@ import { analyzeGuard, normalizeTouchedPathForProject, type ArtifactMatch } from
 import { loadIgnores, saveIgnore, isIgnored } from '../services/ignore-store.js'
 import { collectWorkspaceChanges, type WorkspaceScan } from '../services/workspace-guard.js'
 import { analyzeMetadataHealth } from '../core/metadata-health.js'
+import { analyzeCrossRepoEvidence, type WIEvidenceSummary } from '../core/cross-repo-evidence.js'
+import { loadMappedModules } from '../services/mapped-modules.js'
 import { exists, join, cwd, readFile } from '../utils/fs.js'
 import path from 'path'
 import { parse as parseYaml } from 'yaml'
@@ -378,6 +380,41 @@ export async function runGuard(opts: { staged?: boolean; interactive?: boolean; 
       console.log(`  ⚠ ${f.file}: ${f.detail}`)
     }
     console.log('')
+  }
+
+  // Cross-repo implementation evidence (VS-094).
+  const registeredModuleIds = loadMappedModules(dir).map((m) => m.id)
+  const modifiedRepoIds = workspaceScan
+    ? [...new Set(workspaceScan.changedFiles.map((c) => c.repoId))]
+    : []
+  const wiArtifacts = artifacts.filter((a) => a.isWorkItem && a.affectedModules.length > 0)
+  if (wiArtifacts.length > 0) {
+    const evidenceSummaries: WIEvidenceSummary[] = []
+    for (const wi of wiArtifacts) {
+      const summary = analyzeCrossRepoEvidence({
+        id: wi.id || wi.title,
+        lifecycle: wi.lifecycle ?? 'ready',
+        implementationStatus: wi.implementationStatus,
+        validationStatus: wi.validationStatus,
+        releaseStatus: wi.releaseStatus,
+        affectedModules: wi.affectedModules,
+        rawFrontmatter: wi.rawFrontmatter,
+        registeredModuleIds,
+        modifiedRepoIds,
+      })
+      if (summary.findings.length > 0) evidenceSummaries.push(summary)
+    }
+    if (evidenceSummaries.length > 0) {
+      console.log('Cross-repo implementation evidence:')
+      for (const s of evidenceSummaries) {
+        console.log(`  ${s.id}:`)
+        for (const f of s.findings) {
+          const icon = f.severity === 'blocking' ? '✗' : f.severity === 'warning' ? '!' : '·'
+          console.log(`    ${icon} ${f.message}`)
+        }
+      }
+      console.log('')
+    }
   }
 
   // Show domain owners for matched domains

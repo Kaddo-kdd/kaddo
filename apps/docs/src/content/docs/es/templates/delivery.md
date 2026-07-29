@@ -30,6 +30,86 @@ técnico / mantenimiento / tooling). Ver [create](/es/commands/create/#tipos-de-
 
 > Declara globs `code:` para que Guard relacione los cambios con el work item.
 
+### Dimensiones de estado independientes
+
+Más allá del estado de lifecycle, los Work Items pueden declarar tres dimensiones de
+estado independientes en el front matter:
+
+| Dimensión | Valores | Propósito |
+|---|---|---|
+| `implementation_status` | `not-started`, `in-progress`, `completed`, `partial`, `blocked` | Rastrea la implementación de código entre repos |
+| `validation_status` | `not-started`, `in-progress`, `passed`, `failed`, `partial`, `accepted-with-exceptions`, `blocked` | Rastrea el estado de validación |
+| `release_status` | `not-assessed`, `ready`, `blocked`, `released`, `not-applicable` | Rastrea la preparación para release |
+
+Un Work Item puede estar `completed` (lifecycle) pero `release_status: blocked` — estas
+dimensiones son independientes.
+
+### Evidencia de implementación cross-repo
+
+En proyectos multirepo, los Work Items que abarcan múltiples repositorios declaran
+`affected_modules` en el front matter. `core` siempre es válido; otros módulos deben
+estar registrados en `.kaddo/modules.yml`.
+
+```yaml
+affected_modules:
+  - core
+  - frontend
+implementation_evidence:
+  repositories:
+    core:
+      role: core
+      status: implemented
+      validations:
+        - command: go test ./...
+          status: passed
+      migrations:
+        - id: add-column
+          environment: local
+          status: applied
+```
+
+`kaddo guard --workspace` valida la coherencia de la evidencia: módulos no registrados,
+repos modificados pero no declarados, validaciones no ejecutadas, migraciones bloqueadas
+y consistencia entre lifecycle y release gates.
+
+### Release gates y excepciones de completitud
+
+Los release gates son puntos de control que deben pasar antes del release:
+
+```yaml
+release_gates:
+  - id: supabase-migration
+    status: blocked
+    reason: Proyecto no disponible
+```
+
+Las excepciones de completitud permiten cerrar un Work Item con desviaciones conocidas,
+requiriendo aprobación humana:
+
+```yaml
+completion_exceptions:
+  - id: tests-not-executed
+    status: accepted
+    reason: No ejecutados por instrucción humana
+    approved_by: human
+```
+
+Un Work Item con excepciones en `status: proposed` no puede marcarse como completado.
+
+### Historial de agentes
+
+Los Work Items rastrean qué agentes participaron en su lifecycle:
+
+- `refined_by`: el agente que refinó el Work Item (nunca se sobrescribe)
+- `implemented_by`: el agente que lo implementó
+- `closed_by`: el humano o agente que lo cerró
+
+### Robustez del grafo Mermaid
+
+El grafo de conocimiento (`kaddo graph`) filtra nodos con id o label vacío, aristas que
+referencian nodos inexistentes, y escapa comillas, corchetes y saltos de línea en labels.
+Un proyecto sin ADRs genera un grafo válido sin nodos vacíos `adr[""]`.
+
 ## Roadmap
 
 Iniciativas estructuradas (`RM-001`) y work items candidatos (`WI-CANDIDATE-001`) para

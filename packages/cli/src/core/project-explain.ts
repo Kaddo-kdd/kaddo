@@ -130,6 +130,18 @@ export type ProjectExplanation = {
   metadataHealth: MetadataHealth
   /** Whether this is a module repo (VS-093.1). */
   isModuleRepo: boolean
+  /** Cross-repo implementation evidence for WIs with affected_modules (VS-094). */
+  implementationEvidence: {
+    id: string
+    lifecycle: string
+    implementationStatus: string
+    validationStatus: string
+    releaseStatus: string
+    affectedModules: string[]
+    releaseGates: { id: string; status: string; reason?: string }[]
+    completionExceptions: { id: string; status: string; reason?: string }[]
+    repoEvidence: Record<string, { role: string; status: string }>
+  }[]
 }
 
 function normalizeTitle(t: string): string {
@@ -487,6 +499,31 @@ export function buildProjectExplanation(dir: string): ProjectExplanation {
     scanSignals: loadScanSignals(dir),
     metadataHealth: analyzeMetadataHealth(dir),
     isModuleRepo: config != null && isModule(config),
+    implementationEvidence: workItemArtifacts
+      .filter((a) => a.affectedModules.length > 0)
+      .map((a) => {
+        const fm = a.rawFrontmatter
+        const evidence = fm.implementation_evidence as { repositories?: Record<string, Record<string, unknown>> } | undefined
+        const repos = evidence?.repositories ?? {}
+        const repoEvidence: Record<string, { role: string; status: string }> = {}
+        for (const [repoId, data] of Object.entries(repos)) {
+          repoEvidence[repoId] = {
+            role: String(data.role ?? (repoId === 'core' ? 'core' : 'module')),
+            status: String(data.status ?? 'unknown'),
+          }
+        }
+        return {
+          id: a.id || a.title,
+          lifecycle: lifecycleStateOf({ status: a.status, filePath: a.filePath }),
+          implementationStatus: a.implementationStatus || 'not-started',
+          validationStatus: a.validationStatus || 'not-started',
+          releaseStatus: a.releaseStatus || 'not-assessed',
+          affectedModules: a.affectedModules,
+          releaseGates: (Array.isArray(fm.release_gates) ? fm.release_gates : []) as { id: string; status: string; reason?: string }[],
+          completionExceptions: (Array.isArray(fm.completion_exceptions) ? fm.completion_exceptions : []) as { id: string; status: string; reason?: string }[],
+          repoEvidence,
+        }
+      }),
   }
 }
 
@@ -628,6 +665,38 @@ export function renderExplanationHuman(exp: ProjectExplanation): string {
       const level = wi.knowledgeLevel ? ` [${wi.knowledgeLevel}]` : ''
       const owned = wi.hasOwnership ? ' ●' : ' ○'
       lines.push(`-${owned} ${wi.id}${level} — ${wi.title}`)
+    }
+    lines.push('')
+  }
+
+  // Implementation Evidence (VS-094): cross-repo evidence for WIs with affected_modules.
+  if (exp.implementationEvidence.length > 0) {
+    lines.push('## Implementation Evidence')
+    for (const ev of exp.implementationEvidence) {
+      lines.push('')
+      lines.push(`### ${ev.id}`)
+      lines.push(`- Lifecycle: ${ev.lifecycle.charAt(0).toUpperCase() + ev.lifecycle.slice(1)}`)
+      lines.push(`- Implementation: ${ev.implementationStatus}`)
+      lines.push(`- Validation: ${ev.validationStatus}`)
+      lines.push(`- Release: ${ev.releaseStatus}`)
+      if (Object.keys(ev.repoEvidence).length > 0) {
+        lines.push('Repositories:')
+        for (const [repoId, info] of Object.entries(ev.repoEvidence)) {
+          lines.push(`- ${repoId} — ${info.status}`)
+        }
+      } else if (ev.affectedModules.length > 0) {
+        lines.push(`Affected modules: ${ev.affectedModules.join(', ')}`)
+      }
+      const pendingGates = ev.releaseGates.filter((g) => g.status === 'blocked' || g.status === 'pending')
+      if (pendingGates.length > 0) {
+        lines.push('Pending release gates:')
+        for (const g of pendingGates) lines.push(`- ${g.id}${g.reason ? ` — ${g.reason}` : ''}`)
+      }
+      const acceptedExceptions = ev.completionExceptions.filter((e) => e.status === 'accepted' || e.status === 'deferred')
+      if (acceptedExceptions.length > 0) {
+        lines.push('Completion exceptions:')
+        for (const e of acceptedExceptions) lines.push(`- ${e.id}: ${e.status}${e.reason ? ` — ${e.reason}` : ''}`)
+      }
     }
     lines.push('')
   }

@@ -22,6 +22,16 @@ export type Artifact = {
   decisions: string[]
   /** External Knowledge Capsule IDs this artifact uses (front matter `capsules`). */
   capsules: string[]
+  /** Independent status dimensions (VS-094). */
+  implementationStatus: string
+  validationStatus: string
+  releaseStatus: string
+  /** Affected module IDs (VS-091 / VS-094). */
+  affectedModules: string[]
+  /** Agent history (VS-094). */
+  refinedBy: string
+  implementedBy: string
+  closedBy: string
 }
 
 function parseArtifact(filePath: string, raw: string): Artifact | null {
@@ -47,6 +57,13 @@ function parseArtifact(filePath: string, raw: string): Artifact | null {
       rawFrontmatter: data as Record<string, unknown>,
       decisions: Array.isArray(data.decisions) ? data.decisions.map(String).filter(Boolean) : [],
       capsules: Array.isArray(data.capsules) ? data.capsules.map(String).filter(Boolean) : [],
+      implementationStatus: String(data.implementation_status ?? ''),
+      validationStatus: String(data.validation_status ?? ''),
+      releaseStatus: String(data.release_status ?? ''),
+      affectedModules: Array.isArray(data.affected_modules) ? data.affected_modules.map(String).filter(Boolean) : [],
+      refinedBy: String(data.refined_by ?? ''),
+      implementedBy: String(data.implemented_by ?? ''),
+      closedBy: String(data.closed_by ?? ''),
     }
   } catch {
     return null

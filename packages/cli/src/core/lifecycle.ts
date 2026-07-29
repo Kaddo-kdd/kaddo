@@ -75,6 +75,59 @@ export function lifecycleStateOf(item: { status?: string; filePath?: string }): 
   return 'ready'
 }
 
+// --- Independent status dimensions (VS-094) ---
+
+export const IMPLEMENTATION_STATUSES = [
+  'not-started', 'in-progress', 'completed', 'partial', 'blocked',
+] as const
+export type ImplementationStatus = (typeof IMPLEMENTATION_STATUSES)[number]
+
+export const VALIDATION_STATUSES = [
+  'not-started', 'in-progress', 'passed', 'failed', 'partial',
+  'accepted-with-exceptions', 'blocked',
+] as const
+export type ValidationStatus = (typeof VALIDATION_STATUSES)[number]
+
+export const RELEASE_STATUSES = [
+  'not-assessed', 'ready', 'blocked', 'released', 'not-applicable',
+] as const
+export type ReleaseStatus = (typeof RELEASE_STATUSES)[number]
+
+export type ReleaseGate = {
+  id: string
+  status: 'pending' | 'passed' | 'failed' | 'blocked' | 'waived' | 'not-applicable'
+  required_for?: string
+  reason?: string
+}
+
+export type CompletionException = {
+  id: string
+  status: 'proposed' | 'accepted' | 'rejected' | 'deferred' | 'resolved'
+  category?: string
+  reason?: string
+  impact?: string
+  approved_by?: string
+  approved_at?: string
+}
+
+export type CompletionDecision = {
+  decision?: string
+  approved_by?: string
+  approved_at?: string
+}
+
+export type RepoEvidence = {
+  role?: string
+  status?: string
+  changed_paths?: string[]
+  validations?: { command: string; status: string; reason?: string }[]
+  migrations?: { id: string; environment: string; status: string; idempotency?: string; reason?: string }[]
+}
+
+export type ImplementationEvidence = {
+  repositories?: Record<string, RepoEvidence>
+}
+
 /** Zeroed counts for every lifecycle state. */
 export function emptyLifecycleCounts(): Record<LifecycleState, number> {
   return Object.fromEntries(LIFECYCLE_STATES.map((s) => [s, 0])) as Record<LifecycleState, number>

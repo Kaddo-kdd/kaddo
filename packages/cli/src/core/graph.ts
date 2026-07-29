@@ -143,6 +143,7 @@ export function buildGraph(
 
   for (const wi of selectedWIs) {
     const id = wi.id || wi.title
+    if (!id || !id.trim()) continue
     const wiNodeId = `wi:${id}`
     addNode({
       id: wiNodeId,
@@ -154,16 +155,19 @@ export function buildGraph(
     })
 
     for (const glob of wi.codeGlobs) {
+      if (!glob || !glob.trim()) continue
       const codeId = `code:${glob}`
       addNode({ id: codeId, type: 'code-glob', label: glob })
       addEdge(wiNodeId, codeId, 'owns')
     }
     for (const cap of wi.capabilities) {
+      if (!cap || !cap.trim()) continue
       const capId = `capability:${slug(cap) || cap}`
       addNode({ id: capId, type: 'capability', label: cap })
       addEdge(wiNodeId, capId, 'implements')
     }
     for (const dec of wi.decisions) {
+      if (!dec || !dec.trim()) continue
       const adrId = `adr:${dec}`
       addNode({ id: adrId, type: 'decision', label: dec })
       addEdge(wiNodeId, adrId, 'depends_on')
@@ -183,17 +187,19 @@ export function buildGraph(
   // --- ADR nodes + governs edges. In `all` scope, include every ADR (even unreferenced);
   //     in `active` scope, only ADRs already referenced by a selected Work Item. ---
   for (const adr of all.filter(isAdr)) {
-    const adrId = `adr:${adr.id || adr.title}`
+    const adrLabel = adr.id || adr.title
+    if (!adrLabel || !adrLabel.trim()) continue
+    const adrId = `adr:${adrLabel}`
     const referenced = nodes.has(adrId)
     if (scope === 'all' || referenced) {
-      // Upgrade/insert with full metadata (a referenced node may only have a bare label so far).
       nodes.set(adrId, {
         id: adrId,
         type: 'decision',
-        label: `${adr.id} ${adr.title}`.trim() || adr.id || adr.title,
+        label: `${adr.id} ${adr.title}`.trim() || adrLabel,
         path: adr.relPath,
       })
       for (const glob of adr.codeGlobs) {
+        if (!glob || !glob.trim()) continue
         const codeId = `code:${glob}`
         addNode({ id: codeId, type: 'code-glob', label: glob })
         addEdge(adrId, codeId, 'governs')
@@ -279,14 +285,25 @@ export function renderGraphMermaid(graph: KnowledgeGraph): string {
     safeIds.set(id, candidate)
     return candidate
   }
-  const escapeLabel = (s: string): string => s.replace(/"/g, "'")
+  const escapeLabel = (s: string): string =>
+    s.replace(/"/g, "'").replace(/\[/g, '(').replace(/\]/g, ')').replace(/\n/g, ' ')
+
+  // Filter out nodes with empty id or label (VS-094).
+  const validNodes = graph.nodes.filter(
+    (n) => n.id && n.id.trim() !== '' && n.label && n.label.trim() !== ''
+  )
+  const validNodeIds = new Set(validNodes.map((n) => n.id))
 
   const lines = ['flowchart LR']
-  for (const node of graph.nodes) {
+  for (const node of validNodes) {
     lines.push(`  ${safe(node.id)}["${escapeLabel(node.label)}"]`)
   }
-  if (graph.edges.length > 0) lines.push('')
-  for (const edge of graph.edges) {
+  // Filter edges: both source and target must exist (VS-094).
+  const validEdges = graph.edges.filter(
+    (e) => validNodeIds.has(e.from) && validNodeIds.has(e.to)
+  )
+  if (validEdges.length > 0) lines.push('')
+  for (const edge of validEdges) {
     lines.push(`  ${safe(edge.from)} -->|${edge.type}| ${safe(edge.to)}`)
   }
   return lines.join('\n') + '\n'

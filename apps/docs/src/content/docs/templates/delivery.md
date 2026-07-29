@@ -30,6 +30,86 @@ maintenance / tooling work). See [create](/commands/create/#work-item-types).
 
 > Declare `code:` globs so Guard can relate changes to the work item.
 
+### Independent status dimensions
+
+Beyond the lifecycle state, Work Items can declare three independent status dimensions
+in front matter:
+
+| Dimension | Values | Purpose |
+|---|---|---|
+| `implementation_status` | `not-started`, `in-progress`, `completed`, `partial`, `blocked` | Tracks code implementation across repos |
+| `validation_status` | `not-started`, `in-progress`, `passed`, `failed`, `partial`, `accepted-with-exceptions`, `blocked` | Tracks validation state |
+| `release_status` | `not-assessed`, `ready`, `blocked`, `released`, `not-applicable` | Tracks release readiness |
+
+A Work Item can be `completed` (lifecycle) but `release_status: blocked` — these
+dimensions are independent.
+
+### Cross-repo implementation evidence
+
+For multirepo projects, Work Items that span multiple repositories declare
+`affected_modules` in front matter. `core` is always valid; other modules must be
+registered in `.kaddo/modules.yml`.
+
+```yaml
+affected_modules:
+  - core
+  - frontend
+implementation_evidence:
+  repositories:
+    core:
+      role: core
+      status: implemented
+      validations:
+        - command: go test ./...
+          status: passed
+      migrations:
+        - id: add-column
+          environment: local
+          status: applied
+```
+
+`kaddo guard --workspace` validates evidence coherence: unregistered modules, modified
+but undeclared repos, not-run validations, blocked migrations, and lifecycle/release
+gate consistency.
+
+### Release gates and completion exceptions
+
+Release gates are checkpoints that must pass before release:
+
+```yaml
+release_gates:
+  - id: supabase-migration
+    status: blocked
+    reason: Project not available
+```
+
+Completion exceptions allow closing a Work Item with known deviations, requiring
+human approval:
+
+```yaml
+completion_exceptions:
+  - id: tests-not-executed
+    status: accepted
+    reason: Not executed by human instruction
+    approved_by: human
+```
+
+A Work Item with `status: proposed` exceptions cannot be marked as completed.
+
+### Agent history
+
+Work Items track which agents participated in their lifecycle:
+
+- `refined_by`: the agent that refined the Work Item (never overwritten)
+- `implemented_by`: the agent that implemented it
+- `closed_by`: the human or agent that closed it
+
+### Mermaid graph hardening
+
+The knowledge graph (`kaddo graph`) filters out nodes with empty id or label, edges
+referencing non-existent nodes, and escapes quotes, brackets, and newlines in labels.
+A project with zero ADRs produces a valid graph without empty `adr[""]` nodes.
+
 ## Roadmap
 
 Structured initiatives (`RM-001`) and candidate work items (`WI-CANDIDATE-001`) for
