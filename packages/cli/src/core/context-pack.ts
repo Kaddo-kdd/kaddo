@@ -37,6 +37,10 @@ export type ContextWorkItem = {
   validationStatus?: string
   releaseStatus?: string
   affectedModules?: string[]
+  scopeConfidence?: { level: string; reasons: string[] }
+  moduleCoverage?: Record<string, { status: string; reason?: string }>
+  impactAnalysis?: Record<string, { status: string; reason?: string }>
+  scopeUnknowns?: string[]
 }
 
 export type ContextArtifact = {
@@ -268,6 +272,15 @@ function toContextWorkItem(a: Artifact): ContextWorkItem {
   wi.validationStatus = a.validationStatus || (isHistorical ? 'not-assessed' : undefined)
   wi.releaseStatus = a.releaseStatus || (isHistorical ? 'not-assessed' : undefined)
   if (a.affectedModules.length > 0) wi.affectedModules = a.affectedModules
+  if (a.scopeConfidence) wi.scopeConfidence = a.scopeConfidence
+  if (a.moduleCoverage) wi.moduleCoverage = a.moduleCoverage
+  if (a.impactAnalysis) wi.impactAnalysis = a.impactAnalysis
+  if (a.moduleCoverage) {
+    const unknowns = Object.entries(a.moduleCoverage)
+      .filter(([, v]) => v.status === 'unknown')
+      .map(([k]) => k)
+    if (unknowns.length > 0) wi.scopeUnknowns = unknowns
+  }
   return wi
 }
 

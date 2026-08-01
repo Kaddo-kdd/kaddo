@@ -48,6 +48,28 @@ distingue la ausencia de trabajo activo de la ausencia total de trabajo:
 - Work Items legacy completados (sin `implementation_status` / `validation_status` /
   `release_status`) usan `not-assessed` por defecto, no `not-started`.
 
+### Refinamiento de alcance end-to-end
+
+Kaddo soporta metadata explícita de cobertura de alcance para prevenir refinamientos
+incompletos. Un Work Item puede declarar:
+
+- **`scope_confidence`** — `high`, `medium` o `low` con razones.
+- **`module_coverage`** — cada módulo mapeado como `affected`, `reviewed-not-affected`,
+  `unknown` o `not-applicable`.
+- **`impact_analysis`** — cada superficie (frontend, backend, database, etc.) con los
+  mismos estados.
+
+Guard valida la consistencia entre `affected_modules` y `module_coverage`, advierte
+cuando Work Items orientados al usuario tienen módulos frontend sin evaluar, y señala
+Work Items `ready` con baja confianza o módulos desconocidos. Estos campos son
+opcionales para compatibilidad con Work Items existentes.
+
+El work-item-agent reconstruye el outcome, journey y evalúa superficies antes de
+proponer archivos. El implementation-agent realiza una revisión de alcance antes de
+implementar. La skill work-item-refinement estandariza: framing del outcome,
+reconstrucción del journey, revisión de superficies, revisión de módulos y revisión
+de completitud.
+
 ### Dimensiones de estado independientes
 
 Más allá del estado de lifecycle, los Work Items pueden declarar tres dimensiones de

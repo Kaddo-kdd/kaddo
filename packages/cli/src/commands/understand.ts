@@ -103,6 +103,26 @@ export function runUnderstand(): void {
       console.log(`  - Current active work: ${ds.activeWorkItems > 0 ? ds.activeWorkItems : 'none'}`)
     }
 
+    // Scope coverage (VS-095): surface material unknowns.
+    if (exp.scopeCoverage.length > 0) {
+      const withUnknowns = exp.scopeCoverage.filter((sc) => sc.unknownModules.length > 0)
+      if (withUnknowns.length > 0) {
+        console.log('')
+        console.log('Scope unknowns:')
+        for (const sc of withUnknowns) {
+          console.log(`  ${sc.id}: ${sc.unknownModules.join(', ')}`)
+        }
+      }
+      const lowConfidence = exp.scopeCoverage.filter((sc) => sc.scopeConfidence?.level === 'low')
+      if (lowConfidence.length > 0) {
+        console.log('')
+        console.log('Low scope confidence:')
+        for (const sc of lowConfidence) {
+          console.log(`  ${sc.id}`)
+        }
+      }
+    }
+
     if (rec.skill) console.log(`Recommended skill: ${rec.skill}`)
     console.log(`Next step: ${rec.label}`)
     if (rec.reason) console.log(`Why: ${rec.reason}`)

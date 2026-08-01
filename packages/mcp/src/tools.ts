@@ -25,6 +25,7 @@ type ExplainJson = {
   isModuleRepo?: boolean
   readiness?: { overall?: string; project_role?: string; signals?: Record<string, unknown> }
   deliverySummary?: { completedWorkItems?: number; archivedWorkItems?: number; activeWorkItems?: number; implementationCompleted?: number; releaseBlocked?: number; releaseReady?: number }
+  scopeCoverage?: { id: string; scopeConfidence?: { level: string }; unknownModules?: string[]; hasScopeCoverage?: boolean }[]
 }
 
 type GraphHintsJson = { quality?: string; scope?: string; scope_reason?: string; summary?: { hints?: number } }
@@ -77,6 +78,10 @@ export function projectStatus(root: string): ToolResult {
 
   if (explain.deliverySummary) {
     result.deliverySummary = explain.deliverySummary
+  }
+
+  if (explain.scopeCoverage && Array.isArray(explain.scopeCoverage) && explain.scopeCoverage.length > 0) {
+    result.scopeCoverage = explain.scopeCoverage
   }
 
   return ok(result)

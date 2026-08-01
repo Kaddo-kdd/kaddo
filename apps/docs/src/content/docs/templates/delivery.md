@@ -48,6 +48,27 @@ the absence of active work from the absence of any work:
 - Completed legacy Work Items (without `implementation_status` / `validation_status` /
   `release_status`) default to `not-assessed`, not `not-started`.
 
+### End-to-end scope refinement
+
+Kaddo supports explicit scope coverage metadata to prevent incomplete refinement.
+A Work Item can declare:
+
+- **`scope_confidence`** — `high`, `medium`, or `low` with reasons.
+- **`module_coverage`** — each mapped module as `affected`, `reviewed-not-affected`,
+  `unknown`, or `not-applicable`.
+- **`impact_analysis`** — each surface (frontend, backend, database, etc.) with the
+  same statuses.
+
+Guard validates consistency between `affected_modules` and `module_coverage`, warns
+when user-facing Work Items have unassessed frontend modules, and flags `ready` Work
+Items with low confidence or unknown modules. These fields are optional for
+backward compatibility.
+
+The work-item-agent reconstructs the outcome, journey, and evaluates surfaces before
+proposing files. The implementation-agent performs a pre-implementation scope review.
+The work-item-refinement skill standardizes outcome framing, journey reconstruction,
+surface review, module review, and completeness review.
+
 ### Independent status dimensions
 
 Beyond the lifecycle state, Work Items can declare three independent status dimensions

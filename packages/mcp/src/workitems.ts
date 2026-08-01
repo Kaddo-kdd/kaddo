@@ -45,6 +45,10 @@ export type WorkItemSummary = {
   closed_by?: string
   release_gates?: { id: string; status: string; reason?: string }[]
   completion_exceptions?: { id: string; status: string; reason?: string }[]
+  scope_confidence?: { level: string; reasons: string[] }
+  module_coverage?: Record<string, { status: string; reason?: string }>
+  impact_analysis?: Record<string, { status: string; reason?: string }>
+  scope_unknowns?: string[]
 }
 
 const VALID_SOURCES = new Set(['manual', 'roadmap', 'jira', 'github', 'notion', 'xlsx', 'csv', 'api', 'external', 'unknown'])
@@ -96,6 +100,51 @@ function firstParagraph(body: string): string {
   return ''
 }
 
+const VALID_COVERAGE_STATUSES = new Set(['affected', 'reviewed-not-affected', 'unknown', 'not-applicable'])
+
+function parseScopeMeta(data: Record<string, unknown>): Partial<WorkItemSummary> {
+  const result: Partial<WorkItemSummary> = {}
+  const sc = data.scope_confidence
+  if (sc && typeof sc === 'object' && !Array.isArray(sc)) {
+    const obj = sc as Record<string, unknown>
+    const level = String(obj.level ?? '')
+    if (['high', 'medium', 'low'].includes(level)) {
+      result.scope_confidence = { level, reasons: Array.isArray(obj.reasons) ? obj.reasons.map(String) : [] }
+    }
+  }
+  const mc = data.module_coverage
+  if (mc && typeof mc === 'object' && !Array.isArray(mc)) {
+    const parsed: Record<string, { status: string; reason?: string }> = {}
+    const unknowns: string[] = []
+    for (const [id, val] of Object.entries(mc as Record<string, unknown>)) {
+      if (!val || typeof val !== 'object' || Array.isArray(val)) continue
+      const v = val as Record<string, unknown>
+      const status = String(v.status ?? '')
+      if (!VALID_COVERAGE_STATUSES.has(status)) continue
+      parsed[id] = { status, ...(v.reason ? { reason: String(v.reason) } : {}) }
+      if (status === 'unknown') unknowns.push(id)
+    }
+    if (Object.keys(parsed).length > 0) result.module_coverage = parsed
+    if (unknowns.length > 0) result.scope_unknowns = unknowns
+  }
+  const ia = data.impact_analysis
+  if (ia && typeof ia === 'object' && !Array.isArray(ia)) {
+    const surfaces = (ia as Record<string, unknown>).surfaces
+    if (surfaces && typeof surfaces === 'object' && !Array.isArray(surfaces)) {
+      const parsed: Record<string, { status: string; reason?: string }> = {}
+      for (const [id, val] of Object.entries(surfaces as Record<string, unknown>)) {
+        if (!val || typeof val !== 'object' || Array.isArray(val)) continue
+        const v = val as Record<string, unknown>
+        const status = String(v.status ?? '')
+        if (!VALID_COVERAGE_STATUSES.has(status)) continue
+        parsed[id] = { status, ...(v.reason ? { reason: String(v.reason) } : {}) }
+      }
+      if (Object.keys(parsed).length > 0) result.impact_analysis = parsed
+    }
+  }
+  return result
+}
+
 /** Discover and summarize all Work Items in the project. */
 export function listWorkItems(root: string): WorkItemSummary[] {
   const files = listFiles(root, 'knowledge/delivery/work-items', '.md')
@@ -143,6 +192,7 @@ export function listWorkItems(root: string): WorkItemSummary[] {
         ? { release_gates: data.release_gates as { id: string; status: string; reason?: string }[] } : {}),
       ...(Array.isArray(data.completion_exceptions) && data.completion_exceptions.length > 0
         ? { completion_exceptions: data.completion_exceptions as { id: string; status: string; reason?: string }[] } : {}),
+      ...parseScopeMeta(data),
     })
   }
   return items.sort((a, b) => a.id.localeCompare(b.id))

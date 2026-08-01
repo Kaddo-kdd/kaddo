@@ -63,11 +63,43 @@ domains: []
 capabilities: []
 code: []
 created_at: YYYY-MM-DD
+# scope_confidence:
+#   level: medium
+#   reasons: []
+# module_coverage:
+#   core:
+#     status: affected
+#     reason: ""
+# impact_analysis:
+#   surfaces:
+#     frontend:
+#       status: affected
+#       reason: ""
 ---
 
 # <Title>
 
 > Type: feature · Level: K2
+
+## Actor and outcome
+
+_Who experiences the change and what is the observable result?_
+
+## Current behavior
+
+_What happens today?_
+
+## Target behavior
+
+_What should happen after this change?_
+
+## Entry points
+
+_Where does the flow start for the actor?_
+
+## End-to-end flow
+
+_Describe the complete flow from entry point to final result._
 
 ## Problem
 
@@ -77,9 +109,26 @@ _What problem or opportunity does this address?_
 
 _What should be true once this is done?_
 
+## Impact analysis
+
+_Which surfaces are affected, reviewed-not-affected, unknown, or not-applicable?_
+
+## Module coverage
+
+_For multirepo: which modules were evaluated and their status._
+
+## Scope unknowns
+
+_What remains unknown? Include focused questions._
+
+## Scope confidence
+
+_high / medium / low — with reasons._
+
 ## Acceptance criteria
 
 - [ ] ...
+- [ ] _Include at least one end-to-end criterion for user-facing changes._
 
 ## Design
 
@@ -111,6 +160,9 @@ ${QUALITY}
 - [ ] Title is specific and action-oriented.
 - [ ] \`code:\` globs declared so Guard can relate changes.
 - [ ] Knowledge level matches the real uncertainty.
+- [ ] Actor and outcome are identified.
+- [ ] Current and target behavior are documented.
+- [ ] Scope confidence is declared.
 `
 
 const ROADMAP = `---

@@ -140,6 +140,14 @@ export type ProjectExplanation = {
     releaseBlocked: number
     releaseReady: number
   } | null
+  /** Work Item scope coverage (VS-095). */
+  scopeCoverage: {
+    id: string
+    scopeConfidence: { level: string; reasons: string[] } | null
+    moduleCoverage: Record<string, { status: string; reason?: string }> | null
+    unknownModules: string[]
+    hasScopeCoverage: boolean
+  }[]
   /** Cross-repo implementation evidence for WIs with affected_modules (VS-094). */
   implementationEvidence: {
     id: string
@@ -523,6 +531,20 @@ export function buildProjectExplanation(dir: string): ProjectExplanation {
         releaseReady: completed.filter((a) => a.releaseStatus === 'ready' || a.releaseStatus === 'released').length,
       }
     })(),
+    scopeCoverage: workItemArtifacts
+      .filter((a) => a.scopeConfidence || a.moduleCoverage || a.impactAnalysis)
+      .map((a) => {
+        const unknownModules = a.moduleCoverage
+          ? Object.entries(a.moduleCoverage).filter(([, v]) => v.status === 'unknown').map(([k]) => k)
+          : []
+        return {
+          id: a.id || a.title,
+          scopeConfidence: a.scopeConfidence,
+          moduleCoverage: a.moduleCoverage,
+          unknownModules,
+          hasScopeCoverage: true,
+        }
+      }),
     implementationEvidence: workItemArtifacts
       .filter((a) => a.affectedModules.length > 0)
       .map((a) => {
@@ -722,6 +744,25 @@ export function renderExplanationHuman(exp: ProjectExplanation): string {
       if (acceptedExceptions.length > 0) {
         lines.push('Completion exceptions:')
         for (const e of acceptedExceptions) lines.push(`- ${e.id}: ${e.status}${e.reason ? ` — ${e.reason}` : ''}`)
+      }
+    }
+    lines.push('')
+  }
+
+  // Scope Coverage (VS-095).
+  if (exp.scopeCoverage.length > 0) {
+    lines.push('## Work Item Scope Coverage')
+    for (const sc of exp.scopeCoverage) {
+      lines.push('')
+      lines.push(`### ${sc.id}`)
+      if (sc.scopeConfidence) lines.push(`- Scope confidence: ${sc.scopeConfidence.level}`)
+      if (sc.moduleCoverage) {
+        const affected = Object.entries(sc.moduleCoverage).filter(([, v]) => v.status === 'affected').map(([k]) => k)
+        const reviewed = Object.entries(sc.moduleCoverage).filter(([, v]) => v.status === 'reviewed-not-affected').map(([k]) => k)
+        const unknown = Object.entries(sc.moduleCoverage).filter(([, v]) => v.status === 'unknown').map(([k]) => k)
+        if (affected.length > 0) lines.push(`Affected: ${affected.join(', ')}`)
+        if (reviewed.length > 0) lines.push(`Reviewed, not affected: ${reviewed.join(', ')}`)
+        if (unknown.length > 0) lines.push(`Unknown: ${unknown.join(', ')}`)
       }
     }
     lines.push('')

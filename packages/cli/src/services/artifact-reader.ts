@@ -32,6 +32,63 @@ export type Artifact = {
   refinedBy: string
   implementedBy: string
   closedBy: string
+  /** Scope confidence (VS-095). */
+  scopeConfidence: { level: string; reasons: string[] } | null
+  /** Module coverage (VS-095). */
+  moduleCoverage: Record<string, { status: string; reason?: string; evidence?: string[] }> | null
+  /** Impact analysis surfaces (VS-095). */
+  impactAnalysis: Record<string, { status: string; reason?: string; question?: string }> | null
+}
+
+const VALID_SCOPE_CONFIDENCE_LEVELS = new Set(['high', 'medium', 'low'])
+const VALID_COVERAGE_STATUSES = new Set(['affected', 'reviewed-not-affected', 'unknown', 'not-applicable'])
+
+function parseScopeConfidence(data: Record<string, unknown>): Artifact['scopeConfidence'] {
+  const sc = data.scope_confidence
+  if (!sc || typeof sc !== 'object' || Array.isArray(sc)) return null
+  const obj = sc as Record<string, unknown>
+  const level = String(obj.level ?? '')
+  if (!VALID_SCOPE_CONFIDENCE_LEVELS.has(level)) return null
+  const reasons = Array.isArray(obj.reasons) ? obj.reasons.map(String).filter(Boolean) : []
+  return { level, reasons }
+}
+
+function parseModuleCoverage(data: Record<string, unknown>): Artifact['moduleCoverage'] {
+  const mc = data.module_coverage
+  if (!mc || typeof mc !== 'object' || Array.isArray(mc)) return null
+  const result: Record<string, { status: string; reason?: string; evidence?: string[] }> = {}
+  for (const [id, val] of Object.entries(mc as Record<string, unknown>)) {
+    if (!val || typeof val !== 'object' || Array.isArray(val)) continue
+    const v = val as Record<string, unknown>
+    const status = String(v.status ?? '')
+    if (!VALID_COVERAGE_STATUSES.has(status)) continue
+    result[id] = {
+      status,
+      ...(v.reason ? { reason: String(v.reason) } : {}),
+      ...(Array.isArray(v.evidence) ? { evidence: v.evidence.map(String).filter(Boolean) } : {}),
+    }
+  }
+  return Object.keys(result).length > 0 ? result : null
+}
+
+function parseImpactAnalysis(data: Record<string, unknown>): Artifact['impactAnalysis'] {
+  const ia = data.impact_analysis
+  if (!ia || typeof ia !== 'object' || Array.isArray(ia)) return null
+  const surfaces = (ia as Record<string, unknown>).surfaces
+  if (!surfaces || typeof surfaces !== 'object' || Array.isArray(surfaces)) return null
+  const result: Record<string, { status: string; reason?: string; question?: string }> = {}
+  for (const [id, val] of Object.entries(surfaces as Record<string, unknown>)) {
+    if (!val || typeof val !== 'object' || Array.isArray(val)) continue
+    const v = val as Record<string, unknown>
+    const status = String(v.status ?? '')
+    if (!VALID_COVERAGE_STATUSES.has(status)) continue
+    result[id] = {
+      status,
+      ...(v.reason ? { reason: String(v.reason) } : {}),
+      ...(v.question ? { question: String(v.question) } : {}),
+    }
+  }
+  return Object.keys(result).length > 0 ? result : null
 }
 
 function parseArtifact(filePath: string, raw: string): Artifact | null {
@@ -64,6 +121,9 @@ function parseArtifact(filePath: string, raw: string): Artifact | null {
       refinedBy: String(data.refined_by ?? ''),
       implementedBy: String(data.implemented_by ?? ''),
       closedBy: String(data.closed_by ?? ''),
+      scopeConfidence: parseScopeConfidence(data),
+      moduleCoverage: parseModuleCoverage(data),
+      impactAnalysis: parseImpactAnalysis(data),
     }
   } catch {
     return null

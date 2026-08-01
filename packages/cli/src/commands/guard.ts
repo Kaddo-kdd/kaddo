@@ -5,6 +5,7 @@ import { loadIgnores, saveIgnore, isIgnored } from '../services/ignore-store.js'
 import { collectWorkspaceChanges, type WorkspaceScan } from '../services/workspace-guard.js'
 import { analyzeMetadataHealth } from '../core/metadata-health.js'
 import { analyzeCrossRepoEvidence, type WIEvidenceSummary } from '../core/cross-repo-evidence.js'
+import { analyzeScopeCoverage, type ScopeCoverageSummary } from '../core/scope-coverage.js'
 import { loadMappedModules } from '../services/mapped-modules.js'
 import { exists, join, cwd, readFile } from '../utils/fs.js'
 import path from 'path'
@@ -415,6 +416,31 @@ export async function runGuard(opts: { staged?: boolean; interactive?: boolean; 
       }
       console.log('')
     }
+  }
+
+  // Scope coverage analysis (VS-095): validate module_coverage, impact_analysis, scope_confidence.
+  const mappedModules = loadMappedModules(dir)
+  const registeredModuleIdsForScope = mappedModules.map((m) => m.id)
+  const frontendModuleIds = mappedModules
+    .filter((m) => m.type === 'frontend' || m.type === 'web' || m.type === 'mobile' || m.type === 'ui')
+    .map((m) => m.id)
+  const wiArtifactsForScope = artifacts.filter((a) => a.isWorkItem)
+  const scopeSummaries: ScopeCoverageSummary[] = []
+  for (const wi of wiArtifactsForScope) {
+    if (!wi.scopeConfidence && !wi.moduleCoverage && !wi.impactAnalysis) continue
+    const summary = analyzeScopeCoverage(wi, registeredModuleIdsForScope, frontendModuleIds)
+    if (summary.findings.length > 0) scopeSummaries.push(summary)
+  }
+  if (scopeSummaries.length > 0) {
+    console.log('Scope coverage:')
+    for (const s of scopeSummaries) {
+      console.log(`  ${s.id}:`)
+      for (const f of s.findings) {
+        const icon = f.severity === 'blocking' ? '✗' : f.severity === 'warning' ? '!' : '·'
+        console.log(`    ${icon} ${f.message}`)
+      }
+    }
+    console.log('')
   }
 
   // Show domain owners for matched domains

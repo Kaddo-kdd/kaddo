@@ -750,18 +750,31 @@ A refined Work Item intended to be saved under the lifecycle workspace:
 
 ## Instructions
 
-1. Restate the problem in one clear sentence.
-2. Split the candidate if it is too large for a single Work Item.
-3. Preserve the candidate's type (\`feature\`, \`bugfix\`, \`hotfix\`, \`spike\`, \`chore\`).
-   Keep \`chore\` for maintenance/tooling/config/infra work — never upgrade a chore to a feature.
-4. Validate the Knowledge Level (K0–K4) and propose a different one if needed.
-5. Propose acceptance criteria.
-6. Propose an Out of scope section.
-7. Propose **how to test it** — concrete validation steps (commands to run, manual steps, or
-   test cases) that prove the change works once implemented. This is mandatory.
-8. Propose a Definition of Done.
-9. Identify open questions and assumptions.
-10. Suggest ownership candidates (code globs) if evident.
+1. **Interpret the outcome** — what must change for the actor or consumer of this change.
+2. **Identify the actor** — who experiences or triggers the change.
+3. **Describe current behavior** — what happens today.
+4. **Describe target behavior** — what should happen after the change.
+5. **Reconstruct the journey** — for user-facing changes, map the end-to-end flow from entry
+   point to final observable result before proposing files.
+6. **Evaluate surfaces** — assess each potentially affected surface (frontend, backend, database,
+   configuration, content, feature flags, authentication, notifications, analytics, documentation,
+   operations) as \`affected\`, \`reviewed-not-affected\`, \`unknown\`, or \`not-applicable\`.
+7. **Evaluate modules** — for multirepo projects, assess each plausibly related mapped module with
+   the same statuses. A module must be \`affected\`, \`reviewed-not-affected\`, \`unknown\`, or
+   \`not-applicable\`. Do not leave related modules unmentioned.
+8. Restate the problem in one clear sentence.
+9. Split the candidate if it is too large for a single Work Item.
+10. Preserve the candidate's type (\`feature\`, \`bugfix\`, \`hotfix\`, \`spike\`, \`chore\`).
+    Keep \`chore\` for maintenance/tooling/config/infra work — never upgrade a chore to a feature.
+11. Validate the Knowledge Level (K0–K4) and propose a different one if needed.
+12. Propose acceptance criteria — include at least one end-to-end criterion for user-facing changes.
+13. Propose an Out of scope section.
+14. Propose **how to test it** — concrete validation steps (commands to run, manual steps, or
+    test cases) that prove the change works once implemented. This is mandatory.
+15. Propose a Definition of Done.
+16. Identify open questions, assumptions, and scope unknowns.
+17. Determine scope confidence (high, medium, low) with reasons.
+18. Suggest ownership candidates (code globs) if evident.
 
 ## Constraints
 
@@ -769,11 +782,29 @@ A refined Work Item intended to be saved under the lifecycle workspace:
 - Do not invent business facts.
 - Do not assign a Knowledge Level higher than the change requires.
 - Mark assumptions explicitly.
+- Do not reduce a product intent to the first technical implementation found.
+- Inspect the observable outcome before proposing files.
+- For user-facing changes, assess the entry point, interaction surface, backend behavior, and
+  final user-visible result.
+- For multirepo projects, assess each plausibly related mapped module.
+- Do not mark the Work Item ready while material scope remains unknown.
+- Ask focused questions instead of silently narrowing the request.
+- Preserve unsupported assumptions as assumptions.
 
 ## Output Format
 
 \`\`\`markdown
 # <Work Item title>
+
+**Actor and outcome:**
+
+**Current behavior:**
+
+**Target behavior:**
+
+**Entry points:**
+
+**End-to-end flow:**
 
 **Problem:**
 
@@ -781,7 +812,19 @@ A refined Work Item intended to be saved under the lifecycle workspace:
 
 **Suggested Knowledge Level:** K1 / K2 / K3 / K4
 
+**Impact analysis:**
+<!-- surfaces: affected / reviewed-not-affected / unknown / not-applicable -->
+
+**Module coverage:**
+<!-- for multirepo: each module as affected / reviewed-not-affected / unknown / not-applicable -->
+
+**Scope unknowns:**
+
+**Scope confidence:** high / medium / low
+<!-- reasons: -->
+
 **Acceptance criteria:**
+<!-- include at least one end-to-end criterion for user-facing changes -->
 
 **Out of scope:**
 
@@ -1527,6 +1570,20 @@ Provide \`.kaddo/context-pack.md\`, the Work Item to implement, and the Git stra
 Working code, tests and migrations, plus updated knowledge (ADR / capabilities / current-state)
 when the change affects them. You also produce a suggested branch name and a suggested
 Conventional Commit message — as suggestions, never executed.
+
+## Pre-implementation Scope Review (VS-095)
+
+Before implementing, review the Work Item's scope coverage:
+- Check that expected result, current behavior, and target behavior are documented.
+- Verify the journey covers the full user-facing flow when applicable.
+- Confirm affected surfaces and modules are declared.
+- Check module_coverage: if a mapped module is plausibly related but not assessed, flag it.
+- Verify acceptance criteria include end-to-end validation for user-facing changes.
+- Check for unresolved scope unknowns that could change the implementation.
+
+If you find a contradiction (e.g., target behavior describes a user-facing registration flow but
+the mapped frontend module was not assessed), explain the finding, propose updating the Work Item,
+and wait for confirmation before proceeding. Do not silently expand scope.
 
 ## Instructions
 
