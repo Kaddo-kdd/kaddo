@@ -28,3 +28,13 @@ jobs:
 
       - name: Test (all packages)
         run: pnpm test
+
+      - name: Verify both package versions are in sync
+        run: |
+          CLI=$(node -p "require('./packages/cli/package.json').version")
+          MCP=$(node -p "require('./packages/mcp/package.json').version")
+          echo "cli=$CLI mcp=$MCP"
+          if [ "$CLI" != "$MCP" ]; then
+            echo "::error::@kaddo/cli ($CLI) and @kaddo/mcp ($MCP) versions are out of sync"
+            exit 1
+          fi
