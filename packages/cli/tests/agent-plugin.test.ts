@@ -45,7 +45,7 @@ describe('official Kaddo Agent Plugin', () => {
     expect(manifest.$schema).toBe('https://agent-plugins.org/schemas/1.0.0/plugin.schema.json')
     expect(manifest.name).toBe('kaddo-power')
     expect(manifest.name).toMatch(/^(?!.*(?:--|\.\.))[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?$/)
-    expect(manifest.version).toBe('1.0.2')
+    expect(manifest.version).toBe('1.0.3')
     expect(manifest.repository).toBe('https://github.com/Kaddo-kdd/kaddo/tree/main/kaddo-power')
     expect(manifest.homepage).toBe('https://kaddo.trycatch.tv/')
     expect(manifest.license).toBe('MIT')
@@ -77,6 +77,7 @@ describe('official Kaddo Agent Plugin', () => {
       'plugin.json',
       'mcp.json',
       'README.md',
+      'assets/icon.png',
       'skills/README.md',
       'dev.kiro/steering/power-kaddo.md',
       'dev.kiro/steering/getting-started.md',

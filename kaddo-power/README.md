@@ -1,9 +1,15 @@
 # Kaddo Power
 
+<img src="./assets/icon.png" alt="Kaddo Power logo" width="160">
+
 The official portable Agent Plugin for [Kaddo](https://kaddo.trycatch.tv/), the Knowledge Driven
 Development toolkit. It packages discovery, activation, agent guidance, portable Skills and
 `@kaddo/mcp` integration. Kiro is the first supported consumer, but the portable plugin is not
 defined by Kiro.
+
+The square PNG at [`assets/icon.png`](assets/icon.png) is the official catalog and documentation
+logo. Custom Kiro imports currently use Kiro's default Power icon because Agent Plugins 1.0 does
+not define portable icon metadata.
 
 The plugin orchestrates existing Kaddo capabilities. It does not reimplement Kaddo Core, CLI, MCP,
 agents or Skills.
