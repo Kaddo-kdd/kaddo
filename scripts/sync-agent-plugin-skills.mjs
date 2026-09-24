@@ -7,7 +7,7 @@ import ts from 'typescript'
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const sourceRelative = 'packages/cli/src/skills/skills.ts'
 const sourcePath = path.join(repoRoot, sourceRelative)
-const outputRoot = path.join(repoRoot, 'Kaddo Power', 'skills')
+const outputRoot = path.join(repoRoot, 'kaddo-power', 'skills')
 const checkOnly = process.argv.includes('--check')
 
 function literal(node, label) {

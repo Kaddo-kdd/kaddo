@@ -13,7 +13,7 @@ pnpm build
 
 ```
 kaddo/
-  Kaddo Power/        â€” portable Agent Plugin; generated Skills and client guidance
+  kaddo-power/        â€” portable Agent Plugin; generated Skills and client guidance
   packages/cli/src/
     commands/     — one file per CLI command
     core/         — pure logic (knowledge levels, diff analysis)
@@ -46,8 +46,8 @@ pnpm agent-plugin:sync
 pnpm agent-plugin:check
 ```
 
-Do not edit `Kaddo Power/skills/*/SKILL.md` directly. Client-specific guidance belongs under its
-extension directory, such as `Kaddo Power/dev.kiro/`.
+Do not edit `kaddo-power/skills/*/SKILL.md` directly. Client-specific guidance belongs under its
+extension directory, such as `kaddo-power/dev.kiro/`.
 
 ## Principles
 

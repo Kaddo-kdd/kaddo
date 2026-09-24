@@ -215,7 +215,7 @@ It never writes files, runs git, calls an LLM or reads source code. See the
 
 ## Kaddo Power
 
-The official [`Kaddo Power/`](<Kaddo Power/README.md>) packages Kaddo Skills, KDD workflow guidance
+The official [`kaddo-power/`](kaddo-power/README.md) packages Kaddo Skills, KDD workflow guidance
 and `@kaddo/mcp` integration using the Agent Plugins specification. Kiro Powers is the first
 supported consumer, while portable behavior remains independent of Kiro-specific steering.
 

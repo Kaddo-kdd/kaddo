@@ -6,7 +6,7 @@ import { describe, expect, it } from 'vitest'
 import { SKILLS } from '../src/skills/skills.js'
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..')
-const pluginRoot = path.join(repoRoot, 'Kaddo Power')
+const pluginRoot = path.join(repoRoot, 'kaddo-power')
 
 function readJson(relativePath: string): Record<string, unknown> {
   return JSON.parse(fs.readFileSync(path.join(pluginRoot, relativePath), 'utf8')) as Record<string, unknown>
@@ -45,8 +45,8 @@ describe('official Kaddo Agent Plugin', () => {
     expect(manifest.$schema).toBe('https://agent-plugins.org/schemas/1.0.0/plugin.schema.json')
     expect(manifest.name).toBe('kaddo-power')
     expect(manifest.name).toMatch(/^(?!.*(?:--|\.\.))[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?$/)
-    expect(manifest.version).toBe('1.0.1')
-    expect(manifest.repository).toBe('https://github.com/Kaddo-kdd/kaddo/tree/main/Kaddo%20Power')
+    expect(manifest.version).toBe('1.0.2')
+    expect(manifest.repository).toBe('https://github.com/Kaddo-kdd/kaddo/tree/main/kaddo-power')
     expect(manifest.homepage).toBe('https://kaddo.trycatch.tv/')
     expect(manifest.license).toBe('MIT')
     expect(manifest.author).toEqual({ name: 'Kaddo', url: 'https://kaddo.trycatch.tv/' })
