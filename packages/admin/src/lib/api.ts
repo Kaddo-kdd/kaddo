@@ -271,7 +271,7 @@ export type WorkItemFilters = { status?: string; module?: string; query?: string
 export type IntegrationCapabilities = { workItems: { list: boolean; read: boolean; import: boolean; write?: boolean; statusSync?: boolean; comments?: boolean; webhooks?: boolean } }
 export type IntegrationStatusValue = 'configured' | 'available' | 'unavailable' | 'unauthorized' | 'invalid-config' | 'disabled'
 export type ConfigFieldSchema = {
-  type: 'string' | 'number' | 'boolean' | 'select'
+  type: 'string' | 'url' | 'password' | 'number' | 'boolean' | 'select' | 'multi-select'
   required: boolean; label: string; description?: string; placeholder?: string
   options?: { value: string; label: string }[]; defaultValue?: unknown
 }

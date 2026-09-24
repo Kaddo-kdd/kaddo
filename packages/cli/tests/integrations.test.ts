@@ -475,3 +475,114 @@ describe('VS-103 — adapter unavailable preservation', () => {
     expect(updatedList.find((i) => i.id === 'custom-jira')).toBeDefined()
   })
 })
+
+// --- VS-103A tests -----------------------------------------------------------
+
+describe('VS-103A — schema validation in create/update', () => {
+  let dir: string
+  beforeEach(() => { dir = tmpDir(); initProject(dir) })
+  afterEach(() => fs.rmSync(dir, { recursive: true, force: true }))
+
+  it('createIntegration rejects unknown adapter', async () => {
+    const core = await import('../src/core.js')
+    expect(() => core.createIntegration(dir, { id: 'bad', adapter: 'nonexistent' })).toThrow(/Unknown integration adapter/)
+  })
+
+  it('createIntegration rejects invalid config against adapter schema', async () => {
+    const core = await import('../src/core.js')
+    expect(() => core.createIntegration(dir, {
+      id: 'mock-invalid',
+      adapter: 'mock',
+      config: { simulate: 'invalid-option' },
+    })).toThrow(/options/)
+  })
+
+  it('createIntegration accepts valid config', async () => {
+    const core = await import('../src/core.js')
+    const result = core.createIntegration(dir, { id: 'mock-valid', adapter: 'mock', config: { simulate: 'available' } })
+    expect(result.id).toBe('mock-valid')
+    expect(result.adapter).toBe('mock')
+  })
+
+  it('updateIntegration rejects invalid config against adapter schema', async () => {
+    const core = await import('../src/core.js')
+    core.createIntegration(dir, { id: 'mock-upd', adapter: 'mock', config: {} })
+    expect(() => core.updateIntegration(dir, 'mock-upd', { config: { simulate: 'not-real' } })).toThrow(/options/)
+  })
+
+  it('updateIntegration accepts valid config', async () => {
+    const core = await import('../src/core.js')
+    core.createIntegration(dir, { id: 'mock-upd2', adapter: 'mock', config: {} })
+    const result = core.updateIntegration(dir, 'mock-upd2', { config: { simulate: 'unauthorized' } })
+    expect(result.id).toBe('mock-upd2')
+  })
+})
+
+describe('VS-103A — provider catalog from registry', () => {
+  it('getAvailableIntegrationTypes returns adapters with full metadata', async () => {
+    const core = await import('../src/core.js')
+    const types = core.getAvailableIntegrationTypes()
+    expect(types.length).toBeGreaterThanOrEqual(1)
+    const mock = types.find((t) => t.id === 'mock')!
+    expect(mock.displayName).toBe('Mock Work Source')
+    expect(mock.description).toBeTruthy()
+    expect(mock.icon).toBe('mock')
+    expect(mock.configSchema).toBeDefined()
+    expect(mock.secretSchema).toBeDefined()
+    expect(mock.capabilities.workItems.list).toBe(true)
+  })
+})
+
+describe('VS-103A — multiple instances of same adapter', () => {
+  let dir: string
+  beforeEach(() => { dir = tmpDir(); initProject(dir) })
+  afterEach(() => fs.rmSync(dir, { recursive: true, force: true }))
+
+  it('can create multiple integrations using the same adapter', async () => {
+    const core = await import('../src/core.js')
+    core.createIntegration(dir, { id: 'mock-a', adapter: 'mock', config: { simulate: 'available' } })
+    core.createIntegration(dir, { id: 'mock-b', adapter: 'mock', config: { simulate: 'unauthorized' } })
+    const list = core.listIntegrations(dir)
+    const a = list.find((i) => i.id === 'mock-a')
+    const b = list.find((i) => i.id === 'mock-b')
+    expect(a).toBeDefined()
+    expect(b).toBeDefined()
+    expect(a!.adapter).toBe('mock')
+    expect(b!.adapter).toBe('mock')
+  })
+
+  it('multiple instances work independently', async () => {
+    const core = await import('../src/core.js')
+    core.createIntegration(dir, { id: 'mock-one', adapter: 'mock', config: { simulate: 'available' } })
+    core.createIntegration(dir, { id: 'mock-two', adapter: 'mock', config: { simulate: 'unauthorized' } })
+    const r1 = await core.verifyIntegration(dir, 'mock-one', {})
+    const r2 = await core.verifyIntegration(dir, 'mock-two', {})
+    expect(r1.status).toBe('available')
+    expect(r2.status).toBe('unauthorized')
+  })
+})
+
+describe('VS-103A — adapter unavailable handling', () => {
+  let dir: string
+  beforeEach(() => { dir = tmpDir() })
+  afterEach(() => fs.rmSync(dir, { recursive: true, force: true }))
+
+  it('unavailable adapter has null metadata in summary', async () => {
+    write(dir, '.kaddo/config.yml', ['project:', '  name: p', '  state: pre-ai', '  structure: monorepo', 'team:', '  size: small'].join('\n'))
+    write(dir, '.kaddo/integrations.yml', [
+      'integrations:',
+      '  - id: unknown-adapter-int',
+      '    adapter: nonexistent',
+      '    enabled: true',
+      '    config:',
+      '      key: value',
+    ].join('\n'))
+    const core = await import('../src/core.js')
+    const list = core.listIntegrations(dir)
+    const item = list.find((i) => i.id === 'unknown-adapter-int')!
+    expect(item.metadata).toBeNull()
+    expect(item.capabilities).toBeNull()
+    expect(item.status).toBe('invalid-config')
+    expect(item.adapter).toBe('nonexistent')
+  })
+})

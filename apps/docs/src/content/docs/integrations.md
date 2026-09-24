@@ -282,6 +282,61 @@ Each adapter declares which filter fields it supports via `filterCapabilities` i
 uses this to render only the filter controls the adapter can actually handle — unsupported filters
 are not shown, not silently ignored.
 
+## Provider-Driven Integration Setup
+
+VS-103A introduces a **provider-driven** creation flow: instead of manually filling adapter-specific
+fields, Admin generates the entire form from adapter metadata — no hardcoded provider logic.
+
+### Provider Catalog
+
+The creation flow starts with a **visual grid** of available providers, sourced directly from the
+Integration Registry. Each tile shows the adapter's icon, display name, description and capabilities.
+Selecting a provider moves to the configuration step.
+
+Adding a new adapter to the registry automatically makes it appear in the catalog — no Admin changes
+needed.
+
+### Schema-based forms
+
+Each adapter declares a `configSchema` and `secretSchema` in its metadata. Admin renders a dynamic
+form from these schemas at runtime. Supported field types:
+
+| Type | Renders as |
+|---|---|
+| `string` | Text input |
+| `url` | URL input (validated) |
+| `password` | Masked input |
+| `number` | Number input |
+| `boolean` | Checkbox |
+| `select` | Dropdown from `options` |
+| `multi-select` | Toggle buttons from `options` |
+
+Each field carries `required`, `label`, `description`, `placeholder`, `options` and `defaultValue`.
+Validation runs against the schema before saving — required-field checks, URL format, type coercion,
+option membership.
+
+### Verify on create
+
+The creation flow includes a **Verify & Save** step: after filling configuration and secrets, the
+integration is created, secrets are set, and `verifyConnection` runs automatically. If verification
+fails, the integration is removed and the error is shown — so no broken integrations linger.
+
+### Provider icons
+
+Adapters declare an `icon` field in metadata. Admin maps this to a visual icon via `ProviderIcon` —
+a simple emoji-based mapping that is extensible without external assets.
+
+### Multiple instances
+
+The same adapter can back multiple integrations — each with independent configuration, secrets and
+connection status. For example, two separate GitHub integrations pointing at different repositories.
+
+### Adapter unavailable
+
+If an adapter is no longer registered but its configuration persists, Admin shows the integration
+with an "Adapter unavailable" label and hides the Verify button. Configuration is preserved — the
+adapter can be re-registered later without data loss.
+
 ## Out of scope (built on this foundation later)
 
 Production provider adapters, bidirectional sync, polling, webhooks, status/comment/attachment sync,

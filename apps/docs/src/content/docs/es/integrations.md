@@ -292,6 +292,64 @@ Cada adapter declara qué campos de filtro soporta vía `filterCapabilities` en 
 usa esto para renderizar solo los controles de filtro que el adapter puede manejar — los filtros no
 soportados no se muestran, no se ignoran silenciosamente.
 
+## Configuración de Integraciones Dirigida por Proveedor
+
+VS-103A introduce un flujo de creación **dirigido por el proveedor**: en lugar de llenar manualmente
+campos específicos del adapter, Admin genera todo el formulario a partir de los metadatos del
+adapter — sin lógica hardcoded por proveedor.
+
+### Catálogo de Proveedores
+
+El flujo de creación comienza con una **grilla visual** de proveedores disponibles, obtenida
+directamente del Integration Registry. Cada tarjeta muestra el ícono, nombre, descripción y
+capabilities del adapter. Al seleccionar un proveedor se pasa al paso de configuración.
+
+Agregar un nuevo adapter al registry lo hace aparecer automáticamente en el catálogo — sin cambios
+en Admin.
+
+### Formularios basados en esquema
+
+Cada adapter declara un `configSchema` y `secretSchema` en sus metadatos. Admin renderiza un
+formulario dinámico a partir de estos esquemas en tiempo de ejecución. Tipos de campo soportados:
+
+| Tipo | Se renderiza como |
+|---|---|
+| `string` | Input de texto |
+| `url` | Input de URL (con validación) |
+| `password` | Input enmascarado |
+| `number` | Input numérico |
+| `boolean` | Checkbox |
+| `select` | Dropdown con `options` |
+| `multi-select` | Botones de toggle con `options` |
+
+Cada campo lleva `required`, `label`, `description`, `placeholder`, `options` y `defaultValue`.
+La validación se ejecuta contra el esquema antes de guardar — verificación de campos requeridos,
+formato de URL, coerción de tipos, pertenencia a opciones.
+
+### Verificar al crear
+
+El flujo de creación incluye un paso **Verificar y Guardar**: tras llenar la configuración y los
+secretos, la integración se crea, se configuran los secretos y `verifyConnection` se ejecuta
+automáticamente. Si la verificación falla, la integración se elimina y se muestra el error — así
+no quedan integraciones rotas.
+
+### Íconos de proveedor
+
+Los adapters declaran un campo `icon` en sus metadatos. Admin lo mapea a un ícono visual vía
+`ProviderIcon` — un mapeo simple basado en emojis que es extensible sin assets externos.
+
+### Múltiples instancias
+
+El mismo adapter puede respaldar múltiples integraciones — cada una con configuración, secretos y
+estado de conexión independientes. Por ejemplo, dos integraciones GitHub apuntando a distintos
+repositorios.
+
+### Adapter no disponible
+
+Si un adapter ya no está registrado pero su configuración persiste, Admin muestra la integración
+con una etiqueta "Adapter no disponible" y oculta el botón Verificar. La configuración se preserva
+— el adapter puede re-registrarse después sin perder datos.
+
 ## Fuera de alcance (se construye sobre esta foundation)
 
 Los adapters de proveedores en producción, la sincronización bidireccional, el polling, los webhooks,

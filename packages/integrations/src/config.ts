@@ -249,6 +249,62 @@ export function integrationConfigFromInput(input: IntegrationInput): Integration
   }
 }
 
+// --- Schema validation (VS-103A) ---------------------------------------------
+
+export type SchemaValidationFinding = { field: string; message: string }
+
+/**
+ * Validate a config object against an adapter's config or secret schema. Returns an array of
+ * findings for required-but-missing fields and type mismatches. An empty array means valid.
+ */
+export function validateConfigAgainstSchema(
+  config: Record<string, unknown>,
+  schema: Record<string, import('./contract.js').ConfigFieldSchema>,
+): SchemaValidationFinding[] {
+  const findings: SchemaValidationFinding[] = []
+  for (const [key, field] of Object.entries(schema)) {
+    const value = config[key]
+    const missing = value === undefined || value === null || (typeof value === 'string' && !value.trim())
+    if (field.required && missing) {
+      findings.push({ field: key, message: `${field.label} is required.` })
+      continue
+    }
+    if (missing) continue
+    switch (field.type) {
+      case 'url':
+        if (typeof value !== 'string' || !/^https?:\/\/.+/.test(value)) {
+          findings.push({ field: key, message: `${field.label} must be a valid URL.` })
+        }
+        break
+      case 'number':
+        if (typeof value !== 'number' || Number.isNaN(value)) {
+          findings.push({ field: key, message: `${field.label} must be a number.` })
+        }
+        break
+      case 'boolean':
+        if (typeof value !== 'boolean') {
+          findings.push({ field: key, message: `${field.label} must be a boolean.` })
+        }
+        break
+      case 'select':
+        if (field.options && !field.options.some((o) => o.value === value)) {
+          findings.push({ field: key, message: `${field.label} must be one of the available options.` })
+        }
+        break
+      case 'multi-select':
+        if (!Array.isArray(value)) {
+          findings.push({ field: key, message: `${field.label} must be an array.` })
+        } else if (field.options) {
+          const valid = new Set(field.options.map((o) => o.value))
+          const invalid = (value as unknown[]).filter((v) => !valid.has(String(v)))
+          if (invalid.length) findings.push({ field: key, message: `${field.label} contains invalid options.` })
+        }
+        break
+    }
+  }
+  return findings
+}
+
 /** Merge two filter sets — the overlay fields take priority when present. */
 export function mergeFilters(base?: ExternalWorkItemFilters, overlay?: ExternalWorkItemFilters): ExternalWorkItemFilters {
   if (!base && !overlay) return {}

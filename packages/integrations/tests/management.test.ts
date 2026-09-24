@@ -198,7 +198,7 @@ describe('VS-103 — Integration Management', () => {
       expect(mock.metadata.configSchema!.simulate.type).toBe('select')
       expect(mock.metadata.secretSchema).toBeDefined()
       expect(mock.metadata.secretSchema!.token).toBeDefined()
-      expect(mock.metadata.secretSchema!.token.type).toBe('string')
+      expect(mock.metadata.secretSchema!.token.type).toBe('password')
     })
   })
 

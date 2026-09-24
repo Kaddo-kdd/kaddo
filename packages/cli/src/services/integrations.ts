@@ -47,7 +47,9 @@ import {
   type ImportPreview,
   type IntegrationStatus,
   type IntegrationConfigFinding,
+  type SchemaValidationFinding,
   mergeFilters,
+  validateConfigAgainstSchema,
 } from '../../../integrations/src/index.js'
 
 export const INTEGRATIONS_FILE = '.kaddo/integrations.yml'
@@ -273,9 +275,17 @@ function validateId(id: string): void {
 export function createIntegration(dir: string, input: IntegrationInput): IntegrationSummary {
   validateId(input.id)
   if (!input.adapter || !input.adapter.trim()) throw new IntegrationServiceError('INTEGRATION_INVALID_INPUT', 'An adapter type is required.')
+  const adapter = registry.get(input.adapter)
+  if (!adapter) throw new IntegrationServiceError('ADAPTER_NOT_FOUND', `Unknown integration adapter "${input.adapter}".`)
   const { integrations } = loadIntegrations(dir)
   if (integrations.find((i) => i.id === input.id)) {
     throw new IntegrationServiceError('INTEGRATION_ALREADY_EXISTS', `An integration with id "${input.id}" already exists.`)
+  }
+  if (adapter.metadata.configSchema && input.config) {
+    const findings = validateConfigAgainstSchema(input.config, adapter.metadata.configSchema)
+    if (findings.length) {
+      throw new IntegrationServiceError('INTEGRATION_INVALID_INPUT', findings.map((f) => f.message).join(' '))
+    }
   }
   const newConfig = integrationConfigFromInput(input)
   integrations.push(newConfig)
@@ -295,8 +305,17 @@ export function updateIntegration(dir: string, id: string, input: UpdateIntegrat
   const idx = integrations.findIndex((i) => i.id === id)
   if (idx < 0) throw new IntegrationServiceError('INTEGRATION_NOT_CONFIGURED', `No integration "${id}" is configured.`)
   const existing = integrations[idx]
+  if (input.config !== undefined) {
+    const adapter = registry.get(existing.adapter)
+    if (adapter?.metadata.configSchema) {
+      const findings = validateConfigAgainstSchema(input.config, adapter.metadata.configSchema)
+      if (findings.length) {
+        throw new IntegrationServiceError('INTEGRATION_INVALID_INPUT', findings.map((f) => f.message).join(' '))
+      }
+    }
+    existing.config = input.config
+  }
   if (input.enabled !== undefined) existing.enabled = input.enabled
-  if (input.config !== undefined) existing.config = input.config
   if (input.secrets !== undefined) existing.secrets = input.secrets
   if (input.timeoutMs !== undefined) existing.timeoutMs = input.timeoutMs
   integrations[idx] = existing

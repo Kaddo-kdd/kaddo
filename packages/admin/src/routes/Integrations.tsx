@@ -4,6 +4,19 @@ import { useRouter } from '@tanstack/react-router'
 import { api } from '../lib/api'
 import type { IntegrationSummary, AdapterTypeInfo, ExternalWorkItem, ImportPreviewResult, ConfigFieldSchema } from '../lib/api'
 
+// --- Provider Icon -----------------------------------------------------------
+
+const PROVIDER_ICONS: Record<string, string> = {
+  mock: '🧪', jira: '🟦', github: '🐙', 'azure-devops': '🔷', linear: '🟣', gitlab: '🦊',
+}
+
+function ProviderIcon({ icon, size = 32 }: { icon?: string; size?: number }) {
+  const emoji = icon ? PROVIDER_ICONS[icon] ?? '🔌' : '🔌'
+  return <span style={{ fontSize: size, lineHeight: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: size + 8, height: size + 8 }}>{emoji}</span>
+}
+
+// --- Shared styles -----------------------------------------------------------
+
 const STATUS_TONE: Record<string, string> = {
   available: 'var(--success)', configured: 'var(--foreground-muted)', unauthorized: 'var(--danger)',
   unavailable: 'var(--warning)', 'invalid-config': 'var(--danger)', disabled: 'var(--foreground-muted)',
@@ -27,6 +40,8 @@ const inputStyle: React.CSSProperties = { padding: '8px 12px', border: '1px soli
 const labelStyle: React.CSSProperties = { fontSize: 13, fontWeight: 600, color: 'var(--foreground)', marginBottom: 4, display: 'block' }
 const cardStyle: React.CSSProperties = { border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: 16, background: 'var(--surface)' }
 
+// --- Dynamic Field -----------------------------------------------------------
+
 function DynamicField({ name, schema, value, onChange }: { name: string; schema: ConfigFieldSchema; value: unknown; onChange: (v: unknown) => void }) {
   if (schema.type === 'select' && schema.options) {
     return (
@@ -40,6 +55,30 @@ function DynamicField({ name, schema, value, onChange }: { name: string; schema:
       </div>
     )
   }
+  if (schema.type === 'multi-select' && schema.options) {
+    const selected = Array.isArray(value) ? (value as string[]) : []
+    return (
+      <div style={{ marginBottom: 12 }}>
+        <label style={labelStyle}>{schema.label}{schema.required && ' *'}</label>
+        {schema.description && <div style={{ fontSize: 12, color: 'var(--foreground-muted)', marginBottom: 4 }}>{schema.description}</div>}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+          {schema.options.map((o) => {
+            const on = selected.includes(o.value)
+            return (
+              <button
+                key={o.value}
+                type="button"
+                onClick={() => onChange(on ? selected.filter((v) => v !== o.value) : [...selected, o.value])}
+                style={{ ...btnStyle, background: on ? 'var(--primary)' : 'var(--surface)', color: on ? 'var(--primary-foreground, #fff)' : 'var(--foreground)', fontWeight: on ? 600 : 400 }}
+              >
+                {o.label}
+              </button>
+            )
+          })}
+        </div>
+      </div>
+    )
+  }
   if (schema.type === 'boolean') {
     return (
       <div style={{ marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -49,12 +88,22 @@ function DynamicField({ name, schema, value, onChange }: { name: string; schema:
       </div>
     )
   }
+  if (schema.type === 'password') {
+    return (
+      <div style={{ marginBottom: 12 }}>
+        <label style={labelStyle}>{schema.label}{schema.required && ' *'}</label>
+        {schema.description && <div style={{ fontSize: 12, color: 'var(--foreground-muted)', marginBottom: 4 }}>{schema.description}</div>}
+        <input type="password" value={String(value ?? '')} placeholder={schema.placeholder} onChange={(e) => onChange(e.target.value)} style={inputStyle} />
+      </div>
+    )
+  }
+  const inputType = schema.type === 'url' ? 'url' : schema.type === 'number' ? 'number' : 'text'
   return (
     <div style={{ marginBottom: 12 }}>
       <label style={labelStyle}>{schema.label}{schema.required && ' *'}</label>
       {schema.description && <div style={{ fontSize: 12, color: 'var(--foreground-muted)', marginBottom: 4 }}>{schema.description}</div>}
       <input
-        type={schema.type === 'number' ? 'number' : 'text'}
+        type={inputType}
         value={String(value ?? '')}
         placeholder={schema.placeholder}
         onChange={(e) => onChange(schema.type === 'number' ? Number(e.target.value) : e.target.value)}
@@ -63,6 +112,8 @@ function DynamicField({ name, schema, value, onChange }: { name: string; schema:
     </div>
   )
 }
+
+// --- Secret Field (edit mode) ------------------------------------------------
 
 function SecretField({ schema, configured, onSave }: { name: string; schema: ConfigFieldSchema; configured: boolean; onSave: (v: string) => void }) {
   const [editing, setEditing] = useState(false)
@@ -95,7 +146,51 @@ function SecretField({ schema, configured, onSave }: { name: string; schema: Con
   )
 }
 
-// --- Create Integration Panel ------------------------------------------------
+// --- Provider Catalog (VS-103A) ----------------------------------------------
+
+function ProviderCatalog({ types, onSelect, onCancel }: { types: AdapterTypeInfo[]; onSelect: (t: AdapterTypeInfo) => void; onCancel: () => void }) {
+  return (
+    <div style={{ ...cardStyle, marginBottom: 16 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        <h3 style={{ fontSize: 15, fontWeight: 700, margin: 0 }}>Add Integration</h3>
+        <button onClick={onCancel} style={{ ...btnStyle, border: 'none', background: 'none', color: 'var(--foreground-muted)' }}>✕</button>
+      </div>
+      <p style={{ fontSize: 13, color: 'var(--foreground-muted)', margin: '0 0 16px' }}>Choose a provider from the Integration Registry:</p>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12 }}>
+        {types.map((t) => (
+          <button
+            key={t.id}
+            onClick={() => onSelect(t)}
+            style={{
+              ...cardStyle,
+              cursor: 'pointer',
+              textAlign: 'center' as const,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: 8,
+              padding: '20px 16px',
+              transition: 'border-color 0.15s',
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'var(--primary)')}
+            onMouseLeave={(e) => (e.currentTarget.style.borderColor = 'var(--border)')}
+          >
+            <ProviderIcon icon={t.icon} size={36} />
+            <div style={{ fontWeight: 700, fontSize: 15 }}>{t.displayName}</div>
+            {t.description && <div style={{ fontSize: 12, color: 'var(--foreground-muted)', lineHeight: 1.4 }}>{t.description}</div>}
+            <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+              <Cap on={t.capabilities.workItems.read} label="Read" />
+              <Cap on={t.capabilities.workItems.list} label="List" />
+              <Cap on={t.capabilities.workItems.import} label="Import" />
+            </div>
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// --- Create Integration Panel (VS-103A) --------------------------------------
 
 function CreateIntegrationPanel({ onCreated, onCancel }: { onCreated: () => void; onCancel: () => void }) {
   const queryClient = useQueryClient()
@@ -104,6 +199,8 @@ function CreateIntegrationPanel({ onCreated, onCancel }: { onCreated: () => void
   const [id, setId] = useState('')
   const [config, setConfig] = useState<Record<string, unknown>>({})
   const [secrets, setSecrets] = useState<Record<string, string>>({})
+  const [verifyResult, setVerifyResult] = useState<{ status: string; message?: string } | null>(null)
+  const [verifying, setVerifying] = useState(false)
 
   const createMut = useMutation({
     mutationFn: () => api.createIntegration({ id: id.trim(), adapter: selectedType!.id, config }),
@@ -116,41 +213,47 @@ function CreateIntegrationPanel({ onCreated, onCancel }: { onCreated: () => void
     },
   })
 
+  if (!types) return <div style={{ ...cardStyle, marginBottom: 16 }}><p style={{ fontSize: 13, color: 'var(--foreground-muted)' }}>Loading providers…</p></div>
+
   if (!selectedType) {
-    return (
-      <div style={{ ...cardStyle, marginBottom: 16 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-          <h3 style={{ fontSize: 15, fontWeight: 700, margin: 0 }}>Add Integration</h3>
-          <button onClick={onCancel} style={{ ...btnStyle, border: 'none', background: 'none', color: 'var(--foreground-muted)' }}>✕</button>
-        </div>
-        <p style={{ fontSize: 13, color: 'var(--foreground-muted)', margin: '0 0 12px' }}>Choose a provider from the Integration Registry:</p>
-        {!types && <p style={{ fontSize: 13, color: 'var(--foreground-muted)' }}>Loading…</p>}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {types?.map((t) => (
-            <button key={t.id} onClick={() => { setSelectedType(t); setId('') }} style={{ ...cardStyle, cursor: 'pointer', textAlign: 'left' as const }}>
-              <div style={{ fontWeight: 600, fontSize: 14 }}>{t.displayName}</div>
-              {t.description && <div style={{ fontSize: 12, color: 'var(--foreground-muted)', marginTop: 2 }}>{t.description}</div>}
-              <div style={{ display: 'flex', gap: 8, marginTop: 6 }}>
-                <Cap on={t.capabilities.workItems.read} label="Read" />
-                <Cap on={t.capabilities.workItems.list} label="List" />
-                <Cap on={t.capabilities.workItems.import} label="Import" />
-              </div>
-            </button>
-          ))}
-        </div>
-      </div>
-    )
+    return <ProviderCatalog types={types} onSelect={(t) => { setSelectedType(t); setId(''); setConfig({}); setSecrets({}); setVerifyResult(null) }} onCancel={onCancel} />
   }
 
   const configSchema = selectedType.configSchema
   const secretSchema = selectedType.secretSchema
   const canSave = id.trim() && /^[a-z0-9][a-z0-9._-]*$/i.test(id.trim())
 
+  const handleVerify = async () => {
+    setVerifying(true)
+    setVerifyResult(null)
+    try {
+      const created = await api.createIntegration({ id: id.trim(), adapter: selectedType.id, config })
+      for (const [name, value] of Object.entries(secrets)) {
+        if (value.trim()) await api.setIntegrationSecret(created.id, name, value)
+      }
+      const res = await api.getIntegrationStatus(created.id)
+      setVerifyResult({ status: res.status, message: res.message })
+      queryClient.invalidateQueries({ queryKey: ['integrations'] })
+      if (res.status === 'available') {
+        onCreated()
+      } else {
+        await api.deleteIntegration(created.id)
+      }
+    } catch (err) {
+      setVerifyResult({ status: 'error', message: (err as Error).message })
+    } finally {
+      setVerifying(false)
+    }
+  }
+
   return (
     <div style={{ ...cardStyle, marginBottom: 16 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-        <h3 style={{ fontSize: 15, fontWeight: 700, margin: 0 }}>{selectedType.displayName} Integration</h3>
-        <button onClick={() => setSelectedType(null)} style={{ ...btnStyle, border: 'none', background: 'none', color: 'var(--foreground-muted)' }}>✕</button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <ProviderIcon icon={selectedType.icon} size={24} />
+          <h3 style={{ fontSize: 15, fontWeight: 700, margin: 0 }}>{selectedType.displayName} Integration</h3>
+        </div>
+        <button onClick={() => setSelectedType(null)} style={{ ...btnStyle, border: 'none', background: 'none', color: 'var(--foreground-muted)', fontSize: 12 }}>← Back</button>
       </div>
 
       <div style={{ marginBottom: 12 }}>
@@ -181,9 +284,21 @@ function CreateIntegrationPanel({ onCreated, onCancel }: { onCreated: () => void
         </>
       )}
 
+      {verifyResult && (
+        <div style={{
+          marginTop: 8, marginBottom: 8, fontSize: 13, padding: '8px 12px', borderRadius: 'var(--radius)',
+          background: verifyResult.status === 'available' ? 'var(--success-bg, rgba(0,180,0,0.08))' : 'var(--danger-bg, rgba(200,0,0,0.08))',
+        }}>
+          Connection: <strong>{verifyResult.status}</strong>{verifyResult.message ? ` — ${verifyResult.message}` : ''}
+        </div>
+      )}
+
       <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
         <button disabled={!canSave || createMut.isPending} onClick={() => createMut.mutate()} style={primaryBtnStyle}>
-          {createMut.isPending ? 'Creating…' : 'Save Integration'}
+          {createMut.isPending ? 'Creating…' : 'Save'}
+        </button>
+        <button disabled={!canSave || verifying} onClick={handleVerify} style={btnStyle}>
+          {verifying ? 'Verifying…' : 'Verify & Save'}
         </button>
         <button onClick={onCancel} style={btnStyle}>Cancel</button>
       </div>
@@ -198,6 +313,7 @@ function EditIntegrationPanel({ integration, onDone }: { integration: Integratio
   const queryClient = useQueryClient()
   const configSchema = integration.metadata?.configSchema ?? {}
   const secretSchema = integration.metadata?.secretSchema ?? {}
+  const adapterUnavailable = !integration.metadata
 
   const { data: detail } = useQuery({ queryKey: ['integration-detail', integration.id], queryFn: () => api.getIntegrationDetail(integration.id) })
   const { data: secretStatus, refetch: refetchSecrets } = useQuery({ queryKey: ['integration-secrets', integration.id], queryFn: () => api.getIntegrationSecretStatus(integration.id) })
@@ -205,7 +321,6 @@ function EditIntegrationPanel({ integration, onDone }: { integration: Integratio
   const [config, setConfig] = useState<Record<string, unknown>>(() => ({ ...((detail as IntegrationSummary | undefined) ?? integration) }))
   const [configDirty, setConfigDirty] = useState(false)
 
-  // Re-init config when detail loads
   const detailConfig = (detail as unknown as { config?: Record<string, unknown> })?.config
   useState(() => {
     if (detailConfig && !configDirty) setConfig(detailConfig)
@@ -231,9 +346,18 @@ function EditIntegrationPanel({ integration, onDone }: { integration: Integratio
   return (
     <div style={{ ...cardStyle, marginBottom: 16 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-        <h3 style={{ fontSize: 15, fontWeight: 700, margin: 0 }}>Configure: {integration.displayName}</h3>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <ProviderIcon icon={integration.metadata?.icon} size={20} />
+          <h3 style={{ fontSize: 15, fontWeight: 700, margin: 0 }}>Configure: {integration.displayName}</h3>
+        </div>
         <button onClick={onDone} style={{ ...btnStyle, border: 'none', background: 'none', color: 'var(--foreground-muted)' }}>✕</button>
       </div>
+
+      {adapterUnavailable && (
+        <div style={{ padding: '10px 14px', borderRadius: 'var(--radius)', background: 'var(--danger-bg, rgba(200,0,0,0.08))', fontSize: 13, color: 'var(--danger)', marginBottom: 12 }}>
+          This integration's adapter (<span className="font-mono">{integration.adapter}</span>) is not currently available. Configuration is preserved but the integration cannot be used until its adapter is registered.
+        </div>
+      )}
 
       {Object.keys(configSchema).length > 0 && (
         <>
@@ -331,9 +455,10 @@ function IntegrationCard({ integration, onEdit }: { integration: IntegrationSumm
   const [open, setOpen] = useState(false)
   const [importing, setImporting] = useState<ExternalWorkItem | null>(null)
   const [confirmDelete, setConfirmDelete] = useState(false)
-  const canBrowse = integration.status !== 'disabled' && integration.status !== 'invalid-config' && integration.capabilities?.workItems.list
+  const adapterAvailable = integration.metadata !== null
+  const canBrowse = adapterAvailable && integration.status !== 'disabled' && integration.status !== 'invalid-config' && integration.capabilities?.workItems.list
 
-  const status = useQuery({ queryKey: ['integration-status', integration.id], queryFn: () => api.getIntegrationStatus(integration.id), enabled: canBrowse, retry: false })
+  const status = useQuery({ queryKey: ['integration-status', integration.id], queryFn: () => api.getIntegrationStatus(integration.id), enabled: Boolean(canBrowse), retry: false })
   const items = useQuery({ queryKey: ['external-items', integration.id], queryFn: () => api.getExternalWorkItems(integration.id), enabled: open && Boolean(canBrowse), retry: false })
 
   const toggleMut = useMutation({
@@ -357,24 +482,30 @@ function IntegrationCard({ integration, onEdit }: { integration: IntegrationSumm
   return (
     <div style={{ ...cardStyle, marginBottom: 12 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' }}>
-        <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 15, fontWeight: 700 }}>{integration.displayName} <span className="font-mono" style={{ fontSize: 12, color: 'var(--foreground-muted)', fontWeight: 400 }}>· {integration.id}</span></div>
-          <div style={{ marginTop: 4, display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
-            <StatusBadge status={status.data?.status ?? integration.status} />
-            {integration.capabilities && (
-              <span style={{ display: 'inline-flex', gap: 10 }}>
-                <Cap on={integration.capabilities.workItems.read} label="Read" />
-                <Cap on={integration.capabilities.workItems.list} label="List" />
-                <Cap on={integration.capabilities.workItems.import} label="Import" />
-              </span>
-            )}
+        <div style={{ display: 'flex', gap: 12, flex: 1 }}>
+          <ProviderIcon icon={integration.metadata?.icon} size={28} />
+          <div>
+            <div style={{ fontSize: 15, fontWeight: 700 }}>{integration.displayName} <span className="font-mono" style={{ fontSize: 12, color: 'var(--foreground-muted)', fontWeight: 400 }}>· {integration.id}</span></div>
+            <div style={{ marginTop: 4, display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+              <StatusBadge status={status.data?.status ?? integration.status} />
+              {!adapterAvailable && <span style={{ fontSize: 12, color: 'var(--danger)' }}>Adapter unavailable</span>}
+              {integration.capabilities && (
+                <span style={{ display: 'inline-flex', gap: 10 }}>
+                  <Cap on={integration.capabilities.workItems.read} label="Read" />
+                  <Cap on={integration.capabilities.workItems.list} label="List" />
+                  <Cap on={integration.capabilities.workItems.import} label="Import" />
+                </span>
+              )}
+            </div>
           </div>
         </div>
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
           <button onClick={onEdit} style={btnStyle}>Configure</button>
-          <button onClick={() => verifyMut.mutate()} disabled={verifyMut.isPending} style={btnStyle}>
-            {verifyMut.isPending ? 'Verifying…' : 'Verify'}
-          </button>
+          {adapterAvailable && (
+            <button onClick={() => verifyMut.mutate()} disabled={verifyMut.isPending} style={btnStyle}>
+              {verifyMut.isPending ? 'Verifying…' : 'Verify'}
+            </button>
+          )}
           <button onClick={() => toggleMut.mutate()} disabled={toggleMut.isPending} style={btnStyle}>
             {toggleMut.isPending ? '…' : integration.enabled ? 'Disable' : 'Enable'}
           </button>

@@ -132,6 +132,7 @@ export {
 } from './services/integrations.js'
 export {
   IntegrationError,
+  validateConfigAgainstSchema,
   type IntegrationErrorCode,
   type ExternalWorkItem,
   type ExternalWorkItemPage,
@@ -144,5 +145,6 @@ export {
   type IntegrationInput,
   type ConfigFieldSchema,
   type ConnectionResult,
+  type SchemaValidationFinding,
 } from '../../integrations/src/index.js'
 export { exists, readFile, join, cwd } from './utils/fs.js'

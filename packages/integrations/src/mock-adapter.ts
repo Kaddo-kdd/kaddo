@@ -182,7 +182,7 @@ export function createMockAdapter(opts: { items?: ExternalWorkItem[]; simulate?:
       },
       secretSchema: {
         token: {
-          type: 'string',
+          type: 'password',
           required: false,
           label: 'API Token',
           description: 'Optional token for testing secret handling (not used by the mock adapter).',

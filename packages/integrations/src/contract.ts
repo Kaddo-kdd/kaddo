@@ -10,7 +10,7 @@
 
 /** A field definition for dynamic form generation. Admin renders forms from these — no hardcoded provider forms. */
 export type ConfigFieldSchema = {
-  type: 'string' | 'number' | 'boolean' | 'select'
+  type: 'string' | 'url' | 'password' | 'number' | 'boolean' | 'select' | 'multi-select'
   required: boolean
   label: string
   description?: string
