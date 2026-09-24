@@ -3,6 +3,10 @@ title: Kiro Adapter (AGENTS.md)
 description: Generate an AGENTS.md so Kiro understands how to work inside a Kaddo-managed repository — native instructions, no manual context pasting.
 ---
 
+For dynamic Power activation, portable Skills and bundled MCP discovery, see
+[Kaddo Power for Kiro](kaddo-power/). The Power complements this generated `AGENTS.md` adapter;
+neither installs the other.
+
 `kaddo adapters install kiro` generates an **`AGENTS.md`** at the project root so
 [Kiro](https://kiro.dev) gets native instructions for working in a Kaddo repo — without you pasting
 the context pack, prompts or rules into the chat.

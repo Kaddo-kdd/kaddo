@@ -164,6 +164,7 @@ export default defineConfig({
             { label: 'Multirepo modules', translations: { es: 'Módulos multirepo' }, slug: 'modules/multirepo' },
             { label: 'Knowledge Capsules', translations: { es: 'Knowledge Capsules' }, slug: 'knowledge-capsules' },
             { label: 'Knowledge Graph Export', translations: { es: 'Exportar el grafo de conocimiento' }, slug: 'knowledge-graph-export' },
+            { label: 'Kaddo Power for Kiro', translations: { es: 'Kaddo Power para Kiro' }, slug: 'kaddo-power' },
             { label: 'MCP Server', translations: { es: 'Servidor MCP' }, slug: 'mcp-server' },
             { label: 'Integrations', translations: { es: 'Integraciones' }, slug: 'integrations' },
             { label: 'Impact Report', translations: { es: 'Reporte de impacto' }, slug: 'impact-report' },
