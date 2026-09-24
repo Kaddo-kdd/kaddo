@@ -235,6 +235,16 @@ export const WorkItemDetailSchema = WorkItemListItemSchema.extend({
   graphRevision: z.string().nullable(),
   graphCoverage: z.enum(['unavailable', 'partial', 'available']),
   source: z.object({ type: z.string(), id: z.string().optional(), inferred: z.boolean() }).passthrough(),
+  originalSnapshot: z.object({
+    title: z.string(),
+    description: z.string().optional(),
+    type: z.string().optional(),
+    status: z.string().optional(),
+    labels: z.array(z.string()).optional(),
+    assignee: z.string().optional(),
+    created_at: z.string().optional(),
+    updated_at: z.string().optional(),
+  }).nullable(),
   path: z.string(),
   refinement: z.object({
     status: z.enum(['needs-refinement', 'refined']),

@@ -419,11 +419,23 @@ export type WorkItemSourceInput = {
   id?: string
   url?: string
   imported_at?: string
+  external_updated_at?: string
+}
+
+export type ExternalSnapshot = {
+  title: string
+  description?: string
+  type?: string
+  status?: string
+  labels?: string[]
+  assignee?: string
+  created_at?: string
+  updated_at?: string
 }
 
 export function createWorkItem(
   dir: string,
-  opts: { intent: string; type: string; answers?: Record<string, string>; source?: WorkItemSourceInput },
+  opts: { intent: string; type: string; answers?: Record<string, string>; source?: WorkItemSourceInput; originalSnapshot?: ExternalSnapshot },
 ): { id: string; path: string; revision: string } {
   const intent = opts.intent.trim()
   if (!intent) throw new WorkItemWriteError('INVALID_INPUT', 'An intent or summary is required.')
@@ -448,6 +460,7 @@ export function createWorkItem(
     affected_modules: [],
     summary: intent,
   }
+  if (opts.originalSnapshot) data.original_snapshot = opts.originalSnapshot
   const answers = opts.answers ?? {}
   const hasAnswers = Object.values(answers).some((v) => v?.trim())
   const body = hasAnswers

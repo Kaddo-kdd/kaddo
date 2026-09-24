@@ -337,6 +337,66 @@ If an adapter is no longer registered but its configuration persists, Admin show
 with an "Adapter unavailable" label and hides the Verify button. Configuration is preserved — the
 adapter can be re-registered later without data loss.
 
+## External Work Item Import & Refinement Handoff
+
+VS-105 adds a human-initiated **import** action that converts a discovered External Work Item into a
+native Kaddo Draft Work Item — preserving full provenance and an original snapshot of the external
+state at import time.
+
+### Import pipeline
+
+1. User selects an External Item in the discovery view and chooses a Kaddo Work Item type.
+2. Kaddo re-reads the item from the adapter for freshness.
+3. Duplicate check runs against `integrationId#externalId` — if already imported, the existing Work
+   Item is returned (idempotent import, no duplicate created).
+4. A Draft Work Item is created through the standard `createWorkItem` Core boundary.
+
+The pipeline is **provider-neutral**: once an item is normalized to `ExternalWorkItem`, Core has no
+knowledge of the original provider.
+
+### Original snapshot
+
+At import time, the external item's title, description, type, status, labels, assignee and timestamps
+are captured as an `original_snapshot` in the Work Item frontmatter. This snapshot is immutable — it
+records what the external item looked like when it was imported, regardless of later changes on either
+side.
+
+### Provenance
+
+Each imported Work Item carries full traceability in its `source` metadata:
+
+| Field | Value |
+|---|---|
+| `type` | `external` |
+| `provider` | Adapter id (e.g. `mock`, `github`) |
+| `integration` | Kaddo integration id |
+| `id` | External item id |
+| `url` | Link back to the external item |
+| `imported_at` | ISO timestamp of import |
+| `external_updated_at` | External item's last update at import time |
+
+### Imported badge in discovery
+
+After importing an item, the discovery view shows an **Imported** badge with a link to the Kaddo Work
+Item. The Import button is hidden for already-imported items.
+
+### Rich provenance in Work Item detail
+
+The Work Item detail view shows an **External provenance** section (provider, external ID,
+integration, timestamps, and an "Open in provider" link) and an **Original snapshot** section
+(title, description, type, status, labels, assignee).
+
+### Refinement handoff
+
+Imported Work Items enter the standard Kaddo refinement pipeline. The snapshot and provenance survive
+refinement — no provider-specific refinement logic exists.
+
+### Resilience
+
+- Deleting the source integration does **not** affect imported Work Items.
+- If the adapter becomes unavailable, imported Work Items remain fully functional.
+- Import is a **one-time snapshot**, not continuous sync.
+
 ## Out of scope (built on this foundation later)
 
 Production provider adapters, bidirectional sync, polling, webhooks, status/comment/attachment sync,

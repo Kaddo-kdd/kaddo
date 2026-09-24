@@ -21,6 +21,7 @@ import {
   type LifecycleState,
 } from './lifecycle.js'
 import { parseWorkItemSource, type WorkItemSource } from './work-item-source.js'
+import type { ExternalSnapshot } from './work-item-write.js'
 import { loadSystemTopology } from './system-topology.js'
 
 // --- Public types ------------------------------------------------------------
@@ -102,6 +103,7 @@ export type WorkItemDetail = WorkItemListItem & {
   decisions: LinkedDecision[]
   relatedKnowledge: LinkedKnowledge[]
   source: WorkItemSource
+  originalSnapshot: ExternalSnapshot | null
   /** POSIX path relative to the project root. */
   path: string
   /** How far the Work Item has been refined (independent of lifecycle). */
@@ -284,6 +286,7 @@ export function getWorkItem(dir: string, workItemId: string): WorkItemDetail {
     decisions: parseDecisions(match.decisions, knowledgeById),
     relatedKnowledge: parseRelatedKnowledge(fm, knowledgeById),
     source: parseWorkItemSource(fm),
+    originalSnapshot: parseOriginalSnapshot(fm),
     path: match.relPath,
     ...parseSystemImpact(dir, fm),
   }
@@ -349,6 +352,24 @@ function parseSystemImpact(dir: string, fm: Record<string, unknown>): {
   const graphCoverage: 'unavailable' | 'partial' | 'available' =
     topology.entities.length === 0 ? 'unavailable' : topology.relationships.length > 0 ? 'available' : 'partial'
   return { affectedSystemEntities: affected, reviewedSystemEntities: reviewed, graphRevision, graphCoverage }
+}
+
+function parseOriginalSnapshot(fm: Record<string, unknown>): ExternalSnapshot | null {
+  const raw = fm.original_snapshot
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null
+  const o = raw as Record<string, unknown>
+  const title = typeof o.title === 'string' ? o.title : undefined
+  if (!title) return null
+  return {
+    title,
+    description: typeof o.description === 'string' ? o.description : undefined,
+    type: typeof o.type === 'string' ? o.type : undefined,
+    status: typeof o.status === 'string' ? o.status : undefined,
+    labels: Array.isArray(o.labels) ? o.labels.map(String) : undefined,
+    assignee: typeof o.assignee === 'string' ? o.assignee : undefined,
+    created_at: typeof o.created_at === 'string' ? o.created_at : undefined,
+    updated_at: typeof o.updated_at === 'string' ? o.updated_at : undefined,
+  }
 }
 
 // --- Body parsing ------------------------------------------------------------

@@ -43,6 +43,7 @@ export {
   WorkItemWriteError,
   type WorkItemInput,
   type WorkItemSourceInput,
+  type ExternalSnapshot,
   type WorkItemEditModel,
   type WorkItemCoverageInput,
   type WorkItemImpactInput,
@@ -129,6 +130,10 @@ export {
   type LinkedWorkItem,
   type DiscoveryResult,
   type DiscoveryIntegrationResult,
+  type DiscoveryItemImportState,
+  type EnrichedExternalWorkItem,
+  type ImportIndex,
+  buildImportIndex,
 } from './services/integrations.js'
 export {
   IntegrationError,

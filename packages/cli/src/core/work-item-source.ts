@@ -19,6 +19,7 @@ export type WorkItemSource = {
   integration?: string
   url?: string
   imported_at?: string
+  external_updated_at?: string
   synced_at?: string
   inferred: boolean
   reason?: string
@@ -48,6 +49,7 @@ export function parseWorkItemSource(frontmatter: Record<string, unknown>): WorkI
       integration: optStr(obj.integration) ?? optStr(frontmatter.source_integration),
       url: optStr(obj.url) ?? optStr(frontmatter.source_url),
       imported_at: optStr(obj.imported_at) ?? optStr(frontmatter.source_imported_at),
+      external_updated_at: optStr(obj.external_updated_at) ?? optStr(frontmatter.source_external_updated_at),
       synced_at: optStr(obj.synced_at) ?? optStr(frontmatter.source_synced_at),
       inferred: obj.inferred === true || obj.inferred === 'true',
       reason: t && !isValidSource(t) ? `Invalid source type in object: "${t}".` : undefined,
@@ -65,6 +67,7 @@ export function parseWorkItemSource(frontmatter: Record<string, unknown>): WorkI
       provider: optStr(frontmatter.source_provider),
       url: optStr(frontmatter.source_url),
       imported_at: optStr(frontmatter.source_imported_at),
+      external_updated_at: optStr(frontmatter.source_external_updated_at),
       synced_at: optStr(frontmatter.source_synced_at),
       inferred: false,
     }
@@ -79,6 +82,7 @@ export function parseWorkItemSource(frontmatter: Record<string, unknown>): WorkI
       provider: optStr(frontmatter.source_provider),
       url: optStr(frontmatter.source_url),
       imported_at: optStr(frontmatter.source_imported_at),
+      external_updated_at: optStr(frontmatter.source_external_updated_at),
       synced_at: optStr(frontmatter.source_synced_at),
       inferred: true,
       reason: `Invalid source value: "${raw}".`,

@@ -586,3 +586,122 @@ describe('VS-103A — adapter unavailable handling', () => {
     expect(item.adapter).toBe('nonexistent')
   })
 })
+
+// --- VS-105 — External Work Item Import & Refinement Handoff -----------------
+
+describe('VS-105 — original snapshot preservation', () => {
+  let dir: string
+  beforeEach(() => { dir = tmpDir(); initProject(dir) })
+  afterEach(() => fs.rmSync(dir, { recursive: true, force: true }))
+
+  it('imported Work Item carries an original snapshot of the external item', async () => {
+    const core = await import('../src/core.js')
+    const result = await core.importExternalWorkItem(dir, 'mock-work-source', 'EXT-001', { type: 'feature' }, {})
+    const wi = core.getWorkItem(dir, result.workItemId)
+    expect(wi.originalSnapshot).not.toBeNull()
+    expect(wi.originalSnapshot!.title).toBe('Open public registration to everyone')
+    expect(wi.originalSnapshot!.type).toBe('Feature')
+    expect(wi.originalSnapshot!.status).toBe('Open')
+  })
+
+  it('non-imported Work Items have null originalSnapshot', async () => {
+    const core = await import('../src/core.js')
+    core.createWorkItem(dir, { intent: 'Test item', type: 'feature' })
+    const list = core.getWorkItems(dir)
+    const wi = core.getWorkItem(dir, list.items[0].id)
+    expect(wi.originalSnapshot).toBeNull()
+  })
+
+  it('original snapshot includes external_updated_at in source', async () => {
+    const core = await import('../src/core.js')
+    const result = await core.importExternalWorkItem(dir, 'mock-work-source', 'EXT-001', { type: 'feature' }, {})
+    const wi = core.getWorkItem(dir, result.workItemId)
+    expect(wi.source.imported_at).toBeDefined()
+    expect(wi.source.external_updated_at).toBeDefined()
+  })
+})
+
+describe('VS-105 — discovery enrichment with import state', () => {
+  let dir: string
+  beforeEach(() => { dir = tmpDir(); initProject(dir) })
+  afterEach(() => fs.rmSync(dir, { recursive: true, force: true }))
+
+  it('discovered items show imported: false when not imported', async () => {
+    const core = await import('../src/core.js')
+    const discovery = await core.discoverExternalWorkItems(dir, {}, {})
+    const items = discovery.results[0].items
+    expect(items.length).toBeGreaterThan(0)
+    expect(items.every((i: any) => i.importState.imported === false)).toBe(true)
+  })
+
+  it('imported items are enriched with workItemId in discovery', async () => {
+    const core = await import('../src/core.js')
+    const result = await core.importExternalWorkItem(dir, 'mock-work-source', 'EXT-001', { type: 'feature' }, {})
+    const discovery = await core.discoverExternalWorkItems(dir, {}, {})
+    const items = discovery.results[0].items
+    const ext001 = items.find((i: any) => i.externalId === 'EXT-001')
+    expect(ext001).toBeDefined()
+    expect(ext001!.importState).toEqual({ imported: true, workItemId: result.workItemId, title: expect.any(String) })
+    const others = items.filter((i: any) => i.externalId !== 'EXT-001')
+    expect(others.every((i: any) => i.importState.imported === false)).toBe(true)
+  })
+})
+
+describe('VS-105 — buildImportIndex', () => {
+  let dir: string
+  beforeEach(() => { dir = tmpDir(); initProject(dir) })
+  afterEach(() => fs.rmSync(dir, { recursive: true, force: true }))
+
+  it('builds an empty index when no imported items exist', async () => {
+    const core = await import('../src/core.js')
+    const idx = core.buildImportIndex(dir)
+    expect(idx.size).toBe(0)
+  })
+
+  it('indexes imported items by integrationId#externalId', async () => {
+    const core = await import('../src/core.js')
+    await core.importExternalWorkItem(dir, 'mock-work-source', 'EXT-001', { type: 'feature' }, {})
+    await core.importExternalWorkItem(dir, 'mock-work-source', 'EXT-002', { type: 'bugfix' }, {})
+    const idx = core.buildImportIndex(dir)
+    expect(idx.size).toBe(2)
+    expect(idx.has('mock-work-source#EXT-001')).toBe(true)
+    expect(idx.has('mock-work-source#EXT-002')).toBe(true)
+    expect(idx.get('mock-work-source#EXT-001')!.workItemId).toBeDefined()
+  })
+})
+
+describe('VS-105 — snapshot + provenance survive refinement', () => {
+  let dir: string
+  beforeEach(() => { dir = tmpDir(); initProject(dir) })
+  afterEach(() => fs.rmSync(dir, { recursive: true, force: true }))
+
+  it('refinement handoff preserves external provenance', async () => {
+    const core = await import('../src/core.js')
+    const result = await core.importExternalWorkItem(dir, 'mock-work-source', 'EXT-001', { type: 'feature' }, {})
+    const handoff = core.buildRefinementHandoff(dir, result.workItemId)
+    expect(handoff.workItemId).toBe(result.workItemId)
+    expect(handoff.refinement.status).toBe('needs-refinement')
+    // After refinement the external provenance and snapshot should still be intact
+    const wi = core.getWorkItem(dir, result.workItemId)
+    expect(wi.source.type).toBe('external')
+    expect(wi.source.provider).toBe('mock')
+    expect(wi.originalSnapshot).not.toBeNull()
+  })
+})
+
+describe('VS-105 — integration deletion does not break imported Work Items', () => {
+  let dir: string
+  beforeEach(() => { dir = tmpDir(); initProject(dir) })
+  afterEach(() => fs.rmSync(dir, { recursive: true, force: true }))
+
+  it('deleting the source integration leaves imported Work Items intact', async () => {
+    const core = await import('../src/core.js')
+    const result = await core.importExternalWorkItem(dir, 'mock-work-source', 'EXT-001', { type: 'feature' }, {})
+    core.deleteIntegration(dir, 'mock-work-source')
+    const wi = core.getWorkItem(dir, result.workItemId)
+    expect(wi.id).toBe(result.workItemId)
+    expect(wi.source.type).toBe('external')
+    expect(wi.source.integration).toBe('mock-work-source')
+    expect(wi.originalSnapshot).not.toBeNull()
+  })
+})

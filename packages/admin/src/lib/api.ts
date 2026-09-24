@@ -153,9 +153,19 @@ export type WorkItemDetail = WorkItemListItem & {
   reviewedSystemEntities: ReviewedSystemEntity[]
   graphRevision: string | null
   graphCoverage: GraphCoverage
-  source: { type: string; id?: string; inferred: boolean }
+  source: {
+    type: string; id?: string; inferred: boolean
+    provider?: string; integration?: string; url?: string
+    imported_at?: string; external_updated_at?: string
+  }
+  originalSnapshot: ExternalSnapshot | null
   path: string
   refinement: RefinementStatus
+}
+
+export type ExternalSnapshot = {
+  title: string; description?: string; type?: string; status?: string
+  labels?: string[]; assignee?: string; created_at?: string; updated_at?: string
 }
 
 // System impact on a Work Item (VS-101 / VS-101.1). Persisted by an agent+human, resolved against
@@ -321,10 +331,12 @@ export type ImportPreview = {
 export type ImportPreviewResult = { preview: ImportPreview; duplicate: { workItemId: string; title: string } | null }
 export type ImportResult = { workItemId: string; created: boolean; duplicateOf?: string; path?: string }
 
-// --- Discovery (VS-104) ------------------------------------------------------
+// --- Discovery (VS-104 + VS-105) ---------------------------------------------
+export type DiscoveryItemImportState = { imported: true; workItemId: string; title: string } | { imported: false }
+export type EnrichedExternalWorkItem = ExternalWorkItem & { importState: DiscoveryItemImportState }
 export type DiscoveryIntegrationResult = {
   integrationId: string; adapter: string; displayName: string; icon?: string
-  items: ExternalWorkItem[]; hasMore: boolean; nextCursor?: string; error?: string
+  items: EnrichedExternalWorkItem[]; hasMore: boolean; nextCursor?: string; error?: string
 }
 export type DiscoveryResult = { results: DiscoveryIntegrationResult[]; totalItems: number }
 

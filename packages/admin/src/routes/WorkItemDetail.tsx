@@ -282,6 +282,92 @@ export function WorkItemDetail() {
         </div>
       </Section>
 
+      {/* Provenance (VS-105) — rich origin display for externally-imported Work Items */}
+      {wi.source.type === 'external' && (
+        <Section title="External provenance">
+          <div style={{ display: 'grid', gridTemplateColumns: '140px minmax(0, 1fr)', gap: '10px 16px', fontSize: 13, alignItems: 'baseline' }}>
+            {wi.source.provider && (
+              <>
+                <span style={{ color: 'var(--foreground-muted)' }}>Provider</span>
+                <span style={{ fontWeight: 500 }}>{humanize(wi.source.provider)}</span>
+              </>
+            )}
+            {wi.source.id && (
+              <>
+                <span style={{ color: 'var(--foreground-muted)' }}>External ID</span>
+                <span className="font-mono">{wi.source.id}</span>
+              </>
+            )}
+            {wi.source.integration && (
+              <>
+                <span style={{ color: 'var(--foreground-muted)' }}>Integration</span>
+                <span className="font-mono">{wi.source.integration}</span>
+              </>
+            )}
+            {wi.source.imported_at && (
+              <>
+                <span style={{ color: 'var(--foreground-muted)' }}>Imported at</span>
+                <span>{new Date(wi.source.imported_at).toLocaleString()}</span>
+              </>
+            )}
+            {wi.source.external_updated_at && (
+              <>
+                <span style={{ color: 'var(--foreground-muted)' }}>External updated</span>
+                <span>{new Date(wi.source.external_updated_at).toLocaleString()}</span>
+              </>
+            )}
+            {wi.source.url && (
+              <>
+                <span style={{ color: 'var(--foreground-muted)' }}>External link</span>
+                <a href={wi.source.url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)' }}>
+                  Open in provider &rarr;
+                </a>
+              </>
+            )}
+          </div>
+        </Section>
+      )}
+
+      {/* Original snapshot (VS-105) — the state of the external item at import time */}
+      {wi.originalSnapshot && (
+        <Section title="Original snapshot">
+          <div style={{ display: 'grid', gridTemplateColumns: '140px minmax(0, 1fr)', gap: '10px 16px', fontSize: 13, alignItems: 'baseline' }}>
+            <span style={{ color: 'var(--foreground-muted)' }}>Title</span>
+            <span>{wi.originalSnapshot.title}</span>
+            {wi.originalSnapshot.description && (
+              <>
+                <span style={{ color: 'var(--foreground-muted)' }}>Description</span>
+                <span style={{ whiteSpace: 'pre-wrap' }}>{wi.originalSnapshot.description}</span>
+              </>
+            )}
+            {wi.originalSnapshot.type && (
+              <>
+                <span style={{ color: 'var(--foreground-muted)' }}>Type</span>
+                <span>{wi.originalSnapshot.type}</span>
+              </>
+            )}
+            {wi.originalSnapshot.status && (
+              <>
+                <span style={{ color: 'var(--foreground-muted)' }}>Status</span>
+                <span>{wi.originalSnapshot.status}</span>
+              </>
+            )}
+            {wi.originalSnapshot.labels?.length ? (
+              <>
+                <span style={{ color: 'var(--foreground-muted)' }}>Labels</span>
+                <span>{wi.originalSnapshot.labels.join(', ')}</span>
+              </>
+            ) : null}
+            {wi.originalSnapshot.assignee && (
+              <>
+                <span style={{ color: 'var(--foreground-muted)' }}>Assignee</span>
+                <span>{wi.originalSnapshot.assignee}</span>
+              </>
+            )}
+          </div>
+        </Section>
+      )}
+
       {/* Actions zone reserved for VS-099 (create / edit / refine) — intentionally empty. */}
     </div>
   )

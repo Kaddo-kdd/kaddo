@@ -350,6 +350,66 @@ Si un adapter ya no está registrado pero su configuración persiste, Admin mues
 con una etiqueta "Adapter no disponible" y oculta el botón Verificar. La configuración se preserva
 — el adapter puede re-registrarse después sin perder datos.
 
+## Importación de Work Items Externos y Entrega a Refinamiento
+
+VS-105 añade una acción de **importación** iniciada por el usuario que convierte un External Work Item
+descubierto en un Draft Work Item nativo de Kaddo — preservando la proveniencia completa y una
+instantánea original del estado externo al momento de la importación.
+
+### Pipeline de importación
+
+1. El usuario selecciona un ítem externo en la vista de descubrimiento y elige un tipo de Work Item Kaddo.
+2. Kaddo re-lee el ítem desde el adapter para asegurar frescura.
+3. Se ejecuta verificación de duplicados contra `integrationId#externalId` — si ya fue importado, se
+   retorna el Work Item existente (importación idempotente, no se crea duplicado).
+4. Se crea un Draft Work Item a través del boundary estándar `createWorkItem` del Core.
+
+El pipeline es **neutral al proveedor**: una vez normalizado a `ExternalWorkItem`, el Core no tiene
+conocimiento del proveedor original.
+
+### Instantánea original
+
+Al momento de la importación, el título, descripción, tipo, estado, etiquetas, asignado y timestamps
+del ítem externo se capturan como `original_snapshot` en el frontmatter del Work Item. Esta
+instantánea es inmutable — registra cómo lucía el ítem externo cuando fue importado,
+independientemente de cambios posteriores en cualquier lado.
+
+### Proveniencia
+
+Cada Work Item importado lleva trazabilidad completa en sus metadatos `source`:
+
+| Campo | Valor |
+|---|---|
+| `type` | `external` |
+| `provider` | Id del adapter (ej. `mock`, `github`) |
+| `integration` | Id de integración Kaddo |
+| `id` | Id del ítem externo |
+| `url` | Enlace al ítem externo |
+| `imported_at` | Timestamp ISO de importación |
+| `external_updated_at` | Última actualización del ítem externo al importar |
+
+### Badge de importado en descubrimiento
+
+Tras importar un ítem, la vista de descubrimiento muestra un badge **Imported** con un enlace al Work
+Item de Kaddo. El botón Import se oculta para ítems ya importados.
+
+### Proveniencia enriquecida en detalle de Work Item
+
+La vista de detalle del Work Item muestra una sección **External provenance** (proveedor, ID externo,
+integración, timestamps y un enlace "Open in provider") y una sección **Original snapshot** (título,
+descripción, tipo, estado, etiquetas, asignado).
+
+### Entrega a refinamiento
+
+Los Work Items importados entran al pipeline de refinamiento estándar de Kaddo. La instantánea y la
+proveniencia sobreviven al refinamiento — no existe lógica de refinamiento específica por proveedor.
+
+### Resiliencia
+
+- Eliminar la integración fuente **no** afecta a los Work Items importados.
+- Si el adapter deja de estar disponible, los Work Items importados siguen funcionando.
+- La importación es una **instantánea única**, no sincronización continua.
+
 ## Fuera de alcance (se construye sobre esta foundation)
 
 Los adapters de proveedores en producción, la sincronización bidireccional, el polling, los webhooks,

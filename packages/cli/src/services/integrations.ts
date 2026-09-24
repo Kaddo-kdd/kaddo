@@ -442,12 +442,16 @@ export function updateIntegrationFilters(dir: string, id: string, filters: Exter
 
 // --- Discovery (VS-104) ------------------------------------------------------
 
+export type DiscoveryItemImportState = { imported: true; workItemId: string; title: string } | { imported: false }
+
+export type EnrichedExternalWorkItem = ExternalWorkItem & { importState: DiscoveryItemImportState }
+
 export type DiscoveryIntegrationResult = {
   integrationId: string
   adapter: string
   displayName: string
   icon?: string
-  items: ExternalWorkItem[]
+  items: EnrichedExternalWorkItem[]
   hasMore: boolean
   nextCursor?: string
   error?: string
@@ -464,6 +468,7 @@ export async function discoverExternalWorkItems(
   env: Record<string, string | undefined> = process.env,
 ): Promise<DiscoveryResult> {
   const { integrations, findings } = loadIntegrations(dir)
+  const importIdx = buildImportIndex(dir)
   const candidates = integrations.filter((i) => {
     if (!i.enabled) return false
     if (configStatus(i, findings) === 'invalid-config') return false
@@ -471,6 +476,16 @@ export async function discoverExternalWorkItems(
     const adapter = registry.get(i.adapter)
     return adapter?.capabilities.workItems.list === true
   })
+
+  function enrichItems(integrationId: string, items: ExternalWorkItem[]): EnrichedExternalWorkItem[] {
+    return items.map((item) => {
+      const linked = importIdx.get(`${integrationId}#${item.externalId}`)
+      const importState: DiscoveryItemImportState = linked
+        ? { imported: true, workItemId: linked.workItemId, title: linked.title }
+        : { imported: false }
+      return { ...item, importState }
+    })
+  }
 
   const settled = await Promise.allSettled(
     candidates.map(async (integration): Promise<DiscoveryIntegrationResult> => {
@@ -486,7 +501,7 @@ export async function discoverExternalWorkItems(
         adapter: integration.adapter,
         displayName: adapter.metadata.displayName,
         icon: adapter.metadata.icon,
-        items: page.items,
+        items: enrichItems(integration.id, page.items),
         hasMore: page.hasMore,
         nextCursor: page.nextCursor,
       }
@@ -562,6 +577,25 @@ export function findLinkedWorkItem(dir: string, integrationId: string, externalI
   return null
 }
 
+export type ImportIndex = Map<string, LinkedWorkItem>
+
+export function buildImportIndex(dir: string): ImportIndex {
+  const index: ImportIndex = new Map()
+  for (const art of discoverWorkItems(dir)) {
+    let data: Record<string, unknown>
+    try {
+      data = matter(readFile(art.filePath)).data as Record<string, unknown>
+    } catch {
+      continue
+    }
+    const source = parseWorkItemSource(data)
+    if (source.type === 'external' && source.integration && source.id) {
+      index.set(`${source.integration}#${source.id}`, { workItemId: String(data.id ?? ''), title: String(data.title ?? '') })
+    }
+  }
+  return index
+}
+
 // --- Import preview + materialization ----------------------------------------
 
 export type ImportPreviewResult = { preview: ImportPreview; duplicate: LinkedWorkItem | null }
@@ -611,6 +645,17 @@ export async function importExternalWorkItem(
       id: externalId,
       url: item.url,
       imported_at: new Date().toISOString(),
+      external_updated_at: item.updatedAt,
+    },
+    originalSnapshot: {
+      title: item.title,
+      description: item.description,
+      type: item.type,
+      status: item.status,
+      labels: item.labels,
+      assignee: item.assignees?.[0]?.name,
+      created_at: item.createdAt,
+      updated_at: item.updatedAt,
     },
   })
   return { workItemId: created.id, created: true, preview, path: created.path }

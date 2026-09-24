@@ -1,6 +1,6 @@
 {
   "name": "@kaddo/admin-server",
-  "version": "3.86.0",
+  "version": "3.87.0",
   "description": "Kaddo Admin server — Fastify REST API over Kaddo Core",
   "license": "MIT",
   "repository": {

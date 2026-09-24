@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react'
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query'
 import { useRouter } from '@tanstack/react-router'
 import { api } from '../lib/api'
-import type { ExternalWorkItem, ExternalWorkItemFilters, DiscoveryIntegrationResult, ImportPreviewResult } from '../lib/api'
+import type { EnrichedExternalWorkItem, ExternalWorkItemFilters, DiscoveryIntegrationResult, ImportPreviewResult } from '../lib/api'
 
 const btnStyle: React.CSSProperties = { padding: '6px 12px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', background: 'var(--surface)', color: 'var(--foreground)', cursor: 'pointer', fontSize: 13, fontFamily: 'inherit' }
 const primaryBtnStyle: React.CSSProperties = { ...btnStyle, background: 'var(--primary)', color: 'var(--primary-foreground, #fff)', fontWeight: 600 }
@@ -48,7 +48,7 @@ function FilterBar({ filters, onChange, onRefresh, loading }: { filters: Externa
   )
 }
 
-function ImportPanel({ integrationId, item, onClose }: { integrationId: string; item: ExternalWorkItem; onClose: () => void }) {
+function ImportPanel({ integrationId, item, onClose }: { integrationId: string; item: EnrichedExternalWorkItem; onClose: () => void }) {
   const router = useRouter()
   const queryClient = useQueryClient()
   const [type, setType] = useState('')
@@ -98,16 +98,30 @@ function ImportPanel({ integrationId, item, onClose }: { integrationId: string; 
   )
 }
 
-function ExternalItemRow({ item, integrationId, integrationName, icon }: { item: ExternalWorkItem; integrationId: string; integrationName: string; icon?: string }) {
+function ImportedBadge({ workItemId }: { workItemId: string }) {
+  const router = useRouter()
+  return (
+    <button
+      onClick={() => router.navigate({ to: '/work-items/$workItemId', params: { workItemId } })}
+      style={{ ...chipStyle, cursor: 'pointer', border: '1px solid var(--success)', background: 'color-mix(in srgb, var(--success) 12%, transparent)', color: 'var(--success)', fontWeight: 600, fontSize: 11, gap: 4 }}
+    >
+      Imported &rarr; {workItemId}
+    </button>
+  )
+}
+
+function ExternalItemRow({ item, integrationId, integrationName, icon }: { item: EnrichedExternalWorkItem; integrationId: string; integrationName: string; icon?: string }) {
   const [importing, setImporting] = useState(false)
+  const imported = item.importState.imported
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, padding: '10px 14px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', background: 'var(--surface)' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, padding: '10px 14px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', background: imported ? 'color-mix(in srgb, var(--success) 4%, var(--surface))' : 'var(--surface)' }}>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
             <span className="font-mono" style={{ fontSize: 11, color: 'var(--foreground-muted)', flexShrink: 0 }}>{item.externalId}</span>
             <span style={{ fontSize: 14, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.title}</span>
+            {item.importState.imported && <ImportedBadge workItemId={item.importState.workItemId} />}
           </div>
           <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
             <TypeBadge type={item.type} />
@@ -121,7 +135,7 @@ function ExternalItemRow({ item, integrationId, integrationName, icon }: { item:
         </div>
         <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
           {item.url && <a href={item.url} target="_blank" rel="noopener noreferrer" style={{ ...btnStyle, textDecoration: 'none', fontSize: 12 }}>Open</a>}
-          <button onClick={() => setImporting(!importing)} style={btnStyle}>{importing ? 'Cancel' : 'Import'}</button>
+          {!imported && <button onClick={() => setImporting(!importing)} style={btnStyle}>{importing ? 'Cancel' : 'Import'}</button>}
         </div>
       </div>
       {importing && <ImportPanel integrationId={integrationId} item={item} onClose={() => setImporting(false)} />}
