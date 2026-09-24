@@ -3,6 +3,8 @@
   "private": true,
   "version": "0.0.0",
   "scripts": {
+    "agent-plugin:sync": "node scripts/sync-agent-plugin-skills.mjs",
+    "agent-plugin:check": "node scripts/sync-agent-plugin-skills.mjs --check",
     "build": "pnpm -r build",
     "test": "vitest run --config vitest.config.ts",
     "test:watch": "vitest",

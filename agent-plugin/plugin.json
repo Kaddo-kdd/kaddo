@@ -1,0 +1,29 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "kaddo",
+  "version": "1.0.0",
+  "description": "Official Kaddo Agent Plugin for Knowledge Driven Development. Packages portable Kaddo Skills, agent guidance and @kaddo/mcp integration; Kiro is the first supported consumer.",
+  "author": {
+    "name": "Kaddo",
+    "url": "https://kaddo.trycatch.tv/"
+  },
+  "keywords": [
+    "KDD",
+    "knowledge",
+    "kaddo",
+    "knowledge-driven-development",
+    "work-items",
+    "adr",
+    "guard",
+    "ownership",
+    "context-pack",
+    "multirepo",
+    "knowledge-graph",
+    "delivery",
+    "implementation-planning",
+    "learning-capture"
+  ],
+  "homepage": "https://kaddo.trycatch.tv/",
+  "repository": "https://github.com/Kaddo-kdd/kaddo/tree/main/agent-plugin",
+  "license": "MIT"
+}

@@ -213,6 +213,16 @@ scanning the whole repo.
 It never writes files, runs git, calls an LLM or reads source code. See the
 [MCP Server docs](https://kaddo.trycatch.tv/mcp-server/) and [`examples/mcp/`](examples/mcp/).
 
+## Agent Plugin
+
+The official [`agent-plugin/`](agent-plugin/README.md) packages Kaddo Skills, KDD workflow guidance
+and `@kaddo/mcp` integration using the Agent Plugins specification. Kiro Powers is the first
+supported consumer, while portable behavior remains independent of Kiro-specific steering.
+
+The Agent Plugin is an integration layer, not another Kaddo implementation. Core, CLI, MCP and the
+canonical Skills remain the sources of truth. Generated plugin Skills can be checked locally with
+`pnpm agent-plugin:check`.
+
 ## Skills
 
 **[Skills](https://kaddo.trycatch.tv/skills/)** are reusable capability definitions that standardize

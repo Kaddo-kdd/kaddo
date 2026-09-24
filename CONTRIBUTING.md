@@ -13,6 +13,7 @@ pnpm build
 
 ```
 kaddo/
+  agent-plugin/       â€” portable Agent Plugin; generated Skills and client guidance
   packages/cli/src/
     commands/     — one file per CLI command
     core/         — pure logic (knowledge levels, diff analysis)
@@ -25,6 +26,7 @@ kaddo/
 
 ```bash
 pnpm test              # all tests
+pnpm agent-plugin:check # verify generated Agent Plugin Skill drift
 cd packages/cli
 pnpm test              # cli package only
 ```
@@ -36,6 +38,16 @@ pnpm build             # build all packages
 cd packages/cli
 pnpm dev               # watch mode
 ```
+
+When a canonical Skill changes, regenerate its Agent Plugin projection and commit both changes:
+
+```bash
+pnpm agent-plugin:sync
+pnpm agent-plugin:check
+```
+
+Do not edit `agent-plugin/skills/*/SKILL.md` directly. Client-specific guidance belongs under its
+extension directory, such as `agent-plugin/dev.kiro/`.
 
 ## Principles
 
