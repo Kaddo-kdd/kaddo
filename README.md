@@ -368,6 +368,7 @@ Guard is **silent** when no artifacts declare ownership — no noise on day one.
 | v3.6 | Flexible roadmap parsing and roadmap candidate/materialized Work Item reporting |
 | v3.7 | Work Item lifecycle active workspace (`draft`, `ready`, `in-progress`, `blocked`, `completed`, `archived`) |
 | v3.7.1 | Context Efficiency positioning: Repository Exploration Tax and structured-knowledge narrative |
+| v3.86 | Official Kaddo Agent Plugin: portable Agent Plugins 1.0 packaging, Kiro Power integration, canonical Skill synchronization, MCP boundary documentation and automated drift validation |
 
 **Optional modules (installed with `kaddo add`):**
 `adr` · `rfc` · `incident` · `migration` · `legacy` · `contracts` · `capabilities` ·
