@@ -312,11 +312,12 @@ export async function createAdminServer(opts: AdminServerOptions) {
       return { ok: true }
     }),
   )
-  app.get<{ Params: { id: string }; Querystring: { cursor?: string; pageSize?: string; statuses?: string; types?: string; labels?: string; assignees?: string; search?: string } }>(
+  app.get<{ Params: { id: string }; Querystring: { cursor?: string; pageSize?: string; projects?: string; statuses?: string; types?: string; labels?: string; assignees?: string; search?: string } }>(
     '/api/v1/admin/integrations/:id/work-items',
     async (request, reply) => {
       const q = request.query
       const filters: Record<string, unknown> = {}
+      if (q.projects) filters.projects = q.projects.split(',')
       if (q.statuses) filters.statuses = q.statuses.split(',')
       if (q.types) filters.types = q.types.split(',')
       if (q.labels) filters.labels = q.labels.split(',')
@@ -346,11 +347,12 @@ export async function createAdminServer(opts: AdminServerOptions) {
     },
   )
   // VS-104: Discovery — query all enabled integrations in parallel
-  app.get<{ Querystring: { statuses?: string; types?: string; labels?: string; assignees?: string; search?: string; pageSize?: string; integrationIds?: string } }>(
+  app.get<{ Querystring: { projects?: string; statuses?: string; types?: string; labels?: string; assignees?: string; search?: string; pageSize?: string; integrationIds?: string } }>(
     '/api/v1/admin/integrations/discover',
     async (request, reply) => {
       const q = request.query
       const filters: Record<string, unknown> = {}
+      if (q.projects) filters.projects = q.projects.split(',')
       if (q.statuses) filters.statuses = q.statuses.split(',')
       if (q.types) filters.types = q.types.split(',')
       if (q.labels) filters.labels = q.labels.split(',')

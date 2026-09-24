@@ -286,6 +286,7 @@ export type ConfigFieldSchema = {
   options?: { value: string; label: string }[]; defaultValue?: unknown
 }
 export type FilterCapabilities = {
+  projects?: { supported: boolean; multiple?: boolean }
   types?: { supported: boolean; multiple?: boolean }
   statuses?: { supported: boolean; multiple?: boolean }
   labels?: { supported: boolean; multiple?: boolean }
@@ -295,7 +296,7 @@ export type FilterCapabilities = {
   providerQuery?: { supported: boolean; label?: string }
 }
 export type ExternalWorkItemFilters = {
-  types?: string[]; statuses?: string[]; labels?: string[]; assignees?: string[]
+  projects?: string[]; types?: string[]; statuses?: string[]; labels?: string[]; assignees?: string[]
   updatedAfter?: string; search?: string; providerQuery?: string
 }
 export type AdapterTypeInfo = {
@@ -402,6 +403,7 @@ export const api = {
     const p = new URLSearchParams()
     if (opts.cursor) p.set('cursor', opts.cursor)
     if (opts.pageSize) p.set('pageSize', String(opts.pageSize))
+    if (opts.filters?.projects?.length) p.set('projects', opts.filters.projects.join(','))
     if (opts.filters?.statuses?.length) p.set('statuses', opts.filters.statuses.join(','))
     if (opts.filters?.types?.length) p.set('types', opts.filters.types.join(','))
     if (opts.filters?.labels?.length) p.set('labels', opts.filters.labels.join(','))
@@ -419,6 +421,7 @@ export const api = {
   // VS-104: Discovery + filter management
   discoverExternalWorkItems: (opts: { filters?: ExternalWorkItemFilters; pageSize?: number; integrationIds?: string[] } = {}) => {
     const p = new URLSearchParams()
+    if (opts.filters?.projects?.length) p.set('projects', opts.filters.projects.join(','))
     if (opts.filters?.statuses?.length) p.set('statuses', opts.filters.statuses.join(','))
     if (opts.filters?.types?.length) p.set('types', opts.filters.types.join(','))
     if (opts.filters?.labels?.length) p.set('labels', opts.filters.labels.join(','))

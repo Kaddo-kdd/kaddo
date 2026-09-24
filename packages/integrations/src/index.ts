@@ -15,9 +15,11 @@ export * from './preview.js'
 export * from './secrets.js'
 export { IntegrationRegistry, DuplicateAdapterError } from './registry.js'
 export { createMockAdapter, MOCK_ADAPTER_ID, type MockSimulation } from './mock-adapter.js'
+export { createJiraAdapter, JIRA_ADAPTER_ID } from './jira-adapter.js'
 
 import { IntegrationRegistry } from './registry.js'
 import { createMockAdapter } from './mock-adapter.js'
+import { createJiraAdapter } from './jira-adapter.js'
 
 /**
  * A registry pre-loaded with the reference adapters that ship with Kaddo. Concrete provider adapters
@@ -26,5 +28,6 @@ import { createMockAdapter } from './mock-adapter.js'
 export function createDefaultRegistry(): IntegrationRegistry {
   const registry = new IntegrationRegistry()
   registry.register(createMockAdapter())
+  registry.register(createJiraAdapter())
   return registry
 }

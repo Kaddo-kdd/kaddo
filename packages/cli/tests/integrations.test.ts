@@ -455,24 +455,24 @@ describe('VS-103 — adapter unavailable preservation', () => {
     write(dir, '.kaddo/config.yml', ['project:', '  name: p', '  state: pre-ai', '  structure: monorepo', 'team:', '  size: small'].join('\n'))
     write(dir, '.kaddo/integrations.yml', [
       'integrations:',
-      '  - id: custom-jira',
-      '    adapter: jira',
+      '  - id: custom-unknown',
+      '    adapter: unknown-provider',
       '    enabled: true',
       '    config:',
-      '      baseUrl: https://company.atlassian.net',
+      '      baseUrl: https://company.example.com',
       '    secrets:',
-      '      token: custom-jira.token',
+      '      token: custom-unknown.token',
     ].join('\n'))
     const core = await import('../src/core.js')
     const list = core.listIntegrations(dir)
-    const jira = list.find((i) => i.id === 'custom-jira')
-    expect(jira).toBeDefined()
-    expect(jira!.status).toBe('invalid-config')
-    expect(jira!.adapter).toBe('jira')
-    expect(jira!.secretRefs).toContain('custom-jira.token')
+    const entry = list.find((i) => i.id === 'custom-unknown')
+    expect(entry).toBeDefined()
+    expect(entry!.status).toBe('invalid-config')
+    expect(entry!.adapter).toBe('unknown-provider')
+    expect(entry!.secretRefs).toContain('custom-unknown.token')
     // YAML was not destroyed by loading with an unknown adapter
     const updatedList = core.listIntegrations(dir)
-    expect(updatedList.find((i) => i.id === 'custom-jira')).toBeDefined()
+    expect(updatedList.find((i) => i.id === 'custom-unknown')).toBeDefined()
   })
 })
 

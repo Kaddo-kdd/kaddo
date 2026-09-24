@@ -397,8 +397,90 @@ refinement — no provider-specific refinement logic exists.
 - If the adapter becomes unavailable, imported Work Items remain fully functional.
 - Import is a **one-time snapshot**, not continuous sync.
 
+## Jira Adapter (VS-106)
+
+The first production adapter connects Kaddo to **Jira Cloud** using email + API Token (Basic Auth).
+It is fully provider-neutral from Kaddo's perspective — Admin, Core and the refinement pipeline need
+no Jira-specific logic.
+
+### Configuration
+
+```yaml
+integrations:
+  - id: my-jira
+    adapter: jira
+    enabled: true
+    config:
+      baseUrl: https://mycompany.atlassian.net
+      email: user@example.com
+    secrets:
+      apiToken: my-jira.apiToken
+```
+
+| Field | Schema type | Required | Description |
+|---|---|---|---|
+| `baseUrl` | `url` | Yes | Jira Cloud instance URL |
+| `email` | `string` | Yes | Atlassian account email |
+| `apiToken` | `password` (secret) | Yes | Jira API Token (never stored in YAML) |
+
+### Capabilities
+
+| Capability | Supported |
+|---|---|
+| `list` | Yes |
+| `read` | Yes |
+| `import` | Yes |
+| `write` | No (future) |
+
+### JQL filter generation
+
+The adapter translates the normalized `ExternalWorkItemFilters` into JQL automatically:
+
+| Filter field | JQL clause |
+|---|---|
+| `projects` | `project IN (...)` |
+| `types` | `issuetype IN (...)` |
+| `statuses` | `status IN (...)` |
+| `labels` | `labels IN (...)` |
+| `assignees` | `assignee IN (...)` |
+| `updatedAfter` | `updated >= "..."` |
+| `search` | `(summary ~ "..." OR description ~ "...")` |
+| `providerQuery` | Raw JQL appended directly |
+
+Values are properly escaped. When no filters are provided, the adapter defaults to
+`ORDER BY updated DESC`.
+
+The `providerQuery` capability is labeled **"JQL"** in Admin, so users know they can write raw Jira
+Query Language when the normalized filters are not enough.
+
+### ADF to Markdown
+
+Jira Cloud stores descriptions in **Atlassian Document Format** (ADF) — a rich JSON structure. The
+adapter converts ADF to Markdown at normalization time so the rest of Kaddo works with plain text.
+
+Supported ADF nodes: `doc`, `paragraph`, `heading` (levels 1–6), `bulletList`, `orderedList`,
+`listItem`, `blockquote`, `codeBlock` (with language), `rule`, `hardBreak`, `text` with marks
+(`strong`, `em`, `code`, `strike`). Media nodes are safely skipped.
+
+### Error normalization
+
+| HTTP status | Integration error code |
+|---|---|
+| 401 | `UNAUTHORIZED` |
+| 403 | `FORBIDDEN` |
+| 404 | `NOT_FOUND` |
+| 429 | `RATE_LIMITED` |
+| 500+ | `UNAVAILABLE` |
+| AbortError | `TIMEOUT` |
+
+### Projects filter
+
+VS-106 adds a `projects` field to the normalized filter model (`ExternalWorkItemFilters`). This is
+a common concept across providers (Jira has projects, GitHub has repos, Azure DevOps has projects)
+and avoids forcing users to resort to `providerQuery` for basic project scoping.
+
 ## Out of scope (built on this foundation later)
 
-Production provider adapters, bidirectional sync, polling, webhooks, status/comment/attachment sync,
+Bidirectional sync, polling, webhooks, status/comment/attachment sync,
 pushing or updating external issues, and external OAuth UI are **not** part of the foundation. They
 build on top of it — without redesigning the integration model.

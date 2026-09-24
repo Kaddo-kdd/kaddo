@@ -98,6 +98,8 @@ function parseFilters(raw: unknown): ExternalWorkItemFilters | undefined {
   const o = raw as Record<string, unknown>
   const filters: ExternalWorkItemFilters = {}
   let hasAny = false
+  const projects = toStringArray(o.projects)
+  if (projects?.length) { filters.projects = projects; hasAny = true }
   const types = toStringArray(o.types)
   if (types?.length) { filters.types = types; hasAny = true }
   const statuses = toStringArray(o.statuses)
@@ -311,6 +313,7 @@ export function mergeFilters(base?: ExternalWorkItemFilters, overlay?: ExternalW
   if (!base) return { ...overlay }
   if (!overlay) return { ...base }
   return {
+    projects: overlay.projects?.length ? overlay.projects : base.projects,
     types: overlay.types?.length ? overlay.types : base.types,
     statuses: overlay.statuses?.length ? overlay.statuses : base.statuses,
     labels: overlay.labels?.length ? overlay.labels : base.labels,

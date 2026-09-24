@@ -47,10 +47,11 @@ describe('VS-103A — Provider descriptor', () => {
   it('registry is the provider catalog source', () => {
     const registry = createDefaultRegistry()
     const adapters = registry.list()
-    expect(adapters.length).toBeGreaterThanOrEqual(1)
-    expect(adapters[0].id).toBe(MOCK_ADAPTER_ID)
-    expect(adapters[0].metadata.displayName).toBeTruthy()
-    expect(adapters[0].metadata.icon).toBeTruthy()
+    expect(adapters.length).toBeGreaterThanOrEqual(2)
+    const mock = adapters.find((a) => a.id === MOCK_ADAPTER_ID)
+    expect(mock).toBeDefined()
+    expect(mock!.metadata.displayName).toBeTruthy()
+    expect(mock!.metadata.icon).toBeTruthy()
   })
 
   it('registry resolves adapter by id for form generation', () => {

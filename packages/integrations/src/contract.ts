@@ -21,6 +21,7 @@ export type ConfigFieldSchema = {
 
 /** Declares which normalized filter fields an adapter supports. Admin uses this to render the filter configuration UI. */
 export type FilterCapabilities = {
+  projects?: { supported: boolean; multiple?: boolean }
   types?: { supported: boolean; multiple?: boolean }
   statuses?: { supported: boolean; multiple?: boolean }
   labels?: { supported: boolean; multiple?: boolean }
@@ -95,6 +96,7 @@ export type ExternalWorkItem = {
  * (temporary) share this same shape — the service merges them before calling the adapter.
  */
 export type ExternalWorkItemFilters = {
+  projects?: string[]
   types?: string[]
   statuses?: string[]
   labels?: string[]

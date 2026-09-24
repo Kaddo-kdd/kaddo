@@ -410,9 +410,92 @@ proveniencia sobreviven al refinamiento — no existe lógica de refinamiento es
 - Si el adapter deja de estar disponible, los Work Items importados siguen funcionando.
 - La importación es una **instantánea única**, no sincronización continua.
 
+## Jira Adapter (VS-106)
+
+El primer adapter de producción conecta Kaddo con **Jira Cloud** usando email + API Token (Basic Auth).
+Es completamente neutral al proveedor desde la perspectiva de Kaddo — Admin, Core y el pipeline de
+refinamiento no necesitan lógica específica de Jira.
+
+### Configuración
+
+```yaml
+integrations:
+  - id: my-jira
+    adapter: jira
+    enabled: true
+    config:
+      baseUrl: https://mycompany.atlassian.net
+      email: user@example.com
+    secrets:
+      apiToken: my-jira.apiToken
+```
+
+| Campo | Tipo de esquema | Requerido | Descripción |
+|---|---|---|---|
+| `baseUrl` | `url` | Sí | URL de la instancia Jira Cloud |
+| `email` | `string` | Sí | Email de la cuenta Atlassian |
+| `apiToken` | `password` (secreto) | Sí | Jira API Token (nunca se almacena en YAML) |
+
+### Capabilities
+
+| Capability | Soportado |
+|---|---|
+| `list` | Sí |
+| `read` | Sí |
+| `import` | Sí |
+| `write` | No (futuro) |
+
+### Generación de JQL a partir de filtros
+
+El adapter traduce los `ExternalWorkItemFilters` normalizados a JQL automáticamente:
+
+| Campo de filtro | Cláusula JQL |
+|---|---|
+| `projects` | `project IN (...)` |
+| `types` | `issuetype IN (...)` |
+| `statuses` | `status IN (...)` |
+| `labels` | `labels IN (...)` |
+| `assignees` | `assignee IN (...)` |
+| `updatedAfter` | `updated >= "..."` |
+| `search` | `(summary ~ "..." OR description ~ "...")` |
+| `providerQuery` | JQL crudo agregado directamente |
+
+Los valores se escapan correctamente. Cuando no se proporcionan filtros, el adapter usa por defecto
+`ORDER BY updated DESC`.
+
+La capability `providerQuery` se etiqueta como **"JQL"** en Admin, para que los usuarios sepan que
+pueden escribir Jira Query Language crudo cuando los filtros normalizados no son suficientes.
+
+### ADF a Markdown
+
+Jira Cloud almacena las descripciones en **Atlassian Document Format** (ADF) — una estructura JSON
+enriquecida. El adapter convierte ADF a Markdown en el momento de la normalización para que el resto
+de Kaddo trabaje con texto plano.
+
+Nodos ADF soportados: `doc`, `paragraph`, `heading` (niveles 1–6), `bulletList`, `orderedList`,
+`listItem`, `blockquote`, `codeBlock` (con lenguaje), `rule`, `hardBreak`, `text` con marks
+(`strong`, `em`, `code`, `strike`). Los nodos de media se omiten de forma segura.
+
+### Normalización de errores
+
+| Estado HTTP | Código de error de integración |
+|---|---|
+| 401 | `UNAUTHORIZED` |
+| 403 | `FORBIDDEN` |
+| 404 | `NOT_FOUND` |
+| 429 | `RATE_LIMITED` |
+| 500+ | `UNAVAILABLE` |
+| AbortError | `TIMEOUT` |
+
+### Filtro de proyectos
+
+VS-106 añade un campo `projects` al modelo de filtros normalizado (`ExternalWorkItemFilters`). Este
+es un concepto común entre proveedores (Jira tiene proyectos, GitHub tiene repos, Azure DevOps tiene
+proyectos) y evita que los usuarios recurran a `providerQuery` para filtrar por proyecto básico.
+
 ## Fuera de alcance (se construye sobre esta foundation)
 
-Los adapters de proveedores en producción, la sincronización bidireccional, el polling, los webhooks,
+La sincronización bidireccional, el polling, los webhooks,
 la sincronización de estado/comentarios/adjuntos, el push o la actualización de issues externos y la
 UI de OAuth externo **no** forman parte de la foundation. Se construyen encima — sin rediseñar el
 modelo de integración.

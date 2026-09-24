@@ -428,6 +428,7 @@ export function updateIntegrationFilters(dir: string, id: string, filters: Exter
   if (idx < 0) throw new IntegrationServiceError('INTEGRATION_NOT_CONFIGURED', `No integration "${id}" is configured.`)
   const clean: ExternalWorkItemFilters = {}
   let hasAny = false
+  if (filters.projects?.length) { clean.projects = filters.projects; hasAny = true }
   if (filters.types?.length) { clean.types = filters.types; hasAny = true }
   if (filters.statuses?.length) { clean.statuses = filters.statuses; hasAny = true }
   if (filters.labels?.length) { clean.labels = filters.labels; hasAny = true }
