@@ -1,4 +1,4 @@
-# Kaddo Agent Plugin
+# Kaddo Power
 
 The official portable Agent Plugin for [Kaddo](https://kaddo.trycatch.tv/), the Knowledge Driven
 Development toolkit. It packages discovery, activation, agent guidance, portable Skills and
@@ -38,12 +38,24 @@ npx -y @kaddo/cli scan
 
 ### Kiro Power
 
-Until registry distribution is handled separately, load this directory as a custom Power:
+Until registry distribution is handled separately, load this directory as a custom Power. Kiro
+derives the visible custom Power name from the imported directory or GitHub path, so keep the
+directory name `Kaddo Power` intact.
+
+For a GitHub installation:
+
+1. Remove the previously installed `agent-plugin` custom Power, if present.
+2. Open the Kiro Powers panel.
+3. Choose **Add Custom Power** and **Import power from GitHub**.
+4. Enter `https://github.com/Kaddo-kdd/kaddo/tree/main/Kaddo%20Power`.
+5. Review the bundled Skills and MCP command before enabling **Kaddo Power**.
+
+For a local checkout:
 
 1. Open the Kiro Powers panel.
 2. Choose **Add Custom Power** and **Import power from a folder**.
-3. Select `agent-plugin/`.
-4. Review the bundled Skills and MCP command before enabling the Power.
+3. Select `Kaddo Power/`.
+4. Review the bundled Skills and MCP command before enabling **Kaddo Power**.
 
 The Power contains `mcp.json`, so do not add a second identical MCP server unless the bundled
 server cannot receive the repository path. Registry publication and one-click distribution are not
@@ -51,7 +63,7 @@ part of this integration.
 
 ### Other compatible clients
 
-Load `agent-plugin/` using the client's Agent Plugins installation flow. The client must support
+Load `Kaddo Power/` using the client's Agent Plugins installation flow. The client must support
 the Skills and/or MCP component types it intends to use. Client-specific installation and project
 root binding are controlled by that client.
 
@@ -116,7 +128,7 @@ pnpm agent-plugin:sync   # regenerate portable SKILL.md files
 pnpm agent-plugin:check  # fail when generated files have drifted
 ```
 
-Do not edit generated `agent-plugin/skills/*/SKILL.md` files directly. Change canonical Kaddo Skills
+Do not edit generated `Kaddo Power/skills/*/SKILL.md` files directly. Change canonical Kaddo Skills
 only for an actual Kaddo behavior correction, then regenerate. Kiro-specific workflow guidance
 belongs under `dev.kiro/`.
 

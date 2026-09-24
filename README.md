@@ -213,9 +213,9 @@ scanning the whole repo.
 It never writes files, runs git, calls an LLM or reads source code. See the
 [MCP Server docs](https://kaddo.trycatch.tv/mcp-server/) and [`examples/mcp/`](examples/mcp/).
 
-## Agent Plugin
+## Kaddo Power
 
-The official [`agent-plugin/`](agent-plugin/README.md) packages Kaddo Skills, KDD workflow guidance
+The official [`Kaddo Power/`](<Kaddo Power/README.md>) packages Kaddo Skills, KDD workflow guidance
 and `@kaddo/mcp` integration using the Agent Plugins specification. Kiro Powers is the first
 supported consumer, while portable behavior remains independent of Kiro-specific steering.
 
