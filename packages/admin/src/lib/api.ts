@@ -419,7 +419,7 @@ export const api = {
   importExternalWorkItem: (id: string, externalId: string, type: string) =>
     mutateApi<ImportResult>(`/integrations/${encodeURIComponent(id)}/work-items/${encodeURIComponent(externalId)}/import`, 'POST', { type }),
   // VS-104: Discovery + filter management
-  discoverExternalWorkItems: (opts: { filters?: ExternalWorkItemFilters; pageSize?: number; integrationIds?: string[] } = {}) => {
+  discoverExternalWorkItems: (opts: { filters?: ExternalWorkItemFilters; pageSize?: number; integrationIds?: string[]; cursors?: Record<string, string> } = {}) => {
     const p = new URLSearchParams()
     if (opts.filters?.projects?.length) p.set('projects', opts.filters.projects.join(','))
     if (opts.filters?.statuses?.length) p.set('statuses', opts.filters.statuses.join(','))
@@ -429,6 +429,7 @@ export const api = {
     if (opts.filters?.search) p.set('search', opts.filters.search)
     if (opts.pageSize) p.set('pageSize', String(opts.pageSize))
     if (opts.integrationIds?.length) p.set('integrationIds', opts.integrationIds.join(','))
+    if (opts.cursors && Object.keys(opts.cursors).length) p.set('cursors', JSON.stringify(opts.cursors))
     const q = p.toString()
     return fetchApi<DiscoveryResult>(`/integrations/discover${q ? `?${q}` : ''}`)
   },

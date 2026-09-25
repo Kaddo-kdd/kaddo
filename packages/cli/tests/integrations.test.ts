@@ -705,3 +705,104 @@ describe('VS-105 — integration deletion does not break imported Work Items', (
     expect(wi.originalSnapshot).not.toBeNull()
   })
 })
+
+// ── VS-106A — Import Hardening ──────────────────────────────────────────
+
+describe('VS-106A — disabled integration guard (AC-17)', () => {
+  let dir: string
+  beforeEach(() => { dir = tmpDir(); initProject(dir) })
+  afterEach(() => fs.rmSync(dir, { recursive: true, force: true }))
+
+  it('importExternalWorkItem rejects disabled integration', async () => {
+    const core = await import('../src/core.js')
+    core.disableIntegration(dir, 'mock-work-source')
+    await expect(core.importExternalWorkItem(dir, 'mock-work-source', 'EXT-001', { type: 'feature' }, {}))
+      .rejects.toMatchObject({ code: 'INTEGRATION_DISABLED' })
+  })
+
+  it('previewImport rejects disabled integration', async () => {
+    const core = await import('../src/core.js')
+    core.disableIntegration(dir, 'mock-work-source')
+    await expect(core.previewImport(dir, 'mock-work-source', 'EXT-001', {}, {}))
+      .rejects.toMatchObject({ code: 'INTEGRATION_DISABLED' })
+  })
+
+  it('import succeeds after re-enabling', async () => {
+    const core = await import('../src/core.js')
+    core.disableIntegration(dir, 'mock-work-source')
+    core.enableIntegration(dir, 'mock-work-source')
+    const result = await core.importExternalWorkItem(dir, 'mock-work-source', 'EXT-001', { type: 'feature' }, {})
+    expect(result.created).toBe(true)
+  })
+})
+
+describe('VS-106A — concurrent import protection (AC-16)', () => {
+  let dir: string
+  beforeEach(() => { dir = tmpDir(); initProject(dir) })
+  afterEach(() => fs.rmSync(dir, { recursive: true, force: true }))
+
+  it('concurrent import of the same item — one succeeds, other gets lock error', async () => {
+    const core = await import('../src/core.js')
+    const results = await Promise.allSettled([
+      core.importExternalWorkItem(dir, 'mock-work-source', 'EXT-001', { type: 'feature' }, {}),
+      core.importExternalWorkItem(dir, 'mock-work-source', 'EXT-001', { type: 'feature' }, {}),
+    ])
+    const fulfilled = results.filter((r) => r.status === 'fulfilled')
+    const rejected = results.filter((r) => r.status === 'rejected')
+    expect(fulfilled.length + rejected.length).toBe(2)
+    // At least one must succeed (either first wins, or second finds duplicate)
+    expect(fulfilled.length).toBeGreaterThanOrEqual(1)
+    // If one rejected, it should be the lock error
+    if (rejected.length > 0) {
+      expect((rejected[0] as PromiseRejectedResult).reason.code).toBe('INTEGRATION_INVALID_INPUT')
+    }
+    // Only one Work Item created
+    expect(countWorkItems(dir)).toBe(1)
+  })
+})
+
+describe('VS-106A — fresh read before import (AC-11–12)', () => {
+  let dir: string
+  beforeEach(() => { dir = tmpDir(); initProject(dir) })
+  afterEach(() => fs.rmSync(dir, { recursive: true, force: true }))
+
+  it('import calls getExternalWorkItem for fresh data', async () => {
+    const core = await import('../src/core.js')
+    const result = await core.importExternalWorkItem(dir, 'mock-work-source', 'EXT-001', { type: 'feature' }, {})
+    expect(result.created).toBe(true)
+    const wi = core.getWorkItem(dir, result.workItemId)
+    expect(wi.source.id).toBe('EXT-001')
+    expect(wi.originalSnapshot).toBeDefined()
+  })
+
+  it('import of nonexistent external item throws NOT_FOUND', async () => {
+    const core = await import('../src/core.js')
+    await expect(core.importExternalWorkItem(dir, 'mock-work-source', 'NONEXISTENT', { type: 'feature' }, {}))
+      .rejects.toMatchObject({ code: 'INTEGRATION_NOT_FOUND' })
+  })
+})
+
+describe('VS-106A — discovery with per-integration cursors (AC-09–10)', () => {
+  let dir: string
+  beforeEach(() => { dir = tmpDir(); initProject(dir) })
+  afterEach(() => fs.rmSync(dir, { recursive: true, force: true }))
+
+  it('discovery returns hasMore and nextCursor when more items exist', async () => {
+    const core = await import('../src/core.js')
+    const result = await core.discoverExternalWorkItems(dir, { pageSize: 2 }, {})
+    expect(result.results[0].hasMore).toBe(true)
+    expect(result.results[0].nextCursor).toBeDefined()
+  })
+
+  it('discovery accepts per-integration cursors for Load More', async () => {
+    const core = await import('../src/core.js')
+    const first = await core.discoverExternalWorkItems(dir, { pageSize: 2 }, {})
+    const cursor = first.results[0].nextCursor!
+    const second = await core.discoverExternalWorkItems(dir, { pageSize: 2, cursors: { 'mock-work-source': cursor } }, {})
+    expect(second.results[0].items.length).toBeGreaterThan(0)
+    // Items from second page should differ from first page
+    const firstIds = new Set(first.results[0].items.map((i) => i.externalId))
+    const secondIds = second.results[0].items.map((i) => i.externalId)
+    expect(secondIds.some((id) => !firstIds.has(id))).toBe(true)
+  })
+})

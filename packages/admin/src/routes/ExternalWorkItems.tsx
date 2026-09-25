@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query'
 import { useRouter } from '@tanstack/react-router'
 import { api } from '../lib/api'
@@ -143,7 +143,7 @@ function ExternalItemRow({ item, integrationId, integrationName, icon }: { item:
   )
 }
 
-function IntegrationSection({ result }: { result: DiscoveryIntegrationResult }) {
+function IntegrationSection({ result, onLoadMore, loadingMore }: { result: DiscoveryIntegrationResult; onLoadMore?: () => void; loadingMore?: boolean }) {
   if (result.error) {
     return (
       <div style={{ ...cardStyle, borderLeft: '3px solid var(--danger)', marginBottom: 12 }}>
@@ -170,12 +170,20 @@ function IntegrationSection({ result }: { result: DiscoveryIntegrationResult }) 
           />
         ))}
       </div>
+      {result.hasMore && onLoadMore && (
+        <button onClick={onLoadMore} disabled={loadingMore} style={{ ...btnStyle, marginTop: 8, fontSize: 12 }}>
+          {loadingMore ? 'Loading…' : 'Load more'}
+        </button>
+      )}
     </div>
   )
 }
 
 export function ExternalWorkItems() {
   const [filters, setFilters] = useState<ExternalWorkItemFilters>({})
+  const [accumulated, setAccumulated] = useState<Record<string, DiscoveryIntegrationResult>>({})
+  const [cursors, setCursors] = useState<Record<string, string>>({})
+  const [loadingMoreFor, setLoadingMoreFor] = useState<string | null>(null)
 
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['discover', filters],
@@ -183,13 +191,70 @@ export function ExternalWorkItems() {
     retry: false,
   })
 
-  const allItems = useMemo(() => {
-    if (!data) return []
-    return data.results.flatMap((r) => r.items.map((item) => ({ ...item, _integrationId: r.integrationId, _integrationName: r.displayName, _icon: r.icon })))
+  const prevDataRef = useRef(data)
+  useEffect(() => {
+    if (data && data !== prevDataRef.current) {
+      prevDataRef.current = data
+      const acc: Record<string, DiscoveryIntegrationResult> = {}
+      const cur: Record<string, string> = {}
+      for (const r of data.results) {
+        acc[r.integrationId] = r
+        if (r.hasMore && r.nextCursor) cur[r.integrationId] = r.nextCursor
+      }
+      setAccumulated(acc)
+      setCursors(cur)
+    }
   }, [data])
+
+  const mergedResults = useMemo(() => {
+    if (!data) return []
+    return data.results.map((r) => accumulated[r.integrationId] ?? r)
+  }, [data, accumulated])
+
+  const totalItems = useMemo(() => mergedResults.reduce((sum, r) => sum + r.items.length, 0), [mergedResults])
+
+  const allItems = useMemo(() => {
+    return mergedResults.flatMap((r) => r.items.map((item) => ({ ...item, _integrationId: r.integrationId, _integrationName: r.displayName, _icon: r.icon })))
+  }, [mergedResults])
 
   const uniqueTypes = useMemo(() => [...new Set(allItems.map((i) => i.type).filter(Boolean))].sort(), [allItems])
   const uniqueStatuses = useMemo(() => [...new Set(allItems.map((i) => i.status).filter(Boolean))].sort(), [allItems])
+
+  async function loadMore(integrationId: string) {
+    const cursor = cursors[integrationId]
+    if (!cursor) return
+    setLoadingMoreFor(integrationId)
+    try {
+      const more = await api.discoverExternalWorkItems({ filters, pageSize: 50, integrationIds: [integrationId], cursors: { [integrationId]: cursor } })
+      const page = more.results.find((r) => r.integrationId === integrationId)
+      if (page) {
+        setAccumulated((prev) => {
+          const existing = prev[integrationId]
+          if (!existing) return prev
+          return { ...prev, [integrationId]: { ...existing, items: [...existing.items, ...page.items], hasMore: page.hasMore, nextCursor: page.nextCursor } }
+        })
+        setCursors((prev) => {
+          if (page.hasMore && page.nextCursor) return { ...prev, [integrationId]: page.nextCursor }
+          const { [integrationId]: _, ...rest } = prev
+          return rest
+        })
+      }
+    } finally {
+      setLoadingMoreFor(null)
+    }
+  }
+
+  function handleFilterChange(f: ExternalWorkItemFilters) {
+    setAccumulated({})
+    setCursors({})
+    setFilters(f)
+  }
+
+  function handleRefresh() {
+    setAccumulated({})
+    setCursors({})
+    refetch()
+  }
 
   return (
     <div style={{ padding: '24px 32px', maxWidth: 1000, margin: '0 auto' }}>
@@ -200,7 +265,7 @@ export function ExternalWorkItems() {
         </p>
       </div>
 
-      <FilterBar filters={filters} onChange={setFilters} onRefresh={() => refetch()} loading={isLoading} />
+      <FilterBar filters={filters} onChange={handleFilterChange} onRefresh={handleRefresh} loading={isLoading} />
 
       {uniqueTypes.length > 0 && (
         <div style={{ display: 'flex', gap: 4, marginBottom: 8, flexWrap: 'wrap' }}>
@@ -210,7 +275,7 @@ export function ExternalWorkItems() {
               key={t}
               onClick={() => {
                 const cur = filters.types ?? []
-                setFilters({ ...filters, types: cur.includes(t!) ? cur.filter((x) => x !== t) : [...cur, t!] })
+                handleFilterChange({ ...filters, types: cur.includes(t!) ? cur.filter((x) => x !== t) : [...cur, t!] })
               }}
               style={{ ...chipStyle, cursor: 'pointer', border: '1px solid var(--border)', background: filters.types?.includes(t!) ? 'var(--primary)' : 'var(--surface)', color: filters.types?.includes(t!) ? 'var(--primary-foreground, #fff)' : 'var(--foreground-muted)' }}
             >
@@ -227,7 +292,7 @@ export function ExternalWorkItems() {
               key={s}
               onClick={() => {
                 const cur = filters.statuses ?? []
-                setFilters({ ...filters, statuses: cur.includes(s!) ? cur.filter((x) => x !== s) : [...cur, s!] })
+                handleFilterChange({ ...filters, statuses: cur.includes(s!) ? cur.filter((x) => x !== s) : [...cur, s!] })
               }}
               style={{ ...chipStyle, cursor: 'pointer', border: '1px solid var(--border)', background: filters.statuses?.includes(s!) ? 'var(--primary)' : 'var(--surface)', color: filters.statuses?.includes(s!) ? 'var(--primary-foreground, #fff)' : 'var(--foreground-muted)' }}
             >
@@ -240,7 +305,7 @@ export function ExternalWorkItems() {
       {isLoading && <p style={{ color: 'var(--foreground-muted)' }}>Discovering work items across integrations…</p>}
       {error && <p style={{ color: 'var(--danger)' }}>{(error as Error).message}</p>}
 
-      {data && data.totalItems === 0 && data.results.every((r) => !r.error) && (
+      {data && totalItems === 0 && mergedResults.every((r) => !r.error) && (
         <div style={{ padding: 32, textAlign: 'center', color: 'var(--foreground-muted)', border: '1px dashed var(--border)', borderRadius: 'var(--radius)' }}>
           <div style={{ fontSize: 28, marginBottom: 8 }}>🔍</div>
           <p style={{ fontSize: 14, margin: 0 }}>No external work items found. Check that integrations are configured and enabled.</p>
@@ -249,11 +314,18 @@ export function ExternalWorkItems() {
 
       {data && (
         <div style={{ fontSize: 12, color: 'var(--foreground-muted)', marginBottom: 12 }}>
-          {data.totalItems} item{data.totalItems !== 1 ? 's' : ''} from {data.results.length} integration{data.results.length !== 1 ? 's' : ''}
+          {totalItems} item{totalItems !== 1 ? 's' : ''} from {mergedResults.length} integration{mergedResults.length !== 1 ? 's' : ''}
         </div>
       )}
 
-      {data?.results.map((r) => <IntegrationSection key={r.integrationId} result={r} />)}
+      {mergedResults.map((r) => (
+        <IntegrationSection
+          key={r.integrationId}
+          result={r}
+          onLoadMore={r.hasMore ? () => loadMore(r.integrationId) : undefined}
+          loadingMore={loadingMoreFor === r.integrationId}
+        />
+      ))}
     </div>
   )
 }

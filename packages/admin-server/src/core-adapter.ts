@@ -482,7 +482,7 @@ export async function removeIntegrationSecretAdmin(dir: string, id: string, secr
 
 export async function discoverExternalWorkItemsAdmin(
   dir: string,
-  opts: { filters?: ExternalWorkItemFilters; pageSize?: number; integrationIds?: string[] },
+  opts: { filters?: ExternalWorkItemFilters; pageSize?: number; integrationIds?: string[]; cursors?: Record<string, string> },
 ): Promise<Awaited<ReturnType<typeof coreDiscoverExternalWorkItems>>> {
   try {
     return await coreDiscoverExternalWorkItems(dir, opts)

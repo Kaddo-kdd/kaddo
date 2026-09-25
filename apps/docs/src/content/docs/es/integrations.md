@@ -255,6 +255,11 @@ Admin expone la vista **External Items**, que muestra los items agrupados por in
 de tipo, indicadores de estado, etiquetas y asignados. Cada item tiene una acción **Import** (el mismo
 flujo de confirmación humana de VS-102) y un enlace **Open** a la URL del proveedor.
 
+**Cargar más** — el endpoint de descubrimiento soporta paginación por cursor por integración. Cuando
+una integración reporta `hasMore`, la UI muestra un botón **Load more** debajo de la sección de esa
+integración. Al hacer clic, obtiene la siguiente página usando el cursor de la integración y agrega
+los resultados.
+
 ### Filtros de Integración vs Filtros de UI
 
 Los filtros vienen en dos sabores:
@@ -358,11 +363,14 @@ instantánea original del estado externo al momento de la importación.
 
 ### Pipeline de importación
 
-1. El usuario selecciona un ítem externo en la vista de descubrimiento y elige un tipo de Work Item Kaddo.
-2. Kaddo re-lee el ítem desde el adapter para asegurar frescura.
-3. Se ejecuta verificación de duplicados contra `integrationId#externalId` — si ya fue importado, se
+1. **Verificación de habilitación** — si la integración está deshabilitada, la importación se rechaza inmediatamente.
+2. **Lock concurrente** — un lock en proceso previene dos importaciones simultáneas del mismo ítem
+   (protege contra la condición de carrera TOCTOU entre verificación de duplicados y creación del Work Item).
+3. El usuario selecciona un ítem externo en la vista de descubrimiento y elige un tipo de Work Item Kaddo.
+4. Kaddo re-lee el ítem desde el adapter para asegurar frescura.
+5. Se ejecuta verificación de duplicados contra `integrationId#externalId` — si ya fue importado, se
    retorna el Work Item existente (importación idempotente, no se crea duplicado).
-4. Se crea un Draft Work Item a través del boundary estándar `createWorkItem` del Core.
+6. Se crea un Draft Work Item a través del boundary estándar `createWorkItem` del Core.
 
 El pipeline es **neutral al proveedor**: una vez normalizado a `ExternalWorkItem`, el Core no tiene
 conocimiento del proveedor original.
@@ -461,7 +469,7 @@ El adapter traduce los `ExternalWorkItemFilters` normalizados a JQL automáticam
 | `providerQuery` | JQL crudo agregado directamente |
 
 Los valores se escapan correctamente. Cuando no se proporcionan filtros, el adapter usa por defecto
-`ORDER BY updated DESC`.
+`updated >= -30d ORDER BY updated DESC` (el endpoint de búsqueda mejorada de Jira requiere JQL acotado).
 
 La capability `providerQuery` se etiqueta como **"JQL"** en Admin, para que los usuarios sepan que
 pueden escribir Jira Query Language crudo cuando los filtros normalizados no son suficientes.
@@ -480,12 +488,18 @@ Nodos ADF soportados: `doc`, `paragraph`, `heading` (niveles 1–6), `bulletList
 
 | Estado HTTP | Código de error de integración |
 |---|---|
+| 400 (JQL) | `INVALID_QUERY` |
 | 401 | `UNAUTHORIZED` |
 | 403 | `FORBIDDEN` |
 | 404 | `NOT_FOUND` |
+| 410 | `UNAVAILABLE` |
 | 429 | `RATE_LIMITED` |
 | 500+ | `UNAVAILABLE` |
 | AbortError | `TIMEOUT` |
+
+Una respuesta 400 cuyo cuerpo contiene palabras clave de JQL/query/field se mapea a `INVALID_QUERY`
+para que la UI pueda mostrar un mensaje específico sobre la sintaxis de filtros. Otros errores 400
+caen a `PROVIDER_ERROR`.
 
 ### Filtro de proyectos
 

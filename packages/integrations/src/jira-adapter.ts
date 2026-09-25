@@ -130,12 +130,18 @@ async function handleJiraResponse(res: Response): Promise<unknown> {
   if (res.status >= 500) throw integrationError('INTEGRATION_UNAVAILABLE')
   if (!res.ok) {
     let detail = ''
+    let isJqlError = false
     try {
       const body = await res.json() as { errorMessages?: string[]; errors?: Record<string, string> }
       const msgs = body.errorMessages?.filter(Boolean) ?? []
       const fieldErrs = body.errors ? Object.entries(body.errors).map(([k, v]) => `${k}: ${v}`) : []
       detail = [...msgs, ...fieldErrs].join('; ')
+      if (res.status === 400) {
+        const combined = detail.toLowerCase()
+        isJqlError = combined.includes('jql') || combined.includes('query') || combined.includes('field') || combined.includes('clause')
+      }
     } catch {}
+    if (isJqlError) throw integrationError('INTEGRATION_INVALID_QUERY')
     throw integrationError('INTEGRATION_PROVIDER_ERROR', detail || `Jira responded with status ${res.status}.`)
   }
   return await res.json()
@@ -360,4 +366,4 @@ export function createJiraAdapter(): IntegrationAdapter {
 }
 
 // Exported for testing
-export { buildJql as _buildJql, normalizeIssue as _normalizeIssue, normalizeDescription as _normalizeDescription, normalizeBaseUrl as _normalizeBaseUrl, adfToMarkdown as _adfToMarkdown }
+export { buildJql as _buildJql, escapeJql as _escapeJql, normalizeIssue as _normalizeIssue, normalizeDescription as _normalizeDescription, normalizeBaseUrl as _normalizeBaseUrl, adfToMarkdown as _adfToMarkdown }

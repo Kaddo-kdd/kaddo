@@ -347,7 +347,7 @@ export async function createAdminServer(opts: AdminServerOptions) {
     },
   )
   // VS-104: Discovery — query all enabled integrations in parallel
-  app.get<{ Querystring: { projects?: string; statuses?: string; types?: string; labels?: string; assignees?: string; search?: string; pageSize?: string; integrationIds?: string } }>(
+  app.get<{ Querystring: { projects?: string; statuses?: string; types?: string; labels?: string; assignees?: string; search?: string; pageSize?: string; integrationIds?: string; cursors?: string } }>(
     '/api/v1/admin/integrations/discover',
     async (request, reply) => {
       const q = request.query
@@ -358,10 +358,13 @@ export async function createAdminServer(opts: AdminServerOptions) {
       if (q.labels) filters.labels = q.labels.split(',')
       if (q.assignees) filters.assignees = q.assignees.split(',')
       if (q.search) filters.search = q.search
+      let cursors: Record<string, string> | undefined
+      if (q.cursors) { try { cursors = JSON.parse(q.cursors) } catch {} }
       return asyncCore(reply, () => discoverExternalWorkItemsAdmin(projectDir, {
         filters: Object.keys(filters).length ? filters as import('@kaddo/cli/core').ExternalWorkItemFilters : undefined,
         pageSize: q.pageSize ? Number.parseInt(q.pageSize, 10) : undefined,
         integrationIds: q.integrationIds ? q.integrationIds.split(',') : undefined,
+        cursors,
       }))
     },
   )

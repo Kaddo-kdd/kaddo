@@ -246,6 +246,10 @@ Admin exposes the **External Items** view, which shows items grouped by integrat
 status indicators, labels, and assignees. Each item has an **Import** action (the same human-confirmed
 flow from VS-102) and an **Open** link to the provider's URL.
 
+**Load More** — the discovery endpoint supports per-integration cursor-based pagination. When an
+integration reports `hasMore`, the UI shows a **Load more** button below that integration's section.
+Clicking it fetches the next page using the integration's cursor and appends the results.
+
 ### Integration Filters vs UI Filters
 
 Filters come in two flavors:
@@ -345,11 +349,14 @@ state at import time.
 
 ### Import pipeline
 
-1. User selects an External Item in the discovery view and chooses a Kaddo Work Item type.
-2. Kaddo re-reads the item from the adapter for freshness.
-3. Duplicate check runs against `integrationId#externalId` — if already imported, the existing Work
+1. **Disabled check** — if the integration is disabled, the import is rejected immediately.
+2. **Concurrent lock** — an in-process lock prevents two simultaneous imports of the same item
+   (guards against the TOCTOU race between duplicate check and Work Item creation).
+3. User selects an External Item in the discovery view and chooses a Kaddo Work Item type.
+4. Kaddo re-reads the item from the adapter for freshness.
+5. Duplicate check runs against `integrationId#externalId` — if already imported, the existing Work
    Item is returned (idempotent import, no duplicate created).
-4. A Draft Work Item is created through the standard `createWorkItem` Core boundary.
+6. A Draft Work Item is created through the standard `createWorkItem` Core boundary.
 
 The pipeline is **provider-neutral**: once an item is normalized to `ExternalWorkItem`, Core has no
 knowledge of the original provider.
@@ -448,7 +455,7 @@ The adapter translates the normalized `ExternalWorkItemFilters` into JQL automat
 | `providerQuery` | Raw JQL appended directly |
 
 Values are properly escaped. When no filters are provided, the adapter defaults to
-`ORDER BY updated DESC`.
+`updated >= -30d ORDER BY updated DESC` (the Jira enhanced search endpoint requires bounded JQL).
 
 The `providerQuery` capability is labeled **"JQL"** in Admin, so users know they can write raw Jira
 Query Language when the normalized filters are not enough.
@@ -466,12 +473,17 @@ Supported ADF nodes: `doc`, `paragraph`, `heading` (levels 1–6), `bulletList`,
 
 | HTTP status | Integration error code |
 |---|---|
+| 400 (JQL) | `INVALID_QUERY` |
 | 401 | `UNAUTHORIZED` |
 | 403 | `FORBIDDEN` |
 | 404 | `NOT_FOUND` |
+| 410 | `UNAVAILABLE` |
 | 429 | `RATE_LIMITED` |
 | 500+ | `UNAVAILABLE` |
 | AbortError | `TIMEOUT` |
+
+A 400 response whose body contains JQL/query/field keywords is mapped to `INVALID_QUERY` so the UI
+can show a specific message about filter syntax. Other 400 errors fall through to `PROVIDER_ERROR`.
 
 ### Projects filter
 

@@ -465,7 +465,7 @@ export type DiscoveryResult = {
 
 export async function discoverExternalWorkItems(
   dir: string,
-  opts: { filters?: ExternalWorkItemFilters; pageSize?: number; integrationIds?: string[] } = {},
+  opts: { filters?: ExternalWorkItemFilters; pageSize?: number; integrationIds?: string[]; cursors?: Record<string, string> } = {},
   env: Record<string, string | undefined> = process.env,
 ): Promise<DiscoveryResult> {
   const { integrations, findings } = loadIntegrations(dir)
@@ -493,8 +493,9 @@ export async function discoverExternalWorkItems(
       const adapter = resolveAdapter(integration)
       const { context } = await buildContextWithSecrets(dir, integration, env)
       const filters = mergeFilters(integration.filters, opts.filters)
+      const cursor = opts.cursors?.[integration.id]
       const page = await withTimeout(
-        adapter.listWorkItems({ context, pageSize: opts.pageSize, filters }),
+        adapter.listWorkItems({ context, cursor, pageSize: opts.pageSize, filters }),
         context.timeoutMs,
       )
       return {
@@ -599,6 +600,8 @@ export function buildImportIndex(dir: string): ImportIndex {
 
 // --- Import preview + materialization ----------------------------------------
 
+const importLocks = new Set<string>()
+
 export type ImportPreviewResult = { preview: ImportPreview; duplicate: LinkedWorkItem | null }
 
 export async function previewImport(
@@ -608,6 +611,8 @@ export async function previewImport(
   opts: { type?: string } = {},
   env: Record<string, string | undefined> = process.env,
 ): Promise<ImportPreviewResult> {
+  const { integration } = requireIntegration(dir, id)
+  if (!integration.enabled) throw new IntegrationServiceError('INTEGRATION_DISABLED', `Integration "${id}" is disabled. Enable it before previewing imports.`)
   const item = await getExternalWorkItem(dir, id, externalId, env)
   if (!item) throw integrationError('INTEGRATION_NOT_FOUND', `External work item "${externalId}" was not found.`)
   const preview = buildImportPreview(item, { integrationId: id, type: opts.type })
@@ -628,36 +633,46 @@ export async function importExternalWorkItem(
   opts: { type: string },
   env: Record<string, string | undefined> = process.env,
 ): Promise<ImportResult> {
-  const item = await getExternalWorkItem(dir, id, externalId, env)
-  if (!item) throw integrationError('INTEGRATION_NOT_FOUND', `External work item "${externalId}" was not found.`)
-  const preview = buildImportPreview(item, { integrationId: id, type: opts.type })
+  const { integration } = requireIntegration(dir, id)
+  if (!integration.enabled) throw new IntegrationServiceError('INTEGRATION_DISABLED', `Integration "${id}" is disabled. Enable it before importing.`)
 
-  const existing = findLinkedWorkItem(dir, id, externalId)
-  if (existing) return { workItemId: existing.workItemId, created: false, duplicateOf: existing.workItemId, preview }
+  const lockKey = `${id}#${externalId}`
+  if (importLocks.has(lockKey)) throw new IntegrationServiceError('INTEGRATION_INVALID_INPUT', 'Import already in progress for this item.')
+  importLocks.add(lockKey)
+  try {
+    const item = await getExternalWorkItem(dir, id, externalId, env)
+    if (!item) throw integrationError('INTEGRATION_NOT_FOUND', `External work item "${externalId}" was not found.`)
+    const preview = buildImportPreview(item, { integrationId: id, type: opts.type })
 
-  const intent = item.description ? `${item.title}\n\n${item.description}` : item.title
-  const created = createWorkItem(dir, {
-    intent,
-    type: opts.type,
-    source: {
-      type: 'external',
-      provider: item.provider,
-      integration: id,
-      id: externalId,
-      url: item.url,
-      imported_at: new Date().toISOString(),
-      external_updated_at: item.updatedAt,
-    },
-    originalSnapshot: {
-      title: item.title,
-      description: item.description,
-      type: item.type,
-      status: item.status,
-      labels: item.labels,
-      assignee: item.assignees?.[0]?.name,
-      created_at: item.createdAt,
-      updated_at: item.updatedAt,
-    },
-  })
-  return { workItemId: created.id, created: true, preview, path: created.path }
+    const existing = findLinkedWorkItem(dir, id, externalId)
+    if (existing) return { workItemId: existing.workItemId, created: false, duplicateOf: existing.workItemId, preview }
+
+    const intent = item.description ? `${item.title}\n\n${item.description}` : item.title
+    const created = createWorkItem(dir, {
+      intent,
+      type: opts.type,
+      source: {
+        type: 'external',
+        provider: item.provider,
+        integration: id,
+        id: externalId,
+        url: item.url,
+        imported_at: new Date().toISOString(),
+        external_updated_at: item.updatedAt,
+      },
+      originalSnapshot: {
+        title: item.title,
+        description: item.description,
+        type: item.type,
+        status: item.status,
+        labels: item.labels,
+        assignee: item.assignees?.[0]?.name,
+        created_at: item.createdAt,
+        updated_at: item.updatedAt,
+      },
+    })
+    return { workItemId: created.id, created: true, preview, path: created.path }
+  } finally {
+    importLocks.delete(lockKey)
+  }
 }

@@ -8,6 +8,7 @@ import {
 } from '../src/index.js'
 import {
   _buildJql,
+  _escapeJql,
   _normalizeIssue,
   _normalizeDescription,
   _normalizeBaseUrl,
@@ -78,8 +79,8 @@ function mockFetchOk(body: unknown) {
   fetchMock.mockResolvedValueOnce({ ok: true, status: 200, json: () => Promise.resolve(body) })
 }
 
-function mockFetchStatus(status: number) {
-  fetchMock.mockResolvedValueOnce({ ok: false, status, json: () => Promise.resolve({}) })
+function mockFetchStatus(status: number, body: unknown = {}) {
+  fetchMock.mockResolvedValueOnce({ ok: false, status, json: () => Promise.resolve(body) })
 }
 
 // ---------------------------------------------------------------------------
@@ -525,5 +526,285 @@ describe('VS-106 — projects filter', () => {
     const { mergeFilters } = await import('../src/config.js')
     const merged = mergeFilters({ projects: ['A'] }, {})
     expect(merged.projects).toEqual(['A'])
+  })
+})
+
+// ---------------------------------------------------------------------------
+// VS-106A — Jira Adapter Hardening
+// ---------------------------------------------------------------------------
+
+describe('VS-106A — escapeJql', () => {
+  it('wraps plain value in quotes', () => {
+    expect(_escapeJql('KAD')).toBe('"KAD"')
+  })
+
+  it('escapes embedded double quotes', () => {
+    expect(_escapeJql('value "with" quotes')).toBe('"value \\"with\\" quotes"')
+  })
+
+  it('escapes backslashes', () => {
+    expect(_escapeJql('path\\to\\thing')).toBe('"path\\\\to\\\\thing"')
+  })
+
+  it('escapes both backslashes and quotes together', () => {
+    expect(_escapeJql('a\\"b')).toBe('"a\\\\\\"b"')
+  })
+
+  it('handles empty string', () => {
+    expect(_escapeJql('')).toBe('""')
+  })
+})
+
+describe('VS-106A — invalid JQL error (AC-06)', () => {
+  const adapter = createJiraAdapter()
+
+  it('maps 400 with JQL error message to INTEGRATION_INVALID_QUERY', async () => {
+    mockFetchStatus(400, { errorMessages: ['Error in the JQL Query: Expecting operator before the end of the query.'] })
+    try {
+      await adapter.listWorkItems({ context: ctx() })
+      expect.fail('should throw')
+    } catch (e: any) {
+      expect(e.code).toBe('INTEGRATION_INVALID_QUERY')
+    }
+  })
+
+  it('maps 400 with field clause error to INTEGRATION_INVALID_QUERY', async () => {
+    mockFetchStatus(400, { errorMessages: ["Field 'badfield' does not exist or you do not have permission to view it."] })
+    try {
+      await adapter.listWorkItems({ context: ctx() })
+      expect.fail('should throw')
+    } catch (e: any) {
+      expect(e.code).toBe('INTEGRATION_INVALID_QUERY')
+    }
+  })
+
+  it('maps 400 with query keyword to INTEGRATION_INVALID_QUERY', async () => {
+    mockFetchStatus(400, { errorMessages: ['The query is not valid.'] })
+    try {
+      await adapter.listWorkItems({ context: ctx() })
+      expect.fail('should throw')
+    } catch (e: any) {
+      expect(e.code).toBe('INTEGRATION_INVALID_QUERY')
+    }
+  })
+
+  it('maps generic 400 without JQL keywords to INTEGRATION_PROVIDER_ERROR', async () => {
+    mockFetchStatus(400, { errorMessages: ['Bad request payload.'] })
+    try {
+      await adapter.listWorkItems({ context: ctx() })
+      expect.fail('should throw')
+    } catch (e: any) {
+      expect(e.code).toBe('INTEGRATION_PROVIDER_ERROR')
+    }
+  })
+})
+
+describe('VS-106A — pagination multi-page flow (AC-07–10)', () => {
+  const adapter = createJiraAdapter()
+
+  it('paginates through two pages using nextPageToken', async () => {
+    const issue1 = jiraIssue({ summary: 'Page 1 item' })
+    const issue2 = jiraIssue({ summary: 'Page 2 item' })
+    issue2.key = 'KAD-200'
+
+    mockFetchOk({ issues: [issue1], isLast: false, nextPageToken: 'tok-page2' })
+    const page1 = await adapter.listWorkItems({ context: ctx(), pageSize: 1 })
+    expect(page1.items).toHaveLength(1)
+    expect(page1.hasMore).toBe(true)
+    expect(page1.nextCursor).toBe('tok-page2')
+
+    mockFetchOk({ issues: [issue2], isLast: true })
+    const page2 = await adapter.listWorkItems({ context: ctx(), cursor: page1.nextCursor, pageSize: 1 })
+    expect(page2.items).toHaveLength(1)
+    expect(page2.items[0].externalId).toBe('KAD-200')
+    expect(page2.hasMore).toBe(false)
+    expect(page2.nextCursor).toBeUndefined()
+  })
+
+  it('handles empty page with isLast: true', async () => {
+    mockFetchOk({ issues: [], isLast: true })
+    const page = await adapter.listWorkItems({ context: ctx() })
+    expect(page.items).toHaveLength(0)
+    expect(page.hasMore).toBe(false)
+  })
+
+  it('does not send nextPageToken on first request', async () => {
+    mockFetchOk(searchResponse([]))
+    await adapter.listWorkItems({ context: ctx() })
+    const body = JSON.parse(fetchMock.mock.calls[0][1]?.body as string)
+    expect(body.nextPageToken).toBeUndefined()
+  })
+
+  it('clamps pageSize to [1, 100]', async () => {
+    mockFetchOk(searchResponse([]))
+    await adapter.listWorkItems({ context: ctx(), pageSize: 200 })
+    const body = JSON.parse(fetchMock.mock.calls[0][1]?.body as string)
+    expect(body.maxResults).toBe(100)
+  })
+
+  it('clamps pageSize minimum to 1', async () => {
+    mockFetchOk(searchResponse([]))
+    await adapter.listWorkItems({ context: ctx(), pageSize: 0 })
+    const body = JSON.parse(fetchMock.mock.calls[0][1]?.body as string)
+    expect(body.maxResults).toBe(1)
+  })
+})
+
+describe('VS-106A — error normalization completeness (AC-18–23)', () => {
+  const adapter = createJiraAdapter()
+
+  it('maps 401 to INTEGRATION_UNAUTHORIZED', async () => {
+    mockFetchStatus(401)
+    try { await adapter.listWorkItems({ context: ctx() }); expect.fail('should throw') } catch (e: any) { expect(e.code).toBe('INTEGRATION_UNAUTHORIZED') }
+  })
+
+  it('maps 403 to INTEGRATION_FORBIDDEN', async () => {
+    mockFetchStatus(403)
+    try { await adapter.listWorkItems({ context: ctx() }); expect.fail('should throw') } catch (e: any) { expect(e.code).toBe('INTEGRATION_FORBIDDEN') }
+  })
+
+  it('maps 404 to INTEGRATION_NOT_FOUND', async () => {
+    mockFetchStatus(404)
+    try { await adapter.listWorkItems({ context: ctx() }); expect.fail('should throw') } catch (e: any) { expect(e.code).toBe('INTEGRATION_NOT_FOUND') }
+  })
+
+  it('maps 410 to INTEGRATION_UNAVAILABLE', async () => {
+    mockFetchStatus(410)
+    try { await adapter.listWorkItems({ context: ctx() }); expect.fail('should throw') } catch (e: any) { expect(e.code).toBe('INTEGRATION_UNAVAILABLE') }
+  })
+
+  it('maps 429 to INTEGRATION_RATE_LIMITED', async () => {
+    mockFetchStatus(429)
+    try { await adapter.listWorkItems({ context: ctx() }); expect.fail('should throw') } catch (e: any) { expect(e.code).toBe('INTEGRATION_RATE_LIMITED') }
+  })
+
+  it('maps 500 to INTEGRATION_UNAVAILABLE', async () => {
+    mockFetchStatus(500)
+    try { await adapter.listWorkItems({ context: ctx() }); expect.fail('should throw') } catch (e: any) { expect(e.code).toBe('INTEGRATION_UNAVAILABLE') }
+  })
+
+  it('maps 503 to INTEGRATION_UNAVAILABLE', async () => {
+    mockFetchStatus(503)
+    try { await adapter.listWorkItems({ context: ctx() }); expect.fail('should throw') } catch (e: any) { expect(e.code).toBe('INTEGRATION_UNAVAILABLE') }
+  })
+
+  it('maps AbortError to INTEGRATION_TIMEOUT', async () => {
+    const abortErr = new DOMException('The operation was aborted', 'AbortError')
+    fetchMock.mockRejectedValueOnce(abortErr)
+    try { await adapter.listWorkItems({ context: ctx() }); expect.fail('should throw') } catch (e: any) { expect(e.code).toBe('INTEGRATION_TIMEOUT') }
+  })
+
+  it('maps network failure to INTEGRATION_PROVIDER_ERROR', async () => {
+    fetchMock.mockRejectedValueOnce(new TypeError('Failed to fetch'))
+    try { await adapter.listWorkItems({ context: ctx() }); expect.fail('should throw') } catch (e: any) { expect(e.code).toBe('INTEGRATION_PROVIDER_ERROR') }
+  })
+
+  it('error objects are retryable for transient codes', async () => {
+    mockFetchStatus(429)
+    try { await adapter.listWorkItems({ context: ctx() }); expect.fail('should throw') } catch (e: any) { expect(e.retryable).toBe(true) }
+  })
+
+  it('error objects are not retryable for auth codes', async () => {
+    mockFetchStatus(401)
+    try { await adapter.listWorkItems({ context: ctx() }); expect.fail('should throw') } catch (e: any) { expect(e.retryable).toBe(false) }
+  })
+})
+
+describe('VS-106A — partial data handling (AC-24–25)', () => {
+  it('normalizes issue with null description', () => {
+    const issue = jiraIssue({ description: null })
+    const item = _normalizeIssue(issue as any, 'https://co.atlassian.net', 'co')
+    expect(item.description).toBeUndefined()
+  })
+
+  it('normalizes issue with no assignee', () => {
+    const issue = jiraIssue({ assignee: null })
+    const item = _normalizeIssue(issue as any, 'https://co.atlassian.net', 'co')
+    expect(item.assignees).toBeUndefined()
+  })
+
+  it('normalizes issue with no reporter', () => {
+    const issue = jiraIssue({ reporter: null })
+    const item = _normalizeIssue(issue as any, 'https://co.atlassian.net', 'co')
+    expect(item.author).toBeUndefined()
+  })
+
+  it('normalizes issue with no priority', () => {
+    const issue = jiraIssue({ priority: null })
+    const item = _normalizeIssue(issue as any, 'https://co.atlassian.net', 'co')
+    expect(item.rawMetadata).not.toHaveProperty('priority')
+  })
+
+  it('normalizes issue with no labels', () => {
+    const issue = jiraIssue({ labels: null })
+    const item = _normalizeIssue(issue as any, 'https://co.atlassian.net', 'co')
+    expect(item.labels).toBeNull()
+  })
+
+  it('normalizes issue with empty components', () => {
+    const issue = jiraIssue({ components: [] })
+    const item = _normalizeIssue(issue as any, 'https://co.atlassian.net', 'co')
+    expect(item.rawMetadata).not.toHaveProperty('components')
+  })
+
+  it('uses issue key as fallback title when summary is missing', () => {
+    const issue = { id: '10099', key: 'FALL-1', fields: {} }
+    const item = _normalizeIssue(issue as any, 'https://co.atlassian.net', 'co')
+    expect(item.title).toBe('FALL-1')
+  })
+})
+
+describe('VS-106A — security hardening (AC-29)', () => {
+  const adapter = createJiraAdapter()
+
+  it('never leaks credentials in error messages on auth failure', async () => {
+    mockFetchStatus(401)
+    try {
+      await adapter.listWorkItems({ context: ctx() })
+      expect.fail('should throw')
+    } catch (e: any) {
+      expect(e.message).not.toContain('test-token')
+      expect(e.message).not.toContain('user@company.com')
+      expect(e.safeMessage).not.toContain('test-token')
+    }
+  })
+
+  it('never leaks credentials in error messages on provider error', async () => {
+    mockFetchStatus(400, { errorMessages: ['Something went wrong with token abc123'] })
+    try {
+      await adapter.listWorkItems({ context: ctx() })
+      expect.fail('should throw')
+    } catch (e: any) {
+      expect(e.message).not.toContain('test-token')
+      expect(e.safeMessage).not.toContain('test-token')
+    }
+  })
+
+  it('never leaks credentials in network error', async () => {
+    fetchMock.mockRejectedValueOnce(new Error('connect ECONNREFUSED with token test-token'))
+    try {
+      await adapter.listWorkItems({ context: ctx() })
+      expect.fail('should throw')
+    } catch (e: any) {
+      expect(e.message).not.toContain('test-token')
+      expect(e.safeMessage).not.toContain('test-token')
+    }
+  })
+
+  it('getWorkItem never leaks credentials in 404 null return', async () => {
+    mockFetchStatus(404)
+    const result = await adapter.getWorkItem({ context: ctx(), externalId: 'X-1' })
+    expect(result).toBeNull()
+  })
+
+  it('INTEGRATION_INVALID_QUERY error does not leak raw JQL error details', async () => {
+    mockFetchStatus(400, { errorMessages: ['Error in the JQL Query: unexpected token near "apiToken"'] })
+    try {
+      await adapter.listWorkItems({ context: ctx() })
+      expect.fail('should throw')
+    } catch (e: any) {
+      expect(e.code).toBe('INTEGRATION_INVALID_QUERY')
+      expect(e.message).not.toContain('apiToken')
+    }
   })
 })

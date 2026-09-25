@@ -11,6 +11,7 @@ export type IntegrationErrorCode =
   | 'INTEGRATION_RATE_LIMITED'
   | 'INTEGRATION_UNAVAILABLE'
   | 'INTEGRATION_TIMEOUT'
+  | 'INTEGRATION_INVALID_QUERY'
   | 'INTEGRATION_PROVIDER_ERROR'
   | 'UNSUPPORTED_CAPABILITY'
 
@@ -47,6 +48,7 @@ export function defaultMessageFor(code: IntegrationErrorCode): string {
     case 'INTEGRATION_RATE_LIMITED': return 'The external provider is rate limiting requests. Try again later.'
     case 'INTEGRATION_UNAVAILABLE': return 'The external provider is temporarily unavailable.'
     case 'INTEGRATION_TIMEOUT': return 'The external provider did not respond in time.'
+    case 'INTEGRATION_INVALID_QUERY': return 'The query syntax is invalid. Check filter values or JQL.'
     case 'INTEGRATION_PROVIDER_ERROR': return 'The external provider returned an error.'
     case 'UNSUPPORTED_CAPABILITY': return 'This adapter does not support the requested capability.'
   }
