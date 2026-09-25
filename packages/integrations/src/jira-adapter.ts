@@ -142,6 +142,7 @@ async function jiraFetch(
     if (res.status === 401) throw integrationError('INTEGRATION_UNAUTHORIZED')
     if (res.status === 403) throw integrationError('INTEGRATION_FORBIDDEN')
     if (res.status === 404) throw integrationError('INTEGRATION_NOT_FOUND')
+    if (res.status === 410) throw integrationError('INTEGRATION_UNAVAILABLE', 'Jira API endpoint deprecated (410 Gone).')
     if (res.status === 429) throw integrationError('INTEGRATION_RATE_LIMITED')
     if (res.status >= 500) throw integrationError('INTEGRATION_UNAVAILABLE')
     if (!res.ok) throw integrationError('INTEGRATION_PROVIDER_ERROR', `Jira responded with status ${res.status}.`)
@@ -286,7 +287,7 @@ export function createJiraAdapter(): IntegrationAdapter {
       const startAt = request.cursor ? Math.max(0, Number.parseInt(request.cursor, 10) || 0) : 0
 
       try {
-        const data = await jiraFetch(baseUrl, '/rest/api/3/search', auth, request.context.timeoutMs, {
+        const data = await jiraFetch(baseUrl, '/rest/api/3/search/jql', auth, request.context.timeoutMs, {
           jql: jql.startsWith('ORDER BY') ? jql : jql + ' ORDER BY updated DESC',
           startAt: String(startAt),
           maxResults: String(pageSize),
