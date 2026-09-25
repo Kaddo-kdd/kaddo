@@ -104,9 +104,8 @@ type JiraIssue = {
 
 type JiraSearchResponse = {
   issues: JiraIssue[]
-  total: number
-  startAt: number
-  maxResults: number
+  isLast?: boolean
+  nextPageToken?: string
 }
 
 function normalizeBaseUrl(raw: string): string {
@@ -131,7 +130,12 @@ async function handleJiraResponse(res: Response): Promise<unknown> {
   if (res.status >= 500) throw integrationError('INTEGRATION_UNAVAILABLE')
   if (!res.ok) {
     let detail = ''
-    try { const body = await res.json(); detail = (body as { errorMessages?: string[] }).errorMessages?.[0] ?? '' } catch {}
+    try {
+      const body = await res.json() as { errorMessages?: string[]; errors?: Record<string, string> }
+      const msgs = body.errorMessages?.filter(Boolean) ?? []
+      const fieldErrs = body.errors ? Object.entries(body.errors).map(([k, v]) => `${k}: ${v}`) : []
+      detail = [...msgs, ...fieldErrs].join('; ')
+    } catch {}
     throw integrationError('INTEGRATION_PROVIDER_ERROR', detail || `Jira responded with status ${res.status}.`)
   }
   return await res.json()
@@ -315,24 +319,24 @@ export function createJiraAdapter(): IntegrationAdapter {
       const { baseUrl, email, apiToken } = resolveConfig(request.context)
       const auth = authHeader(email, apiToken)
 
-      // Build JQL: integration-level + runtime filters are already merged by the service
       const jql = buildJql(request.filters)
       const pageSize = Math.min(Math.max(1, request.pageSize ?? DEFAULT_PAGE_SIZE), 100)
-      const startAt = request.cursor ? Math.max(0, Number.parseInt(request.cursor, 10) || 0) : 0
+      const nextPageToken = request.cursor || undefined
 
       try {
-        const fullJql = jql ? jql + ' ORDER BY updated DESC' : 'ORDER BY updated DESC'
-        const data = await jiraPost(baseUrl, '/rest/api/3/search/jql', auth, request.context.timeoutMs, {
+        const fullJql = jql ? jql + ' ORDER BY updated DESC' : 'updated >= -30d ORDER BY updated DESC'
+        const body: Record<string, unknown> = {
           jql: fullJql,
-          startAt,
           maxResults: pageSize,
           fields: SEARCH_FIELDS.split(','),
-        }) as JiraSearchResponse
+        }
+        if (nextPageToken) body.nextPageToken = nextPageToken
+
+        const data = await jiraPost(baseUrl, '/rest/api/3/search/jql', auth, request.context.timeoutMs, body) as JiraSearchResponse
 
         const items = data.issues.map((issue) => normalizeIssue(issue, baseUrl, request.context.integrationId))
-        const nextStart = data.startAt + data.issues.length
-        const hasMore = nextStart < data.total
-        return { items, hasMore, ...(hasMore ? { nextCursor: String(nextStart) } : {}) }
+        const hasMore = data.isLast === false
+        return { items, hasMore, ...(hasMore && data.nextPageToken ? { nextCursor: data.nextPageToken } : {}) }
       } catch (err) {
         throw normalizeProviderError(err)
       }

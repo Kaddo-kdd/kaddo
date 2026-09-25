@@ -51,12 +51,11 @@ function jiraIssue(overrides: Record<string, unknown> = {}) {
   }
 }
 
-function searchResponse(issues: unknown[], total?: number) {
+function searchResponse(issues: unknown[], opts?: { isLast?: boolean; nextPageToken?: string }) {
   return {
     issues,
-    startAt: 0,
-    maxResults: 50,
-    total: total ?? issues.length,
+    isLast: opts?.isLast ?? true,
+    ...(opts?.nextPageToken ? { nextPageToken: opts.nextPageToken } : {}),
   }
 }
 
@@ -383,26 +382,26 @@ describe('VS-106 — listWorkItems', () => {
     expect(body.jql).toContain('project')
   })
 
-  it('applies pagination cursor', async () => {
-    mockFetchOk({ issues: [], startAt: 10, maxResults: 10, total: 10 })
-    await adapter.listWorkItems({ context: ctx(), cursor: '10', pageSize: 10 })
+  it('applies pagination cursor via nextPageToken', async () => {
+    mockFetchOk({ issues: [], isLast: true })
+    await adapter.listWorkItems({ context: ctx(), cursor: 'eyJhIjoiMTAifQ==', pageSize: 10 })
     const body = JSON.parse(fetchMock.mock.calls[0][1]?.body as string)
-    expect(body.startAt).toBe(10)
+    expect(body.nextPageToken).toBe('eyJhIjoiMTAifQ==')
     expect(body.maxResults).toBe(10)
   })
 
   it('returns nextCursor when hasMore', async () => {
-    mockFetchOk({ issues: [jiraIssue()], startAt: 0, maxResults: 1, total: 5 })
+    mockFetchOk({ issues: [jiraIssue()], isLast: false, nextPageToken: 'eyJhIjoiMSJ9' })
     const page = await adapter.listWorkItems({ context: ctx(), pageSize: 1 })
     expect(page.hasMore).toBe(true)
-    expect(page.nextCursor).toBe('1')
+    expect(page.nextCursor).toBe('eyJhIjoiMSJ9')
   })
 
-  it('orders by updated DESC by default', async () => {
+  it('defaults to last-30d bounded JQL when no filters', async () => {
     mockFetchOk(searchResponse([]))
     await adapter.listWorkItems({ context: ctx() })
     const body = JSON.parse(fetchMock.mock.calls[0][1]?.body as string)
-    expect(body.jql).toContain('ORDER BY updated DESC')
+    expect(body.jql).toBe('updated >= -30d ORDER BY updated DESC')
   })
 
   it('throws normalized error on 401', async () => {
