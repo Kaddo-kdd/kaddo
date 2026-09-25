@@ -34,6 +34,7 @@ function Cap({ on, label }: { on: boolean; label: string }) {
 }
 
 const btnStyle: React.CSSProperties = { padding: '6px 12px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', background: 'var(--surface)', color: 'var(--foreground)', cursor: 'pointer', fontSize: 13, fontFamily: 'inherit' }
+const disabledStyle: React.CSSProperties = { opacity: 0.45, cursor: 'not-allowed' }
 const primaryBtnStyle: React.CSSProperties = { ...btnStyle, background: 'var(--primary)', color: 'var(--primary-foreground, #fff)', fontWeight: 600 }
 const dangerBtnStyle: React.CSSProperties = { ...btnStyle, color: 'var(--danger)', borderColor: 'var(--danger)' }
 const inputStyle: React.CSSProperties = { padding: '8px 12px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', background: 'var(--surface)', color: 'var(--foreground)', fontSize: 13, fontFamily: 'inherit', width: '100%', boxSizing: 'border-box' as const }
@@ -139,7 +140,7 @@ function SecretField({ schema, configured, onSave }: { name: string; schema: Con
       <label style={labelStyle}>{schema.label}{schema.required && ' *'}</label>
       <div style={{ display: 'flex', gap: 8 }}>
         <input type="password" value={val} onChange={(e) => setVal(e.target.value)} placeholder="Enter value…" style={{ ...inputStyle, flex: 1 }} />
-        <button disabled={!val.trim()} onClick={() => { onSave(val); setEditing(false); setVal('') }} style={primaryBtnStyle}>Save</button>
+        <button disabled={!val.trim()} onClick={() => { onSave(val); setEditing(false); setVal('') }} style={!val.trim() ? { ...primaryBtnStyle, ...disabledStyle } : primaryBtnStyle}>Save</button>
         <button onClick={() => setEditing(false)} style={btnStyle}>Cancel</button>
       </div>
     </div>
@@ -221,7 +222,9 @@ function CreateIntegrationPanel({ onCreated, onCancel }: { onCreated: () => void
 
   const configSchema = selectedType.configSchema
   const secretSchema = selectedType.secretSchema
-  const canSave = id.trim() && /^[a-z0-9][a-z0-9._-]*$/i.test(id.trim())
+  const idTrimmed = id.trim()
+  const idValid = /^[a-z0-9][a-z0-9._-]*$/i.test(idTrimmed)
+  const canSave = idTrimmed.length > 0 && idValid
 
   const handleVerify = async () => {
     setVerifying(true)
@@ -260,6 +263,7 @@ function CreateIntegrationPanel({ onCreated, onCancel }: { onCreated: () => void
         <label style={labelStyle}>Integration ID *</label>
         <div style={{ fontSize: 12, color: 'var(--foreground-muted)', marginBottom: 4 }}>A unique identifier (alphanumeric, dashes, dots).</div>
         <input value={id} onChange={(e) => setId(e.target.value)} placeholder="e.g. company-jira" style={inputStyle} />
+        {idTrimmed.length > 0 && !idValid && <div style={{ fontSize: 12, color: 'var(--danger)', marginTop: 4 }}>Only letters, digits, dashes, dots — no spaces.</div>}
       </div>
 
       {Object.keys(configSchema).length > 0 && (
@@ -294,10 +298,10 @@ function CreateIntegrationPanel({ onCreated, onCancel }: { onCreated: () => void
       )}
 
       <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
-        <button disabled={!canSave || createMut.isPending} onClick={() => createMut.mutate()} style={primaryBtnStyle}>
+        <button disabled={!canSave || createMut.isPending} onClick={() => createMut.mutate()} style={!canSave || createMut.isPending ? { ...primaryBtnStyle, ...disabledStyle } : primaryBtnStyle}>
           {createMut.isPending ? 'Creating…' : 'Save'}
         </button>
-        <button disabled={!canSave || verifying} onClick={handleVerify} style={btnStyle}>
+        <button disabled={!canSave || verifying} onClick={handleVerify} style={!canSave || verifying ? { ...btnStyle, ...disabledStyle } : btnStyle}>
           {verifying ? 'Verifying…' : 'Verify & Save'}
         </button>
         <button onClick={onCancel} style={btnStyle}>Cancel</button>
@@ -365,7 +369,7 @@ function EditIntegrationPanel({ integration, onDone }: { integration: Integratio
           {Object.entries(configSchema).map(([key, schema]) => (
             <DynamicField key={key} name={key} schema={schema} value={config[key]} onChange={(v) => { setConfig({ ...config, [key]: v }); setConfigDirty(true) }} />
           ))}
-          <button disabled={!configDirty || updateMut.isPending} onClick={() => updateMut.mutate()} style={primaryBtnStyle}>
+          <button disabled={!configDirty || updateMut.isPending} onClick={() => updateMut.mutate()} style={!configDirty || updateMut.isPending ? { ...primaryBtnStyle, ...disabledStyle } : primaryBtnStyle}>
             {updateMut.isPending ? 'Saving…' : 'Save Configuration'}
           </button>
           {updateMut.isError && <p style={{ fontSize: 12, color: 'var(--danger)', marginTop: 4 }}>{(updateMut.error as Error).message}</p>}
