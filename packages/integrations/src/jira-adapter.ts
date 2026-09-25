@@ -89,7 +89,7 @@ function buildJql(filters?: import('./contract.js').ExternalWorkItemFilters): st
   if (filters?.updatedAfter) clauses.push(`updated >= ${escapeJql(filters.updatedAfter)}`)
   if (filters?.search) clauses.push(`(summary ~ ${escapeJql(filters.search)} OR description ~ ${escapeJql(filters.search)})`)
   if (filters?.providerQuery) clauses.push(`(${filters.providerQuery})`)
-  return clauses.join(' AND ') || 'ORDER BY updated DESC'
+  return clauses.join(' AND ')
 }
 
 // ---------------------------------------------------------------------------
@@ -122,6 +122,21 @@ function authHeader(email: string, token: string): string {
   return `Basic ${encoded}`
 }
 
+async function handleJiraResponse(res: Response): Promise<unknown> {
+  if (res.status === 401) throw integrationError('INTEGRATION_UNAUTHORIZED')
+  if (res.status === 403) throw integrationError('INTEGRATION_FORBIDDEN')
+  if (res.status === 404) throw integrationError('INTEGRATION_NOT_FOUND')
+  if (res.status === 410) throw integrationError('INTEGRATION_UNAVAILABLE', 'Jira API endpoint deprecated (410 Gone).')
+  if (res.status === 429) throw integrationError('INTEGRATION_RATE_LIMITED')
+  if (res.status >= 500) throw integrationError('INTEGRATION_UNAVAILABLE')
+  if (!res.ok) {
+    let detail = ''
+    try { const body = await res.json(); detail = (body as { errorMessages?: string[] }).errorMessages?.[0] ?? '' } catch {}
+    throw integrationError('INTEGRATION_PROVIDER_ERROR', detail || `Jira responded with status ${res.status}.`)
+  }
+  return await res.json()
+}
+
 async function jiraFetch(
   baseUrl: string,
   path: string,
@@ -139,14 +154,33 @@ async function jiraFetch(
       headers: { Authorization: auth, Accept: 'application/json' },
       signal: controller.signal,
     })
-    if (res.status === 401) throw integrationError('INTEGRATION_UNAUTHORIZED')
-    if (res.status === 403) throw integrationError('INTEGRATION_FORBIDDEN')
-    if (res.status === 404) throw integrationError('INTEGRATION_NOT_FOUND')
-    if (res.status === 410) throw integrationError('INTEGRATION_UNAVAILABLE', 'Jira API endpoint deprecated (410 Gone).')
-    if (res.status === 429) throw integrationError('INTEGRATION_RATE_LIMITED')
-    if (res.status >= 500) throw integrationError('INTEGRATION_UNAVAILABLE')
-    if (!res.ok) throw integrationError('INTEGRATION_PROVIDER_ERROR', `Jira responded with status ${res.status}.`)
-    return await res.json()
+    return await handleJiraResponse(res)
+  } catch (err) {
+    if (err instanceof Error && err.name === 'AbortError') throw integrationError('INTEGRATION_TIMEOUT')
+    throw normalizeProviderError(err)
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
+async function jiraPost(
+  baseUrl: string,
+  path: string,
+  auth: string,
+  timeoutMs: number,
+  body: unknown,
+): Promise<unknown> {
+  const url = new URL(path, baseUrl + '/')
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), timeoutMs)
+  try {
+    const res = await fetch(url.toString(), {
+      method: 'POST',
+      headers: { Authorization: auth, Accept: 'application/json', 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+      signal: controller.signal,
+    })
+    return await handleJiraResponse(res)
   } catch (err) {
     if (err instanceof Error && err.name === 'AbortError') throw integrationError('INTEGRATION_TIMEOUT')
     throw normalizeProviderError(err)
@@ -287,11 +321,12 @@ export function createJiraAdapter(): IntegrationAdapter {
       const startAt = request.cursor ? Math.max(0, Number.parseInt(request.cursor, 10) || 0) : 0
 
       try {
-        const data = await jiraFetch(baseUrl, '/rest/api/3/search/jql', auth, request.context.timeoutMs, {
-          jql: jql.startsWith('ORDER BY') ? jql : jql + ' ORDER BY updated DESC',
-          startAt: String(startAt),
-          maxResults: String(pageSize),
-          fields: SEARCH_FIELDS,
+        const fullJql = jql ? jql + ' ORDER BY updated DESC' : 'ORDER BY updated DESC'
+        const data = await jiraPost(baseUrl, '/rest/api/3/search/jql', auth, request.context.timeoutMs, {
+          jql: fullJql,
+          startAt,
+          maxResults: pageSize,
+          fields: SEARCH_FIELDS.split(','),
         }) as JiraSearchResponse
 
         const items = data.issues.map((issue) => normalizeIssue(issue, baseUrl, request.context.integrationId))

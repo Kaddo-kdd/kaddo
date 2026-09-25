@@ -144,9 +144,9 @@ describe('VS-106 — provider metadata', () => {
 })
 
 describe('VS-106 — JQL generation', () => {
-  it('returns ORDER BY when no filters', () => {
-    expect(_buildJql(undefined)).toBe('ORDER BY updated DESC')
-    expect(_buildJql({})).toBe('ORDER BY updated DESC')
+  it('returns empty string when no filters', () => {
+    expect(_buildJql(undefined)).toBe('')
+    expect(_buildJql({})).toBe('')
   })
 
   it('generates project filter', () => {
@@ -379,17 +379,16 @@ describe('VS-106 — listWorkItems', () => {
     expect(page.items[0].externalId).toBe('KAD-142')
     expect(page.items[0].provider).toBe('jira')
     expect(page.hasMore).toBe(false)
-    const url = fetchMock.mock.calls[0][0] as string
-    expect(url).toContain('jql=')
-    expect(url).toContain('project')
+    const body = JSON.parse(fetchMock.mock.calls[0][1]?.body as string)
+    expect(body.jql).toContain('project')
   })
 
   it('applies pagination cursor', async () => {
     mockFetchOk({ issues: [], startAt: 10, maxResults: 10, total: 10 })
     await adapter.listWorkItems({ context: ctx(), cursor: '10', pageSize: 10 })
-    const url = fetchMock.mock.calls[0][0] as string
-    expect(url).toContain('startAt=10')
-    expect(url).toContain('maxResults=10')
+    const body = JSON.parse(fetchMock.mock.calls[0][1]?.body as string)
+    expect(body.startAt).toBe(10)
+    expect(body.maxResults).toBe(10)
   })
 
   it('returns nextCursor when hasMore', async () => {
@@ -402,8 +401,8 @@ describe('VS-106 — listWorkItems', () => {
   it('orders by updated DESC by default', async () => {
     mockFetchOk(searchResponse([]))
     await adapter.listWorkItems({ context: ctx() })
-    const url = fetchMock.mock.calls[0][0] as string
-    expect(url).toContain('ORDER+BY+updated+DESC')
+    const body = JSON.parse(fetchMock.mock.calls[0][1]?.body as string)
+    expect(body.jql).toContain('ORDER BY updated DESC')
   })
 
   it('throws normalized error on 401', async () => {
