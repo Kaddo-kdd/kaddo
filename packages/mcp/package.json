@@ -1,6 +1,6 @@
 {
   "name": "@kaddo/mcp",
-  "version": "3.90.1",
+  "version": "3.90.2",
   "description": "MCP server for Kaddo project knowledge: read-only resources/tools/prompts plus safe derived generation under .kaddo/.",
   "license": "MIT",
   "repository": {
@@ -38,13 +38,13 @@
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
-    "@kaddo/cli": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.29.0",
     "gray-matter": "^4.0.3",
     "yaml": "^2.4.2",
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@kaddo/cli": "workspace:*",
     "@types/node": "^20.14.0",
     "tsup": "^8.1.0",
     "typescript": "^5.4.5"

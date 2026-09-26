@@ -216,9 +216,6 @@ importers:
 
   packages/mcp:
     dependencies:
-      '@kaddo/cli':
-        specifier: workspace:*
-        version: link:../cli
       '@modelcontextprotocol/sdk':
         specifier: ^1.29.0
         version: 1.29.0(zod@3.25.76)
@@ -232,6 +229,9 @@ importers:
         specifier: ^3.23.8
         version: 3.25.76
     devDependencies:
+      '@kaddo/cli':
+        specifier: workspace:*
+        version: link:../cli
       '@types/node':
         specifier: ^20.14.0
         version: 20.19.41

@@ -1,6 +1,6 @@
 {
   "name": "@kaddo/integrations",
-  "version": "3.90.1",
+  "version": "3.90.2",
   "description": "Kaddo Integration Adapter Foundation: a provider-agnostic contract, registry and normalized models for connecting Kaddo to external work systems. Never the source of truth.",
   "license": "MIT",
   "private": true,
