@@ -30,6 +30,124 @@ técnico / mantenimiento / tooling). Ver [create](/es/commands/create/#tipos-de-
 
 > Declara globs `code:` para que Guard relacione los cambios con el work item.
 
+### Ejemplo completo
+
+Un Work Item vive en un único archivo `.md` bajo `knowledge/delivery/work-items/<state>/`.
+El nombre del archivo sigue el patrón `WI-NNN-<título-slugificado>.md`. Aquí un ejemplo
+completo mostrando el frontmatter YAML y todas las secciones estándar del body:
+
+```markdown
+---
+type: feature
+id: WI-042
+title: Agregar alarma CloudWatch para latencia p99 del API
+status: draft
+work_type: feature
+created_at: "2026-09-25"
+affected_modules:
+  - core
+  - backend
+source:
+  type: chat
+  imported_at: "2026-09-25"
+  source_format: markdown
+  source_hash: "e3b0c44298fc1c149..."
+  inferred: false
+generated_by: kaddo-admin
+knowledge_level: none
+scope_confidence:
+  level: medium
+  reasons:
+    - Configuración de CloudWatch aún no revisada
+summary: >
+  Agregar una alarma de CloudWatch que monitoree la latencia p99 del API Gateway
+  y alerte al equipo de operaciones cuando supere 500ms por 5 minutos consecutivos.
+original_snapshot:
+  title: Agregar alarma CloudWatch para latencia p99 del API
+  description: Monitorear latencia p99 del API Gateway y alertar cuando > 500ms.
+---
+
+# Agregar alarma CloudWatch para latencia p99 del API
+
+> Type: feature
+
+## Actor
+
+El equipo de operaciones que monitorea la salud del API.
+
+## Outcome
+
+Recibir una notificación cuando la latencia p99 supere 500ms, para que el equipo
+pueda investigar antes de que los usuarios se vean afectados.
+
+## Current behavior
+
+No existe alertamiento de latencia. El equipo descubre los picos de latencia solo
+después de quejas de usuarios.
+
+## Target behavior
+
+Una alarma de CloudWatch se dispara cuando la latencia p99 del API Gateway se
+mantiene por encima de 500ms durante 5 minutos consecutivos, enviando un mensaje
+al canal de Slack #ops-alerts.
+
+## Entry points
+
+- AWS CloudWatch → Alarms
+- API Gateway → Metrics
+
+## End-to-end flow
+
+1. API Gateway emite métricas de latencia a CloudWatch.
+2. CloudWatch evalúa la estadística p99 cada minuto.
+3. Si 5 datapoints consecutivos superan 500ms, la alarma entra en estado ALARM.
+4. Un topic SNS dispara un Lambda que publica en Slack #ops-alerts.
+
+## Scope unknowns
+
+- Confirmar si el topic SNS existente soporta integración con Slack.
+
+## Acceptance criteria
+
+- [ ] Alarma de CloudWatch configurada para la métrica `p99` del API Gateway
+- [ ] Umbral: 500ms durante 5 períodos consecutivos de 1 minuto
+- [ ] Notificación entregada a Slack #ops-alerts
+- [ ] Runbook vinculado en la descripción de la alarma
+- [ ] Alarma visible en el dashboard de CloudWatch de operaciones
+```
+
+**Campos del frontmatter:**
+
+| Campo | Propósito |
+|---|---|
+| `type` / `work_type` | Tipo de Work Item (`feature`, `bugfix`, `hotfix`, `spike`, `chore`) |
+| `id` | Identificador único generado por Kaddo (`WI-NNN`) |
+| `title` | Título descriptivo corto (máx 120 caracteres) |
+| `status` | Estado de lifecycle (`draft`, `ready`, `in-progress`, `blocked`, `completed`, `archived`) |
+| `created_at` | Fecha de creación |
+| `affected_modules` | Módulos que este Work Item toca |
+| `source` | Proveniencia — de dónde se originó el Work Item |
+| `knowledge_level` | Profundidad de refinamiento (`none`, `partial`, `complete`) |
+| `scope_confidence` | Confianza en la cobertura de alcance |
+| `summary` | Texto completo del intent |
+| `original_snapshot` | Estado externo al momento de importar (solo para Work Items importados) |
+
+**Secciones del body:**
+
+| Sección | Propósito |
+|---|---|
+| Actor | Quién se beneficia de este cambio |
+| Outcome | Cómo se ve el éxito |
+| Current behavior | Qué pasa hoy |
+| Target behavior | Qué debería pasar después del cambio |
+| Entry points | Dónde en el sistema comienza el cambio |
+| End-to-end flow | Flujo paso a paso de ejecución |
+| Scope unknowns | Preguntas abiertas que necesitan respuesta |
+| Acceptance criteria | Condiciones verificables para completitud |
+
+No todas las secciones son obligatorias. Un Work Item recién importado puede tener solo
+título y summary; el refinamiento llena el resto.
+
 ### Estado de delivery completado
 
 Un proyecto con todos los Work Items completados entra en fase de **Mantenimiento**. Kaddo

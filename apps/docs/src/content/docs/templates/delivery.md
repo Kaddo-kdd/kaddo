@@ -30,6 +30,123 @@ maintenance / tooling work). See [create](/commands/create/#work-item-types).
 
 > Declare `code:` globs so Guard can relate changes to the work item.
 
+### Complete example
+
+A Work Item lives in a single `.md` file under `knowledge/delivery/work-items/<state>/`.
+The file name follows the pattern `WI-NNN-<slugified-title>.md`. Here is a full example
+showing the YAML frontmatter and all standard body sections:
+
+```markdown
+---
+type: feature
+id: WI-042
+title: Add CloudWatch alarm for API p99 latency
+status: draft
+work_type: feature
+created_at: "2026-09-25"
+affected_modules:
+  - core
+  - backend
+source:
+  type: chat
+  imported_at: "2026-09-25"
+  source_format: markdown
+  source_hash: "e3b0c44298fc1c149..."
+  inferred: false
+generated_by: kaddo-admin
+knowledge_level: none
+scope_confidence:
+  level: medium
+  reasons:
+    - CloudWatch configuration not yet reviewed
+summary: >
+  Add a CloudWatch alarm that monitors API Gateway p99 latency
+  and alerts the ops team when it exceeds 500ms for 5 consecutive minutes.
+original_snapshot:
+  title: Add CloudWatch alarm for API p99 latency
+  description: Monitor API Gateway p99 latency and alert when > 500ms.
+---
+
+# Add CloudWatch alarm for API p99 latency
+
+> Type: feature
+
+## Actor
+
+The operations team that monitors API health.
+
+## Outcome
+
+Receive a notification when p99 latency exceeds 500ms, so the team can
+investigate before users are affected.
+
+## Current behavior
+
+No latency alerting exists. The team discovers latency spikes only after
+user complaints.
+
+## Target behavior
+
+A CloudWatch alarm fires when API Gateway p99 latency stays above 500ms
+for 5 consecutive minutes, sending a message to the #ops-alerts Slack channel.
+
+## Entry points
+
+- AWS CloudWatch → Alarms
+- API Gateway → Metrics
+
+## End-to-end flow
+
+1. API Gateway emits latency metrics to CloudWatch.
+2. CloudWatch evaluates the p99 statistic every minute.
+3. If 5 consecutive datapoints exceed 500ms, the alarm enters ALARM state.
+4. An SNS topic triggers a Lambda that posts to Slack #ops-alerts.
+
+## Scope unknowns
+
+- Confirm whether the existing SNS topic supports Slack integration.
+
+## Acceptance criteria
+
+- [ ] CloudWatch alarm configured for API Gateway `p99` metric
+- [ ] Threshold: 500ms over 5 consecutive 1-minute periods
+- [ ] Notification delivered to Slack #ops-alerts
+- [ ] Runbook linked in the alarm description
+- [ ] Alarm visible in the ops CloudWatch dashboard
+```
+
+**Frontmatter fields at a glance:**
+
+| Field | Purpose |
+|---|---|
+| `type` / `work_type` | Work Item type (`feature`, `bugfix`, `hotfix`, `spike`, `chore`) |
+| `id` | Kaddo-generated unique identifier (`WI-NNN`) |
+| `title` | Short descriptive title (max 120 chars) |
+| `status` | Lifecycle state (`draft`, `ready`, `in-progress`, `blocked`, `completed`, `archived`) |
+| `created_at` | Creation date |
+| `affected_modules` | Modules this Work Item touches |
+| `source` | Provenance — where the Work Item originated |
+| `knowledge_level` | Refinement depth (`none`, `partial`, `complete`) |
+| `scope_confidence` | Confidence in scope coverage |
+| `summary` | Full intent text |
+| `original_snapshot` | External state at import time (only for imported Work Items) |
+
+**Body sections:**
+
+| Section | Purpose |
+|---|---|
+| Actor | Who benefits from this change |
+| Outcome | What success looks like |
+| Current behavior | What happens today |
+| Target behavior | What should happen after the change |
+| Entry points | Where in the system the change starts |
+| End-to-end flow | Step-by-step execution path |
+| Scope unknowns | Open questions that need answers |
+| Acceptance criteria | Checkable conditions for completion |
+
+Not all sections are required. A freshly imported Work Item may only have a title and
+summary; refinement fills in the rest.
+
 ### Completed delivery state
 
 A project with all Work Items completed enters **Maintenance** phase. Kaddo distinguishes
