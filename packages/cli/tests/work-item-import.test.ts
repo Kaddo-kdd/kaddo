@@ -202,6 +202,21 @@ describe('VS-109 — normalizeImportFields', () => {
     expect(result.intent).toContain('My Feature')
     expect(result.intent).toContain('This is the description.')
   })
+
+  it('reports discarded lifecycle fields from imported content', () => {
+    const parsed = parseContent('---\ntype: work-item\nid: WI-999\ntitle: "External"\nstatus: completed\nknowledge_level: K4\nphase: done\n---\n# External')
+    const result = normalizeImportFields(parsed, { importSource: 'chat', sourceHash: 'abc', sourceFormat: 'kaddo-frontmatter' })
+    expect(result.discardedFields).toContain('id')
+    expect(result.discardedFields).toContain('status')
+    expect(result.discardedFields).toContain('knowledge_level')
+    expect(result.discardedFields).toContain('phase')
+  })
+
+  it('reports no discarded fields when content has none', () => {
+    const parsed = parseContent('---\ntitle: "Clean"\nwork_type: feature\n---\n# Clean')
+    const result = normalizeImportFields(parsed, { importSource: 'chat', sourceHash: 'abc', sourceFormat: 'markdown-frontmatter' })
+    expect(result.discardedFields).toEqual([])
+  })
 })
 
 // --- Content hash ------------------------------------------------------------
@@ -311,6 +326,9 @@ describe('VS-109 — importWorkItem', () => {
     const result = importWorkItem(dir, { content, source: 'chat', type: 'feature' })
     expect(result.created).toBe(true)
     expect(result.workItemId).not.toBe('WI-999')
+    expect(result.discardedFields).toContain('id')
+    expect(result.discardedFields).toContain('status')
+    expect(result.discardedFields).toContain('knowledge_level')
     const wi = readWI(dir, result.workItemId)
     expect(wi).toMatch(/^status: draft$/m)
   })
@@ -389,9 +407,14 @@ describe('VS-109 — safety', () => {
   })
 
   it('external id: WI-001 does not override Kaddo ID generation', () => {
+    write(dir, 'knowledge/delivery/work-items/draft/WI-005-existing.md', [
+      '---', 'type: feature', 'id: WI-005', 'title: "Existing"', 'status: draft', '---', '# Existing',
+    ].join('\n'))
     const content = '---\ntype: work-item\nid: WI-001\ntitle: "Hijack"\n---\n# Hijack'
     const result = importWorkItem(dir, { content, source: 'chat' })
-    expect(result.workItemId).toMatch(/^WI-\d+$/)
+    expect(result.workItemId).toBe('WI-006')
+    expect(result.workItemId).not.toBe('WI-001')
+    expect(result.discardedFields).toContain('id')
   })
 
   it('file path metadata is not used as WI ID', () => {

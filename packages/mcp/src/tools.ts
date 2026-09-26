@@ -265,6 +265,7 @@ export function importWorkItemTool(
       refinementHandoff: result.refinementHandoff
         ? { agent: result.refinementHandoff.recommendedAgent, skill: result.refinementHandoff.recommendedSkill, text: result.refinementHandoff.text }
         : undefined,
+      ...(result.discardedFields?.length ? { discardedFields: result.discardedFields } : {}),
     })
   } catch (err) {
     if (err instanceof ImportError) return fail(`[${err.code}] ${err.message}`)

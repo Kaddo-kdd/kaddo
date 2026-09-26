@@ -47,6 +47,7 @@ export type ImportWorkItemResult = {
   duplicateOf?: string
   executed: false
   refinementHandoff?: RefinementHandoff
+  discardedFields?: string[]
 }
 
 // --- Lifecycle-controlled fields that external content must never override ---
@@ -169,12 +170,18 @@ type NormalizedImport = {
   intent: string
   source: WorkItemSourceInput
   snapshot: ExternalSnapshot
+  discardedFields: string[]
 }
 
 export function normalizeImportFields(
   parsed: ParsedContent,
   opts: { userType?: string; importSource: string; sourceHash: string; sourceFormat: DetectedFormat },
 ): NormalizedImport {
+  const discardedFields: string[] = []
+  for (const key of Object.keys(parsed.candidateFields)) {
+    if (LIFECYCLE_FIELDS.has(key)) discardedFields.push(key)
+  }
+
   const type = opts.userType
     ? (normalizeType(opts.userType) ?? 'feature')
     : (parsed.type ?? 'feature')
@@ -200,7 +207,7 @@ export function normalizeImportFields(
     if (labels.length > 0) snapshot.labels = labels
   }
 
-  return { type, intent, source, snapshot }
+  return { type, intent, source, snapshot, discardedFields }
 }
 
 // --- Content hash ------------------------------------------------------------
@@ -286,6 +293,7 @@ export function importWorkItem(dir: string, opts: ImportWorkItemOpts): ImportWor
     sourceHash,
     executed: false,
     refinementHandoff,
+    ...(normalized.discardedFields.length > 0 ? { discardedFields: normalized.discardedFields } : {}),
   }
 }
 

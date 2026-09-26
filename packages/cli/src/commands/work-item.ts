@@ -92,6 +92,10 @@ export async function runWorkItemImport(
 
     log.info(`Created ${result.workItemId} (Draft, needs refinement).`)
     log.info(`Path: ${result.path}`)
+    if (result.discardedFields?.length) {
+      log.warn(`Lifecycle fields discarded from import: ${result.discardedFields.join(', ')}`)
+      log.message('Kaddo always generates its own id and status — external values are ignored.')
+    }
     log.message('executed = false — the Work Item has NOT been implemented.')
 
     if (result.refinementHandoff) {
