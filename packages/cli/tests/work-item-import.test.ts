@@ -422,3 +422,94 @@ describe('VS-109 — safety', () => {
     expect(result.workItemId).not.toBe('WI-999')
   })
 })
+
+// --- ID conflict detection & resolution --------------------------------------
+
+describe('VS-109 — findExistingById', () => {
+  let dir: string
+  let findExistingById: typeof import('../src/core/work-item-import.js').findExistingById
+
+  beforeEach(async () => {
+    dir = tmpDir()
+    initProject(dir)
+    const mod = await import('../src/core/work-item-import.js')
+    findExistingById = mod.findExistingById
+  })
+  afterEach(() => fs.rmSync(dir, { recursive: true, force: true }))
+
+  it('returns undefined when no WI matches the id', () => {
+    expect(findExistingById(dir, 'WI-999')).toBeUndefined()
+  })
+
+  it('finds an existing WI by id', () => {
+    write(dir, 'knowledge/delivery/work-items/draft/WI-003-test.md', [
+      '---', 'type: feature', 'id: WI-003', 'title: "Test"', 'status: draft', '---', '# Test',
+    ].join('\n'))
+    const result = findExistingById(dir, 'WI-003')
+    expect(result).toBeDefined()
+    expect(result!.workItemId).toBe('WI-003')
+    expect(result!.filePath).toContain('WI-003-test.md')
+  })
+})
+
+describe('VS-109 — ID conflict resolution', () => {
+  let dir: string
+  let importWorkItem: typeof import('../src/core/work-item-import.js').importWorkItem
+
+  beforeEach(async () => {
+    dir = tmpDir()
+    initProject(dir)
+    write(dir, 'knowledge/delivery/work-items/draft/WI-003-existing.md', [
+      '---', 'type: feature', 'id: WI-003', 'title: "Existing Item"', 'status: draft', '---', '# Existing Item',
+    ].join('\n'))
+    const mod = await import('../src/core/work-item-import.js')
+    importWorkItem = mod.importWorkItem
+  })
+  afterEach(() => fs.rmSync(dir, { recursive: true, force: true }))
+
+  it('returns conflict when imported id matches an existing WI', () => {
+    const content = '---\ntype: work-item\nid: WI-003\ntitle: "New Version"\n---\n# New Version'
+    const result = importWorkItem(dir, { content, source: 'chat' })
+    expect(result.created).toBe(false)
+    expect(result.conflict).toBeDefined()
+    expect(result.conflict!.importedId).toBe('WI-003')
+    expect(result.conflict!.existingPath).toContain('WI-003')
+  })
+
+  it('no conflict when imported id does not match any existing WI', () => {
+    const content = '---\ntype: work-item\nid: WI-099\ntitle: "No Conflict"\n---\n# No Conflict'
+    const result = importWorkItem(dir, { content, source: 'chat' })
+    expect(result.created).toBe(true)
+    expect(result.conflict).toBeUndefined()
+    expect(result.workItemId).toBe('WI-004')
+  })
+
+  it('onConflict: new-id assigns a new consecutive ID', () => {
+    const content = '---\ntype: work-item\nid: WI-003\ntitle: "Updated"\n---\n# Updated'
+    const result = importWorkItem(dir, { content, source: 'chat', onConflict: 'new-id' })
+    expect(result.created).toBe(true)
+    expect(result.workItemId).toBe('WI-004')
+    expect(result.conflict).toBeUndefined()
+    expect(result.replacedWorkItem).toBeUndefined()
+    expect(countWorkItems(dir)).toBe(2)
+  })
+
+  it('onConflict: replace deletes existing and creates new', () => {
+    const content = '---\ntype: work-item\nid: WI-003\ntitle: "Replacement"\n---\n# Replacement'
+    const result = importWorkItem(dir, { content, source: 'chat', onConflict: 'replace' })
+    expect(result.created).toBe(true)
+    expect(result.replacedWorkItem).toBe('WI-003')
+    expect(countWorkItems(dir)).toBe(1)
+    const existingPath = path.join(dir, 'knowledge/delivery/work-items/draft/WI-003-existing.md')
+    expect(fs.existsSync(existingPath)).toBe(false)
+    const wi = readWI(dir, result.workItemId)
+    expect(wi).toContain('Replacement')
+  })
+
+  it('no conflict for non-WI-NNN ids', () => {
+    const content = '---\nid: JIRA-123\ntitle: "External"\n---\n# External'
+    const result = importWorkItem(dir, { content, source: 'chat' })
+    expect(result.created).toBe(true)
+    expect(result.conflict).toBeUndefined()
+  })
+})

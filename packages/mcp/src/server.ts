@@ -420,6 +420,7 @@ export function createServer(root: string): McpServer {
         content: z.string().describe('The Work Item content — plain text, Markdown, or Kaddo-format Markdown with frontmatter'),
         type: z.string().optional().describe('Kaddo Work Item type (feature/bugfix/hotfix/spike/chore). Defaults to feature if not detectable.'),
         source: z.string().optional().describe('Import origin: chat (default), cli, admin'),
+        onConflict: z.string().optional().describe('ID conflict resolution: "replace" deletes the existing WI and creates the new one; "new-id" assigns a new consecutive ID. Required when the imported content has an id that already exists.'),
       },
     },
     async (args) => toolText(guarded(root, () => importWorkItemTool(root, args)))

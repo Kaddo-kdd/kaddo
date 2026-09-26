@@ -244,15 +244,31 @@ export function listGraphHints(
 
 export function importWorkItemTool(
   root: string,
-  args: { content: string; source?: string; type?: string },
+  args: { content: string; source?: string; type?: string; onConflict?: string },
 ): ToolResult {
   const source = (args.source === 'cli' || args.source === 'admin') ? args.source : 'chat' as const
+  const onConflict = (args.onConflict === 'replace' || args.onConflict === 'new-id') ? args.onConflict : undefined
   try {
     const result: ImportWorkItemResult = importWorkItem(root, {
       content: args.content,
       source,
       type: args.type,
+      onConflict,
     })
+
+    if (result.conflict) {
+      return ok({
+        created: false,
+        conflict: true,
+        importedId: result.conflict.importedId,
+        existingPath: result.conflict.existingPath,
+        message: `The imported content has id "${result.conflict.importedId}" which already exists. `
+          + 'Call again with onConflict: "replace" to delete the existing Work Item and create the new one, '
+          + 'or onConflict: "new-id" to assign a new consecutive ID.',
+        executed: false,
+      })
+    }
+
     return ok({
       created: result.created,
       workItemId: result.workItemId,
@@ -266,6 +282,7 @@ export function importWorkItemTool(
         ? { agent: result.refinementHandoff.recommendedAgent, skill: result.refinementHandoff.recommendedSkill, text: result.refinementHandoff.text }
         : undefined,
       ...(result.discardedFields?.length ? { discardedFields: result.discardedFields } : {}),
+      ...(result.replacedWorkItem ? { replacedWorkItem: result.replacedWorkItem } : {}),
     })
   } catch (err) {
     if (err instanceof ImportError) return fail(`[${err.code}] ${err.message}`)

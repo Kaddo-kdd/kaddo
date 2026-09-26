@@ -8,7 +8,7 @@ import {
   findDuplicateByHash,
   ImportError,
 } from '../core/work-item-import.js'
-import { intro, outro, log, confirm, cancel } from '../utils/ui.js'
+import { intro, outro, log, confirm, cancel, select } from '../utils/ui.js'
 import { exists, readFile, cwd } from '../utils/fs.js'
 
 function requireProject(dir: string): void {
@@ -77,21 +77,47 @@ export async function runWorkItemImport(
       }
     }
 
-    const result = importWorkItem(dir, {
+    let result = importWorkItem(dir, {
       content,
       source: 'cli',
       type: opts.type,
       filePath: fileOrText,
     })
 
+    if (result.conflict) {
+      const { importedId, existingPath } = result.conflict
+      log.warn(`The imported content has id "${importedId}" which already exists at ${existingPath}.`)
+
+      const resolution = await select<'replace' | 'new-id'>({
+        message: `How should Kaddo handle this conflict?`,
+        options: [
+          { value: 'new-id', label: 'Assign a new consecutive ID', hint: 'keeps the existing Work Item intact' },
+          { value: 'replace', label: `Delete ${importedId} and create the new one`, hint: 'removes the existing file' },
+        ],
+      })
+
+      result = importWorkItem(dir, {
+        content,
+        source: 'cli',
+        type: opts.type,
+        filePath: fileOrText,
+        onConflict: resolution,
+      })
+    }
+
     if (!result.created) {
-      log.warn(`Already imported as ${result.duplicateOf}.`)
-      outro('No duplicate was created.')
+      if (result.duplicateOf) {
+        log.warn(`Already imported as ${result.duplicateOf}.`)
+        outro('No duplicate was created.')
+      }
       return
     }
 
     log.info(`Created ${result.workItemId} (Draft, needs refinement).`)
     log.info(`Path: ${result.path}`)
+    if (result.replacedWorkItem) {
+      log.warn(`Replaced existing Work Item ${result.replacedWorkItem}.`)
+    }
     if (result.discardedFields?.length) {
       log.warn(`Lifecycle fields discarded from import: ${result.discardedFields.join(', ')}`)
       log.message('Kaddo always generates its own id and status — external values are ignored.')

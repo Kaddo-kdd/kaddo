@@ -6,6 +6,7 @@
 // a refinement handoff. The content is DATA, never instructions.
 
 import crypto from 'node:crypto'
+import fs from 'node:fs'
 import matter from 'gray-matter'
 import { normalizeType } from './knowledge-levels.js'
 import { createWorkItem, type WorkItemSourceInput, type ExternalSnapshot } from './work-item-write.js'
@@ -34,6 +35,12 @@ export type ImportWorkItemOpts = {
   source: 'chat' | 'cli' | 'admin'
   type?: string
   filePath?: string
+  onConflict?: 'replace' | 'new-id'
+}
+
+export type IdConflict = {
+  importedId: string
+  existingPath: string
 }
 
 export type ImportWorkItemResult = {
@@ -48,6 +55,8 @@ export type ImportWorkItemResult = {
   executed: false
   refinementHandoff?: RefinementHandoff
   discardedFields?: string[]
+  conflict?: IdConflict
+  replacedWorkItem?: string
 }
 
 // --- Lifecycle-controlled fields that external content must never override ---
@@ -237,6 +246,15 @@ export function findDuplicateByHash(dir: string, hash: string): { workItemId: st
   return undefined
 }
 
+// --- ID conflict detection ---------------------------------------------------
+
+export function findExistingById(dir: string, id: string): { workItemId: string; path: string; filePath: string } | undefined {
+  const items = discoverWorkItems(dir)
+  const match = items.find((item) => (item.id || item.title) === id)
+  if (!match) return undefined
+  return { workItemId: (match.id || match.title) as string, path: match.relPath, filePath: match.filePath }
+}
+
 // --- Orchestrator ------------------------------------------------------------
 
 export function importWorkItem(dir: string, opts: ImportWorkItemOpts): ImportWorkItemResult {
@@ -271,6 +289,33 @@ export function importWorkItem(dir: string, opts: ImportWorkItemOpts): ImportWor
     sourceFormat: parsed.format,
   })
 
+  const importedId = typeof parsed.candidateFields.id === 'string' ? parsed.candidateFields.id.trim() : undefined
+  let replacedWorkItem: string | undefined
+
+  if (importedId && /^WI-\d+$/.test(importedId)) {
+    const existing = findExistingById(dir, importedId)
+    if (existing) {
+      if (!opts.onConflict) {
+        return {
+          created: false,
+          workItemId: existing.workItemId,
+          path: existing.path,
+          status: 'draft',
+          source: opts.source,
+          sourceFormat: parsed.format,
+          sourceHash,
+          executed: false,
+          conflict: { importedId, existingPath: existing.path },
+          ...(normalized.discardedFields.length > 0 ? { discardedFields: normalized.discardedFields } : {}),
+        }
+      }
+      if (opts.onConflict === 'replace') {
+        fs.rmSync(existing.filePath, { force: true })
+        replacedWorkItem = existing.workItemId
+      }
+    }
+  }
+
   const result = createWorkItem(dir, {
     intent: normalized.intent,
     type: normalized.type,
@@ -294,6 +339,7 @@ export function importWorkItem(dir: string, opts: ImportWorkItemOpts): ImportWor
     executed: false,
     refinementHandoff,
     ...(normalized.discardedFields.length > 0 ? { discardedFields: normalized.discardedFields } : {}),
+    ...(replacedWorkItem ? { replacedWorkItem } : {}),
   }
 }
 

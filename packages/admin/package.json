@@ -1,7 +1,7 @@
 {
   "name": "@kaddo/admin",
   "private": true,
-  "version": "3.90.2",
+  "version": "3.90.3",
   "type": "module",
   "scripts": {
     "dev": "vite",
