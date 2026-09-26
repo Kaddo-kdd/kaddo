@@ -4,7 +4,7 @@
 // without creating a separate "work source" flow. Pure types + deterministic parsing.
 
 export const VALID_SOURCES = [
-  'manual', 'roadmap', 'jira', 'github', 'notion', 'xlsx', 'csv', 'api', 'external', 'unknown',
+  'manual', 'roadmap', 'jira', 'github', 'notion', 'xlsx', 'csv', 'api', 'external', 'chat', 'unknown',
 ] as const
 
 export type WorkItemSourceType = typeof VALID_SOURCES[number]

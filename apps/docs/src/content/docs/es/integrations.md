@@ -507,6 +507,107 @@ VS-106 añade un campo `projects` al modelo de filtros normalizado (`ExternalWor
 es un concepto común entre proveedores (Jira tiene proyectos, GitHub tiene repos, Azure DevOps tiene
 proyectos) y evita que los usuarios recurran a `providerQuery` para filtrar por proyecto básico.
 
+## Importación de Contenido Externo (VS-109)
+
+VS-109 añade una segunda ruta de importación — **texto crudo o Markdown** — independiente de cualquier
+Integration Adapter. Contenido de ChatGPT, Claude, un wiki, un export de Notion o un archivo `.md`
+entra a Kaddo a través del mismo boundary Core que una importación por adapter, produciendo un Draft
+Work Item canónico con proveniencia completa.
+
+El invariante crítico: **importar nunca ejecuta un Work Item.** El contenido es datos — parseado,
+normalizado y registrado — pero la implementación requiere una acción separada y explícita.
+
+```text
+Contenido crudo (texto / Markdown / Markdown formato Kaddo)
+        ↓
+detectFormat()             (kaddo-frontmatter | markdown-frontmatter | markdown | plain-text)
+        ↓
+parseContent()             (extrae título, tipo candidato, secciones, campos candidatos)
+        ↓
+normalizeImportFields()    (valida tipo, construye proveniencia, captura instantánea original)
+        ↓
+computeContentHash()       (SHA-256 del input recortado)
+        ↓
+findDuplicateByHash()      (recorre WIs existentes — devuelve WI existente si mismo hash)
+        ↓
+createWorkItem()           (Core — siempre Draft, siempre nuevo ID)
+        ↓
+buildRefinementHandoff()   (instrucciones de refinamiento agnósticas del agente)
+```
+
+### Formatos soportados
+
+| Formato | Detectado cuando |
+|---|---|
+| `kaddo-frontmatter` | Frontmatter YAML con `type: work-item` o `id: WI-NNN` |
+| `markdown-frontmatter` | Frontmatter YAML sin marcadores Kaddo |
+| `markdown` | Encabezados `## `, sin frontmatter |
+| `plain-text` | Todo lo demás |
+
+### Campos controlados por lifecycle
+
+El contenido externo puede traer campos como `status: completed` o `id: WI-001`. Kaddo **descarta**
+estos campos controlados por lifecycle durante la normalización — nunca sobreescriben el lifecycle
+interno:
+
+`id`, `status`, `phase`, `knowledge_level`, `refined_by`, `implemented_by`, `closed_by`, `ready_at`,
+`generated_by`, `template_version`, `implementation_status`, `validation_status`, `release_status`.
+
+El Work Item importado **siempre** se crea como Draft con un ID generado por Kaddo.
+
+### Detección de duplicados
+
+Se almacena un hash SHA-256 del input recortado en `source.source_hash`. Antes de crear un Work Item,
+el pipeline recorre todos los Work Items existentes y verifica su `source_hash`. Si encuentra
+coincidencia, devuelve el Work Item existente — no se crea duplicado.
+
+### Proveniencia
+
+Cada Work Item importado por contenido lleva trazabilidad en sus metadatos `source`:
+
+| Campo | Valor |
+|---|---|
+| `type` | `chat` (MCP/conversación) o `external` (CLI/Admin) |
+| `imported_at` | Fecha de importación |
+| `source_format` | Formato detectado (`kaddo-frontmatter`, `markdown`, etc.) |
+| `source_hash` | SHA-256 del contenido original |
+
+Un `original_snapshot` captura el título, descripción, tipo y estado externo al momento de importar.
+
+### CLI
+
+```bash
+kaddo work-item import ./feature.md                         # importar desde un archivo
+kaddo work-item import --text "Agregar alerta CloudWatch" -y  # importar desde texto inline, omitir confirmación
+kaddo work-item import ./spec.md --type bugfix              # sobreescribir el tipo detectado
+```
+
+El comando muestra un preview del formato detectado, título y tipo antes de pedir confirmación. Pasa
+`-y` o `--yes` para omitir el prompt.
+
+### MCP
+
+La herramienta `kaddo_work_item_import` acepta contenido crudo y devuelve el Work Item creado con
+`executed: false` y un handoff de refinamiento opcional:
+
+```json
+{
+  "content": "## Agregar alerta CloudWatch\n\nMonitorear latencia p99 del API y alertar cuando > 500ms.",
+  "type": "feature",
+  "source": "chat"
+}
+```
+
+La respuesta incluye `workItemId`, `path`, `status: "draft"`, `sourceFormat` y
+`refinementHandoff` con el agente y skill recomendados para el refinamiento.
+
+### Frontera de seguridad
+
+- El contenido es **datos**, nunca instrucciones — el parser extrae estructura, nunca ejecuta comandos.
+- La entrada está limitada a 100 KB.
+- El resultado siempre incluye `executed: false` — una señal a cualquier consumidor de que el Work
+  Item fue registrado pero no ejecutado.
+
 ## Fuera de alcance (se construye sobre esta foundation)
 
 La sincronización bidireccional, el polling, los webhooks,

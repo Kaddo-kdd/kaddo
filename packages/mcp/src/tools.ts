@@ -1,9 +1,11 @@
-// Read-only MCP tools (VS-057).
+// MCP tools (VS-057, VS-109).
 //
-// Each tool returns a plain JS value (string/object). The server wraps it as MCP content. Tools
-// only read project knowledge — they never modify files, run git or call an LLM.
+// Each tool returns a plain JS value (string/object). The server wraps it as MCP content. Most
+// tools only read project knowledge. Write tools: markWorkItemReady (VS-058), importWorkItemTool
+// (VS-109). No tool runs git or calls an LLM.
 
 import matter from 'gray-matter'
+import { importWorkItem, ImportError, type ImportWorkItemResult } from '@kaddo/cli/core'
 import { listWorkItems, type WorkItemSummary } from './workitems.js'
 import { listCapsules, getCapsule, listAgents, getAgentPrompt } from './catalog.js'
 import { listSkills, getSkill } from './skills.js'
@@ -236,4 +238,36 @@ export function listGraphHints(
     count: hints.length,
     hints,
   })
+}
+
+// --- Work Item Import (VS-109) -------------------------------------------
+
+export function importWorkItemTool(
+  root: string,
+  args: { content: string; source?: string; type?: string },
+): ToolResult {
+  const source = (args.source === 'cli' || args.source === 'admin') ? args.source : 'chat' as const
+  try {
+    const result: ImportWorkItemResult = importWorkItem(root, {
+      content: args.content,
+      source,
+      type: args.type,
+    })
+    return ok({
+      created: result.created,
+      workItemId: result.workItemId,
+      path: result.path,
+      status: result.status,
+      source: result.source,
+      sourceFormat: result.sourceFormat,
+      duplicateOf: result.duplicateOf,
+      executed: false,
+      refinementHandoff: result.refinementHandoff
+        ? { agent: result.refinementHandoff.recommendedAgent, skill: result.refinementHandoff.recommendedSkill, text: result.refinementHandoff.text }
+        : undefined,
+    })
+  } catch (err) {
+    if (err instanceof ImportError) return fail(`[${err.code}] ${err.message}`)
+    return fail('Work Item import failed.')
+  }
 }

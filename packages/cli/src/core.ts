@@ -61,6 +61,19 @@ export {
 } from './core/work-item-refinement.js'
 export { computeRefinementStatus, type RefinementStatus } from './core/work-items.js'
 export {
+  importWorkItem,
+  detectFormat,
+  parseContent,
+  computeContentHash,
+  findDuplicateByHash,
+  ImportError,
+  type ImportWorkItemOpts,
+  type ImportWorkItemResult,
+  type DetectedFormat,
+  type ParsedContent,
+  type ImportErrorCode,
+} from './core/work-item-import.js'
+export {
   getSystemMapProjection,
   getSystemNodeContext,
   searchSystemNodes,

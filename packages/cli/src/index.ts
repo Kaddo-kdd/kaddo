@@ -40,6 +40,7 @@ import { runTechOrganize } from './commands/tech.js'
 import { runAssetsStatus, runAssetsUpdate } from './commands/assets.js'
 import { runReady } from './commands/ready.js'
 import { runAdmin } from './commands/admin.js'
+import { runWorkItemImport } from './commands/work-item.js'
 
 // Single source of truth for the version: read it from package.json at runtime so the CLI
 // `--version` can never drift from the published package version. `../package.json` resolves
@@ -191,6 +192,20 @@ integrationsCmd
   .option('-y, --yes', 'Skip the confirmation prompt (for already-approved automation)')
   .action(async (id: string, externalId: string, opts: { type?: string; yes?: boolean }) => {
     await runIntegrationsImport(cwd(), id, externalId, opts)
+  })
+
+const workItemCmd = program
+  .command('work-item')
+  .description('Work Item operations')
+
+workItemCmd
+  .command('import [file]')
+  .description('Import a Work Item from text or file into Kaddo as a Draft (import ≠ execute)')
+  .option('--text <content>', 'Import from inline text instead of a file')
+  .option('--type <type>', 'Kaddo Work Item type (feature/bugfix/hotfix/spike/chore)')
+  .option('-y, --yes', 'Skip the confirmation prompt')
+  .action(async (file: string | undefined, opts: { text?: string; type?: string; yes?: boolean }) => {
+    await runWorkItemImport(cwd(), file, opts)
   })
 
 const reportCmd = program

@@ -491,6 +491,105 @@ VS-106 adds a `projects` field to the normalized filter model (`ExternalWorkItem
 a common concept across providers (Jira has projects, GitHub has repos, Azure DevOps has projects)
 and avoids forcing users to resort to `providerQuery` for basic project scoping.
 
+## External Content Import (VS-109)
+
+VS-109 adds a second import path — **raw text or Markdown** — independent of any Integration Adapter.
+Content from ChatGPT, Claude, a wiki, a Notion export, or a plain `.md` file enters Kaddo through the
+same Core boundary as an adapter import, producing a canonical Draft Work Item with full provenance.
+
+The critical invariant: **import never executes a Work Item.** The content is data — parsed,
+normalized and registered — but implementation requires a separate, explicit action.
+
+```text
+Raw content (text / Markdown / Kaddo-format Markdown)
+        ↓
+detectFormat()             (kaddo-frontmatter | markdown-frontmatter | markdown | plain-text)
+        ↓
+parseContent()             (extracts title, type candidate, sections, candidate fields)
+        ↓
+normalizeImportFields()    (validates type, builds provenance, captures original snapshot)
+        ↓
+computeContentHash()       (SHA-256 of trimmed input)
+        ↓
+findDuplicateByHash()      (walks existing WIs — returns existing WI if same hash)
+        ↓
+createWorkItem()           (Core — always Draft, always new ID)
+        ↓
+buildRefinementHandoff()   (agent-agnostic refinement instructions)
+```
+
+### Supported formats
+
+| Format | Detected when |
+|---|---|
+| `kaddo-frontmatter` | YAML frontmatter with `type: work-item` or `id: WI-NNN` |
+| `markdown-frontmatter` | YAML frontmatter without Kaddo markers |
+| `markdown` | `## ` headings, no frontmatter |
+| `plain-text` | Everything else |
+
+### Lifecycle-controlled fields
+
+External content may carry fields like `status: completed` or `id: WI-001`. Kaddo **discards** these
+lifecycle-controlled fields during normalization — they never override the internal lifecycle:
+
+`id`, `status`, `phase`, `knowledge_level`, `refined_by`, `implemented_by`, `closed_by`, `ready_at`,
+`generated_by`, `template_version`, `implementation_status`, `validation_status`, `release_status`.
+
+The imported Work Item is **always** created as a Draft with a Kaddo-generated ID.
+
+### Duplicate detection
+
+A SHA-256 hash of the trimmed input is stored in `source.source_hash`. Before creating a Work Item,
+the pipeline walks all existing Work Items and checks their `source_hash`. If a match is found, the
+existing Work Item is returned — no duplicate is created.
+
+### Provenance
+
+Each content-imported Work Item carries traceability in its `source` metadata:
+
+| Field | Value |
+|---|---|
+| `type` | `chat` (MCP/conversation) or `external` (CLI/Admin) |
+| `imported_at` | Date of import |
+| `source_format` | Detected format (`kaddo-frontmatter`, `markdown`, etc.) |
+| `source_hash` | SHA-256 of the original content |
+
+An `original_snapshot` captures the external title, description, type and status at import time.
+
+### CLI
+
+```bash
+kaddo work-item import ./feature.md                         # import from a file
+kaddo work-item import --text "Add CloudWatch alert" -y     # import from inline text, skip confirmation
+kaddo work-item import ./spec.md --type bugfix              # override the detected type
+```
+
+The command previews the detected format, title and type before asking for confirmation. Pass `-y` or
+`--yes` to skip the prompt.
+
+### MCP
+
+The `kaddo_work_item_import` tool accepts raw content and returns the created Work Item with
+`executed: false` and an optional refinement handoff:
+
+```json
+{
+  "content": "## Add CloudWatch alert\n\nMonitor API latency p99 and alert when > 500ms.",
+  "type": "feature",
+  "source": "chat"
+}
+```
+
+The response includes `workItemId`, `path`, `status: "draft"`, `sourceFormat`, and
+`refinementHandoff` with the recommended agent and skill for refinement.
+
+### Safety boundary
+
+- Content is **data**, never instructions — the parser extracts structure, never executes commands.
+- Input is capped at 100 KB.
+- The result always includes `executed: false` — a signal to any consumer that the Work Item has been
+  registered but not acted upon.
+
 ## Out of scope (built on this foundation later)
 
 Bidirectional sync, polling, webhooks, status/comment/attachment sync,
