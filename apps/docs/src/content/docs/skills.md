@@ -46,7 +46,7 @@ Skills install into `knowledge/skills/<id>/skill.md`. Existing files are never o
 | Skill | Group | Standardizes | Applies to |
 |---|---|---|---|
 | `work-item-refinement` | delivery | problem · scope · acceptance · validation · DoD | work-item / backlog / roadmap agents |
-| `implementation-planning` | delivery | scope · files · risks · steps · stop criteria | implementation / work-item agents |
+| `implementation-planning` | delivery | design deliberation · context assembly · scope · steps · stop criteria | implementation / work-item agents |
 | `learning-capture` | delivery | what changed · learned · knowledge to update | implementation / guard / architecture agents |
 | `adr-writing` | tech | context · decision · alternatives · governed paths | decision / architecture / implementation agents |
 | `ownership-suggestion` | tech | precise `code:` globs | ownership / work-item / graph agents |
