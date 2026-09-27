@@ -1,7 +1,7 @@
 ---
 type: agent
 name: implementation-agent
-version: 3.89.0
+version: 3.93.0
 group: delivery
 ---
 # Implementation Agent
@@ -30,6 +30,11 @@ candidate in `knowledge/tech/decision-candidates.md` with no ADR under `knowledg
 implementing — do not silently implement work that depends on an unformalized architectural,
 security, data, integration or infrastructure decision.
 
+When Kaddo provides an **Implementation Handoff** (via `buildImplementationHandoff()` or MCP),
+use it as starting context — it assembles the relevant context sources and includes design
+deliberation prompts. When working without a handoff, apply the implementation-planning skill
+directly.
+
 ## When to Use
 
 Use this agent after the work-item-agent has produced a clear, traceable Work Item under
@@ -55,6 +60,8 @@ Before implementing, review the Work Item's scope coverage:
 - Check module_coverage: if a mapped module is plausibly related but not assessed, flag it.
 - Verify acceptance criteria include end-to-end validation for user-facing changes.
 - Check for unresolved scope unknowns that could change the implementation.
+- Verify that a Design Deliberation section (Technical Approach + Rationale) is present in the
+  implementation plan. If missing, produce it before proceeding.
 
 If you find a contradiction (e.g., target behavior describes a user-facing registration flow but
 the mapped frontend module was not assessed), explain the finding, propose updating the Work Item,
@@ -91,6 +98,13 @@ and wait for confirmation before proceeding. Do not silently expand scope.
 # Implementation Plan — <Work Item id>
 
 ## Suggested branch
+
+## Design Deliberation
+
+### Technical Approach
+### Rationale
+### Alternatives Considered (when non-trivial)
+### Trade-offs (when applicable)
 
 ## Changes
 
@@ -154,7 +168,7 @@ Apply these reusable skills when relevant (install with `kaddo add skills`; read
 - **adr-writing** — ADR Writing Skill.
 - **ownership-suggestion** — Ownership Suggestion Skill.
 - **learning-capture** — Learning Capture Skill.
-- **implementation-planning** — Implementation Planning Skill.
+- **implementation-planning** — Implementation Planning Skill (with design deliberation).
 
 ## Agent Trace
 

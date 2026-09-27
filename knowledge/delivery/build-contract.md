@@ -180,19 +180,28 @@ Una open question bloqueante impide la transición a Ready. Una no-bloqueante se
 
 **Estado lifecycle.ts:** `in-progress`
 
+**Estado de formalización:** Formalizado (VS-110). La skill `implementation-planning` fue
+enriquecida con deliberación de diseño. El tipo `ImplementationHandoff` en
+`packages/cli/src/core/implementation-handoff.ts` provee un contrato compartido para CLI, MCP y
+agentes.
+
 **Entry criteria:**
 - WI en estado ready seleccionado para implementación.
 
 **Actividades:**
-- Aplicar implementation-planning skill.
+- Aplicar implementation-planning skill (v3.93.0, con deliberación de diseño).
 - Ensamblar contexto relevante dinámicamente:
   - Work Item (qué construir, constraints, ACs)
   - Knowledge relevante (business, product, tech, delivery)
   - System Context (topology, dependencias entre módulos)
   - Repository Context (archivos relevantes, patrones existentes)
   - Related Work Items (dependencias, WIs completados relacionados)
+- Documentar Technical Approach y Rationale antes de listar pasos de implementación.
+- Evaluar si la decisión requiere un ADR (adr-writing skill).
 - Producir plan de implementación: scope técnico, archivos esperados, riesgos, validaciones, pasos, stop criteria.
 - Human confirma plan.
+- Usar `buildImplementationHandoff()` del Core para ensamblar el handoff programáticamente, o
+  aplicar la skill manualmente.
 
 **Exit criteria:**
 - Plan confirmado por humano.
@@ -205,7 +214,7 @@ Una open question bloqueante impide la transición a Ready. Una no-bloqueante se
 **Participación de agentes:** implementation-agent con implementation-planning skill.
 **Participación humana:** confirmar plan antes de comenzar a codear.
 
-**Skill:** implementation-planning
+**Skill:** implementation-planning (v3.93.0, con deliberación de diseño)
 
 ### El Handoff es una proyección
 

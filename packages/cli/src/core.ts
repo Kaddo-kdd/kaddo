@@ -59,6 +59,11 @@ export {
   type CaptureQuestion,
   type RefinementHandoff,
 } from './core/work-item-refinement.js'
+export {
+  buildImplementationHandoff,
+  WorkItemNotReadyError,
+  type ImplementationHandoff,
+} from './core/implementation-handoff.js'
 export { computeRefinementStatus, type RefinementStatus } from './core/work-items.js'
 export {
   importWorkItem,
