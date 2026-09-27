@@ -3,6 +3,9 @@ import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query'
 import { useRouter } from '@tanstack/react-router'
 import { api } from '../lib/api'
 import type { IntegrationSummary, AdapterTypeInfo, ExternalWorkItem, ImportPreviewResult, ConfigFieldSchema } from '../lib/api'
+import { EmptyState } from '../components/EmptyState'
+import { ConfirmDialog } from '../components/ConfirmDialog'
+import { btnStyle, primaryBtnStyle, dangerBtnStyle } from '../components/editor/primitives'
 
 // --- Provider Icon -----------------------------------------------------------
 
@@ -33,10 +36,7 @@ function Cap({ on, label }: { on: boolean; label: string }) {
   return <span style={{ fontSize: 12, color: on ? 'var(--foreground)' : 'var(--foreground-muted)' }}>{on ? '✓' : '✗'} {label}</span>
 }
 
-const btnStyle: React.CSSProperties = { padding: '6px 12px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', background: 'var(--surface)', color: 'var(--foreground)', cursor: 'pointer', fontSize: 13, fontFamily: 'inherit' }
 const disabledStyle: React.CSSProperties = { opacity: 0.45, cursor: 'not-allowed' }
-const primaryBtnStyle: React.CSSProperties = { ...btnStyle, background: 'var(--primary)', color: 'var(--primary-foreground, #fff)', fontWeight: 600 }
-const dangerBtnStyle: React.CSSProperties = { ...btnStyle, color: 'var(--danger)', borderColor: 'var(--danger)' }
 const inputStyle: React.CSSProperties = { padding: '8px 12px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', background: 'var(--surface)', color: 'var(--foreground)', fontSize: 13, fontFamily: 'inherit', width: '100%', boxSizing: 'border-box' as const }
 const labelStyle: React.CSSProperties = { fontSize: 13, fontWeight: 600, color: 'var(--foreground)', marginBottom: 4, display: 'block' }
 const cardStyle: React.CSSProperties = { border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: 16, background: 'var(--surface)' }
@@ -154,7 +154,7 @@ function ProviderCatalog({ types, onSelect, onCancel }: { types: AdapterTypeInfo
     <div style={{ ...cardStyle, marginBottom: 16 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
         <h3 style={{ fontSize: 15, fontWeight: 700, margin: 0 }}>Add Integration</h3>
-        <button onClick={onCancel} style={{ ...btnStyle, border: 'none', background: 'none', color: 'var(--foreground-muted)' }}>✕</button>
+        <button onClick={onCancel} aria-label="Close" style={{ ...btnStyle, border: 'none', background: 'none', color: 'var(--foreground-muted)' }}>✕</button>
       </div>
       <p style={{ fontSize: 13, color: 'var(--foreground-muted)', margin: '0 0 16px' }}>Choose a provider from the Integration Registry:</p>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12 }}>
@@ -354,7 +354,7 @@ function EditIntegrationPanel({ integration, onDone }: { integration: Integratio
           <ProviderIcon icon={integration.metadata?.icon} size={20} />
           <h3 style={{ fontSize: 15, fontWeight: 700, margin: 0 }}>Configure: {integration.displayName}</h3>
         </div>
-        <button onClick={onDone} style={{ ...btnStyle, border: 'none', background: 'none', color: 'var(--foreground-muted)' }}>✕</button>
+        <button onClick={onDone} aria-label="Close" style={{ ...btnStyle, border: 'none', background: 'none', color: 'var(--foreground-muted)' }}>✕</button>
       </div>
 
       {adapterUnavailable && (
@@ -419,7 +419,7 @@ function ImportPanel({ integrationId, item, onClose }: { integrationId: string; 
     <div style={{ ...cardStyle, marginTop: 10 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h3 style={{ fontSize: 13, fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: 0.4, color: 'var(--foreground-muted)', margin: 0 }}>Import work item</h3>
-        <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--foreground-muted)', fontSize: 13 }}>✕</button>
+        <button onClick={onClose} aria-label="Close" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--foreground-muted)', fontSize: 13 }}>✕</button>
       </div>
       {isLoading && <p style={{ fontSize: 13, color: 'var(--foreground-muted)' }}>Loading preview…</p>}
       {preview?.duplicate ? (
@@ -516,14 +516,17 @@ function IntegrationCard({ integration, onEdit }: { integration: IntegrationSumm
           {canBrowse && (
             <button onClick={() => setOpen((o) => !o)} style={btnStyle}>{open ? 'Hide items' : 'Browse'}</button>
           )}
-          {!confirmDelete ? (
-            <button onClick={() => setConfirmDelete(true)} style={dangerBtnStyle}>Delete</button>
-          ) : (
-            <span style={{ display: 'inline-flex', gap: 4, alignItems: 'center' }}>
-              <span style={{ fontSize: 12, color: 'var(--danger)' }}>Delete?</span>
-              <button onClick={() => deleteMut.mutate()} style={dangerBtnStyle}>Yes</button>
-              <button onClick={() => setConfirmDelete(false)} style={btnStyle}>No</button>
-            </span>
+          <button onClick={() => setConfirmDelete(true)} style={dangerBtnStyle}>Delete</button>
+          {confirmDelete && (
+            <ConfirmDialog
+              title="Delete integration"
+              confirmLabel="Delete"
+              tone="danger"
+              onConfirm={() => { deleteMut.mutate(); setConfirmDelete(false) }}
+              onCancel={() => setConfirmDelete(false)}
+            >
+              This will remove the <strong>{integration.displayName}</strong> integration configuration and credentials. Work Items already imported from this integration will not be affected.
+            </ConfirmDialog>
           )}
         </div>
       </div>
@@ -600,13 +603,28 @@ export function Integrations() {
         <EditIntegrationPanel integration={editingIntegration} onDone={() => setEditing(null)} />
       )}
 
-      {isLoading && <p style={{ color: 'var(--foreground-muted)' }}>Loading…</p>}
-      {error && <p style={{ color: 'var(--danger)' }}>{(error as Error).message}</p>}
-      {data && data.length === 0 && !creating && (
-        <div style={{ padding: 32, textAlign: 'center', color: 'var(--foreground-muted)', border: '1px dashed var(--border)', borderRadius: 'var(--radius)' }}>
-          <div style={{ fontSize: 28, marginBottom: 8 }}>🔌</div>
-          <p style={{ fontSize: 14, margin: 0 }}>No integrations are configured. Click <strong>+ Add Integration</strong> to get started.</p>
+      {isLoading && (
+        <div>
+          {[1, 2].map((i) => (
+            <div key={i} style={{ height: 80, background: 'var(--surface-muted)', borderRadius: 'var(--radius)', marginBottom: 12, animation: 'pulse 1.5s ease-in-out infinite' }} />
+          ))}
+          <style>{`@keyframes pulse { 0%,100% { opacity: 1 } 50% { opacity: 0.5 } }`}</style>
         </div>
+      )}
+      {error && (
+        <div style={{ background: 'color-mix(in srgb, var(--danger) 10%, transparent)', border: '1px solid var(--danger)', borderRadius: 'var(--radius)', padding: 16 }}>
+          <strong>Integrations could not be loaded</strong>
+          <p style={{ margin: '4px 0 8px', fontSize: 14, color: 'var(--foreground-muted)' }}>{(error as Error).message}</p>
+          <button onClick={() => queryClient.invalidateQueries({ queryKey: ['integrations'] })} style={{ ...btnStyle, cursor: 'pointer' }}>Retry</button>
+        </div>
+      )}
+      {data && data.length === 0 && !creating && (
+        <EmptyState
+          icon="🔌"
+          title="No integrations configured"
+          description="Connect Kaddo to external work systems like Jira."
+          action={{ label: '+ Add Integration', onClick: () => { setCreating(true); setEditing(null) } }}
+        />
       )}
       {data?.map((i) => <IntegrationCard key={i.id} integration={i} onEdit={() => { setEditing(i.id); setCreating(false) }} />)}
     </div>

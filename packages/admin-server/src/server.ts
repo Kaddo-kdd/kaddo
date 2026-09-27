@@ -62,6 +62,9 @@ function statusForCode(code: string): number {
     case 'WORK_ITEM_NOT_EDITABLE': return 409
     case 'INVALID_INPUT':
     case 'INVALID_WORK_ITEM_ID':
+    case 'INVALID_INTEGRATION_ID':
+    case 'INVALID_SECRET_NAME':
+    case 'INVALID_EXTERNAL_ID':
     case 'INVALID_TRANSITION': return 400
     default: return 500
   }

@@ -54,6 +54,10 @@ export function SelectField({ id, label, hint, value, onChange, options }: {
   )
 }
 
+export const btnStyle: React.CSSProperties = { padding: '6px 12px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', background: 'var(--surface)', color: 'var(--foreground)', cursor: 'pointer', fontSize: 13, fontFamily: 'inherit' }
+export const primaryBtnStyle: React.CSSProperties = { ...btnStyle, background: 'var(--primary)', color: 'var(--primary-foreground, #fff)', fontWeight: 600 }
+export const dangerBtnStyle: React.CSSProperties = { ...btnStyle, color: 'var(--danger)', borderColor: 'var(--danger)' }
+
 export function SecondaryButton({ children, onClick, disabled }: { children: ReactNode; onClick: () => void; disabled?: boolean }) {
   return (
     <button onClick={onClick} disabled={disabled} style={{
@@ -68,6 +72,14 @@ export function PrimaryButton({ children, onClick, disabled }: { children: React
     <button onClick={onClick} disabled={disabled} style={{
       padding: '8px 16px', border: '1px solid var(--primary)', borderRadius: 'var(--radius)', background: 'var(--primary)',
       color: 'var(--primary-foreground)', cursor: disabled ? 'default' : 'pointer', fontSize: 13, fontWeight: 600, fontFamily: 'inherit', opacity: disabled ? 0.5 : 1,
+    }}>{children}</button>
+  )
+}
+
+export function DangerButton({ children, onClick, disabled }: { children: ReactNode; onClick: () => void; disabled?: boolean }) {
+  return (
+    <button onClick={onClick} disabled={disabled} style={{
+      ...dangerBtnStyle, cursor: disabled ? 'default' : 'pointer', opacity: disabled ? 0.5 : 1,
     }}>{children}</button>
   )
 }

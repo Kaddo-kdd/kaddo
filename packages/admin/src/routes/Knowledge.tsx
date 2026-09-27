@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useRouter } from '@tanstack/react-router'
 import { api } from '../lib/api'
 import { KnowledgeStatus } from '../components/KnowledgeStatus'
+import { EmptyState } from '../components/EmptyState'
 
 function Skeleton() {
   return (
@@ -42,12 +43,11 @@ export function Knowledge() {
   )
 
   if (!data || data.layers.length === 0) return (
-    <div style={{ padding: '48px 32px', textAlign: 'center', color: 'var(--foreground-muted)' }}>
-      <div style={{ fontSize: 32, marginBottom: 12 }}>📚</div>
-      <h2 style={{ fontSize: 18, fontWeight: 600, margin: '0 0 8px', color: 'var(--foreground)' }}>No knowledge available</h2>
-      <p style={{ fontSize: 14 }}>This project does not contain knowledge artifacts yet.</p>
-      <p style={{ fontSize: 13, marginTop: 8 }}>Use the Kaddo workflow to build the project knowledge baseline.</p>
-    </div>
+    <EmptyState
+      icon="📚"
+      title="No knowledge available"
+      description="This project does not contain knowledge artifacts yet. Use the Kaddo workflow to build the project knowledge baseline."
+    />
   )
 
   const searchLower = search.toLowerCase()

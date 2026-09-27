@@ -15,6 +15,7 @@ import { WorkItemImpactOverlay } from '../components/system/WorkItemImpactOverla
 import {
   layoutSystemMap, toReactFlowNodes, toReactFlowEdges, searchNodes, nodeCategory, type ImpactClass,
 } from '../lib/systemMap'
+import { EmptyState } from '../components/EmptyState'
 
 const NODE_TYPES = { system: SystemNode, systemGroup: SystemGroupNode }
 
@@ -222,12 +223,11 @@ export function System() {
     </div>
   )
   if (!data || !data.metadata.available) return (
-    <div style={{ padding: '48px 32px', textAlign: 'center', color: 'var(--foreground-muted)', maxWidth: 640, margin: '0 auto' }}>
-      <div style={{ fontSize: 32, marginBottom: 12 }}>🗺️</div>
-      <h2 style={{ fontSize: 18, fontWeight: 600, color: 'var(--foreground)', margin: '0 0 8px' }}>System map not available yet</h2>
-      <p style={{ fontSize: 14 }}>Kaddo does not have enough system metadata to build a System Map for this project yet.</p>
-      <p style={{ fontSize: 13, marginTop: 8 }}>Review the project Knowledge and graph metadata to enrich the map.</p>
-    </div>
+    <EmptyState
+      icon="🗺️"
+      title="System map not available yet"
+      description="Kaddo does not have enough system metadata to build a System Map for this project yet. Review the project Knowledge and graph metadata to enrich the map."
+    />
   )
 
   return (

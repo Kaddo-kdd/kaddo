@@ -3,9 +3,8 @@ import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query'
 import { useRouter } from '@tanstack/react-router'
 import { api } from '../lib/api'
 import type { EnrichedExternalWorkItem, ExternalWorkItemFilters, DiscoveryIntegrationResult, ImportPreviewResult } from '../lib/api'
-
-const btnStyle: React.CSSProperties = { padding: '6px 12px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', background: 'var(--surface)', color: 'var(--foreground)', cursor: 'pointer', fontSize: 13, fontFamily: 'inherit' }
-const primaryBtnStyle: React.CSSProperties = { ...btnStyle, background: 'var(--primary)', color: 'var(--primary-foreground, #fff)', fontWeight: 600 }
+import { EmptyState } from '../components/EmptyState'
+import { btnStyle, primaryBtnStyle } from '../components/editor/primitives'
 const inputStyle: React.CSSProperties = { padding: '6px 10px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', background: 'var(--surface)', color: 'var(--foreground)', fontSize: 13, fontFamily: 'inherit' }
 const cardStyle: React.CSSProperties = { border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: 16, background: 'var(--surface)' }
 const chipStyle: React.CSSProperties = { display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 8px', borderRadius: 12, fontSize: 11, fontWeight: 500, background: 'var(--surface-muted)', color: 'var(--foreground-muted)' }
@@ -70,7 +69,7 @@ function ImportPanel({ integrationId, item, onClose }: { integrationId: string; 
     <div style={{ ...cardStyle, marginTop: 10, marginLeft: 16, borderLeft: '3px solid var(--primary)' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h4 style={{ fontSize: 13, fontWeight: 700, margin: 0 }}>Import: {item.title}</h4>
-        <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--foreground-muted)', fontSize: 13 }}>✕</button>
+        <button onClick={onClose} aria-label="Close" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--foreground-muted)', fontSize: 13 }}>✕</button>
       </div>
       {isLoading && <p style={{ fontSize: 13, color: 'var(--foreground-muted)' }}>Loading preview…</p>}
       {preview?.duplicate ? (
@@ -302,14 +301,28 @@ export function ExternalWorkItems() {
         </div>
       )}
 
-      {isLoading && <p style={{ color: 'var(--foreground-muted)' }}>Discovering work items across integrations…</p>}
-      {error && <p style={{ color: 'var(--danger)' }}>{(error as Error).message}</p>}
+      {isLoading && (
+        <div>
+          {[1, 2, 3].map((i) => (
+            <div key={i} style={{ height: 64, background: 'var(--surface-muted)', borderRadius: 'var(--radius)', marginBottom: 10, animation: 'pulse 1.5s ease-in-out infinite' }} />
+          ))}
+          <style>{`@keyframes pulse { 0%,100% { opacity: 1 } 50% { opacity: 0.5 } }`}</style>
+        </div>
+      )}
+      {error && (
+        <div style={{ background: 'color-mix(in srgb, var(--danger) 10%, transparent)', border: '1px solid var(--danger)', borderRadius: 'var(--radius)', padding: 16, marginBottom: 12 }}>
+          <strong>External items could not be loaded</strong>
+          <p style={{ margin: '4px 0 8px', fontSize: 14, color: 'var(--foreground-muted)' }}>{(error as Error).message}</p>
+          <button onClick={() => refetch()} style={btnStyle}>Retry</button>
+        </div>
+      )}
 
       {data && totalItems === 0 && mergedResults.every((r) => !r.error) && (
-        <div style={{ padding: 32, textAlign: 'center', color: 'var(--foreground-muted)', border: '1px dashed var(--border)', borderRadius: 'var(--radius)' }}>
-          <div style={{ fontSize: 28, marginBottom: 8 }}>🔍</div>
-          <p style={{ fontSize: 14, margin: 0 }}>No external work items found. Check that integrations are configured and enabled.</p>
-        </div>
+        <EmptyState
+          icon="🔍"
+          title="No external work items found"
+          description="Check that integrations are configured and enabled."
+        />
       )}
 
       {data && (

@@ -4,6 +4,7 @@ import { useRouter } from '@tanstack/react-router'
 import { api } from '../lib/api'
 import type { WorkItemListItem } from '../lib/api'
 import { WorkItemRow } from '../components/WorkItemRow'
+import { EmptyState } from '../components/EmptyState'
 
 const ACTIVE_STATES = ['draft', 'ready', 'in-progress', 'blocked']
 
@@ -96,22 +97,14 @@ export function WorkItems() {
 
   const { summary, items, modules } = data
 
-  // Empty project (no Work Items at all).
   if (summary.total === 0) {
     return (
-      <div style={{ padding: '48px 32px', textAlign: 'center', color: 'var(--foreground-muted)', maxWidth: 640, margin: '0 auto' }}>
-        <div style={{ fontSize: 32, marginBottom: 12 }}>📋</div>
-        <h2 style={{ fontSize: 18, fontWeight: 600, color: 'var(--foreground)', margin: '0 0 8px' }}>No Work Items</h2>
-        <p style={{ fontSize: 14 }}>No Work Items have been defined for this project yet.</p>
-        <div style={{ marginTop: 16 }}>
-          <button
-            onClick={() => router.navigate({ to: '/work-items/new' })}
-            style={{ padding: '8px 16px', border: '1px solid var(--primary)', borderRadius: 'var(--radius)', background: 'var(--primary)', color: 'var(--primary-foreground)', cursor: 'pointer', fontSize: 13, fontWeight: 600, fontFamily: 'inherit' }}
-          >
-            + Create Work Item
-          </button>
-        </div>
-      </div>
+      <EmptyState
+        icon="📋"
+        title="No Work Items"
+        description="No Work Items have been defined for this project yet."
+        action={{ label: '+ Create Work Item', onClick: () => router.navigate({ to: '/work-items/new' }) }}
+      />
     )
   }
 

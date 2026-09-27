@@ -3,9 +3,9 @@ title: kaddo admin
 description: Launch the local web admin interface for a Kaddo project.
 ---
 
-`kaddo admin` starts a local web server that provides a read-only visual dashboard over
-the current Kaddo project. It surfaces the same data as `kaddo explain`, `kaddo ready`
-and `kaddo understand` in an interactive browser UI.
+`kaddo admin` starts a local web server that provides an interactive admin dashboard over
+the current Kaddo project. It brings together project observability, Work Item management,
+Integration management, and System exploration in a browser UI.
 
 ## Usage
 
@@ -24,29 +24,54 @@ kaddo admin --no-open
 | `--host <address>` | `127.0.0.1` | Host to bind |
 | `--no-open` | `false` | Do not open the browser automatically |
 
-## What it shows
+## Sections
 
-The admin dashboard displays a unified overview of the project:
+The admin dashboard contains six sections:
 
-- **Project summary** — name, state, structure, team size
-- **Knowledge layers** — status of each layer (Business, Product, Tech, Delivery)
-- **Work Items** — by state and type, with current counts
-- **Modules** — detected modules and their roles (multirepo)
-- **Readiness** — overall readiness level and recommended next step
-- **Route** — progress through the project route with step-by-step detail
-- **Findings** — blocking, warning and FYI findings
-- **System Explorer** — the semantic system topology as a read-only graph, with Knowledge, Delivery and Implementation overlays
-- **Work Item system impact** — for a refined Work Item, the entities classified as affected, reviewed-not-affected or unknown, each with its reason, graph reason and repository evidence; "View in System Explorer" projects that impact onto the graph
+### Overview
 
-The impact view is graph-assisted, never authoritative: the Graph widens what the agent reviews, but it does not decide scope. When topology coverage is partial or unavailable, the UI says so explicitly — a missing Graph relationship is never presented as proof of no impact.
+Project summary, readiness level, knowledge layer status, module list, route progress, and findings.
+
+### Knowledge
+
+Browse all knowledge layers and their artifacts. Filter by layer, status, or search text.
+
+### Work Items
+
+Full Work Item lifecycle management — create draft Work Items, view details, edit fields, and track status transitions. Search, filter by status or module.
+
+### System Explorer
+
+Interactive semantic system topology graph. Toggle Knowledge, Delivery, and Implementation overlays. Deep-link to nodes. For refined Work Items, view system impact classification (affected, reviewed, unknown) projected onto the graph.
+
+### Integrations
+
+Manage external integrations (Jira, GitHub, etc.): add, configure, verify connectivity, enable/disable, set credentials, and delete. Supports the provider catalog with configSchema and secretSchema.
+
+### External Work Items
+
+Discover work items across all enabled integrations. Filter by type, status, or search text. Import items as Draft Work Items with duplicate detection. Pagination with Load More.
+
+## Security
+
+- Session authentication: local, ephemeral, cookie-based (SameSite=strict, HttpOnly)
+- CSRF protection: same-origin check on all state-changing requests
+- Input validation: integration IDs and secret names validated server-side against path traversal
+- Secrets: never exposed in API responses (boolean presence only)
+- ErrorBoundary: a crash in one section does not affect the others
 
 ## Architecture
 
 - The admin server consumes domain logic from Kaddo Core — it never duplicates it
 - Git remains the canonical source of truth; SQLite is operational storage only
-- Session authentication is local and ephemeral (cookie-based, single-machine)
 - The frontend uses the Kaddo Design System with semantic and domain color tokens
 - All data flows through a REST API at `/api/v1/admin/`
+
+## Known Limitations
+
+- Single-user, single-machine — not intended for team-wide deployment
+- Work Item editing is limited to fields supported by the Admin API
+- System Explorer performance degrades above ~500 nodes
 
 ## Requirements
 

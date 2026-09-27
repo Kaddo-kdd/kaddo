@@ -383,11 +383,24 @@ function assertExternalId(externalId: string): void {
   }
 }
 
+function assertIntegrationId(id: string): void {
+  if (!id || id.includes('..') || id.includes('/') || id.includes('\\') || id.startsWith('.') || !/^[a-z0-9][a-z0-9._-]*$/i.test(id)) {
+    throw new CoreError('INVALID_INTEGRATION_ID', 'Invalid integration identifier.')
+  }
+}
+
+function assertSecretName(name: string): void {
+  if (!name || name.includes('..') || name.includes('/') || name.includes('\\') || !/^[a-zA-Z0-9_-]+$/.test(name)) {
+    throw new CoreError('INVALID_SECRET_NAME', 'Invalid secret name.')
+  }
+}
+
 export function getIntegrations(dir: string): ReturnType<typeof coreListIntegrations> {
   return coreListIntegrations(dir)
 }
 
 export async function getIntegrationStatus(dir: string, id: string): Promise<Awaited<ReturnType<typeof coreVerifyIntegration>>> {
+  assertIntegrationId(id)
   try {
     return await coreVerifyIntegration(dir, id)
   } catch (err) {
@@ -400,6 +413,7 @@ export async function getExternalWorkItems(
   id: string,
   opts: { cursor?: string; pageSize?: number; filters?: ExternalWorkItemFilters },
 ): Promise<Awaited<ReturnType<typeof coreListExternalWorkItems>>> {
+  assertIntegrationId(id)
   try {
     return await coreListExternalWorkItems(dir, id, { cursor: opts.cursor, pageSize: opts.pageSize, filters: opts.filters })
   } catch (err) {
@@ -408,6 +422,7 @@ export async function getExternalWorkItems(
 }
 
 export async function getExternalWorkItemDetail(dir: string, id: string, externalId: string): Promise<Awaited<ReturnType<typeof coreGetExternalWorkItem>>> {
+  assertIntegrationId(id)
   assertExternalId(externalId)
   try {
     return await coreGetExternalWorkItem(dir, id, externalId)
@@ -417,6 +432,7 @@ export async function getExternalWorkItemDetail(dir: string, id: string, externa
 }
 
 export async function previewIntegrationImport(dir: string, id: string, externalId: string, opts: { type?: string }): Promise<Awaited<ReturnType<typeof corePreviewImport>>> {
+  assertIntegrationId(id)
   assertExternalId(externalId)
   try {
     return await corePreviewImport(dir, id, externalId, { type: opts.type })
@@ -427,6 +443,7 @@ export async function previewIntegrationImport(dir: string, id: string, external
 
 /** Mutating, human-confirmed (the UI confirm) import into a canonical Draft. Requires an explicit type. */
 export async function importIntegrationWorkItem(dir: string, id: string, externalId: string, opts: { type: string }): Promise<Awaited<ReturnType<typeof coreImportExternalWorkItem>>> {
+  assertIntegrationId(id)
   assertExternalId(externalId)
   try {
     return await coreImportExternalWorkItem(dir, id, externalId, { type: opts.type })
@@ -439,10 +456,12 @@ export async function importIntegrationWorkItem(dir: string, id: string, externa
 // --- Integration management (VS-103) ----------------------------------------
 
 export function getIntegrationDetail(dir: string, id: string): ReturnType<typeof coreGetIntegration> {
+  assertIntegrationId(id)
   try { return coreGetIntegration(dir, id) } catch (err) { mapIntegrationError(err) }
 }
 
 export async function getIntegrationSecretStatusAdmin(dir: string, id: string): Promise<Awaited<ReturnType<typeof coreGetIntegrationSecretStatus>>> {
+  assertIntegrationId(id)
   try { return await coreGetIntegrationSecretStatus(dir, id) } catch (err) { mapIntegrationError(err) }
 }
 
@@ -455,26 +474,34 @@ export function createIntegrationAdmin(dir: string, body: { id: string; adapter:
 }
 
 export function updateIntegrationAdmin(dir: string, id: string, body: { enabled?: boolean; config?: Record<string, unknown>; secrets?: Record<string, string> }): ReturnType<typeof coreUpdateIntegration> {
+  assertIntegrationId(id)
   try { return coreUpdateIntegration(dir, id, body) } catch (err) { mapIntegrationError(err) }
 }
 
 export function deleteIntegrationAdmin(dir: string, id: string): void {
+  assertIntegrationId(id)
   try { coreDeleteIntegration(dir, id) } catch (err) { mapIntegrationError(err) }
 }
 
 export function enableIntegrationAdmin(dir: string, id: string): ReturnType<typeof coreEnableIntegration> {
+  assertIntegrationId(id)
   try { return coreEnableIntegration(dir, id) } catch (err) { mapIntegrationError(err) }
 }
 
 export function disableIntegrationAdmin(dir: string, id: string): ReturnType<typeof coreDisableIntegration> {
+  assertIntegrationId(id)
   try { return coreDisableIntegration(dir, id) } catch (err) { mapIntegrationError(err) }
 }
 
 export async function setIntegrationSecretAdmin(dir: string, id: string, secretName: string, value: string): Promise<void> {
+  assertIntegrationId(id)
+  assertSecretName(secretName)
   try { await coreSetIntegrationSecret(dir, id, secretName, value) } catch (err) { mapIntegrationError(err) }
 }
 
 export async function removeIntegrationSecretAdmin(dir: string, id: string, secretName: string): Promise<void> {
+  assertIntegrationId(id)
+  assertSecretName(secretName)
   try { await coreRemoveIntegrationSecret(dir, id, secretName) } catch (err) { mapIntegrationError(err) }
 }
 
@@ -492,9 +519,11 @@ export async function discoverExternalWorkItemsAdmin(
 }
 
 export function getIntegrationFiltersAdmin(dir: string, id: string): ReturnType<typeof coreGetIntegrationFilters> {
+  assertIntegrationId(id)
   try { return coreGetIntegrationFilters(dir, id) } catch (err) { mapIntegrationError(err) }
 }
 
 export function updateIntegrationFiltersAdmin(dir: string, id: string, filters: ExternalWorkItemFilters): ReturnType<typeof coreUpdateIntegrationFilters> {
+  assertIntegrationId(id)
   try { return coreUpdateIntegrationFilters(dir, id, filters) } catch (err) { mapIntegrationError(err) }
 }
