@@ -249,46 +249,35 @@ Independientemente de si es un agente o un humano, el implementador necesita ent
 
 **Estado lifecycle.ts:** `in-progress`
 
-> **Nota:** Esta etapa está definida conceptualmente. La infraestructura de tipos existe en `lifecycle.ts` (RepoEvidence, ImplementationEvidence) pero aún no existe un comando CLI o MCP tool que recolecte evidencia automáticamente.
+**Estado de formalización:** Formalizado (VS-111). `collectImplementationEvidence()` en Core
+recolecta evidencia estructurada. CLI `kaddo verify` y MCP `kaddo_collect_evidence` proveen la
+interfaz. Secret paths se filtran automáticamente.
 
 **Entry criteria:**
 - Cambios de código existen (commits, archivos modificados).
 
 **Actividades:**
-- Recolectar evidencia de implementación:
-  - Archivos cambiados (changed_paths).
+- Recolectar evidencia de implementación vía `kaddo verify` o MCP `kaddo_collect_evidence`:
+  - Archivos cambiados (changed_paths, con secret filtering).
   - Resumen de implementación.
   - Decisiones tomadas durante implementación.
-  - Tests ejecutados y resultados.
-  - Evidencia de acceptance criteria.
-  - Desviaciones del plan.
+  - Tests ejecutados y resultados (validaciones con command + status).
+  - Evidencia de acceptance criteria (por criterio, con status).
+  - Desviaciones del plan (planned vs actual modules).
   - Issues descubiertos.
   - Knowledge gaps descubiertos.
 
 **Exit criteria:**
 - Evidencia recolectada y disponible para verificación.
+- `implementation_evidence` persistida en frontmatter del WI (vía `kaddo verify --yes`).
 
 **Artefactos:**
 - Metadata de evidencia (estructura ImplementationEvidence de lifecycle.ts).
 
-**Tipos disponibles en lifecycle.ts:**
-
-```typescript
-type RepoEvidence = {
-  role?: string
-  status?: string
-  changed_paths?: string[]
-  validations?: { command: string; status: string; reason?: string }[]
-  migrations?: { id: string; environment: string; status: string }[]
-}
-
-type ImplementationEvidence = {
-  repositories?: Record<string, RepoEvidence>
-}
-```
-
-**Participación de agentes:** implementation-agent.
+**Participación de agentes:** implementation-agent con evidence-verification skill.
 **Participación humana:** commit, push, PR creation.
+
+**CLI:** `kaddo verify <WI-ID>` | MCP `kaddo_collect_evidence`
 
 ---
 
@@ -296,53 +285,39 @@ type ImplementationEvidence = {
 
 **Estado lifecycle.ts:** `in-progress`
 
-> **Nota:** Esta etapa está definida conceptualmente. Los tipos existen en `lifecycle.ts` (ValidationStatus, ReleaseStatus, ReleaseGate, CompletionException) pero no existe un comando CLI que orqueste la verificación.
+**Estado de formalización:** Formalizado (VS-111). `verifyWorkItem()` evalúa ACs y gates;
+`evaluateCompletion()` produce la decisión de completitud. CLI `kaddo verify` y MCP
+`kaddo_verify_work_item` proveen la interfaz. Skill `evidence-verification` estandariza el
+proceso. `kaddo learn` ahora bloquea completitud cuando hay gates fallidos o excepciones
+rechazadas (bypass con `--force`).
 
 **Entry criteria:**
-- Evidencia de implementación recolectada.
+- Evidencia de implementación recolectada (Etapa 5).
 
 **Actividades:**
-- Validar acceptance criteria contra evidencia.
+- Validar acceptance criteria contra evidencia vía `kaddo verify` o MCP `kaddo_verify_work_item`.
 - Ejecutar validaciones automatizables (tests, build, type-check).
 - Verificar release gates.
 - Gestionar exceptions si las hay.
+- Evaluar decisión de completitud: READY_TO_COMPLETE | NEEDS_WORK | BLOCKED | READY_WITH_EXCEPTIONS.
 - Human review de la implementación.
 
 **Exit criteria:**
 - Todos los ACs verificados (passed, o accepted-with-exceptions).
 - Release gates evaluados.
+- Decisión de completitud es READY_TO_COMPLETE o READY_WITH_EXCEPTIONS.
 - Human review completado.
 
 **Artefactos:**
-- Estado de validación (ValidationStatus).
-- Estado de release (ReleaseStatus).
-- Release gates (ReleaseGate[]).
-- Completion exceptions si aplica (CompletionException[]).
+- VerificationResult (AC status, findings, planned vs actual).
+- CompletionEvaluation (readiness, blockers, warnings).
+- Estado de validación y implementación persistidos en frontmatter del WI.
 
-**Tipos disponibles en lifecycle.ts:**
-
-```typescript
-type ValidationStatus = 'not-started' | 'in-progress' | 'passed' | 'failed'
-  | 'partial' | 'accepted-with-exceptions' | 'blocked'
-
-type ReleaseGate = {
-  id: string
-  status: 'pending' | 'passed' | 'failed' | 'blocked' | 'waived' | 'not-applicable'
-  required_for?: string
-  reason?: string
-}
-
-type CompletionException = {
-  id: string
-  status: 'proposed' | 'accepted' | 'rejected' | 'deferred' | 'resolved'
-  category?: string
-  reason?: string
-  impact?: string
-}
-```
-
-**Participación de agentes:** guard-agent (futuro).
+**Participación de agentes:** implementation-agent con evidence-verification skill, guard-agent.
 **Participación humana:** verificación manual de ACs, aprobación de exceptions.
+
+**CLI:** `kaddo verify <WI-ID>` | MCP `kaddo_verify_work_item`
+**Skill:** evidence-verification
 
 ---
 

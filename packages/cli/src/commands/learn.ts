@@ -41,7 +41,7 @@ function updateWorkItemFile(filePath: string, learning: string): void {
   writeFile(filePath, newRaw)
 }
 
-export async function runLearn(artifactId?: string): Promise<void> {
+export async function runLearn(artifactId?: string, opts: { force?: boolean } = {}): Promise<void> {
   const dir = cwd()
 
   if (!exists(join(dir, ARCH_DIR))) {
@@ -90,14 +90,50 @@ export async function runLearn(artifactId?: string): Promise<void> {
     process.exit(1)
   }
 
+  const wiRaw = readFile(filePath)
+  const wiData = matter(wiRaw).data as Record<string, unknown>
+
+  // Completion safety (VS-111): block on failed gates, rejected exceptions, failed validation.
+  if (!opts.force) {
+    const completionBlockers: string[] = []
+
+    const releaseGates = Array.isArray(wiData.release_gates)
+      ? (wiData.release_gates as { id: string; status: string; reason?: string }[])
+      : []
+    for (const gate of releaseGates) {
+      if (gate.status === 'failed' || gate.status === 'blocked') {
+        completionBlockers.push(`Release gate "${gate.id}" is ${gate.status}${gate.reason ? ': ' + gate.reason : ''}.`)
+      }
+    }
+
+    const completionExceptions = Array.isArray(wiData.completion_exceptions)
+      ? (wiData.completion_exceptions as { id: string; status: string; reason?: string }[])
+      : []
+    for (const ex of completionExceptions) {
+      if (ex.status === 'rejected') {
+        completionBlockers.push(`Completion exception "${ex.id}" was rejected${ex.reason ? ': ' + ex.reason : ''}.`)
+      }
+    }
+
+    if (wiData.validation_status === 'failed') {
+      completionBlockers.push('Validation status is "failed".')
+    }
+
+    if (completionBlockers.length > 0) {
+      log.error('Completion blocked:')
+      for (const b of completionBlockers) log.error(`  ✗ ${b}`)
+      log.info('Run `kaddo verify` to review evidence, or use `kaddo learn --force` to override.')
+      outro('Cannot complete Work Item.')
+      return
+    }
+  }
+
   const learning = await text({
     message: 'What did you learn from this change?',
     placeholder: 'e.g. The retry logic needed a separate queue to avoid blocking the main flow',
     validate: (v) => (v.trim().length === 0 ? 'Learning is required.' : undefined),
   })
 
-  const wiRaw = readFile(filePath)
-  const wiData = matter(wiRaw).data as Record<string, unknown>
   const hasExceptions = wiData.validation_status === 'accepted-with-exceptions' ||
     (Array.isArray(wiData.completion_exceptions) && wiData.completion_exceptions.length > 0)
   const releaseBlocked = wiData.release_status === 'blocked'

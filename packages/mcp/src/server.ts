@@ -19,6 +19,8 @@ import {
   listSkillsTool,
   getSkillTool,
   importWorkItemTool,
+  collectEvidenceTool,
+  verifyWorkItemTool,
   type ToolResult,
 } from './tools.js'
 import { listSkills, getSkill } from './skills.js'
@@ -424,6 +426,65 @@ export function createServer(root: string): McpServer {
       },
     },
     async (args) => toolText(guarded(root, () => importWorkItemTool(root, args)))
+  )
+
+  // --- Evidence & Verification (VS-111) ---
+  const evidenceRepoSchema = z.object({
+    repoId: z.string(),
+    role: z.string().optional(),
+    changedPaths: z.array(z.string()),
+    validations: z.array(z.object({
+      command: z.string(),
+      status: z.enum(['passed', 'failed', 'skipped', 'error']),
+      reason: z.string().optional(),
+    })),
+    migrations: z.array(z.object({
+      id: z.string(),
+      environment: z.string(),
+      status: z.string(),
+      reason: z.string().optional(),
+    })).optional(),
+  })
+  const acVerificationSchema = z.object({
+    criterion: z.string(),
+    status: z.enum(['passed', 'failed', 'not-verified', 'manual-review-required']),
+    evidence: z.string().optional(),
+  })
+  const evidenceInputSchema = z.object({
+    repos: z.array(evidenceRepoSchema),
+    summary: z.string().optional(),
+    deviations: z.array(z.string()).optional(),
+    issues: z.array(z.string()).optional(),
+    knowledgeGaps: z.array(z.string()).optional(),
+    acVerifications: z.array(acVerificationSchema),
+  })
+
+  server.registerTool(
+    'kaddo_collect_evidence',
+    {
+      title: 'Collect Implementation Evidence',
+      description: 'Collect structured evidence of what changed during implementation of an in-progress Work Item. '
+        + 'Accepts repository changes, validations, and AC verifications. Returns structured evidence ready for frontmatter.',
+      inputSchema: {
+        workItemId: z.string().describe('The Work Item ID (e.g. WI-005)'),
+        evidence: evidenceInputSchema,
+      },
+    },
+    async (args) => toolText(guarded(root, () => collectEvidenceTool(root, args)))
+  )
+
+  server.registerTool(
+    'kaddo_verify_work_item',
+    {
+      title: 'Verify Work Item',
+      description: 'Verify implementation evidence, acceptance criteria, release gates, and completion exceptions for an in-progress Work Item. '
+        + 'Returns a verification result with AC status, findings, and a completion decision (READY_TO_COMPLETE, NEEDS_WORK, BLOCKED, READY_WITH_EXCEPTIONS).',
+      inputSchema: {
+        workItemId: z.string().describe('The Work Item ID (e.g. WI-005)'),
+        evidence: evidenceInputSchema,
+      },
+    },
+    async (args) => toolText(guarded(root, () => verifyWorkItemTool(root, args)))
   )
 
   // --- Per-skill resources (kaddo://skills/<id>) — VS-059 ---

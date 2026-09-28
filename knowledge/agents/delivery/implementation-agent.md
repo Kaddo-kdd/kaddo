@@ -1,7 +1,7 @@
 ---
 type: agent
 name: implementation-agent
-version: 3.93.0
+version: 3.94.0
 group: delivery
 ---
 # Implementation Agent
@@ -82,6 +82,9 @@ and wait for confirmation before proceeding. Do not silently expand scope.
    (run the Work Item's "How to test it" steps and report the result).
 8. Suggest a Conventional Commit message and **wait for explicit human confirmation**. Never
    commit, push or merge on your own.
+9. After implementation and testing, collect evidence using `kaddo verify` or the MCP tools
+   `kaddo_collect_evidence`/`kaddo_verify_work_item`. Apply the evidence-verification skill to
+   ensure all ACs have evidence and release gates are evaluated before completion.
 
 ## Constraints
 
@@ -169,6 +172,7 @@ Apply these reusable skills when relevant (install with `kaddo add skills`; read
 - **ownership-suggestion** — Ownership Suggestion Skill.
 - **learning-capture** — Learning Capture Skill.
 - **implementation-planning** — Implementation Planning Skill (with design deliberation).
+- **evidence-verification** — Evidence Verification Skill (VS-111).
 
 ## Agent Trace
 
@@ -187,6 +191,7 @@ Next:
 kaddo scan
 kaddo owners suggest
 kaddo guard
+kaddo verify
 kaddo explain
 ────────────────────────
 ```

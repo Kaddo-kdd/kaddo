@@ -48,6 +48,7 @@ sobrescriben.
 |---|---|---|---|
 | `work-item-refinement` | delivery | problema · alcance · aceptación · validación · DoD | work-item / backlog / roadmap agents |
 | `implementation-planning` | delivery | deliberación de diseño · ensamblaje de contexto · alcance · pasos · criterios de parada | implementation / work-item agents |
+| `evidence-verification` | delivery | recolección de evidencia · verificación de ACs · release gates · decisión de completitud | implementation / guard agents |
 | `learning-capture` | delivery | qué cambió · qué se aprendió · conocimiento a actualizar | implementation / guard / architecture agents |
 | `adr-writing` | tech | contexto · decisión · alternativas · paths gobernados | decision / architecture / implementation agents |
 | `ownership-suggestion` | tech | globs `code:` precisos | ownership / work-item / graph agents |

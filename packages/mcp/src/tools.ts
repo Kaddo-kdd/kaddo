@@ -5,7 +5,17 @@
 // (VS-109). No tool runs git or calls an LLM.
 
 import matter from 'gray-matter'
-import { importWorkItem, ImportError, type ImportWorkItemResult } from '@kaddo/cli/core'
+import {
+  importWorkItem,
+  ImportError,
+  type ImportWorkItemResult,
+  collectImplementationEvidence,
+  verifyWorkItem,
+  evaluateCompletion,
+  WorkItemNotInProgressError,
+  WorkItemNotFoundError,
+  type CollectEvidenceInput,
+} from '@kaddo/cli/core'
 import { listWorkItems, type WorkItemSummary } from './workitems.js'
 import { listCapsules, getCapsule, listAgents, getAgentPrompt } from './catalog.js'
 import { listSkills, getSkill } from './skills.js'
@@ -287,5 +297,38 @@ export function importWorkItemTool(
   } catch (err) {
     if (err instanceof ImportError) return fail(`[${err.code}] ${err.message}`)
     return fail('Work Item import failed.')
+  }
+}
+
+// --- Evidence Collection (VS-111) ----------------------------------------
+
+export function collectEvidenceTool(
+  root: string,
+  args: { workItemId: string; evidence: CollectEvidenceInput },
+): ToolResult {
+  try {
+    const result = collectImplementationEvidence(root, args.workItemId, args.evidence)
+    return ok({ workItemId: args.workItemId, evidence: result })
+  } catch (err) {
+    if (err instanceof WorkItemNotFoundError) return fail(err.message)
+    if (err instanceof WorkItemNotInProgressError) return fail(err.message)
+    return fail('Evidence collection failed.')
+  }
+}
+
+// --- Work Item Verification (VS-111) ------------------------------------
+
+export function verifyWorkItemTool(
+  root: string,
+  args: { workItemId: string; evidence: CollectEvidenceInput },
+): ToolResult {
+  try {
+    const verification = verifyWorkItem(root, args.workItemId, args.evidence)
+    const evaluation = evaluateCompletion(verification)
+    return ok({ verification, evaluation })
+  } catch (err) {
+    if (err instanceof WorkItemNotFoundError) return fail(err.message)
+    if (err instanceof WorkItemNotInProgressError) return fail(err.message)
+    return fail('Work Item verification failed.')
   }
 }

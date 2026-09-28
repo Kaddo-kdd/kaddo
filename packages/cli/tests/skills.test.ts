@@ -32,6 +32,7 @@ describe('Skills layer (VS-059)', () => {
       [
         'adr-writing',
         'capsule-writing',
+        'evidence-verification',
         'graph-metadata-review',
         'implementation-planning',
         'learning-capture',

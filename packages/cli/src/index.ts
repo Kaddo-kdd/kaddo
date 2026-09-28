@@ -41,6 +41,7 @@ import { runAssetsStatus, runAssetsUpdate } from './commands/assets.js'
 import { runReady } from './commands/ready.js'
 import { runAdmin } from './commands/admin.js'
 import { runWorkItemImport } from './commands/work-item.js'
+import { runVerify } from './commands/verify.js'
 
 // Single source of truth for the version: read it from package.json at runtime so the CLI
 // `--version` can never drift from the published package version. `../package.json` resolves
@@ -457,7 +458,15 @@ program
 program
   .command('learn [artifact-id]')
   .description('Close a work item and record what was learned')
-  .action(async (artifactId?: string) => { await runLearn(artifactId) })
+  .option('--force', 'Force completion despite blocking conditions')
+  .action(async (artifactId: string | undefined, opts: { force?: boolean }) => { await runLearn(artifactId, opts) })
+
+program
+  .command('verify <id>')
+  .description('Verify implementation evidence and acceptance criteria for a Work Item')
+  .option('--json', 'Output JSON')
+  .option('-y, --yes', 'Skip confirmation prompt')
+  .action(async (id: string, opts: { json?: boolean; yes?: boolean }) => { await runVerify(id, opts) })
 
 program
   .command('history')

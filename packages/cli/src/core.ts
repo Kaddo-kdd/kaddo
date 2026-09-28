@@ -64,6 +64,23 @@ export {
   WorkItemNotReadyError,
   type ImplementationHandoff,
 } from './core/implementation-handoff.js'
+export {
+  collectImplementationEvidence,
+  verifyWorkItem,
+  evaluateCompletion,
+  filterSecretPaths,
+  WorkItemNotInProgressError,
+  type CollectEvidenceInput,
+  type RepoEvidenceInput,
+  type ValidationInput,
+  type ACVerificationInput,
+  type ACVerificationResult,
+  type ACSummary,
+  type PlannedVsActual,
+  type VerificationResult,
+  type CompletionReadiness,
+  type CompletionEvaluation,
+} from './core/implementation-evidence.js'
 export { computeRefinementStatus, type RefinementStatus } from './core/work-items.js'
 export {
   importWorkItem,
