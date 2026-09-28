@@ -41,8 +41,8 @@ Work Item draft → refine → ready → handoff → implement → verify → co
 The Build Contract replaces external specification tools with a native lifecycle that keeps
 all knowledge near the code. See the `implementation-planning` skill for design deliberation.
 
-> **Historical note:** OpenSpec artifacts remain under `openspec/` as reference for earlier
-> changes but are no longer the active workflow.
+> **Historical note:** Kaddo previously used OpenSpec during its early development. Those
+> artifacts have been removed but remain available through Git history.
 
 ## Kaddo + BMAD / Gentle-AI
 

@@ -88,8 +88,8 @@ Changes follow the Kaddo Work Item lifecycle:
 See [`knowledge/delivery/build-contract.md`](knowledge/delivery/build-contract.md) for the
 full Build Contract and the `implementation-planning` skill for design deliberation.
 
-> **Note:** Historical OpenSpec artifacts remain under `openspec/` as reference but are no
-> longer the active contributor workflow.
+> **Note:** Kaddo previously used OpenSpec during its early development. Those artifacts have
+> been removed from the working tree but remain available through Git history.
 
 ## Commit style
 

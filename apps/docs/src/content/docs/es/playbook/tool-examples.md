@@ -44,8 +44,8 @@ El Build Contract reemplaza herramientas de especificación externas con un cicl
 nativo que mantiene todo el conocimiento cerca del código. Consulta el skill
 `implementation-planning` para deliberación de diseño.
 
-> **Nota histórica:** Los artefactos de OpenSpec permanecen bajo `openspec/` como referencia
-> de cambios anteriores pero ya no son el flujo de trabajo activo.
+> **Nota histórica:** Kaddo utilizó OpenSpec durante su desarrollo inicial. Esos artefactos
+> fueron eliminados del working tree pero permanecen disponibles a través del historial de Git.
 
 ## Kaddo + BMAD / Gentle-AI
 
