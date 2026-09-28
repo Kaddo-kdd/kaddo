@@ -62,11 +62,12 @@ describe('agent responsibility matrix (VS-044)', () => {
     expect(trace).toContain('kaddo create --from roadmap')
   })
 
-  it('renders the matrix as markdown', () => {
+  it('renders the matrix as markdown with all agents', () => {
     const md = renderResponsibilityMatrixMarkdown()
     expect(md).toContain('| Agent |')
-    expect(md).toContain('`roadmap-agent`')
-    expect(md).toContain('`implementation-agent`')
+    for (const key of Object.keys(RESPONSIBILITY_MATRIX)) {
+      expect(md, `missing ${key}`).toContain(`\`${key}\``)
+    }
   })
 })
 

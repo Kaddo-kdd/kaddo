@@ -73,12 +73,23 @@ extension directory, such as `kaddo-power/dev.kiro/`.
 
 Open an issue before starting work on any of these.
 
-## OpenSpec: define before you build
+## Build Contract: the Kaddo-native workflow
 
-Relevant changes to the CLI are defined with OpenSpec **before** any code is written —
-a `proposal.md`, `design.md`, `spec.md` and `tasks.md` under
-`openspec/changes/<change-id>/`. Copy the templates in `openspec/templates/` to start.
-See [`openspec/README.md`](openspec/README.md) for the full convention.
+Changes follow the Kaddo Work Item lifecycle:
+
+1. **Draft** a Work Item in `knowledge/delivery/work-items/draft/`
+2. **Refine** with current/target behavior, acceptance criteria and scope confidence
+3. **Ready** — move to `work-items/ready/` after human review
+4. **Handoff** — produce an implementation plan (use the `implementation-planning` skill)
+5. **Implement** — write code, tests and documentation
+6. **Verify** — run `kaddo verify <WI-ID>` to collect evidence and check ACs
+7. **Complete** — move to `work-items/completed/` with a learning section
+
+See [`knowledge/delivery/build-contract.md`](knowledge/delivery/build-contract.md) for the
+full Build Contract and the `implementation-planning` skill for design deliberation.
+
+> **Note:** Historical OpenSpec artifacts remain under `openspec/` as reference but are no
+> longer the active contributor workflow.
 
 ## Commit style
 

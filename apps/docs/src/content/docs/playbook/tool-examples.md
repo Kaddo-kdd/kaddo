@@ -1,6 +1,6 @@
 ---
 title: Examples with Other Tools
-description: Usage patterns for combining Kaddo with GitHub Issues, Jira/Linear, OpenSpec, agent frameworks and LLM chats.
+description: Usage patterns for combining Kaddo with GitHub Issues, Jira/Linear, Build Contract, agent frameworks and LLM chats.
 ---
 
 Kaddo is the **knowledge layer near the code**. It does not replace your issue tracker,
@@ -29,15 +29,20 @@ Roadmap candidate → Kaddo Work Item → Jira/Linear ticket
 
 The ticket tracks delivery; the Work Item preserves why and what knowledge applies.
 
-## Kaddo + OpenSpec
+## Kaddo + Build Contract
 
-Use OpenSpec for structured change proposals and Kaddo for the knowledge lifecycle.
+Use the Kaddo-native Build Contract for structured change proposals and the Work Item
+lifecycle for delivery.
 
 ```txt
-OpenSpec change → Kaddo Work Item → Guard ownership
+Work Item draft → refine → ready → handoff → implement → verify → complete
 ```
 
-The OpenSpec change defines the proposal; the Work Item connects it to code and drift signals.
+The Build Contract replaces external specification tools with a native lifecycle that keeps
+all knowledge near the code. See the `implementation-planning` skill for design deliberation.
+
+> **Historical note:** OpenSpec artifacts remain under `openspec/` as reference for earlier
+> changes but are no longer the active workflow.
 
 ## Kaddo + BMAD / Gentle-AI
 

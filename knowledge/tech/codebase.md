@@ -51,6 +51,9 @@ El proyecto es un monorepo administrado con `pnpm` que contiene las siguientes c
 - Para las pruebas E2E del frontend, navegar a `packages/admin` y ejecutar `pnpm run test:e2e` (Playwright).
 - Herramientas de formateo y linting estático están disponibles vía `pnpm run lint` y `pnpm run format` en la raíz.
 
-## Open questions
+## Resolved questions
 
-- [open] ¿Existen scripts centrales específicos en `package.json` raíz recomendados para arrancar la aplicación CLI junto con la interfaz gráfica de manera concurrente?
+- [resolved] Los scripts centrales para desarrollo concurrente están en el `package.json` raíz:
+  `pnpm run build` construye todos los paquetes, y cada paquete expone `pnpm dev` (que
+  ejecuta `tsup --watch` o `vite` según corresponda). No existe un script único que arranque
+  CLI + Admin UI concurrentemente — se ejecutan en terminales separadas.

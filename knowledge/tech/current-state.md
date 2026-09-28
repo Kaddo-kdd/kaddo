@@ -3,7 +3,7 @@ type: current-state
 project_state: ai-assisted
 generated_by: kaddo-bootstrap
 template_version: 1
-refined_by: architecture-agent
+refined_by: architecture-agent, WI-008
 ---
 
 > Idioma del proyecto: **español**. Escribe este conocimiento en español. Mantén en inglés el código, los nombres de archivo, los comandos y las claves de configuración.
@@ -48,12 +48,17 @@ Kaddo opera principalmente sobre el sistema de archivos del proyecto (`.kaddo/`,
 - Adopción de React con Vite y bibliotecas de visualización basadas en nodos (XYFlow) para la UI de administración.
 - Separación estricta entre el cliente de línea de comandos, la UI y el servidor API para facilitar el desacoplamiento de lógicas.
 
-## Open Questions
+## Resolved Questions
 
-- [open] ¿Cuál es el mecanismo exacto para el despliegue del frontend admin junto con el CLI? (Existen scripts en `@kaddo/cli` que parecen copiar directorios de compilación desde `admin` y `admin-server`).
-- [open] ¿Cómo se configuran los adaptadores de integración para los distintos proveedores de terceros?
-
-## Areas Requiring Human Validation
-
-- Validar la estrategia de versionado y publicación (publicación conjunta o independiente de paquetes).
-- Confirmar si existen dependencias de infraestructura en la nube más allá del entorno local.
+- [resolved] El CLI empaqueta Admin UI y Admin Server en su distribución: `scripts/copy-admin.mjs`
+  copia los artefactos de build de `@kaddo/admin` y `@kaddo/admin-server` al dist del CLI.
+  Al ejecutar `kaddo admin`, el servidor Fastify se levanta sirviendo la SPA empaquetada.
+- [resolved] Los adaptadores de integración se configuran a través de la Admin UI o CLI
+  (`kaddo integration create`). Cada proveedor define un `configSchema` y `secretSchema` en
+  su `AdapterDefinition`. Los secrets se almacenan cifrados con `SecretProvider` y las
+  credenciales nunca se exponen en la API.
+- [resolved] El versionado es conjunto: los 5 paquetes comparten la misma versión (actualmente
+  3.94.0) y se bumpen simultáneamente en cada release. No se publican a npm — el CLI se
+  distribuye como binario.
+- [resolved] No hay dependencias de infraestructura en la nube. Kaddo opera exclusivamente
+  sobre el sistema de archivos local del proyecto.
