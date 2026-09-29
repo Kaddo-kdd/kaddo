@@ -19,9 +19,10 @@ Cliente MCP / IDE / Agente
 context · explain · understand · grafo · work items · capsules · prompts
 ```
 
-> **De solo lectura por diseño.** El servidor nunca modifica conocimiento, edita archivos, ejecuta
-> git, llama a un LLM ni escanea tu código fuente. Es un paquete separado y liviano — el CLI sigue
-> ligero.
+> **Mayormente de solo lectura.** El servidor nunca ejecuta git, llama a un LLM ni escanea tu código
+> fuente. Las herramientas de lifecycle (import, ready, evidence, verify) pueden escribir bajo
+> `knowledge/delivery/work-items/` y las derived tools escriben bajo `.kaddo/`. Todo lo demás es
+> estrictamente de solo lectura.
 
 ## Instalar y ejecutar
 
@@ -72,20 +73,39 @@ Hay un ejemplo listo para copiar en
 | `kaddo://savings-report` | `.kaddo/reports/` (o en memoria) | [Reporte de ahorro](/es/savings-report/) |
 | `kaddo://drift-report` | `.kaddo/reports/` (o en memoria) | [Reporte de drift](/es/drift-report/) |
 | `kaddo://guard-history` | `.kaddo/history/guard-runs.jsonl` | recorded guard runs |
-| `kaddo://open-questions` | business/product/codebase/roadmap | classified open questions |
-| `kaddo://roadmap-readiness` | (computed) | roadmap readiness summary |
+| `kaddo://build-contract` | `knowledge/delivery/build-contract.md` | Build Contract nativo — lifecycle completo |
+| `kaddo://open-questions` | business/product/codebase/roadmap | preguntas abiertas clasificadas |
+| `kaddo://roadmap-readiness` | (computed) | resumen de readiness del roadmap |
 | `kaddo://tech-decisions` | (computed) | candidatos de decisión vs ADRs + nombres ADR sugeridos |
+| `kaddo://installed-assets` | (computed) | estado de versión de agentes/skills vs paquete actual |
+| `kaddo://roadmap-quality` | (computed) | calidad de fundamento de iniciativas y candidatos WI |
+| `kaddo://work-item-candidates` | `knowledge/delivery/roadmap.md` | candidatos WI materializables del roadmap |
+| `kaddo://next-step` | (computed) | recomendación de siguiente paso según estado de delivery |
+| `kaddo://project-route` | (computed) | mapa de progreso del lifecycle del proyecto |
+| `kaddo://scan-signals` | `.kaddo/scan.json` | señales accionables de `kaddo scan` |
 
 ## Tools (solo lectura)
 
 - `kaddo_project_status` — estado compacto (state, work items, ownership, calidad del grafo, capsules).
 - `kaddo_list_work_items` — filtra por `status` / `type` / `knowledge_level`.
 - `kaddo_get_work_item` — un Work Item por `id` (resumen + markdown completo).
-- `kaddo_mark_work_item_ready` — evalúa si un Work Item en borrador está listo para implementación. Devuelve advertencias de readiness y el comando CLI `kaddo ready <id>` para transicionarlo (el servidor MCP no puede modificar archivos de knowledge directamente).
 - `kaddo_list_capsules` / `kaddo_get_capsule` — Knowledge Capsules externas.
 - `kaddo_list_agents` / `kaddo_get_agent_prompt` — prompts de agentes instalados.
 - `kaddo_list_skills` / `kaddo_get_skill` — [skills](/es/skills/) reutilizables instaladas.
 - `kaddo_list_graph_hints` — hints del grafo, filtra por `artifact_type` / `severity` / `active_only`.
+
+## Herramientas del lifecycle de Work Items
+
+Estas herramientas cubren el Build Contract completo. Pueden escribir bajo
+`knowledge/delivery/work-items/` para transiciones de lifecycle.
+
+| Herramienta | Etapa | Propósito |
+|---|---|---|
+| `kaddo_work_item_import` | Captured Intent | Importa un WI desde texto/Markdown como borrador. Parsea, normaliza y genera un refinement handoff. |
+| `kaddo_mark_work_item_ready` | Ready | Evalúa readiness y transiciona un WI draft a ready (mueve el archivo de `draft/` a `ready/`). |
+| `kaddo_implementation_handoff` | Handoff | Construye un Implementation Handoff agent-agnostic para un WI ready con guía de contexto y deliberación de diseño. |
+| `kaddo_collect_evidence` | Evidence | Recolecta evidencia estructurada: paths cambiados, validaciones, verificaciones de ACs. |
+| `kaddo_verify_work_item` | Verification | Verifica evidencia contra ACs, release gates y excepciones de completitud. Devuelve decisión de completitud. |
 
 ## Herramientas multirepo
 
@@ -100,6 +120,7 @@ lectura excepto `kaddo_export_capsule` que escribe cápsulas derivadas bajo `.ka
 | `kaddo_get_work_item_context` | Contexto compuesto para implementar un Work Item multirepo. |
 | `kaddo_suggest_branch_strategy` | Sugiere nombres de rama, mensajes de commit y checklist. NO ejecuta git. |
 | `kaddo_export_capsule` | Exporta una cápsula (proyecto, sistema o módulo) bajo `.kaddo/exports/`. |
+| `kaddo_modules_discover` | Descubre repos hermanos configurados como módulos Kaddo. No persiste sin apply+confirm. Solo core. |
 
 **Seguridad:** ninguna de estas herramientas ejecuta git, hace deploy, instala dependencias ni
 llama a un LLM. `kaddo_suggest_branch_strategy` solo *sugiere* nombres de rama y mensajes de
@@ -206,10 +227,11 @@ secretos, tokens, valores de entorno, código fuente ni PII.
 
 ## Qué **no** hace
 
-Sin escrituras fuera de `.kaddo/`, sin editar knowledge/código, sin crear Work Items, sin `kaddo
-scan`/`learn`/`owners suggest`/`capsule add`, sin `kaddo add`, sin git, sin sincronización remota,
-sin GitHub API, sin servidor HTTP, sin auth, sin RAG, sin vector database, sin llamadas a LLM. Las
-derived tools regeneran artefactos **solo bajo `.kaddo/`**; todo lo demás es de solo lectura.
+Sin editar código fuente, sin `kaddo scan`/`learn`/`owners suggest`/`capsule add`, sin `kaddo add`,
+sin git, sin sincronización remota, sin GitHub API, sin servidor HTTP, sin auth, sin RAG, sin vector
+database, sin llamadas a LLM. Las herramientas de lifecycle escriben solo bajo
+`knowledge/delivery/work-items/` para transiciones; las derived tools escriben solo bajo `.kaddo/`.
+Todo lo demás es de solo lectura.
 
 ## Ver también
 

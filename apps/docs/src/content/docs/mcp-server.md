@@ -18,8 +18,9 @@ MCP Client / IDE / Agent
 context · explain · understand · graph · work items · capsules · prompts
 ```
 
-> **Read-only by design.** The server never modifies knowledge, edits files, runs git, calls an
-> LLM or scans your source code. It is a separate, lightweight package — the CLI stays lean.
+> **Mostly read-only.** The server never runs git, calls an LLM or scans your source code.
+> Lifecycle tools (import, ready, evidence, verify) can write under `knowledge/delivery/work-items/`
+> and derived tools write under `.kaddo/`. Everything else is strictly read-only.
 
 ## Install & run
 
@@ -69,20 +70,39 @@ A ready-to-copy example lives in [`examples/mcp/`](https://github.com/Kaddo-kdd/
 | `kaddo://savings-report` | `.kaddo/reports/` (or in memory) | [Estimated Savings Report](/savings-report/) |
 | `kaddo://drift-report` | `.kaddo/reports/` (or in memory) | [Drift Trend Report](/drift-report/) |
 | `kaddo://guard-history` | `.kaddo/history/guard-runs.jsonl` | recorded guard runs |
+| `kaddo://build-contract` | `knowledge/delivery/build-contract.md` | Kaddo-native Build Contract lifecycle |
 | `kaddo://open-questions` | business/product/codebase/roadmap | classified open questions |
 | `kaddo://roadmap-readiness` | (computed) | roadmap readiness summary |
 | `kaddo://tech-decisions` | (computed) | decision candidates vs ADRs + suggested ADR filenames |
+| `kaddo://installed-assets` | (computed) | agent/skill version status vs current package |
+| `kaddo://roadmap-quality` | (computed) | initiative and WI-candidate grounding quality |
+| `kaddo://work-item-candidates` | `knowledge/delivery/roadmap.md` | materializable WI candidates from roadmap |
+| `kaddo://next-step` | (computed) | state-aware next-step recommendation |
+| `kaddo://project-route` | (computed) | project lifecycle progress map |
+| `kaddo://scan-signals` | `.kaddo/scan.json` | actionable signals from `kaddo scan` |
 
 ## Tools (read-only)
 
 - `kaddo_project_status` — compact status (state, work items, ownership, graph quality, capsules).
 - `kaddo_list_work_items` — filter by `status` / `type` / `knowledge_level`.
 - `kaddo_get_work_item` — a Work Item by `id` (summary + full markdown).
-- `kaddo_mark_work_item_ready` — assess whether a draft Work Item is ready for implementation. Returns readiness warnings and the CLI command `kaddo ready <id>` to transition it (the MCP server cannot modify knowledge files directly).
 - `kaddo_list_capsules` / `kaddo_get_capsule` — external Knowledge Capsules.
 - `kaddo_list_agents` / `kaddo_get_agent_prompt` — installed agent prompts.
 - `kaddo_list_skills` / `kaddo_get_skill` — installed reusable [skills](/skills/).
 - `kaddo_list_graph_hints` — graph hints, filter by `artifact_type` / `severity` / `active_only`.
+
+## Work Item Lifecycle tools
+
+These tools cover the full Build Contract lifecycle. They can write under
+`knowledge/delivery/work-items/` for lifecycle transitions.
+
+| Tool | Stage | Purpose |
+|---|---|---|
+| `kaddo_work_item_import` | Captured Intent | Import a Work Item from text/Markdown as a draft. Parses, normalizes, and generates a refinement handoff. |
+| `kaddo_mark_work_item_ready` | Ready | Assess readiness and transition a draft WI to ready (moves file from `draft/` to `ready/`). |
+| `kaddo_implementation_handoff` | Handoff | Build an agent-agnostic Implementation Handoff for a ready WI with context guidance and design deliberation prompts. |
+| `kaddo_collect_evidence` | Evidence | Collect structured implementation evidence: changed paths, validations, AC verifications. |
+| `kaddo_verify_work_item` | Verification | Verify evidence against ACs, release gates, and completion exceptions. Returns a completion decision. |
 
 ## Multirepo tools
 
@@ -97,6 +117,7 @@ Tools for agents working with multirepo `core`/`module` projects. All are read-o
 | `kaddo_get_work_item_context` | Composite context for implementing a multirepo Work Item. |
 | `kaddo_suggest_branch_strategy` | Suggest branch names, commit messages and checklist. Does NOT execute git. |
 | `kaddo_export_capsule` | Export a capsule (project, system, or module scope) under `.kaddo/exports/`. |
+| `kaddo_modules_discover` | Discover sibling repos configured as Kaddo modules. Does not persist without apply+confirm. Core only. |
 
 **Security:** none of these tools executes git, deploys, installs dependencies or calls an LLM.
 `kaddo_suggest_branch_strategy` only *suggests* branch names and commit messages — the agent
@@ -205,10 +226,10 @@ tokens, env values, source code or PII.
 
 ## What it does NOT do
 
-No writes outside `.kaddo/`, no knowledge/source edits, no Work Item creation, no `kaddo scan`/
-`learn`/`owners suggest`/`capsule add`, no `kaddo add`, no git, no remote sync, no GitHub API, no
-HTTP server, no auth, no RAG, no vector database, no LLM calls. The derived tools regenerate
-artifacts **only under `.kaddo/`**; everything else is read-only.
+No source code edits, no `kaddo scan`/`learn`/`owners suggest`/`capsule add`, no `kaddo add`, no git,
+no remote sync, no GitHub API, no HTTP server, no auth, no RAG, no vector database, no LLM calls.
+Lifecycle tools write only under `knowledge/delivery/work-items/` for transitions; derived tools
+write only under `.kaddo/`. Everything else is read-only.
 
 ## See also
 
