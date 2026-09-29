@@ -47,9 +47,9 @@ describe('official Kaddo Agent Plugin', () => {
     expect(manifest.name).toMatch(/^(?!.*(?:--|\.\.))[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?$/)
     expect(manifest.version).toBe('1.0.3')
     expect(manifest.repository).toBe('https://github.com/Kaddo-kdd/kaddo/tree/main/kaddo-power')
-    expect(manifest.homepage).toBe('https://kaddo.trycatch.tv/')
+    expect(manifest.homepage).toBe('https://kaddo.org/')
     expect(manifest.license).toBe('MIT')
-    expect(manifest.author).toEqual({ name: 'Kaddo', url: 'https://kaddo.trycatch.tv/' })
+    expect(manifest.author).toEqual({ name: 'Kaddo', url: 'https://kaddo.org/' })
     expect(manifest.description).toContain('Kiro is the first supported consumer')
   })
 

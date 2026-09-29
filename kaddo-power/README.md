@@ -2,7 +2,7 @@
 
 <img src="./assets/icon.png" alt="Kaddo Power logo" width="160">
 
-The official portable Agent Plugin for [Kaddo](https://kaddo.trycatch.tv/), the Knowledge Driven
+The official portable Agent Plugin for [Kaddo](https://kaddo.org/), the Knowledge Driven
 Development toolkit. It packages discovery, activation, agent guidance, portable Skills and
 `@kaddo/mcp` integration. Kiro is the first supported consumer, but the portable plugin is not
 defined by Kiro.

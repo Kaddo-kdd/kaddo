@@ -41,4 +41,4 @@ Your agent can now read `kaddo://context-pack`, `kaddo://work-items`, `kaddo://g
 `kaddo://graph-hints`, call tools like `kaddo_project_status` / `kaddo_list_work_items`, and use the
 installed agent prompts — all without scanning your source code.
 
-See the full [MCP Server documentation](https://kaddo.trycatch.tv/mcp-server/).
+See the full [MCP Server documentation](https://kaddo.org/mcp-server/).

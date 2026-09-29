@@ -5,3 +5,9 @@
 [build.environment]
   NODE_VERSION = "20"
   PNPM_VERSION = "9"
+
+[[redirects]]
+  from = "https://kaddo.trycatch.tv/*"
+  to = "https://kaddo.org/:splat"
+  status = 301
+  force = true

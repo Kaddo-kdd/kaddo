@@ -1,7 +1,7 @@
 # @kaddo/mcp
 
 A **read-only** [Model Context Protocol](https://modelcontextprotocol.io) server for
-[Kaddo](https://kaddo.trycatch.tv). It exposes your project's curated Kaddo knowledge —
+[Kaddo](https://kaddo.org). It exposes your project's curated Kaddo knowledge —
 context pack, explain, understand, knowledge graph, graph hints, Work Items, roadmap, Knowledge
 Capsules and installed agent prompts — to any MCP-compatible client (IDE or agent), so the agent
 gets structured context instead of scanning your whole repository.
@@ -115,4 +115,4 @@ secrets, tokens, env values, source code or PII.
   named CLI command (e.g. `kaddo context`, `kaddo graph export`).
 - **No prompts listed** — install agents with `kaddo add agents`.
 
-Same version as `@kaddo/cli`. See the [MCP Server docs](https://kaddo.trycatch.tv/mcp-server/).
+Same version as `@kaddo/cli`. See the [MCP Server docs](https://kaddo.org/mcp-server/).

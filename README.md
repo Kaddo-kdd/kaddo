@@ -107,7 +107,7 @@ can write under `knowledge/delivery/work-items/`; derived tools regenerate artif
 { "mcpServers": { "kaddo": { "command": "npx", "args": ["@kaddo/mcp"], "cwd": "/path/to/project" } } }
 ```
 
-See the [MCP Server docs](https://kaddo.trycatch.tv/mcp-server/).
+See the [MCP Server docs](https://kaddo.org/mcp-server/).
 
 ## Integrations
 
@@ -135,7 +135,7 @@ kaddo capsule add      # import an external capsule into the context pack
 ```
 
 No multirepo mapping needed, no source access required. See the
-[Knowledge Capsules docs](https://kaddo.trycatch.tv/knowledge-capsules/).
+[Knowledge Capsules docs](https://kaddo.org/knowledge-capsules/).
 
 ## Operating Moments
 
@@ -151,7 +151,7 @@ Execution**:
 - **Execution** — implementation-agent · `verify` · `scan` · `owners suggest` · `guard` · `explain`
   (build, verify and keep knowledge in sync).
 
-See [**Operating Moments**](https://kaddo.trycatch.tv/operating-moments/) for the full breakdown.
+See [**Operating Moments**](https://kaddo.org/operating-moments/) for the full breakdown.
 
 ## Commands
 
@@ -197,7 +197,7 @@ kaddo add git-strategy # knowledge/tech/git-strategy.md + .kaddo/git.yml
 
 ## Skills
 
-**[Skills](https://kaddo.trycatch.tv/skills/)** standardize *how* agents do common things well
+**[Skills](https://kaddo.org/skills/)** standardize *how* agents do common things well
 (writing an ADR, refining a Work Item, planning implementation, collecting evidence). Agents
 orchestrate; skills standardize. Install with:
 
@@ -220,7 +220,7 @@ kaddo adapters install antigravity  # AGENTS.md for Antigravity
 ```
 
 Both are compact projections of the project's knowledge map — Kaddo stays the source of truth.
-See [Custom Adapters](https://kaddo.trycatch.tv/custom-adapters/) for the shared Adapter Contract.
+See [Custom Adapters](https://kaddo.org/custom-adapters/) for the shared Adapter Contract.
 
 ## Kaddo Power
 
@@ -233,7 +233,7 @@ the first supported consumer.
 Kaddo ships templates for its main artifacts — organized into six categories: **core**,
 **business**, **architecture**, **module**, **operations** and **legacy**. Each carries a
 purpose, when-to-use, output path and quality checklist. See the
-[Templates docs](https://kaddo.trycatch.tv/templates/overview/).
+[Templates docs](https://kaddo.org/templates/overview/).
 
 ## Examples
 
@@ -247,7 +247,7 @@ The [`examples/`](examples/) folder has reproducible demo repositories:
 | [Commerce Stack](examples/multirepo-workspace/) | Many repos | `multirepo` | `modules map` + per-module artifacts |
 
 Each includes a `prompt-flow.md` with a Mermaid diagram, CLI↔LLM split and copy/paste prompt
-handoffs. See the [Examples docs](https://kaddo.trycatch.tv/examples/).
+handoffs. See the [Examples docs](https://kaddo.org/examples/).
 
 ## Self-hosting
 
@@ -293,7 +293,7 @@ the result of years designing software architectures, leading development teams 
 documenting systems. Kaddo applies Knowledge Driven Development principles to AI-assisted
 software development; it does not claim to have invented KDD.
 [GitHub](https://github.com/judlup) · [LinkedIn](https://www.linkedin.com/in/judlup/) ·
-[About](https://kaddo.trycatch.tv/about/).
+[About](https://kaddo.org/about/).
 
 ## Contributing
 

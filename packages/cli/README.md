@@ -435,7 +435,7 @@ contracts, risks, ADRs, owners — never source code or secrets); refine it with
 `capsule-agent` before sharing. `add` registers the capsule in `.kaddo/external.yml`;
 `kaddo context` then includes an **External Knowledge** section and `kaddo explain` lists
 the capsules (warning when one looks stale). See the
-[Knowledge Capsules guide](https://kaddo.trycatch.tv/knowledge-capsules/).
+[Knowledge Capsules guide](https://kaddo.org/knowledge-capsules/).
 
 ---
 
@@ -460,7 +460,7 @@ Every export also rates **relationship quality** and writes non-blocking metadat
 (`.kaddo/graph-hints.md` + `.json`) — detecting active Work Items without `code`/`capabilities`,
 ADRs without governed `code`, capabilities/capsules with no Work Item link, and more. The
 `graph-agent` turns those hints into precise front matter you confirm and apply. See the
-[Knowledge Graph Export guide](https://kaddo.trycatch.tv/knowledge-graph-export/).
+[Knowledge Graph Export guide](https://kaddo.org/knowledge-graph-export/).
 
 ## Roadmap
 

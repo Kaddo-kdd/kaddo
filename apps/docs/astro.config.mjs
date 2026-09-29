@@ -3,7 +3,7 @@ import starlight from '@astrojs/starlight'
 import mermaid from 'astro-mermaid'
 
 export default defineConfig({
-  site: 'https://kaddo.trycatch.tv',
+  site: 'https://kaddo.org',
   integrations: [
     mermaid({
       theme: 'dark',
@@ -55,7 +55,7 @@ export default defineConfig({
             '@context': 'https://schema.org',
             '@type': 'Person',
             name: 'Julian Dario Luna Patiño',
-            url: 'https://kaddo.trycatch.tv/about/',
+            url: 'https://kaddo.org/about/',
             jobTitle: 'Cloud Solutions Architect Lead',
             worksFor: { '@type': 'Organization', name: 'TryCatch.tv', url: 'https://trycatch.tv' },
             sameAs: [

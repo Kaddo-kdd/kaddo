@@ -5,7 +5,7 @@
   "description": "Official Kaddo Agent Plugin for Knowledge Driven Development. Packages portable Kaddo Skills, agent guidance and @kaddo/mcp integration; Kiro is the first supported consumer.",
   "author": {
     "name": "Kaddo",
-    "url": "https://kaddo.trycatch.tv/"
+    "url": "https://kaddo.org/"
   },
   "keywords": [
     "KDD",
@@ -23,7 +23,7 @@
     "implementation-planning",
     "learning-capture"
   ],
-  "homepage": "https://kaddo.trycatch.tv/",
+  "homepage": "https://kaddo.org/",
   "repository": "https://github.com/Kaddo-kdd/kaddo/tree/main/kaddo-power",
   "license": "MIT"
 }
