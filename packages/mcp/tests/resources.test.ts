@@ -15,6 +15,7 @@ describe('MCP resources (VS-057 AC6/AC14)', () => {
     expect(uris).toEqual(
       [
         'kaddo://agents',
+        'kaddo://build-contract',
         'kaddo://capsules',
         'kaddo://context-pack',
         'kaddo://explain',
