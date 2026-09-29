@@ -1,9 +1,9 @@
 ---
 title: Kaddo
-description: An open-source CLI that helps new, pre-AI and legacy projects keep product knowledge close to the code.
+description: An open-source Knowledge Driven Development toolkit for AI-assisted software engineering.
 template: splash
 hero:
-  tagline: Prepare any codebase for AI-assisted evolution.
+  tagline: Knowledge Driven Development for AI-assisted software engineering.
   image:
     file: ../../assets/logo-full-white.png
   actions:
@@ -20,21 +20,23 @@ hero:
 import { Card, CardGrid } from '@astrojs/starlight/components';
 
 <p class="kaddo-lede">
-Kaddo is an open-source CLI and agent toolkit that helps new, pre-AI and legacy
-projects build a living knowledge layer close to the code. The CLI prepares and
-structures the context; your LLM agents turn it into product understanding.
+Kaddo is an open-source <strong>Knowledge Driven Development (KDD)</strong> toolkit that
+helps new, pre-AI and legacy projects build a living knowledge layer close to the code.
+It structures product knowledge, manages the full Work Item lifecycle — from captured intent
+through implementation handoff, evidence and verification — and keeps knowledge alive as the
+system evolves.
 </p>
 
 <p class="kaddo-lede">
-Kaddo reduces repository exploration by turning project knowledge into structured context.
+The CLI prepares and structures context; your LLM agents turn it into product understanding.
 Token savings are a consequence, not the goal.
 </p>
 
-<p class="kaddo-badge">New projects · Pre-AI codebases · Legacy systems · Bilingual (EN/ES) support</p>
+<p class="kaddo-badge">KDD Toolkit · CLI + MCP + Admin + Agents · Bilingual (EN/ES) · Open Source</p>
 
 <div class="kaddo-terminal">
   <div class="kaddo-terminal__bar"><span></span><span></span><span></span><small>kaddo</small></div>
-  <pre><code><span class="c-muted"># New project</span>{"\n"}<span class="c-prompt">$</span> <span class="c-cmd">npx @kaddo/cli init</span>{"\n"}<span class="c-prompt">$</span> <span class="c-cmd">kaddo bootstrap</span>{"\n\n"}<span class="c-muted"># Existing or pre-AI project</span>{"\n"}<span class="c-prompt">$</span> <span class="c-cmd">kaddo scan</span>{"\n\n"}<span class="c-muted"># Not sure what to do next?</span>{"\n"}<span class="c-prompt">$</span> <span class="c-cmd">kaddo understand</span>{"\n\n"}<span class="c-muted"># Create a work item from the roadmap, then detect drift</span>{"\n"}<span class="c-prompt">$</span> <span class="c-cmd">kaddo create --from roadmap</span>{"\n"}<span class="c-prompt">$</span> <span class="c-cmd">kaddo guard</span>{"\n"}<span class="c-ok">FYI</span> src/payments/payments.service.ts matches WI-001{"\n"}<span class="c-muted">    WI-001 was not modified in this diff — consider reviewing it.</span></code></pre>
+  <pre><code><span class="c-muted"># Start a new project</span>{"\n"}<span class="c-prompt">$</span> <span class="c-cmd">npx @kaddo/cli init</span>{"\n"}<span class="c-prompt">$</span> <span class="c-cmd">kaddo bootstrap</span>{"\n\n"}<span class="c-muted"># Prepare context for your LLM</span>{"\n"}<span class="c-prompt">$</span> <span class="c-cmd">kaddo scan</span>{"\n"}<span class="c-prompt">$</span> <span class="c-cmd">kaddo add agents</span>{"\n"}<span class="c-prompt">$</span> <span class="c-cmd">kaddo context</span>{"\n\n"}<span class="c-muted"># Create a Work Item and go through the lifecycle</span>{"\n"}<span class="c-prompt">$</span> <span class="c-cmd">kaddo create --from roadmap</span>{"\n"}<span class="c-prompt">$</span> <span class="c-cmd">kaddo verify</span>{"\n"}<span class="c-prompt">$</span> <span class="c-cmd">kaddo guard</span>{"\n"}<span class="c-ok">FYI</span> src/payments/payments.service.ts matches WI-001{"\n"}<span class="c-muted">    WI-001 was not modified in this diff — consider reviewing it.</span></code></pre>
 </div>
 
 <p class="kaddo-tagline-strong">From scattered code to observable product knowledge.</p>
@@ -45,18 +47,86 @@ Token savings are a consequence, not the goal.
 
 In new projects, decisions disappear fast. In pre-AI projects, context was never
 prepared for agents. In legacy projects, knowledge often lives in people's heads.
+With AI, this gets worse: agents build on assumptions when they lack context.
 
-Kaddo brings that knowledge closer to the code and helps keep it alive as the system
-changes.
+Kaddo keeps the minimum necessary knowledge alive next to the code — without turning
+development into bureaucracy.
 
-## Context efficiency through structured knowledge
+## The Knowledge Model
 
-Kaddo does not optimize prompts, compress context windows or summarize code automatically.
-It optimizes what the agent needs to discover. Business, Product, Tech and Delivery knowledge
-become a navigable context layer, so agents spend less time searching the repository and more
-time making grounded decisions.
+Kaddo organizes knowledge into four layers: **Business**, **Product**, **Tech** and
+**Delivery**. Each feeds the next. Agents don't guess — they read structured context.
 
-## Choose your starting point
+<CardGrid>
+  <Card title="Business" icon="document">
+    Problem, users, value proposition, constraints — *why* the project exists.
+  </Card>
+  <Card title="Product" icon="list-format">
+    Capabilities, decisions, quality attributes — *what* the system does.
+  </Card>
+  <Card title="Tech" icon="setting">
+    Architecture, stack, codebase, ADRs, modules — *how* it is built.
+  </Card>
+  <Card title="Delivery" icon="rocket">
+    Roadmap, Work Items, build contract, evidence — *when* and *how well* it ships.
+  </Card>
+</CardGrid>
+
+## The Kaddo Lifecycle
+
+Work Items follow the **Kaddo-native Build Contract** — a lifecycle that ensures every
+change is traceable from intent to verified delivery:
+
+<CardGrid>
+  <Card title="Captured Intent" icon="pencil">
+    An idea or external item becomes a Work Item draft — `kaddo create` or import from GitHub Issues, Jira or Azure DevOps.
+  </Card>
+  <Card title="Refinement → Ready" icon="list-format">
+    The work-item-agent enriches ACs, scope, affected modules. A human reviews and marks it ready.
+  </Card>
+  <Card title="Implementation Handoff" icon="open-book">
+    Agent-agnostic context assembly: design deliberation prompts, implementation instructions, recommended agent and skills.
+  </Card>
+  <Card title="Evidence → Verification → Learning" icon="approve-check">
+    `kaddo verify` collects evidence, checks ACs against release gates, and captures learnings for future work.
+  </Card>
+</CardGrid>
+
+Work Items physically move between directories: `draft/` → `ready/` → `in-progress/` →
+`completed/`. The lifecycle is enforced by convention — no lock-in, no platform dependency.
+
+## Four Interfaces, One Knowledge Layer
+
+<CardGrid>
+  <Card title="CLI" icon="seti:powershell">
+    Deterministic commands: init, scan, context, create, verify, guard, explain. No LLM, no API key. → [Commands](/commands/overview/)
+  </Card>
+  <Card title="MCP Server" icon="setting">
+    Model Context Protocol server — exposes knowledge, lifecycle tools and agent prompts to IDEs and agents. → [MCP Server](/mcp-server/)
+  </Card>
+  <Card title="Admin" icon="laptop">
+    Web UI for Work Item management, integration configuration and import provenance. → [Admin](/commands/admin/)
+  </Card>
+  <Card title="Agents" icon="open-book">
+    LLM prompt packs: business, product, architecture, work-item, implementation, graph, capsule and more. → [Agents](/modules/agents/)
+  </Card>
+</CardGrid>
+
+## Integrations
+
+Kaddo connects to external work systems through the **Integration Adapter Foundation**:
+**discovery** → **import** → **refinement**. Browse external items (GitHub Issues, Jira,
+Azure DevOps), import as Work Item drafts with human confirmation, then refine through the
+standard lifecycle. Secrets stay in environment variables and are never exposed.
+
+## Knowledge Capsules
+
+For repos you can't map as modules — other teams, restricted access, integration-only context —
+exchange [**Knowledge Capsules**](/knowledge-capsules/): `kaddo capsule export` shares a minimal
+summary; `kaddo capsule add` imports it as *External Knowledge* in the context pack. No
+multirepo mapping, no source access.
+
+## Choose Your Starting Point
 
 <CardGrid stagger>
   <Card title="New project" icon="rocket">
@@ -77,67 +147,45 @@ Prefer to see it first? The [Visual Guide](/visual-guide/) maps the whole loop, 
 CLI/LLM split and Guard as diagrams. Not sure what Kaddo does and does not do? Read the
 [Project scope](/project-scope/).
 
-## CLI + LLM Agents
+## Scale to Multirepo
 
-Kaddo works in two layers.
+Kaddo models systems that span many repositories. From the architecture repo you map
+secondary repos as modules and keep their knowledge close to the code:
 
-The **CLI** handles deterministic work: initializing the knowledge repository (with bilingual en/es support), scanning
-the codebase, creating work items and detecting possible knowledge drift.
-
-Your **LLM** handles interpretation: using Kaddo agents to extract capabilities,
-reconstruct architecture, identify risks and propose a roadmap from the project context.
-
-> Kaddo does not try to make the CLI "understand everything". The CLI collects and
-> structures signals. The LLM agents turn those signals into product understanding.
-
-## How it works
-
-Kaddo does not start by creating tasks. It starts by understanding the state of the
-project, then builds knowledge progressively before you evolve the code — through four
-[operating moments](/operating-moments/): **Base → Definition → Projection → Execution**.
+```bash
+kaddo modules map        # register a secondary repo as a module
+kaddo modules list       # list mapped modules
+kaddo add standards|security|stack|git-strategy   # global, system-wide artifacts
+```
 
 <CardGrid>
-  <Card title="1 · Initialize & scan" icon="pencil">
-    `kaddo init` then `kaddo scan` — configure project state, structure, and language (English/Spanish), then detect stack and technical signals.
+  <Card title="Per-module knowledge" icon="document">
+    `modules map` generates `module-design`, `stack`, `security` and `standards` artifacts
+    under `knowledge/tech/modules/<id>/`.
   </Card>
-  <Card title="2 · Prepare context" icon="list-format">
-    `kaddo context` builds an LLM context pack and `kaddo add agents` installs agent prompts.
+  <Card title="Module-aware context" icon="list-format">
+    `kaddo context` and `kaddo explain` surface mapped modules and their artifact coverage.
   </Card>
-  <Card title="3 · Understand with agents" icon="open-book">
-    `kaddo understand` guides the handoff — then use Kaddo agents in your LLM chat to extract capabilities, architecture, risks and a roadmap.
+  <Card title="Workspace Guard" icon="approve-check">
+    Opt-in `kaddo guard --workspace` checks local mapped repos and flags possible drift.
   </Card>
-  <Card title="4 · Create from roadmap" icon="rocket">
-    `kaddo create --from roadmap` turns a roadmap candidate into a Work Item; `kaddo owners suggest` declares code ownership.
-  </Card>
-  <Card title="5 · Guard & explain" icon="approve-check">
-    `kaddo guard` detects when code may drift from knowledge; `kaddo explain` summarizes what the project currently knows.
+  <Card title="Global artifacts" icon="seti:config">
+    Standards, security, stack and Git strategy document cross-cutting concerns once.
   </Card>
 </CardGrid>
 
-### The full workflow
+## Self-hosting
 
-```bash
-kaddo init          # state: new | pre-ai | legacy, team size, structure, language (en/es)
-kaddo bootstrap     # new projects: initial knowledge base (Business → Product → Tech → Delivery)
-kaddo scan          # deterministic technical inventory
-kaddo context       # LLM context pack for agent handoff
-kaddo add agents    # install agent prompt packs
-kaddo understand    # guided CLI → LLM handoff plan
-# use your LLM with the context pack + agents to create capabilities, architecture & roadmap
-kaddo create --from roadmap
-kaddo owners suggest
-kaddo guard
-kaddo explain
-```
+**Kaddo builds Kaddo with Kaddo.** The project uses its own lifecycle to manage Work Items,
+collect evidence, verify ACs and capture learnings. The `knowledge/` directory contains Kaddo's
+own product knowledge. This self-hosting validates the lifecycle end-to-end and ensures internal
+friction feeds back into improvements.
 
-The CLI prepares context; your LLM interprets it. Kaddo never calls an LLM by itself.
-
-## See it in action
+## See It in Action
 
 Four reproducible demo repositories ship with committed `.kaddo/` and `knowledge/`
-artifacts — open one and inspect exactly what Kaddo produces. Each includes a
-`prompt-flow.md` with a Mermaid diagram, the CLI↔LLM split and copy/paste prompt
-handoffs for its scenario.
+artifacts — each includes a `prompt-flow.md` with a Mermaid diagram and copy/paste prompt
+handoffs.
 
 <CardGrid>
   <Card title="Task Pilot" icon="rocket">
@@ -155,47 +203,7 @@ handoffs for its scenario.
 </CardGrid>
 
 Browse them in the [Examples](/examples/) guide, or explore the
-[Templates](/templates/overview/) that capture minimum sufficient knowledge for each
-artifact.
-
-## Scale to multirepo
-
-Kaddo also models a system that spans many repositories. From the architecture repo you
-map secondary repos as modules and keep their knowledge close to the code:
-
-```bash
-kaddo modules map        # register a secondary repo (frontend/backend/infra…) as a module
-kaddo modules list       # list mapped modules
-kaddo add standards|security|stack|git-strategy   # global, system-wide artifacts
-```
-
-<CardGrid>
-  <Card title="Per-module knowledge" icon="document">
-    `modules map` generates template-based `module-design`, `stack`, `security` and
-    `standards` artifacts under `knowledge/tech/modules/<id>/`, with front matter and
-    `code:` ownership globs.
-  </Card>
-  <Card title="Module-aware context & explain" icon="list-format">
-    `kaddo context` and `kaddo explain` surface mapped modules and their artifact
-    coverage — distinct from add-on modules installed with `kaddo add`.
-  </Card>
-  <Card title="Workspace Guard" icon="approve-check">
-    Opt-in `kaddo guard --workspace` checks local mapped repos and flags possible drift
-    against `code:` globs — non-blocking, no cloning, no remote APIs.
-  </Card>
-  <Card title="Global artifacts" icon="seti:config">
-    Standards, security, stack and a recommended Git strategy document cross-cutting
-    concerns once for the whole system.
-  </Card>
-</CardGrid>
-
-For repos you can't (or don't want to) map, exchange
-[**Knowledge Capsules**](/knowledge-capsules/) instead — `kaddo capsule export` shares a
-minimal summary of a system; `kaddo capsule add` imports it as *External Knowledge* in the
-context pack. No multirepo mapping, no source access.
-
-See the [Multirepo modules](/modules/multirepo/) guide and the
-[Visual Guide](/visual-guide/) for the full system map.
+[Templates](/templates/overview/) that capture minimum sufficient knowledge for each artifact.
 
 Kaddo is a practical implementation of [**Knowledge Driven Development**](/knowledge-driven-development/)
 for AI-assisted software development — it applies KDD principles; it does not claim to have
@@ -203,6 +211,6 @@ invented them.
 
 <div class="kaddo-cta">
   ## Start with a repo that remembers
-  <p>From new projects to legacy systems, Kaddo keeps product knowledge close to the code.</p>
+  <p>From new projects to legacy systems, Kaddo keeps product knowledge close to the code — and the lifecycle traceable.</p>
   <a class="kaddo-btn" href="/getting-started/">Get started →</a>
 </div>

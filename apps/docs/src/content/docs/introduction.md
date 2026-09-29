@@ -1,19 +1,21 @@
 ---
 title: Introduction
-description: What Kaddo is and the layer it occupies.
+description: What Kaddo is, the layer it occupies, and its lifecycle.
 ---
 
 **Prepare any codebase for AI-assisted evolution. Kaddo helps your repo remember why the
 code exists.**
 
-Kaddo is an open-source **CLI and agent prompt toolkit** based on **Knowledge Driven
-Development (KDD)**. It scans your repo, prepares context for your LLM, guides agent-based
-understanding, turns roadmap candidates into Work Items, declares ownership and warns when
-code changes may leave knowledge behind — without turning development into bureaucracy.
+Kaddo is an open-source **Knowledge Driven Development (KDD) toolkit** for AI-assisted
+software engineering. It scans your repo, structures product knowledge into four layers
+(Business, Product, Tech, Delivery), manages the full Work Item lifecycle — from captured
+intent through implementation handoff, evidence collection and verification — and keeps
+knowledge alive as the system evolves.
 
 It works in two layers: the **CLI** does the deterministic work (no AI, no API key), and
-your **LLM** does the interpretation using Kaddo agents. See the [Workflow](/workflow/)
-page for the full loop and the CLI vs LLM split.
+your **LLM** does the interpretation using Kaddo agents. Four interfaces expose the same
+knowledge layer: CLI, MCP Server, Admin UI and Agent prompt packs. See the
+[Workflow](/workflow/) page for the full loop and the CLI vs LLM split.
 
 > **Knowledge Driven Development ≠ Kaddo.** KDD is a prior concept in software engineering and
 > knowledge management. Kaddo is a **practical implementation of KDD principles for
