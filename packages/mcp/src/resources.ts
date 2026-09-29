@@ -112,6 +112,19 @@ export const RESOURCES: ResourceDescriptor[] = [
     },
   },
   {
+    uri: 'kaddo://build-contract',
+    name: 'Kaddo build contract',
+    description: 'The Kaddo-native Build Contract — lifecycle stages, entry/exit criteria, agents, skills, and CLI commands for the full Work Item lifecycle (Captured Intent → Completed).',
+    mimeType: 'text/markdown',
+    read: (root) =>
+      fileOrHint(
+        root,
+        'kaddo://build-contract',
+        'knowledge/delivery/build-contract.md',
+        'Build Contract not found. Create knowledge/delivery/build-contract.md first.'
+      ),
+  },
+  {
     uri: 'kaddo://work-items',
     name: 'Kaddo work items',
     description: 'Summarized Work Items from knowledge/delivery/work-items/.',

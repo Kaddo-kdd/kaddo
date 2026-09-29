@@ -15,8 +15,11 @@ const EXTRA_INPUTS: Record<string, string[]> = {
   'graph-agent': ['.kaddo/graph.json', '.kaddo/graph-hints.md'],
   'ownership-agent': ['knowledge/delivery/work-items/', 'knowledge/inventory.md'],
   'capsule-agent': ['knowledge/product/capabilities.md', 'knowledge/tech/decisions/'],
-  'work-item-agent': ['knowledge/delivery/roadmap.md'],
-  'implementation-agent': ['knowledge/tech/git-strategy.md'],
+  'work-item-agent': ['knowledge/delivery/roadmap.md', 'knowledge/delivery/build-contract.md'],
+  'implementation-agent': ['knowledge/tech/git-strategy.md', 'knowledge/delivery/build-contract.md', 'knowledge/skills/implementation-planning/skill.md'],
+  'backlog-agent': ['knowledge/delivery/roadmap.md', 'knowledge/delivery/work-items/'],
+  'architecture-agent': ['knowledge/tech/stack.md', 'knowledge/tech/current-state.md', 'knowledge/tech/decisions/'],
+  'module-context-agent': ['knowledge/tech/codebase.md', 'knowledge/tech/current-state.md'],
 }
 
 function recommendedInputs(name: string): string[] {

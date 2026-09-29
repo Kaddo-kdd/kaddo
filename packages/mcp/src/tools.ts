@@ -14,6 +14,8 @@ import {
   evaluateCompletion,
   WorkItemNotInProgressError,
   WorkItemNotFoundError,
+  buildImplementationHandoff,
+  WorkItemNotReadyError,
   type CollectEvidenceInput,
 } from '@kaddo/cli/core'
 import { listWorkItems, type WorkItemSummary } from './workitems.js'
@@ -297,6 +299,22 @@ export function importWorkItemTool(
   } catch (err) {
     if (err instanceof ImportError) return fail(`[${err.code}] ${err.message}`)
     return fail('Work Item import failed.')
+  }
+}
+
+// --- Implementation Handoff (VS-110) -------------------------------------
+
+export function implementationHandoffTool(
+  root: string,
+  args: { workItemId: string },
+): ToolResult {
+  try {
+    const handoff = buildImplementationHandoff(root, args.workItemId)
+    return ok(handoff)
+  } catch (err) {
+    if (err instanceof WorkItemNotFoundError) return fail(err.message)
+    if (err instanceof WorkItemNotReadyError) return fail(err.message)
+    return fail('Implementation handoff failed.')
   }
 }
 

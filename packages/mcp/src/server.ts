@@ -19,6 +19,7 @@ import {
   listSkillsTool,
   getSkillTool,
   importWorkItemTool,
+  implementationHandoffTool,
   collectEvidenceTool,
   verifyWorkItemTool,
   type ToolResult,
@@ -426,6 +427,22 @@ export function createServer(root: string): McpServer {
       },
     },
     async (args) => toolText(guarded(root, () => importWorkItemTool(root, args)))
+  )
+
+  // --- Implementation Handoff (VS-110) ---
+  server.registerTool(
+    'kaddo_implementation_handoff',
+    {
+      title: 'Build Implementation Handoff',
+      description: 'Build an agent-agnostic Implementation Handoff for a ready Work Item. '
+        + 'Assembles context guidance, design deliberation prompts, and implementation instructions. '
+        + 'Returns structured handoff data including recommended agent, skill, affected modules, and copyable text. '
+        + 'The Work Item must be in "ready" state. Does not start implementation — human confirmation is required first.',
+      inputSchema: {
+        workItemId: z.string().describe('The Work Item ID (e.g. WI-005)'),
+      },
+    },
+    async (args) => toolText(guarded(root, () => implementationHandoffTool(root, args)))
   )
 
   // --- Evidence & Verification (VS-111) ---
