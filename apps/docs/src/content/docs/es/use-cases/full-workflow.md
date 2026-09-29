@@ -6,18 +6,23 @@ description: El loop completo de Kaddo de principio a fin, con el artefacto que 
 Este es el loop completo de Kaddo como una narrativa. Cada paso muestra el comando, qué aporta
 y el artefacto que produce.
 
-| # | Paso | Comando | Produce |
+| # | Paso | Comando / Skill | Produce |
 |---|---|---|---|
 | 1 | Inicializar | `kaddo init` | `.kaddo/config.yml` |
 | 2 | Escanear | `kaddo scan` | `.kaddo/scan.json`, `knowledge/inventory.md` |
 | 3 | Context pack | `kaddo context` | `.kaddo/context-pack.md` |
 | 4 | Instalar agentes | `kaddo add agents` | `knowledge/agents/*.md` |
 | 5 | Understand | `kaddo understand` | `.kaddo/understand.md` |
-| 6 | Entender en el LLM | *(tu chat)* | `knowledge/product/capabilities.md`, `knowledge/tech/current-state.md`, `knowledge/delivery/roadmap.md` |
-| 7 | Crear desde roadmap | `kaddo create --from roadmap` | `knowledge/delivery/work-items/*.md` |
-| 8 | Declarar ownership | `kaddo owners suggest` | front matter `code:` actualizado |
-| 9 | Guard | `kaddo guard` | FYI de deriva sobre el `git diff` |
-| 10 | Explain | `kaddo explain` | `.kaddo/explain.md`, `.kaddo/explain.json` |
+| 6 | Entender en el LLM | *(tu chat)* | `capabilities.md`, `current-state.md`, `roadmap.md` |
+| 7 | Crear desde roadmap | `kaddo create --from roadmap` | `work-items/draft/WI-001.md` |
+| 8 | Refinar | skill work-item-refinement | WI refinado con ACs, scope, refs legacy |
+| 9 | Ready | `kaddo ready WI-001` | `work-items/ready/WI-001.md` |
+| 10 | Handoff | skill implementation-planning | Plan de implementación + contexto legacy |
+| 11 | Implementar | implementation-agent | código + tests |
+| 12 | Evidencia + Verificar | `kaddo verify WI-001` | reporte de evidencia, verificación de ACs |
+| 13 | Guard | `kaddo guard` | FYI de deriva + intersecciones de riesgos legacy |
+| 14 | Completar + Aprender | `kaddo learn WI-001` | `work-items/completed/WI-001.md` + aprendizajes |
+| 15 | Explain | `kaddo explain` | `.kaddo/explain.md`, `.kaddo/explain.json` |
 
 ## El loop en detalle
 
@@ -52,8 +57,8 @@ flowchart TD
 
     F --> F1[Roadmap Agent]
     F1 --> F2[knowledge/delivery/roadmap.md]
-    F2 --> F3[Roadmap initiatives<br/>RM-001, RM-002...]
-    F3 --> F4[Candidate Work Items<br/>WI-CANDIDATE-001...]
+    F2 --> F3[Iniciativas del roadmap<br/>RM-001, RM-002...]
+    F3 --> F4[Candidatos de Work Items<br/>WI-CANDIDATE-001...]
 
     F4 --> G[Clasificación]
     G --> G1{Tipo de cambio}
@@ -77,44 +82,42 @@ flowchart TD
     I --> I1[kaddo create --from roadmap]
     I1 --> I2[knowledge/delivery/work-items/WI-*.md]
 
-    I2 --> J[Captura de conocimiento mínimo suficiente]
-    J --> J1[Problema]
-    J --> J2[Resultado esperado]
-    J --> J3[Impacto]
-    J --> J4[Criterios de aceptación]
-    J --> J5[Diseño / Riesgo si aplica]
+    I2 --> J[Refinamiento]
+    J --> J1[work-item-agent<br/>+ work-item-refinement skill]
+    J1 --> J2[ACs · scope · módulos<br/>refs de riesgos legacy si aplica]
+    J2 --> J3[kaddo ready WI-001<br/>draft/ → ready/]
 
-    J --> K[Ownership]
-    K --> K1[kaddo owners suggest]
-    K1 --> K2[Front matter actualizado]
-    K2 --> K3[code:<br/>- src/module/**]
+    J3 --> K[Implementation Handoff]
+    K --> K1[implementation-planning skill]
+    K1 --> K2[Ensamblaje de contexto<br/>+ deliberación de diseño<br/>+ contexto legacy si disponible]
 
-    K3 --> L[Construcción]
-    L --> L1[Implementación en código]
-    L1 --> L2[Tests / Validación]
-    L2 --> L3[Pull Request]
+    K2 --> L[Implementación]
+    L --> L1[implementation-agent]
+    L1 --> L2[Código + tests en rama feature]
 
-    L3 --> M[Guard Lite]
-    M --> M1[kaddo guard]
-    M1 --> M2{¿Código cambió y artifact relacionado no?}
+    L2 --> M[Evidencia + Verificación]
+    M --> M1[kaddo verify WI-001]
+    M1 --> M2[Recolección de evidencia<br/>Verificación de ACs<br/>Evaluación de completitud]
 
-    M2 -->|Sí| N[Possible Knowledge Drift]
-    N --> N1[Revisar si el artifact sigue vigente]
-    N1 --> O[Actualizar conocimiento o justificar no impacto]
+    M2 --> N[Guard]
+    N --> N1[kaddo guard]
+    N1 --> N2{¿Deriva de conocimiento?<br/>¿Intersección de riesgo legacy?}
 
-    M2 -->|No| P[Sin warning]
+    N2 -->|Deriva o riesgo| N3[Revisar + actualizar conocimiento]
+    N2 -->|Limpio| N4[Sin warning]
 
-    O --> Q[Release / Merge]
-    P --> Q
+    N3 --> O[Completar + Aprender]
+    N4 --> O
 
-    Q --> R[Aprendizaje]
-    R --> R1[Actualizar Learning en Work Item]
-    R --> R2[Actualizar roadmap / architecture si aplica]
-    R --> R3[kaddo explain]
+    O --> O1[kaddo learn WI-001<br/>ready/ → completed/]
+    O1 --> O2[Aprendizajes capturados<br/>Conocimiento actualizado]
 
-    R3 --> S[Proyecto explicado y conocimiento actualizado]
-    S --> T[Nuevo ciclo de evolución]
-    T --> A
+    O2 --> P[Release / Merge]
+    P --> P1[kaddo explain]
+
+    P1 --> Q[Proyecto explicado y conocimiento actualizado]
+    Q --> R[Nuevo ciclo de evolución]
+    R --> A
 ```
 
 ## Los comandos
@@ -128,8 +131,13 @@ kaddo understand
 # ── usa tu LLM con .kaddo/context-pack.md + los agentes recomendados para crear
 #    capacidades, el baseline de arquitectura y el roadmap ──
 kaddo create --from roadmap
-kaddo owners suggest
+# ── refina con work-item-agent, marca ready ──
+kaddo ready WI-001
+# ── Implementation Handoff (implementation-planning skill) ──
+# ── implementa con implementation-agent ──
+kaddo verify WI-001
 kaddo guard
+kaddo learn WI-001
 kaddo explain
 ```
 
@@ -139,8 +147,12 @@ kaddo explain
   context pack, prompts de agentes y un plan de handoff. Sin LLM, sin API key.
 - **Paso 6 (chat LLM):** ejecutas los agentes de Kaddo en tu LLM favorito para convertir ese
   contexto en capacidades, arquitectura y un roadmap. Aquí ocurre la interpretación.
-- **Pasos 7–10 (CLI):** Kaddo convierte el roadmap en Work Items, los conecta al código vía
-  ownership y cierra el loop — Guard avisa sobre la deriva y Explain resume el estado.
+- **Pasos 7–9 (CLI + LLM):** Kaddo convierte el roadmap en Work Items, el work-item-agent
+  los refina y tú los marcas ready para implementación.
+- **Pasos 10–14 (CLI + LLM):** El handoff ensambla contexto (incluido contexto legacy cuando
+  está disponible), el implementation-agent construye, `kaddo verify` recolecta evidencia y
+  verifica ACs, Guard avisa sobre deriva e intersecciones de riesgos legacy, se capturan
+  aprendizajes y Explain resume el estado.
 
 ## Quién produjo qué (Agent Trace)
 
@@ -154,15 +166,16 @@ Next: kaddo create --from roadmap → work-item-agent
 
 Agent: work-item-agent
 Produced: knowledge/delivery/work-items/draft/WI-001.md
-Next: implementation-agent
+Next: kaddo ready → implementation-planning skill → implementation-agent
 
 Agent: implementation-agent
-Produced: código · tests · conocimiento actualizado
-Next: kaddo scan → kaddo owners suggest → kaddo guard → kaddo explain
+Produced: código · tests
+Next: kaddo verify → kaddo guard → kaddo learn → kaddo explain
 ```
 
 Solo el **implementation-agent** puede sugerir una rama de Git (respetando la estrategia de Git del
-proyecto); el roadmap-agent y el work-item-agent nunca lo hacen.
+proyecto); el roadmap-agent y el work-item-agent nunca lo hacen. Ver la
+[matriz de responsabilidad](/es/modules/agents/#responsibility-boundaries--agent-trace).
 
 ## Cómo se cierra el loop
 

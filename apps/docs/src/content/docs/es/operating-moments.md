@@ -86,21 +86,26 @@ queremos"* a *"sabemos qué construir primero"*.
 
 ## Momento 4 — Ejecución
 
-**Propósito:** implementar Work Items, validar cambios y mantener el conocimiento sincronizado con
-el código. Es el loop central de Kaddo:
+**Propósito:** implementar Work Items siguiendo el **Build Contract** — el ciclo de vida que conecta
+intención con código verificado y conocimiento sincronizado.
 
 ```text
-Work Item → Código → kaddo scan → kaddo guard → actualización de conocimiento
+Ready → Implementation Handoff → Implementación → Evidencia → Verificación →
+Guard → Completado → Aprendizaje
 ```
 
-**Comandos:** `kaddo context` · `kaddo understand` · `kaddo scan` · `kaddo owners suggest` ·
-`kaddo guard` · `kaddo explain`.
+**Comandos:** `kaddo ready` · `kaddo verify` · `kaddo guard` · `kaddo learn` · `kaddo scan` ·
+`kaddo owners suggest` · `kaddo context` · `kaddo understand` · `kaddo explain`.
 
-**Agentes**
+**Agentes y skills**
 
-| Agente | Rol en ejecución |
+| Agente / Skill | Rol en ejecución |
 |---|---|
-| `implementation-agent` | implementa un Work Item; sugiere nombre de rama / comandos de validación (nunca ejecuta git) |
+| `implementation-agent` | implementa un Work Item; sugiere nombre de rama / validación (nunca ejecuta git) |
+| skill `implementation-planning` | deliberación de diseño + ensamblaje de contexto antes de codificar |
+| skill `evidence-verification` | recolección de evidencia estructurada + verificación de ACs |
+| skill `learning-capture` | aprendizaje retrospectivo sobre Work Items completados |
+| skill `legacy-risk-assessment` | evalúa un cambio contra riesgos legacy conocidos (proyectos legacy) |
 | `ownership-agent` | ajusta ownership cuando el código tocado cambia o aparecen rutas nuevas |
 | `architecture-agent` | actualiza `current-state.md` si la realidad técnica cambió |
 | `capability-agent` | actualiza capacidades si cambió el comportamiento del producto |
@@ -110,11 +115,13 @@ Work Item → Código → kaddo scan → kaddo guard → actualización de conoc
 **Loop recomendado**
 
 ```text
-work-item-agent → implementation-agent → kaddo scan → kaddo owners suggest → kaddo guard →
+work-item-agent (refinar) → kaddo ready → implementation-planning skill →
+implementation-agent → kaddo verify → kaddo guard → kaddo learn →
 el agente correspondiente actualiza el conocimiento → kaddo explain
 ```
 
-**Resultado:** código, cambios validados y conocimiento que sigue reflejando la realidad.
+**Resultado:** código, cambios verificados, aprendizajes capturados y conocimiento que sigue
+reflejando la realidad.
 
 ## Comandos cíclicos
 

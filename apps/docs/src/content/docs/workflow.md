@@ -20,14 +20,17 @@ kaddo understand    # guided CLI → LLM handoff plan
 # ── use your LLM with the context pack + agents to create
 #    capabilities, architecture and a roadmap ──
 kaddo create --from roadmap   # turn a roadmap candidate into a Work Item
+kaddo ready WI-001            # mark refined Work Item as ready for implementation
 kaddo owners suggest          # declare code: ownership on the Work Item
-kaddo guard                   # detect possible knowledge drift
+# ── Implementation Handoff → Implementation → Evidence → Verification ──
+kaddo verify WI-001           # collect evidence, verify ACs, evaluate completeness
+kaddo guard                   # detect knowledge drift + legacy risk intersections
 kaddo explain                 # summarize what Kaddo currently knows
 ```
 
 In one sentence: **scan the repo → prepare context → use agents in your LLM → create
-roadmap-driven work items → connect knowledge to code → guard against drift → explain the
-state.**
+roadmap-driven work items → refine → ready → implement with handoff → verify → guard →
+learn.**
 
 New ideas can enter the loop at any point through the
 [`backlog-agent`](/modules/agents/), which captures them as a Work Item draft or a roadmap
@@ -41,14 +44,16 @@ flowchart LR
     D --> E[LLM Agents]
     E --> F[Capabilities / Architecture / Risks]
     F --> G[Roadmap]
-    G --> H[Classification]
-    H --> I[Work Item]
-    I --> J[Ownership]
-    J --> K[Build]
-    K --> L[Guard]
-    L --> M[Learn]
-    M --> N[Explain]
-    N --> A
+    G --> H[Work Item]
+    H --> I[Refinement]
+    I --> J[Ready]
+    J --> K[Implementation Handoff]
+    K --> L[Implementation]
+    L --> M[Evidence + Verification]
+    M --> N[Guard]
+    N --> O[Learning]
+    O --> P[Explain]
+    P --> A
 ```
 
 ## CLI vs LLM agents
@@ -87,39 +92,36 @@ Kaddo keeps **intent** and **reality** distinct — they answer different questi
 
 `current-state.md` does not replace `codebase.md`: one is the plan, the other the truth.
 
-## Work Item delivery lifecycle
+## Work Item delivery lifecycle (Build Contract)
 
-Once you create a Work Item, Kaddo defines a repeatable delivery lifecycle that keeps code
-and knowledge evolving together. **The Kaddo CLI never touches git.** Branch creation is
-part of the *implementing agent's* protocol (configured in the `work-item-agent` prompt):
-the agent **creates a branch first** so work never lands on `main`, and it **never commits,
-pushes or merges without your confirmation**.
+Once you create a Work Item, Kaddo defines a repeatable delivery lifecycle — the
+**Build Contract** — that keeps code and knowledge evolving together. Work Items physically
+move between directories as they progress:
 
 ```txt
-Roadmap → Create Work Item → Branch (agent) → Implementation → Scan → Ownership → Guard →
-Knowledge update → Review → Commit (with confirmation)
+Captured Intent (draft/) → Refinement → Human Review → Ready (ready/)
+→ Implementation Handoff → Implementation (in-progress/) → Evidence
+→ Verification → Human Review → Completed (completed/) → Learning
 ```
 
-1. **Create** — `kaddo create --from roadmap` → `knowledge/delivery/work-items/`.
-2. **Branch** — the implementing agent creates a branch from your Git strategy
-   (`.kaddo/git.yml`, default `feature/WI-001-<slug>`; also `bugfix/`, `hotfix/`, `spike/`, `chore/`)
-   **before** changing code, so nothing lands on the default branch by accident.
-3. **Implement** — you or your agent make the change.
-4. **Scan** — after new modules/migrations/contracts: `kaddo scan`.
-5. **Ownership** — `kaddo owners suggest` (agent proposes `code:` globs, human confirms).
-6. **Guard** — **before committing**, run `kaddo guard` to detect knowledge drift.
-7. **Knowledge update** — record what changed:
-   | Change | Update |
-   |---|---|
-   | New architecture decision | ADR in `knowledge/tech/decisions/` |
-   | New capability | `knowledge/product/capabilities.md` |
-   | Significant structural change | `knowledge/tech/current-state.md` (reality) |
-8. **Review** — human validation.
-9. **Commit** — the agent suggests `feat(tasks): add task reminders` and commits **only with
-   your explicit confirmation**; it never pushes or merges on its own.
+| Stage | CLI / MCP | What happens |
+|---|---|---|
+| **Create** | `kaddo create --from roadmap` | Roadmap candidate → `work-items/draft/` |
+| **Refine** | work-item-refinement skill | ACs, scope, modules, legacy risk references |
+| **Ready** | `kaddo ready WI-001` | Human approves → `work-items/ready/` |
+| **Handoff** | implementation-planning skill | Context assembly + design deliberation (includes legacy context when available) |
+| **Implement** | implementation-agent | Code + tests on a feature branch |
+| **Evidence** | `kaddo verify WI-001` | Collect implementation evidence |
+| **Verify** | `kaddo verify WI-001` | Verify ACs, evaluate completeness |
+| **Guard** | `kaddo guard` | Knowledge drift + legacy risk intersections |
+| **Complete** | — | → `work-items/completed/` |
+| **Learn** | `kaddo learn WI-001` | Capture learnings, update knowledge |
 
-`kaddo understand` prints this lifecycle whenever a Work Item is active. The branching and
-commit rules live in the `work-item-agent` prompt — the Kaddo CLI never runs git.
+**The Kaddo CLI never touches git.** Branch creation is part of the *implementing agent's*
+protocol: the agent **creates a branch first** so work never lands on `main`, and it
+**never commits, pushes or merges without your confirmation**.
+
+`kaddo understand` prints this lifecycle whenever a Work Item is active.
 
 ## Declaring ownership
 

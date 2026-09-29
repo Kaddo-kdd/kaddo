@@ -86,21 +86,26 @@ know what to build first"*.
 
 ## Moment 4 — Execution
 
-**Purpose:** implement Work Items, verify changes and keep knowledge in sync with code. This is
-Kaddo's core loop:
+**Purpose:** implement Work Items following the **Build Contract** — the lifecycle that connects
+intent to verified code with knowledge kept in sync.
 
 ```text
-Work Item → Code → kaddo scan → kaddo guard → knowledge update
+Ready → Implementation Handoff → Implementation → Evidence → Verification →
+Guard → Completed → Learning
 ```
 
-**Commands:** `kaddo context` · `kaddo understand` · `kaddo scan` · `kaddo owners suggest` ·
-`kaddo guard` · `kaddo explain`.
+**Commands:** `kaddo ready` · `kaddo verify` · `kaddo guard` · `kaddo learn` · `kaddo scan` ·
+`kaddo owners suggest` · `kaddo context` · `kaddo understand` · `kaddo explain`.
 
-**Agents**
+**Agents and skills**
 
-| Agent | Role in execution |
+| Agent / Skill | Role in execution |
 |---|---|
-| `implementation-agent` | implement a Work Item; suggest branch name / validation commands (never runs git) |
+| `implementation-agent` | implement a Work Item; suggest branch name / validation (never runs git) |
+| `implementation-planning` skill | design deliberation + context assembly before coding |
+| `evidence-verification` skill | structured evidence collection + AC verification |
+| `learning-capture` skill | retrospective learning on completed Work Items |
+| `legacy-risk-assessment` skill | evaluate change against known legacy risks (legacy projects) |
 | `ownership-agent` | adjust ownership when touched code changes or new paths appear |
 | `architecture-agent` | update `current-state.md` when technical reality changes |
 | `capability-agent` | update capabilities when product behavior changes |
@@ -110,11 +115,12 @@ Work Item → Code → kaddo scan → kaddo guard → knowledge update
 **Recommended loop**
 
 ```text
-work-item-agent → implementation-agent → kaddo scan → kaddo owners suggest → kaddo guard →
+work-item-agent (refine) → kaddo ready → implementation-planning skill →
+implementation-agent → kaddo verify → kaddo guard → kaddo learn →
 the right agent updates knowledge → kaddo explain
 ```
 
-**Result:** code, verified changes, and knowledge that still reflects reality.
+**Result:** code, verified changes, captured learnings, and knowledge that still reflects reality.
 
 ## Cyclic commands
 

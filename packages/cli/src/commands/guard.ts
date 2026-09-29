@@ -15,6 +15,7 @@ import { resolvePlugins, runPlugins, type PluginSignal } from '../plugins/regist
 import { loadOwners, resolveAffectedOwners, collectMatchedDomains } from '../services/owners.js'
 import { loadConfig as loadKaddoConfig } from '../core/config.js'
 import { recordGuardRun, type GuardWarning } from '../core/guard-history.js'
+import { analyzeLegacyRiskIntersections, type LegacyRiskIntersection } from '../core/legacy-guard.js'
 
 const ARCH_DIR = 'knowledge'
 const CONFIG_PATH = '.kaddo/config.yml'
@@ -380,6 +381,24 @@ export async function runGuard(opts: { staged?: boolean; interactive?: boolean; 
     for (const f of mh.findings) {
       console.log(`  ⚠ ${f.file}: ${f.detail}`)
     }
+    console.log('')
+  }
+
+  // Legacy risk intersections (WI-012): detect when touched files overlap with known legacy risks.
+  const legacyIntersections = analyzeLegacyRiskIntersections(dir, touchedFiles)
+  if (legacyIntersections.length > 0) {
+    console.log('Legacy risk context:')
+    for (const li of legacyIntersections) {
+      console.log(`  ⚠ ${li.riskId}: ${li.title}`)
+      console.log(`    Blast radius: ${li.blastRadius} · Confidence: ${li.confidence}`)
+      console.log(`    Touched files in risk area:`)
+      for (const f of li.matchedFiles.slice(0, 5)) console.log(`      - ${f}`)
+      if (li.matchedFiles.length > 5) console.log(`      …and ${li.matchedFiles.length - 5} more`)
+    }
+    console.log('')
+    console.log('  These files intersect known legacy risks. Consider consulting')
+    console.log('  `knowledge/legacy/risks.md` and the legacy-risk-assessment skill')
+    console.log('  before completing this change.')
     console.log('')
   }
 

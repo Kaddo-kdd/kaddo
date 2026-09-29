@@ -20,14 +20,17 @@ kaddo understand    # plan guiado de handoff CLI → LLM
 # ── usa tu LLM con el context pack + agentes para crear
 #    capacidades, arquitectura y un roadmap ──
 kaddo create --from roadmap   # convierte un candidato del roadmap en un Work Item
+kaddo ready WI-001            # marca el Work Item refinado como ready para implementación
 kaddo owners suggest          # declara el ownership (code:) en el Work Item
-kaddo guard                   # detecta posible deriva del conocimiento
+# ── Implementation Handoff → Implementación → Evidencia → Verificación ──
+kaddo verify WI-001           # recolectar evidencia, verificar ACs, evaluar completitud
+kaddo guard                   # detecta deriva + intersecciones de riesgos legacy
 kaddo explain                 # resume lo que Kaddo sabe actualmente
 ```
 
 En una frase: **escanea el repo → prepara el contexto → usa agentes en tu LLM → crea work
-items guiados por el roadmap → conecta el conocimiento al código → vigila la deriva →
-explica el estado.**
+items guiados por el roadmap → refina → ready → implementa con handoff → verifica → guard →
+aprende.**
 
 Las ideas nuevas pueden entrar al loop en cualquier punto mediante el
 [`backlog-agent`](/es/modules/agents/), que las captura como draft de Work Item o candidato de
@@ -41,14 +44,16 @@ flowchart LR
     D --> E[Agentes LLM]
     E --> F[Capacidades / Arquitectura / Riesgos]
     F --> G[Roadmap]
-    G --> H[Clasificación]
-    H --> I[Work Item]
-    I --> J[Ownership]
-    J --> K[Build]
-    K --> L[Guard]
-    L --> M[Aprendizaje]
-    M --> N[Explain]
-    N --> A
+    G --> H[Work Item]
+    H --> I[Refinamiento]
+    I --> J[Ready]
+    J --> K[Implementation Handoff]
+    K --> L[Implementación]
+    L --> M[Evidencia + Verificación]
+    M --> N[Guard]
+    N --> O[Aprendizaje]
+    O --> P[Explain]
+    P --> A
 ```
 
 ## CLI vs agentes LLM
@@ -87,39 +92,36 @@ Kaddo mantiene **intención** y **realidad** separadas — responden preguntas d
 
 `current-state.md` no reemplaza a `codebase.md`: uno es el plan, el otro la verdad.
 
-## Ciclo de entrega de un Work Item
+## Ciclo de entrega de un Work Item (Build Contract)
 
-Cuando creas un Work Item, Kaddo define un ciclo de entrega repetible que mantiene código y
-conocimiento evolucionando juntos. **El CLI de Kaddo nunca toca git.** La creación de la
-rama es parte del protocolo del *agente que implementa* (configurado en el prompt del
-`work-item-agent`): el agente **crea una rama primero** para que el trabajo no caiga en
-`main`, y **nunca commitea, hace push ni merge sin tu confirmación**.
+Cuando creas un Work Item, Kaddo define un ciclo de entrega repetible — el **Build Contract**
+— que mantiene código y conocimiento evolucionando juntos. Los Work Items se mueven
+físicamente entre directorios conforme avanzan:
 
 ```txt
-Roadmap → Crear Work Item → Rama (agente) → Implementación → Scan → Ownership → Guard →
-Actualizar conocimiento → Review → Commit (con confirmación)
+Intención capturada (draft/) → Refinamiento → Revisión humana → Ready (ready/)
+→ Implementation Handoff → Implementación (in-progress/) → Evidencia
+→ Verificación → Revisión humana → Completado (completed/) → Aprendizaje
 ```
 
-1. **Crear** — `kaddo create --from roadmap` → `knowledge/delivery/work-items/`.
-2. **Rama** — el agente que implementa crea una rama según tu Git strategy
-   (`.kaddo/git.yml`, por defecto `feature/WI-001-<slug>`; también `bugfix/`, `hotfix/`,
-   `spike/`) **antes** de tocar código, para que nada caiga en la rama por defecto por error.
-3. **Implementar** — tú o tu agente hacen el cambio.
-4. **Scan** — tras nuevos módulos/migraciones/contratos: `kaddo scan`.
-5. **Ownership** — `kaddo owners suggest` (el agente propone globs `code:`, el humano confirma).
-6. **Guard** — **antes de commitear**, corre `kaddo guard` para detectar knowledge drift.
-7. **Actualizar conocimiento** — registra lo que cambió:
-   | Cambio | Actualiza |
-   |---|---|
-   | Nueva decisión de arquitectura | ADR en `knowledge/tech/decisions/` |
-   | Nueva capacidad | `knowledge/product/capabilities.md` |
-   | Cambio estructural importante | `knowledge/tech/current-state.md` (realidad) |
-8. **Review** — validación humana.
-9. **Commit** — el agente sugiere `feat(tasks): add task reminders` y commitea **solo con tu
-   confirmación explícita**; nunca hace push ni merge por su cuenta.
+| Etapa | CLI / MCP | Qué ocurre |
+|---|---|---|
+| **Crear** | `kaddo create --from roadmap` | Candidato del roadmap → `work-items/draft/` |
+| **Refinar** | skill work-item-refinement | ACs, scope, módulos, refs de riesgos legacy |
+| **Ready** | `kaddo ready WI-001` | Humano aprueba → `work-items/ready/` |
+| **Handoff** | skill implementation-planning | Ensamblaje de contexto + deliberación de diseño (incluye contexto legacy si está disponible) |
+| **Implementar** | implementation-agent | Código + tests en una rama feature |
+| **Evidencia** | `kaddo verify WI-001` | Recolectar evidencia de implementación |
+| **Verificar** | `kaddo verify WI-001` | Verificar ACs, evaluar completitud |
+| **Guard** | `kaddo guard` | Deriva de conocimiento + intersecciones de riesgos legacy |
+| **Completar** | — | → `work-items/completed/` |
+| **Aprender** | `kaddo learn WI-001` | Capturar aprendizajes, actualizar conocimiento |
 
-`kaddo understand` imprime este ciclo cuando hay un Work Item activo. Las reglas de rama y
-commit viven en el prompt del `work-item-agent` — el CLI de Kaddo nunca corre git.
+**El CLI de Kaddo nunca toca git.** La creación de la rama es parte del protocolo del
+*agente que implementa*: el agente **crea una rama primero** para que el trabajo no caiga
+en `main`, y **nunca commitea, hace push ni merge sin tu confirmación**.
+
+`kaddo understand` imprime este ciclo cuando hay un Work Item activo.
 
 ## Declarar ownership
 

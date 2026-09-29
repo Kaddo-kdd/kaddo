@@ -349,6 +349,45 @@ export const RESOURCES: ResourceDescriptor[] = [
     },
   },
   {
+    uri: 'kaddo://legacy-risks',
+    name: 'Kaddo legacy risks',
+    description: 'Known legacy risks (RISK-xxx) from `knowledge/legacy/risks.md` — blast radius, confidence, mitigation (WI-012). Read-only.',
+    mimeType: 'text/markdown',
+    read: (root) =>
+      fileOrHint(
+        root,
+        'kaddo://legacy-risks',
+        'knowledge/legacy/risks.md',
+        'No legacy risks found. Run the `legacy-agent` in a legacy project to generate `knowledge/legacy/risks.md`.',
+      ),
+  },
+  {
+    uri: 'kaddo://legacy-unknowns',
+    name: 'Kaddo legacy unknowns',
+    description: 'Known legacy unknowns (UNK-xxx) from `knowledge/legacy/unknowns.md` — open questions about legacy system behavior (WI-012). Read-only.',
+    mimeType: 'text/markdown',
+    read: (root) =>
+      fileOrHint(
+        root,
+        'kaddo://legacy-unknowns',
+        'knowledge/legacy/unknowns.md',
+        'No legacy unknowns found. Run the `legacy-agent` in a legacy project to generate `knowledge/legacy/unknowns.md`.',
+      ),
+  },
+  {
+    uri: 'kaddo://modernization-candidates',
+    name: 'Kaddo modernization candidates',
+    description: 'Modernization candidates (MOD-xxx) from `knowledge/legacy/modernization-candidates.md` — current state, target state, risk, Knowledge Level (WI-012). Read-only.',
+    mimeType: 'text/markdown',
+    read: (root) =>
+      fileOrHint(
+        root,
+        'kaddo://modernization-candidates',
+        'knowledge/legacy/modernization-candidates.md',
+        'No modernization candidates found. Run the `legacy-agent` in a legacy project to generate `knowledge/legacy/modernization-candidates.md`.',
+      ),
+  },
+  {
     uri: 'kaddo://scan-signals',
     name: 'Kaddo scan signals',
     description: 'Actionable signals detected by `kaddo scan`: auth, payments, webhooks, storage, background jobs, email, database, migrations, API routes, tests, security, infrastructure, integrations, environment (VS-081). Read-only.',

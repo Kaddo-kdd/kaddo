@@ -16,6 +16,7 @@ import { loadConfig } from './config.js'
 import { loadMappedModules } from '../services/mapped-modules.js'
 import { getWorkItem, type RefinementStatus } from './work-items.js'
 import { getSystemMapProjection } from './system-map.js'
+import { hasLegacyKnowledge } from './legacy-knowledge.js'
 
 // --- Capture parity ----------------------------------------------------------
 
@@ -109,6 +110,20 @@ export function buildRefinementHandoff(dir: string, workItemId: string): Refinem
       '',
       'The semantic system Graph is unavailable. Continue repository-driven refinement normally, using the',
       'repository, Knowledge and mapped modules — the Graph is enrichment, not a prerequisite.',
+    )
+  }
+
+  if (hasLegacyKnowledge(dir)) {
+    lines.push(
+      '',
+      'This is a legacy project with existing legacy analysis. When refining, consult:',
+      '- `knowledge/legacy/risks.md` — known risks (RISK-xxx identifiers).',
+      '- `knowledge/legacy/unknowns.md` — known unknowns (UNK-xxx identifiers).',
+      '- `knowledge/legacy/modernization-candidates.md` — modernization candidates (MOD-xxx identifiers).',
+      '',
+      'Reference only the findings relevant to this Work Item\'s scope — do not copy all legacy',
+      'knowledge into the Work Item. Add `legacy_risks` and `legacy_unknowns` to the front matter',
+      'when applicable, using the stable identifiers (e.g. `legacy_risks: [RISK-001, RISK-003]`).',
     )
   }
 

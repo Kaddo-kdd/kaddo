@@ -11,6 +11,7 @@ import { WorkItemNotFoundError } from './work-items.js'
 import { lifecycleStateOf, type LifecycleState } from './lifecycle.js'
 import { getSystemMapProjection } from './system-map.js'
 import { buildTechDecisions, hasUnmaterializedDecisions } from './decisions.js'
+import { getLegacyKnowledgeSummary } from './legacy-knowledge.js'
 
 // --- Types -------------------------------------------------------------------
 
@@ -131,6 +132,38 @@ export function buildImplementationHandoff(dir: string, workItemId: string): Imp
       '2. query the Kaddo Graph (search / neighbors / paths) for connected entities;',
       '3. treat Graph results as impact candidates, not confirmed scope;',
       '4. inspect the actual implementation in the repository for each candidate.',
+    )
+  }
+
+  const legacy = getLegacyKnowledgeSummary(dir)
+  if (legacy.available) {
+    lines.push(
+      '',
+      '--- Legacy Context ---',
+      '',
+      'This project has legacy analysis knowledge. Before implementing, consult the relevant',
+      'legacy findings for the areas this Work Item will modify:',
+    )
+    if (legacy.risks.exists) {
+      lines.push(
+        `- Risks (${legacy.risks.identifiers.length} findings): \`${legacy.risks.path}\``,
+      )
+    }
+    if (legacy.unknowns.exists) {
+      lines.push(
+        `- Unknowns (${legacy.unknowns.identifiers.length} findings): \`${legacy.unknowns.path}\``,
+      )
+    }
+    if (legacy.candidates.exists) {
+      lines.push(
+        `- Modernization candidates (${legacy.candidates.identifiers.length} findings): \`${legacy.candidates.path}\``,
+      )
+    }
+    lines.push(
+      '',
+      'Reference relevant findings by their stable identifiers (RISK-xxx, UNK-xxx, MOD-xxx).',
+      'Highlight risks that intersect with the areas to be modified in the Design Deliberation.',
+      'Do not copy all legacy knowledge — assemble proportionally to scope.',
     )
   }
 

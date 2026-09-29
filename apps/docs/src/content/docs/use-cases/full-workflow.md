@@ -6,18 +6,23 @@ description: The complete Kaddo loop end to end, with the artifact produced at e
 This is the complete Kaddo loop as one narrative. Each step shows the command, what it
 contributes, and the artifact it produces.
 
-| # | Step | Command | Produces |
+| # | Step | Command / Skill | Produces |
 |---|---|---|---|
 | 1 | Initialize | `kaddo init` | `.kaddo/config.yml` |
 | 2 | Scan | `kaddo scan` | `.kaddo/scan.json`, `knowledge/inventory.md` |
 | 3 | Context pack | `kaddo context` | `.kaddo/context-pack.md` |
 | 4 | Install agents | `kaddo add agents` | `knowledge/agents/*.md` |
 | 5 | Understand | `kaddo understand` | `.kaddo/understand.md` |
-| 6 | Understand in LLM | *(your chat)* | `knowledge/product/capabilities.md`, `knowledge/tech/current-state.md`, `knowledge/delivery/roadmap.md` |
-| 7 | Create from roadmap | `kaddo create --from roadmap` | `knowledge/delivery/work-items/*.md` |
-| 8 | Declare ownership | `kaddo owners suggest` | updated `code:` front matter |
-| 9 | Guard | `kaddo guard` | drift FYI on `git diff` |
-| 10 | Explain | `kaddo explain` | `.kaddo/explain.md`, `.kaddo/explain.json` |
+| 6 | Understand in LLM | *(your chat)* | `capabilities.md`, `current-state.md`, `roadmap.md` |
+| 7 | Create from roadmap | `kaddo create --from roadmap` | `work-items/draft/WI-001.md` |
+| 8 | Refine | work-item-refinement skill | refined WI with ACs, scope, legacy refs |
+| 9 | Ready | `kaddo ready WI-001` | `work-items/ready/WI-001.md` |
+| 10 | Handoff | implementation-planning skill | Implementation plan + legacy context |
+| 11 | Implement | implementation-agent | code + tests |
+| 12 | Evidence + Verify | `kaddo verify WI-001` | evidence report, AC verification |
+| 13 | Guard | `kaddo guard` | drift FYI + legacy risk intersections |
+| 14 | Complete + Learn | `kaddo learn WI-001` | `work-items/completed/WI-001.md` + learnings |
+| 15 | Explain | `kaddo explain` | `.kaddo/explain.md`, `.kaddo/explain.json` |
 
 ## The loop in detail
 
@@ -77,44 +82,42 @@ flowchart TD
     I --> I1[kaddo create --from roadmap]
     I1 --> I2[knowledge/delivery/work-items/WI-*.md]
 
-    I2 --> J[Capture minimum sufficient knowledge]
-    J --> J1[Problem]
-    J --> J2[Expected result]
-    J --> J3[Impact]
-    J --> J4[Acceptance criteria]
-    J --> J5[Design / Risk if applicable]
+    I2 --> J[Refinement]
+    J --> J1[work-item-agent<br/>+ work-item-refinement skill]
+    J1 --> J2[ACs · scope · modules<br/>legacy risk refs if applicable]
+    J2 --> J3[kaddo ready WI-001<br/>draft/ → ready/]
 
-    J --> K[Ownership]
-    K --> K1[kaddo owners suggest]
-    K1 --> K2[Updated front matter]
-    K2 --> K3[code:<br/>- src/module/**]
+    J3 --> K[Implementation Handoff]
+    K --> K1[implementation-planning skill]
+    K1 --> K2[Context assembly<br/>+ design deliberation<br/>+ legacy context if available]
 
-    K3 --> L[Build]
-    L --> L1[Implementation in code]
-    L1 --> L2[Tests / Validation]
-    L2 --> L3[Pull Request]
+    K2 --> L[Implementation]
+    L --> L1[implementation-agent]
+    L1 --> L2[Code + tests on feature branch]
 
-    L3 --> M[Guard Lite]
-    M --> M1[kaddo guard]
-    M1 --> M2{Code changed and related artifact did not?}
+    L2 --> M[Evidence + Verification]
+    M --> M1[kaddo verify WI-001]
+    M1 --> M2[Evidence collection<br/>AC verification<br/>Completeness evaluation]
 
-    M2 -->|Yes| N[Possible Knowledge Drift]
-    N --> N1[Check if the artifact is still valid]
-    N1 --> O[Update knowledge or justify no impact]
+    M2 --> N[Guard]
+    N --> N1[kaddo guard]
+    N1 --> N2{Knowledge drift?<br/>Legacy risk intersection?}
 
-    M2 -->|No| P[No warning]
+    N2 -->|Drift or risk| N3[Review + update knowledge]
+    N2 -->|Clean| N4[No warning]
 
-    O --> Q[Release / Merge]
-    P --> Q
+    N3 --> O[Complete + Learn]
+    N4 --> O
 
-    Q --> R[Learning]
-    R --> R1[Update Learning in Work Item]
-    R --> R2[Update roadmap / architecture if applicable]
-    R --> R3[kaddo explain]
+    O --> O1[kaddo learn WI-001<br/>ready/ → completed/]
+    O1 --> O2[Learnings captured<br/>Knowledge updated]
 
-    R3 --> S[Project explained and knowledge updated]
-    S --> T[New evolution cycle]
-    T --> A
+    O2 --> P[Release / Merge]
+    P --> P1[kaddo explain]
+
+    P1 --> Q[Project explained and knowledge updated]
+    Q --> R[New evolution cycle]
+    R --> A
 ```
 
 ## The commands
@@ -128,8 +131,13 @@ kaddo understand
 # ── use your LLM with .kaddo/context-pack.md + the recommended agents to create
 #    capabilities, the architecture baseline and the roadmap ──
 kaddo create --from roadmap
-kaddo owners suggest
+# ── refine with work-item-agent, mark ready ──
+kaddo ready WI-001
+# ── Implementation Handoff (implementation-planning skill) ──
+# ── implement with implementation-agent ──
+kaddo verify WI-001
 kaddo guard
+kaddo learn WI-001
 kaddo explain
 ```
 
@@ -139,8 +147,12 @@ kaddo explain
   context pack, agent prompts and a handoff plan. No LLM, no API key.
 - **Step 6 (LLM chat):** you run the Kaddo agents in your preferred LLM to turn that context
   into capabilities, architecture and a roadmap. This is where interpretation happens.
-- **Steps 7–10 (CLI):** Kaddo turns the roadmap into Work Items, connects them to code via
-  ownership, and closes the loop — Guard warns on drift and Explain summarizes the state.
+- **Steps 7–9 (CLI + LLM):** Kaddo turns the roadmap into Work Items, the work-item-agent
+  refines them, and you mark them ready for implementation.
+- **Steps 10–14 (CLI + LLM):** The handoff assembles context (including legacy context when
+  available), the implementation-agent builds, `kaddo verify` collects evidence and verifies
+  ACs, Guard warns on drift and legacy risk intersections, learnings are captured, and
+  Explain summarizes the state.
 
 ## Who produced what (Agent Trace)
 
@@ -154,11 +166,11 @@ Next: kaddo create --from roadmap → work-item-agent
 
 Agent: work-item-agent
 Produced: knowledge/delivery/work-items/draft/WI-001.md
-Next: implementation-agent
+Next: kaddo ready → implementation-planning skill → implementation-agent
 
 Agent: implementation-agent
-Produced: code · tests · updated knowledge
-Next: kaddo scan → kaddo owners suggest → kaddo guard → kaddo explain
+Produced: code · tests
+Next: kaddo verify → kaddo guard → kaddo learn → kaddo explain
 ```
 
 Only the **implementation-agent** may suggest a Git branch (respecting the project Git strategy);
