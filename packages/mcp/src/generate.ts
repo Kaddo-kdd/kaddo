@@ -3,7 +3,7 @@
 // These tools regenerate Kaddo's DERIVED artifacts under `.kaddo/` using the exact same core logic
 // as the CLI (imported from @kaddo/cli source and bundled). They are deterministic: they never call
 // an LLM, never run git, and never modify source knowledge (`knowledge/`), source code (`src/`) or
-// external context (`external/`, `.kaddo/external.yml`). Every write goes through the derived-write
+// external context (`knowledge/external/`, `.kaddo/external.yml`). Every write goes through the derived-write
 // allowlist in project.ts.
 
 import { loadConfig } from '../../cli/src/core/config.js'

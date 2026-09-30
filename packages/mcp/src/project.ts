@@ -1,16 +1,16 @@
 // Project resolution & path safety (VS-057).
 //
-// The MCP server is strictly READ-ONLY and may only read files under a Kaddo project's `.kaddo/`,
-// `knowledge/` and `external/` directories. It never reads source code (`src/`), VCS internals
-// (`.git/`), dependencies (`node_modules/`) or build output (`dist/`, `build/`, `coverage/`), and
-// it never allows path traversal outside the project root.
+// The MCP server is strictly READ-ONLY and may only read files under a Kaddo project's `.kaddo/`
+// and `knowledge/` directories. It never reads source code (`src/`), VCS internals (`.git/`),
+// dependencies (`node_modules/`) or build output (`dist/`, `build/`, `coverage/`), and it never
+// allows path traversal outside the project root.
 
 import fs from 'node:fs'
 import path from 'node:path'
 import { parse as parseYaml } from 'yaml'
 
 /** Top-level directories the server is allowed to read from. */
-export const ALLOWED_ROOTS = ['.kaddo', 'knowledge', 'external'] as const
+export const ALLOWED_ROOTS = ['.kaddo', 'knowledge'] as const
 
 /** Directories that must never be read (defense in depth — they are not in ALLOWED_ROOTS). */
 export const FORBIDDEN_ROOTS = ['src', '.git', 'node_modules', 'dist', 'build', 'coverage'] as const
@@ -98,7 +98,7 @@ export function readYaml<T = unknown>(root: string, relPath: string): T | null {
 // --- Derived writes (VS-058) ---------------------------------------------
 //
 // Derived tools may ONLY write generated artifacts under `.kaddo/`. They can never write to
-// knowledge/, src/, external/, .kaddo/external.yml or any VCS/build directory.
+// knowledge/, src/, .kaddo/external.yml or any VCS/build directory.
 
 const DERIVED_WRITE_FILES = new Set([
   '.kaddo/context-pack.md',

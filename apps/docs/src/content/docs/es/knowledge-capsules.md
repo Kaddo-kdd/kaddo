@@ -74,13 +74,13 @@ Gestiona pedidos de clientes, su ciclo de vida y las transiciones de estado.
 kaddo capsule add ../orders-service/.kaddo/exports/orders-service.capsule.md
 ```
 
-Copia la cápsula en `external/<id>.capsule.md` y la registra en `.kaddo/external.yml`:
+Copia la cápsula en `knowledge/external/<id>.capsule.md` y la registra en `.kaddo/external.yml`:
 
 ```yaml
 external:
   - id: orders-service
     type: knowledge-capsule
-    path: external/orders-service.capsule.md
+    path: knowledge/external/orders-service.capsule.md
     owner: Orders Team
     lastImportedAt: 2026-06-10
 ```

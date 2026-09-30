@@ -89,8 +89,8 @@ describe('Graph hints — detection (VS-056)', () => {
 
   it('AC8: registered capsule not referenced by any Work Item is flagged; referenced one is not', () => {
     config('todoApp')
-    write('external/orders-service.capsule.md', '---\ntype: knowledge-capsule\nsystem: orders-service\n---\n# c\n')
-    write('.kaddo/external.yml', 'external:\n  - id: orders-service\n    type: knowledge-capsule\n    path: external/orders-service.capsule.md\n')
+    write('knowledge/external/orders-service.capsule.md', '---\ntype: knowledge-capsule\nsystem: orders-service\n---\n# c\n')
+    write('.kaddo/external.yml', 'external:\n  - id: orders-service\n    type: knowledge-capsule\n    path: knowledge/external/orders-service.capsule.md\n')
     expect(report().hints.find((h) => h.artifact_type === 'knowledge-capsule')?.artifact_id).toBe('orders-service')
 
     // Now a Work Item declares it.

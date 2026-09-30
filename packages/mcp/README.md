@@ -34,7 +34,7 @@ directory set via the `KADDO_PROJECT_DIR` environment variable).
 }
 ```
 
-`cwd` must point to the project that contains `.kaddo/`, `knowledge/` and (optionally) `external/`.
+`cwd` must point to the project that contains `.kaddo/` and `knowledge/`.
 
 ## Resources
 
@@ -47,7 +47,7 @@ directory set via the `KADDO_PROJECT_DIR` environment variable).
 | `kaddo://graph-hints` | `.kaddo/graph-hints.md` + `.json` | weak/missing relationships |
 | `kaddo://work-items` | `knowledge/delivery/work-items/` | summarized Work Items |
 | `kaddo://roadmap` | `knowledge/delivery/roadmap.md` | delivery roadmap |
-| `kaddo://capsules` | `.kaddo/external.yml` + `external/` | external Knowledge Capsules |
+| `kaddo://capsules` | `.kaddo/external.yml` + `knowledge/external/` | external Knowledge Capsules |
 | `kaddo://agents` | `knowledge/agents/` | installed agent prompts |
 | `kaddo://skills` | `knowledge/skills/` | installed reusable skills (empty if none) |
 | `kaddo://skills/<id>` | `knowledge/skills/<id>/skill.md` | one reusable skill |
@@ -66,7 +66,7 @@ directory set via the `KADDO_PROJECT_DIR` environment variable).
 
 When a derived artifact is missing or stale, these tools regenerate it in place using the same core
 logic as the CLI — so the agent never has to leave the flow. They are deterministic (no LLM) and
-**only write under `.kaddo/`**; they never touch `knowledge/`, `src/`, `external/`,
+**only write under `.kaddo/`**; they never touch `knowledge/`, `src/`,
 `.kaddo/external.yml` or git.
 
 | Tool | Writes | CLI equivalent |
@@ -78,7 +78,7 @@ logic as the CLI — so the agent never has to leave the flow. They are determin
 | `kaddo_generate_capsule_draft` | `.kaddo/exports/<project>.capsule.md` + `.json` | `kaddo capsule export` |
 
 `kaddo_generate_capsule_draft` writes a **draft only** — it never registers/imports a capsule
-(`external/`, `.kaddo/external.yml` stay untouched; use the CLI `kaddo capsule add` for that).
+(`knowledge/external/`, `.kaddo/external.yml` stay untouched; use the CLI `kaddo capsule add` for that).
 
 Each tool returns `{ status, files_written, summary, warnings, next_suggested_resources }`. All
 writes pass through a central allowlist (`assertMcpDerivedWritePath`) that blocks any path outside
@@ -103,7 +103,7 @@ regenerate artifacts **only under `.kaddo/`**; everything else is read-only.
 
 ## Security
 
-The server only reads `.kaddo/`, `knowledge/` and `external/`. It never reads `src/`, `.git/`,
+The server only reads `.kaddo/` and `knowledge/`. It never reads `src/`, `.git/`,
 `node_modules/`, `dist/`, `build/` or `coverage/`, blocks path traversal, and never exposes
 secrets, tokens, env values, source code or PII.
 

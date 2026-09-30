@@ -158,7 +158,7 @@ export const RESOURCES: ResourceDescriptor[] = [
   {
     uri: 'kaddo://capsules',
     name: 'Kaddo knowledge capsules',
-    description: 'External Knowledge Capsules from .kaddo/external.yml and external/.',
+    description: 'External Knowledge Capsules from .kaddo/external.yml and knowledge/external/.',
     mimeType: 'application/json',
     read: (root) => [
       {

@@ -61,8 +61,8 @@ describe('MCP tools (VS-057 AC7)', () => {
   it('kaddo_list_capsules / get_capsule', () => {
     root = makeProject()
     config(root)
-    write(root, 'external/orders.capsule.md', '---\ntype: knowledge-capsule\nsystem: orders\n---\n## Purpose\n\nOrders.\n')
-    write(root, '.kaddo/external.yml', 'external:\n  - id: orders\n    type: knowledge-capsule\n    path: external/orders.capsule.md\n')
+    write(root, 'knowledge/external/orders.capsule.md', '---\ntype: knowledge-capsule\nsystem: orders\n---\n## Purpose\n\nOrders.\n')
+    write(root, '.kaddo/external.yml', 'external:\n  - id: orders\n    type: knowledge-capsule\n    path: knowledge/external/orders.capsule.md\n')
     const list = listCapsulesTool(root)
     expect(list.ok && (list.data as { id: string }[])[0].id).toBe('orders')
     expect(getCapsuleTool(root, 'orders').ok).toBe(true)

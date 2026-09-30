@@ -291,7 +291,7 @@ function slugId(s: string): string {
 export type AddCapsuleResult = { id: string; destRel: string; entry: ExternalCapsuleEntry; isCapsuleType: boolean }
 
 /**
- * Register an external Knowledge Capsule into `dir`: copy it under `external/<id>.capsule.md` and
+ * Register an external Knowledge Capsule into `dir`: copy it under `knowledge/external/<id>.capsule.md` and
  * record it in `.kaddo/external.yml`. Pure (no cwd, no logging) so it is testable. Throws if the
  * source file is missing.
  */
@@ -303,7 +303,7 @@ export function addExternalCapsule(dir: string, sourceFile: string): AddCapsuleR
   const fallbackName = sourceFile.split(/[\\/]/).pop()?.replace(/\.capsule\.md$/, '') ?? 'external'
   const id = slugId(String(data.system ?? fallbackName))
 
-  const destRel = join('external', `${id}.capsule.md`).replace(/\\/g, '/')
+  const destRel = join('knowledge', 'external', `${id}.capsule.md`).replace(/\\/g, '/')
   writeFile(join(dir, destRel), raw)
 
   const entry: ExternalCapsuleEntry = {

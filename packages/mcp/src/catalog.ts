@@ -1,5 +1,5 @@
 // Shared catalog helpers (VS-057): capsules and installed agent prompts.
-// Read-only; reads only external/, .kaddo/external.yml and knowledge/agents/**.
+// Read-only; reads only knowledge/external/, .kaddo/external.yml and knowledge/agents/**.
 
 import matter from 'gray-matter'
 import { listFiles, readText, readYaml } from './project.js'

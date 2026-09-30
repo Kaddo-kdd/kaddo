@@ -14,14 +14,14 @@ let root: string
 afterEach(() => root && cleanup(root))
 
 describe('project path safety (VS-057 AC12/AC13)', () => {
-  it('allows reads under .kaddo / knowledge / external', () => {
+  it('allows reads under .kaddo / knowledge (including knowledge/external)', () => {
     root = makeProject()
     write(root, '.kaddo/explain.md', 'hi')
     write(root, 'knowledge/inventory.md', 'inv')
-    write(root, 'external/x.capsule.md', 'cap')
+    write(root, 'knowledge/external/x.capsule.md', 'cap')
     expect(readText(root, '.kaddo/explain.md')).toBe('hi')
     expect(readText(root, 'knowledge/inventory.md')).toBe('inv')
-    expect(readText(root, 'external/x.capsule.md')).toBe('cap')
+    expect(readText(root, 'knowledge/external/x.capsule.md')).toBe('cap')
   })
 
   it('blocks forbidden top dirs (src, .git, node_modules, dist, build, coverage)', () => {

@@ -14,7 +14,7 @@ Cliente MCP / IDE / Agente
         ↓
     @kaddo/mcp
         ↓
-.kaddo/ + knowledge/ + external/
+.kaddo/ + knowledge/
         ↓
 context · explain · understand · grafo · work items · capsules · prompts
 ```
@@ -50,7 +50,7 @@ la variable de entorno `KADDO_PROJECT_DIR`). Comparte versión con
 }
 ```
 
-`cwd` debe apuntar al proyecto que contiene `.kaddo/`, `knowledge/` y (opcionalmente) `external/`.
+`cwd` debe apuntar al proyecto que contiene `.kaddo/` y `knowledge/`.
 Hay un ejemplo listo para copiar en
 [`examples/mcp/`](https://github.com/Kaddo-kdd/kaddo/tree/main/examples/mcp).
 
@@ -65,7 +65,7 @@ Hay un ejemplo listo para copiar en
 | `kaddo://graph-hints` | `.kaddo/graph-hints.md` + `.json` | relaciones débiles/faltantes |
 | `kaddo://work-items` | `knowledge/delivery/work-items/` | Work Items resumidos |
 | `kaddo://roadmap` | `knowledge/delivery/roadmap.md` | roadmap de delivery |
-| `kaddo://capsules` | `.kaddo/external.yml` + `external/` | Knowledge Capsules externas |
+| `kaddo://capsules` | `.kaddo/external.yml` + `knowledge/external/` | Knowledge Capsules externas |
 | `kaddo://agents` | `knowledge/agents/` | prompts de agentes instalados |
 | `kaddo://skills` | `knowledge/skills/` | skills instaladas (vacío si no hay) |
 | `kaddo://skills/<id>` | `knowledge/skills/<id>/skill.md` | una skill reutilizable |
@@ -167,7 +167,7 @@ referencia).
 Cuando un artefacto derivado falta o está desactualizado, estas tools lo regeneran en el sitio —
 con la misma lógica core del CLI — para que el agente no tenga que salir al terminal. Son
 deterministas (sin LLM, sin git) y **solo escriben bajo `.kaddo/`**; nunca modifican `knowledge/`,
-`src/`, `external/` ni `.kaddo/external.yml`.
+`src/`, `knowledge/external/` ni `.kaddo/external.yml`.
 
 | Tool | Escribe | Equivalente CLI |
 |---|---|---|
@@ -221,7 +221,7 @@ resource responde con una instrucción clara (y luego puedes llamar a la derived
 
 ## Seguridad
 
-El servidor solo lee `.kaddo/`, `knowledge/` y `external/`. Nunca lee `src/`, `.git/`,
+El servidor solo lee `.kaddo/` y `knowledge/`. Nunca lee `src/`, `.git/`,
 `node_modules/`, `dist/`, `build/` ni `coverage/`, bloquea el path traversal y nunca expone
 secretos, tokens, valores de entorno, código fuente ni PII.
 

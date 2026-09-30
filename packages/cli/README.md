@@ -427,7 +427,7 @@ without mapping it as multirepo or reading its source.
 
 ```bash
 kaddo capsule export        # → .kaddo/exports/<project>.capsule.md / .json
-kaddo capsule add <path>    # import an external capsule → external/<id>.capsule.md
+kaddo capsule add <path>    # import an external capsule → knowledge/external/<id>.capsule.md
 ```
 
 `export` builds a deterministic draft from `knowledge/` (purpose, capabilities, public

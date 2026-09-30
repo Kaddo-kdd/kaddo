@@ -69,8 +69,8 @@ describe('Knowledge Graph — build (VS-055)', () => {
     write('knowledge/product/product.md', '---\ntype: product\n---\n# P\n')
     write('knowledge/tech/decisions/ADR-001.md', '---\nid: ADR-001\ntype: adr\ntitle: Tech Stack\ncode:\n  - src/database/**\n---\nx\n')
     richWorkItem('WI-002')
-    write('external/orders-service.capsule.md', '---\ntype: knowledge-capsule\nsystem: orders-service\n---\n# c\n')
-    write('.kaddo/external.yml', 'external:\n  - id: orders-service\n    type: knowledge-capsule\n    path: external/orders-service.capsule.md\n')
+    write('knowledge/external/orders-service.capsule.md', '---\ntype: knowledge-capsule\nsystem: orders-service\n---\n# c\n')
+    write('.kaddo/external.yml', 'external:\n  - id: orders-service\n    type: knowledge-capsule\n    path: knowledge/external/orders-service.capsule.md\n')
 
     const graph = buildGraph(tmp, loadConfig(tmp)!, { scope: 'all' }, new Date('2026-06-19T00:00:00.000Z'))
     const ids = graph.nodes.map((n) => n.id)

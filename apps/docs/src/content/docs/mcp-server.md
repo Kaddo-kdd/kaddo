@@ -13,7 +13,7 @@ MCP Client / IDE / Agent
         ↓
     @kaddo/mcp
         ↓
-.kaddo/ + knowledge/ + external/
+.kaddo/ + knowledge/
         ↓
 context · explain · understand · graph · work items · capsules · prompts
 ```
@@ -48,7 +48,7 @@ directory in the `KADDO_PROJECT_DIR` environment variable). It shares its versio
 }
 ```
 
-`cwd` must point to the project that contains `.kaddo/`, `knowledge/` and (optionally) `external/`.
+`cwd` must point to the project that contains `.kaddo/` and `knowledge/`.
 A ready-to-copy example lives in [`examples/mcp/`](https://github.com/Kaddo-kdd/kaddo/tree/main/examples/mcp).
 
 ## Resources
@@ -62,7 +62,7 @@ A ready-to-copy example lives in [`examples/mcp/`](https://github.com/Kaddo-kdd/
 | `kaddo://graph-hints` | `.kaddo/graph-hints.md` + `.json` | weak/missing relationships |
 | `kaddo://work-items` | `knowledge/delivery/work-items/` | summarized Work Items |
 | `kaddo://roadmap` | `knowledge/delivery/roadmap.md` | delivery roadmap |
-| `kaddo://capsules` | `.kaddo/external.yml` + `external/` | external Knowledge Capsules |
+| `kaddo://capsules` | `.kaddo/external.yml` + `knowledge/external/` | external Knowledge Capsules |
 | `kaddo://agents` | `knowledge/agents/` | installed agent prompts |
 | `kaddo://skills` | `knowledge/skills/` | installed [skills](/skills/) (empty if none) |
 | `kaddo://skills/<id>` | `knowledge/skills/<id>/skill.md` | one reusable skill |
@@ -161,7 +161,7 @@ are never returned (only the names of the environment variables a credential ref
 When a derived artifact is missing or stale, these tools regenerate it in place — using the same
 core logic as the CLI — so the agent never has to drop to a terminal. They are deterministic (no
 LLM, no git) and **write only under `.kaddo/`**; they never modify `knowledge/`, `src/`,
-`external/` or `.kaddo/external.yml`.
+`knowledge/external/` or `.kaddo/external.yml`.
 
 | Tool | Writes | CLI equivalent |
 |---|---|---|
@@ -220,7 +220,7 @@ returns a clear instruction (and you can then call the matching [derived tool](#
 
 ## Security
 
-The server only reads `.kaddo/`, `knowledge/` and `external/`. It never reads `src/`, `.git/`,
+The server only reads `.kaddo/` and `knowledge/`. It never reads `src/`, `.git/`,
 `node_modules/`, `dist/`, `build/` or `coverage/`, blocks path traversal, and never exposes secrets,
 tokens, env values, source code or PII.
 

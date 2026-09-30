@@ -115,10 +115,9 @@ describe('Derived generation tools (VS-058)', () => {
     generateExplain(root)
     generateGraph(root)
     generateCapsuleDraft(root)
-    // knowledge/ unchanged, no src/ or external/ created
+    // knowledge/ unchanged, no src/ created
     expect(fs.readFileSync(path.join(root, 'knowledge/business/business.md'), 'utf-8')).toBe(before)
     expect(exists('src')).toBe(false)
-    expect(exists('external')).toBe(false)
   })
 
   it('AC17: assertMcpDerivedWritePath allows only derived paths', () => {
@@ -127,7 +126,7 @@ describe('Derived generation tools (VS-058)', () => {
     for (const bad of [
       'knowledge/business/business.md',
       'src/index.ts',
-      'external/x.capsule.md',
+      'knowledge/external/x.capsule.md',
       '.kaddo/external.yml',
       '.kaddo/config.yml',
       '../escape.md',

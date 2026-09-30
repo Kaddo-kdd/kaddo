@@ -427,7 +427,7 @@ Agents and IDEs can read curated Kaddo knowledge directly through the read-only
 ```mermaid
 flowchart LR
     A["MCP client / IDE / agent"] --> M["@kaddo/mcp (read-only)"]
-    M --> K[".kaddo/ + knowledge/ + external/"]
+    M --> K[".kaddo/ + knowledge/"]
     K --> O["context · explain · understand · graph · work items · capsules · prompts"]
 ```
 

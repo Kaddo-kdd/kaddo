@@ -91,7 +91,7 @@ describe('Knowledge Capsule — import / consume (VS-054)', () => {
   ].join('\n')
 
   it('parseCapsule extracts purpose/capabilities/contracts/risks + age', () => {
-    const c = parseCapsule('orders-service', 'external/orders-service.capsule.md', capsuleMd)
+    const c = parseCapsule('orders-service', 'knowledge/external/orders-service.capsule.md', capsuleMd)
     expect(c.system).toBe('orders-service')
     expect(c.purpose).toContain('Manages customer orders')
     expect(c.capabilities).toEqual(['Order Creation', 'Order Lookup'])
@@ -115,8 +115,8 @@ describe('Knowledge Capsule — import / consume (VS-054)', () => {
 
   it('AC5: context pack includes an External Knowledge section', () => {
     config('checkout-app')
-    write('external/orders-service.capsule.md', capsuleMd)
-    write('.kaddo/external.yml', 'external:\n  - id: orders-service\n    type: knowledge-capsule\n    path: external/orders-service.capsule.md\n    owner: Orders Team\n')
+    write('knowledge/external/orders-service.capsule.md', capsuleMd)
+    write('.kaddo/external.yml', 'external:\n  - id: orders-service\n    type: knowledge-capsule\n    path: knowledge/external/orders-service.capsule.md\n    owner: Orders Team\n')
     const pack = buildContextPack(tmp, loadConfig(tmp)!)
     expect(pack.external).toHaveLength(1)
     const md = renderContextPack(pack)
@@ -127,8 +127,8 @@ describe('Knowledge Capsule — import / consume (VS-054)', () => {
 
   it('AC6: explain lists capsules and warns when stale', () => {
     config('checkout-app')
-    write('external/orders-service.capsule.md', capsuleMd) // updated_at 2026-01-01 (>90d before test date)
-    write('.kaddo/external.yml', 'external:\n  - id: orders-service\n    type: knowledge-capsule\n    path: external/orders-service.capsule.md\n')
+    write('knowledge/external/orders-service.capsule.md', capsuleMd) // updated_at 2026-01-01 (>90d before test date)
+    write('.kaddo/external.yml', 'external:\n  - id: orders-service\n    type: knowledge-capsule\n    path: knowledge/external/orders-service.capsule.md\n')
     const exp = buildProjectExplanation(tmp)
     expect(exp.externalCapsules).toHaveLength(1)
     const out = renderExplanationHuman(exp)

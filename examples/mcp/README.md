@@ -21,7 +21,7 @@ kaddo add agents    # → knowledge/agents/** (exposed as MCP prompts)
 
 Copy [`mcp-config.example.json`](./mcp-config.example.json) into your client's MCP settings and set
 `cwd` to the **absolute path** of your project (the directory that contains `.kaddo/`,
-`knowledge/` and optionally `external/`):
+`knowledge/`):
 
 ```json
 {

@@ -429,7 +429,7 @@ de solo lectura [`@kaddo/mcp`](/es/mcp-server/) — sin copiar y pegar, sin esca
 ```mermaid
 flowchart LR
     A["Cliente MCP / IDE / agente"] --> M["@kaddo/mcp (solo lectura)"]
-    M --> K[".kaddo/ + knowledge/ + external/"]
+    M --> K[".kaddo/ + knowledge/"]
     K --> O["context · explain · understand · grafo · work items · capsules · prompts"]
 ```
 
