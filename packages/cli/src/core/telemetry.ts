@@ -22,7 +22,10 @@ const REGISTRATION_PATH = '/v1/installations'
 const REQUEST_TIMEOUT_MS = 5_000
 const MAX_BATCH_SIZE = 25
 
+import { getConsentState, type ConsentState } from './telemetry-consent.js'
+
 export type TelemetryStatus = {
+  consent: ConsentState
   enabled: boolean
   registered: boolean
   pendingEvents: number
@@ -30,16 +33,16 @@ export type TelemetryStatus = {
 }
 
 export function isEnabled(config: KaddoConfig | null): boolean {
-  if (!config) return false
-  const t = config.telemetry as { enabled?: boolean } | undefined
-  return t?.enabled === true
+  return getConsentState(config) === 'enabled'
 }
 
 export function getStatus(dir: string): TelemetryStatus {
   const config = loadConfig(dir)
-  const enabled = isEnabled(config)
+  const consent = getConsentState(config)
+  const enabled = consent === 'enabled'
   const identity = loadIdentity(dir)
   return {
+    consent,
     enabled,
     registered: identity?.registered ?? false,
     pendingEvents: enabled ? bufferSize(dir) : 0,

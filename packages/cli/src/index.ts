@@ -45,6 +45,8 @@ import { runVerify } from './commands/verify.js'
 import { runTelemetryStatus, runTelemetryEnable, runTelemetryDisable } from './commands/telemetry.js'
 import { emit, flush } from './core/telemetry.js'
 import type { TelemetryInterface, KnownTelemetryEvent } from './core/telemetry-events.js'
+import { ensureTelemetryConsent } from './core/telemetry-consent.js'
+import { loadConfig } from './core/config.js'
 
 // Single source of truth for the version: read it from package.json at runtime so the CLI
 // `--version` can never drift from the published package version. `../package.json` resolves
@@ -591,6 +593,22 @@ const CAPSULE_EVENTS: Record<string, KnownTelemetryEvent> = {
   export: 'capsule_exported',
   add: 'capsule_imported',
 }
+
+const CONSENT_SKIP_COMMANDS = new Set(['status', 'enable', 'disable'])
+
+program.hook('preAction', async (_thisCommand, actionCommand) => {
+  const name = actionCommand.name()
+  const parent = actionCommand.parent?.name()
+  if (parent === 'telemetry' && CONSENT_SKIP_COMMANDS.has(name)) return
+
+  try {
+    const dir = cwd()
+    const config = loadConfig(dir)
+    if (config) await ensureTelemetryConsent(dir, config)
+  } catch {
+    // never block a command due to consent check failure
+  }
+})
 
 const commandStart = Date.now()
 

@@ -4,13 +4,23 @@ description: Anonymous usage telemetry — what it is, how to enable it, what da
 ---
 
 Kaddo can optionally send **anonymous usage metadata** to `telemetry.kaddo.org`.
-Telemetry is **disabled by default** and must be explicitly enabled.
+Telemetry is **disabled by default** and requires explicit consent.
 
-## What telemetry is
+## Consent model
 
-Telemetry helps the Kaddo team understand how the toolkit is used — which commands run most
-often, how long they take, and which lifecycle stages are adopted. This data informs where to
-invest development effort.
+Kaddo uses a three-state consent model:
+
+| State | Meaning |
+|---|---|
+| **unset** | No decision has been made — Kaddo may ask once |
+| **enabled** | User accepted — telemetry operates |
+| **disabled** | User declined — no telemetry, no further prompts |
+
+On the first interactive command after initialization, Kaddo asks once whether to enable
+telemetry. The decision is persisted and Kaddo does not ask again.
+
+In non-interactive environments (CI, scripts, MCP, agents, piped input) Kaddo never prompts
+and never enables telemetry by default.
 
 ## What data is sent
 
@@ -40,7 +50,7 @@ Only operational metadata:
 kaddo telemetry enable
 ```
 
-This sets `telemetry.enabled: true` in `.kaddo/config.yml`.
+This persists `consent: enabled` in `.kaddo/config.yml`.
 
 ## How to disable
 
@@ -49,6 +59,7 @@ kaddo telemetry disable
 ```
 
 When disabled, no network requests are made and no events are buffered.
+Kaddo will not ask again after an explicit disable.
 
 ## How to check status
 
@@ -56,19 +67,50 @@ When disabled, no network requests are made and no events are buffered.
 kaddo telemetry status
 ```
 
-Shows whether telemetry is enabled, whether the installation is registered, and how many
-events are pending delivery.
+Shows the consent state (`unset`, `enabled` or `disabled`), whether the installation is
+registered, and how many events are pending delivery.
 
 ## How it works
 
-1. **Identity:** when enabled, Kaddo creates an anonymous installation identity
+1. **Consent:** on the first interactive command, Kaddo asks once. The choice is stored as
+   `consent: enabled` or `consent: disabled` with a `consentVersion`.
+2. **Identity:** when enabled, Kaddo creates an anonymous installation identity
    (UUID + Ed25519 key pair) stored locally in `.kaddo/telemetry/`.
-2. **Registration:** the public key is registered once with `telemetry.kaddo.org`.
-3. **Signing:** every request is signed with Ed25519 to prove authenticity and prevent replay.
-4. **Delivery:** events are sent in batches (up to 25) after each command. Failed deliveries
+3. **Registration:** the public key is registered once with `telemetry.kaddo.org`.
+4. **Signing:** every request is signed with Ed25519 to prove authenticity and prevent replay.
+5. **Delivery:** events are sent in batches (up to 25) after each command. Failed deliveries
    are buffered locally (up to 100 events) and retried on the next command.
-5. **Best-effort:** a telemetry failure never affects the command that generated it. Kaddo
+6. **Best-effort:** a telemetry failure never affects the command that generated it. Kaddo
    works fully offline.
+
+## Re-enabling after disable
+
+Disabling telemetry does not delete the anonymous identity. If you re-enable later, the same
+installation ID is reused for continuity:
+
+```bash
+kaddo telemetry enable
+```
+
+## Non-interactive environments
+
+Kaddo detects non-interactive execution by checking:
+
+- `CI` environment variable
+- `stdin` / `stdout` not attached to a TTY
+
+In these cases, `unset` consent is treated as `disabled` — no prompt, no telemetry, no
+interruption.
+
+## Existing projects
+
+Projects created before the consent feature are migrated automatically:
+
+| Previous config | Interpreted as |
+|---|---|
+| `telemetry.enabled: true` | `enabled` |
+| `telemetry.enabled: false` (explicit) | `disabled` |
+| No `telemetry` section | `unset` (prompt once) |
 
 ## Security
 
@@ -82,5 +124,6 @@ events are pending delivery.
 ```yaml
 # .kaddo/config.yml
 telemetry:
-  enabled: false  # default
+  consent: enabled    # or: disabled
+  consentVersion: 1
 ```

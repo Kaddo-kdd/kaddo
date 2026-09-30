@@ -115,7 +115,9 @@ const configSchema = z
     scan: z.unknown().optional(),
     telemetry: z
       .object({
-        enabled: z.boolean().default(false),
+        consent: z.enum(['enabled', 'disabled']).optional(),
+        consentVersion: z.number().optional(),
+        enabled: z.boolean().optional(),
       })
       .passthrough()
       .optional(),

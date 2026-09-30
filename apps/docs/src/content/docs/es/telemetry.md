@@ -4,13 +4,23 @@ description: Telemetría anónima de uso — qué es, cómo habilitarla, qué da
 ---
 
 Kaddo puede enviar opcionalmente **metadata anónima de uso** a `telemetry.kaddo.org`.
-La telemetría está **deshabilitada por defecto** y debe habilitarse explícitamente.
+La telemetría está **deshabilitada por defecto** y requiere consentimiento explícito.
 
-## Qué es la telemetría
+## Modelo de consentimiento
 
-La telemetría ayuda al equipo de Kaddo a entender cómo se usa el toolkit — qué comandos se
-ejecutan más, cuánto tardan y qué etapas del ciclo de vida se adoptan. Estos datos informan
-dónde invertir esfuerzo de desarrollo.
+Kaddo usa un modelo de consentimiento de tres estados:
+
+| Estado | Significado |
+|---|---|
+| **unset** | No se ha tomado ninguna decisión — Kaddo puede preguntar una vez |
+| **enabled** | El usuario aceptó — la telemetría opera |
+| **disabled** | El usuario rechazó — sin telemetría, sin más prompts |
+
+En el primer comando interactivo después de la inicialización, Kaddo pregunta una vez si
+habilitar telemetría. La decisión se persiste y Kaddo no vuelve a preguntar.
+
+En entornos no interactivos (CI, scripts, MCP, agentes, input redirigido) Kaddo nunca
+hace prompts ni habilita telemetría por defecto.
 
 ## Qué datos se envían
 
@@ -40,7 +50,7 @@ Solo metadata operacional:
 kaddo telemetry enable
 ```
 
-Esto establece `telemetry.enabled: true` en `.kaddo/config.yml`.
+Esto persiste `consent: enabled` en `.kaddo/config.yml`.
 
 ## Cómo deshabilitar
 
@@ -49,6 +59,7 @@ kaddo telemetry disable
 ```
 
 Cuando está deshabilitada, no se realizan requests de red ni se almacenan eventos en buffer.
+Kaddo no vuelve a preguntar después de un disable explícito.
 
 ## Cómo verificar el estado
 
@@ -56,19 +67,50 @@ Cuando está deshabilitada, no se realizan requests de red ni se almacenan event
 kaddo telemetry status
 ```
 
-Muestra si la telemetría está habilitada, si la instalación está registrada y cuántos
-eventos están pendientes de entrega.
+Muestra el estado de consentimiento (`unset`, `enabled` o `disabled`), si la instalación
+está registrada y cuántos eventos están pendientes de entrega.
 
 ## Cómo funciona
 
-1. **Identidad:** al habilitar, Kaddo crea una identidad anónima de instalación
+1. **Consentimiento:** en el primer comando interactivo, Kaddo pregunta una vez. La elección
+   se almacena como `consent: enabled` o `consent: disabled` con un `consentVersion`.
+2. **Identidad:** al habilitar, Kaddo crea una identidad anónima de instalación
    (UUID + par de claves Ed25519) almacenada localmente en `.kaddo/telemetry/`.
-2. **Registro:** la clave pública se registra una vez en `telemetry.kaddo.org`.
-3. **Firma:** cada request se firma con Ed25519 para probar autenticidad y prevenir replay.
-4. **Entrega:** los eventos se envían en lotes (hasta 25) después de cada comando. Las entregas
+3. **Registro:** la clave pública se registra una vez en `telemetry.kaddo.org`.
+4. **Firma:** cada request se firma con Ed25519 para probar autenticidad y prevenir replay.
+5. **Entrega:** los eventos se envían en lotes (hasta 25) después de cada comando. Las entregas
    fallidas se almacenan localmente (hasta 100 eventos) y se reintentan en el siguiente comando.
-5. **Best-effort:** un fallo de telemetría nunca afecta al comando que lo generó. Kaddo
+6. **Best-effort:** un fallo de telemetría nunca afecta al comando que lo generó. Kaddo
    funciona completamente offline.
+
+## Rehabilitar después de deshabilitar
+
+Deshabilitar la telemetría no elimina la identidad anónima. Si se rehabilita después, se
+reutiliza el mismo ID de instalación por continuidad:
+
+```bash
+kaddo telemetry enable
+```
+
+## Entornos no interactivos
+
+Kaddo detecta ejecución no interactiva verificando:
+
+- Variable de entorno `CI`
+- `stdin` / `stdout` no conectados a un TTY
+
+En estos casos, un consentimiento `unset` se trata como `disabled` — sin prompt, sin
+telemetría, sin interrupción.
+
+## Proyectos existentes
+
+Proyectos creados antes de la característica de consentimiento se migran automáticamente:
+
+| Config anterior | Interpretado como |
+|---|---|
+| `telemetry.enabled: true` | `enabled` |
+| `telemetry.enabled: false` (explícito) | `disabled` |
+| Sin sección `telemetry` | `unset` (preguntar una vez) |
 
 ## Seguridad
 
@@ -82,5 +124,6 @@ eventos están pendientes de entrega.
 ```yaml
 # .kaddo/config.yml
 telemetry:
-  enabled: false  # por defecto
+  consent: enabled    # o: disabled
+  consentVersion: 1
 ```

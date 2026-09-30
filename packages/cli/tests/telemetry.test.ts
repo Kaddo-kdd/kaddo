@@ -7,6 +7,8 @@ import { ensureIdentity, loadIdentity, signPayload } from '../src/core/telemetry
 import { createEvent } from '../src/core/telemetry-events.js'
 import { enqueue, readBuffer, clearBuffer, bufferSize } from '../src/core/telemetry-buffer.js'
 import { isEnabled, getStatus } from '../src/core/telemetry.js'
+import { getConsentState, persistConsent, isInteractive } from '../src/core/telemetry-consent.js'
+import { loadConfig } from '../src/core/config.js'
 
 function makeTempDir(): string {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'kaddo-telemetry-'))
@@ -116,13 +118,110 @@ describe('telemetry-buffer', () => {
   })
 })
 
-describe('telemetry config', () => {
-  it('returns false when telemetry is not configured', () => {
+describe('telemetry consent', () => {
+  let dir: string
+  beforeEach(() => { dir = makeTempDir() })
+  afterEach(() => { cleanup(dir) })
+
+  it('returns unset when no telemetry config exists', () => {
+    expect(getConsentState(null)).toBe('unset')
+    const config = loadConfig(dir)!
+    expect(getConsentState(config)).toBe('unset')
+  })
+
+  it('returns enabled when consent is enabled', () => {
+    persistConsent(dir, 'enabled')
+    const config = loadConfig(dir)!
+    expect(getConsentState(config)).toBe('enabled')
+  })
+
+  it('returns disabled when consent is disabled', () => {
+    persistConsent(dir, 'disabled')
+    const config = loadConfig(dir)!
+    expect(getConsentState(config)).toBe('disabled')
+  })
+
+  it('migrates legacy enabled:true to enabled', () => {
+    fs.writeFileSync(
+      path.join(dir, '.kaddo', 'config.yml'),
+      'version: 1\nproject:\n  name: test\n  state: new\n  structure: monorepo\n  language: en\nteam:\n  size: small\ntelemetry:\n  enabled: true\n',
+    )
+    const config = loadConfig(dir)!
+    expect(getConsentState(config)).toBe('enabled')
+  })
+
+  it('migrates legacy enabled:false to disabled', () => {
+    fs.writeFileSync(
+      path.join(dir, '.kaddo', 'config.yml'),
+      'version: 1\nproject:\n  name: test\n  state: new\n  structure: monorepo\n  language: en\nteam:\n  size: small\ntelemetry:\n  enabled: false\n',
+    )
+    const config = loadConfig(dir)!
+    expect(getConsentState(config)).toBe('disabled')
+  })
+
+  it('persistConsent writes consent and consentVersion', () => {
+    persistConsent(dir, 'enabled')
+    const raw = fs.readFileSync(path.join(dir, '.kaddo', 'config.yml'), 'utf-8')
+    expect(raw).toContain('consent: enabled')
+    expect(raw).toContain('consentVersion: 1')
+    expect(raw).not.toContain('enabled: true')
+  })
+
+  it('persistConsent removes legacy enabled field', () => {
+    fs.writeFileSync(
+      path.join(dir, '.kaddo', 'config.yml'),
+      'version: 1\nproject:\n  name: test\n  state: new\n  structure: monorepo\n  language: en\nteam:\n  size: small\ntelemetry:\n  enabled: true\n',
+    )
+    persistConsent(dir, 'disabled')
+    const raw = fs.readFileSync(path.join(dir, '.kaddo', 'config.yml'), 'utf-8')
+    expect(raw).toContain('consent: disabled')
+    expect(raw).not.toContain('enabled:')
+  })
+
+  it('re-enable after disable works', () => {
+    persistConsent(dir, 'disabled')
+    expect(getConsentState(loadConfig(dir)!)).toBe('disabled')
+    persistConsent(dir, 'enabled')
+    expect(getConsentState(loadConfig(dir)!)).toBe('enabled')
+  })
+
+  it('identity is preserved across disable/enable', () => {
+    const identity1 = ensureIdentity(dir)
+    persistConsent(dir, 'enabled')
+    persistConsent(dir, 'disabled')
+    persistConsent(dir, 'enabled')
+    const identity2 = loadIdentity(dir)
+    expect(identity2?.installationId).toBe(identity1.installationId)
+  })
+
+  it('isInteractive returns false when CI env is set', () => {
+    const origCI = process.env.CI
+    process.env.CI = 'true'
+    try {
+      expect(isInteractive()).toBe(false)
+    } finally {
+      if (origCI === undefined) delete process.env.CI
+      else process.env.CI = origCI
+    }
+  })
+})
+
+describe('telemetry config (consent-aware)', () => {
+  it('isEnabled returns false when consent is unset', () => {
     expect(isEnabled(null)).toBe(false)
     expect(isEnabled({ project: { name: 'x', state: 'new', structure: 'monorepo', language: 'en' }, team: { size: 'small' } })).toBe(false)
   })
 
-  it('returns true when telemetry.enabled is true', () => {
+  it('isEnabled returns true when consent is enabled', () => {
+    const config = {
+      project: { name: 'x', state: 'new' as const, structure: 'monorepo' as const, language: 'en' as const },
+      team: { size: 'small' as const },
+      telemetry: { consent: 'enabled' as const, consentVersion: 1 },
+    }
+    expect(isEnabled(config)).toBe(true)
+  })
+
+  it('isEnabled returns true for legacy enabled:true (back-compat)', () => {
     const config = {
       project: { name: 'x', state: 'new' as const, structure: 'monorepo' as const, language: 'en' as const },
       team: { size: 'small' as const },
@@ -131,13 +230,35 @@ describe('telemetry config', () => {
     expect(isEnabled(config)).toBe(true)
   })
 
-  it('returns status for a project', () => {
+  it('isEnabled returns false when consent is disabled', () => {
+    const config = {
+      project: { name: 'x', state: 'new' as const, structure: 'monorepo' as const, language: 'en' as const },
+      team: { size: 'small' as const },
+      telemetry: { consent: 'disabled' as const, consentVersion: 1 },
+    }
+    expect(isEnabled(config)).toBe(false)
+  })
+
+  it('getStatus shows consent state', () => {
     const dir = makeTempDir()
     try {
       const status = getStatus(dir)
+      expect(status.consent).toBe('unset')
       expect(status.enabled).toBe(false)
       expect(status.registered).toBe(false)
       expect(status.pendingEvents).toBe(0)
+    } finally {
+      cleanup(dir)
+    }
+  })
+
+  it('getStatus shows enabled after consent', () => {
+    const dir = makeTempDir()
+    try {
+      persistConsent(dir, 'enabled')
+      const status = getStatus(dir)
+      expect(status.consent).toBe('enabled')
+      expect(status.enabled).toBe(true)
     } finally {
       cleanup(dir)
     }
