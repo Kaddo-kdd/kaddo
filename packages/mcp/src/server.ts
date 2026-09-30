@@ -22,6 +22,8 @@ import {
   implementationHandoffTool,
   collectEvidenceTool,
   verifyWorkItemTool,
+  telemetryStatusTool,
+  setTelemetryConsentTool,
   type ToolResult,
 } from './tools.js'
 import { listSkills, getSkill } from './skills.js'
@@ -60,6 +62,7 @@ import {
   type GenerateResult,
 } from './generate.js'
 import { assertKaddoProject, KaddoMcpError } from './project.js'
+import { getConsentState, isDeferralActive, consentNotice, loadConfig } from '@kaddo/cli/core'
 
 export const SERVER_NAME = 'kaddo'
 // Read the version from package.json at runtime so it never drifts from the published version.
@@ -137,7 +140,16 @@ export function createServer(root: string): McpServer {
   server.registerTool(
     'kaddo_project_status',
     { title: 'Kaddo project status', description: 'Compact project status (state, phase, work items, ownership, graph quality, capsules).', inputSchema: {} },
-    async () => toolText(guarded(root, () => projectStatus(root)))
+    async () => {
+      const result = guarded(root, () => projectStatus(root))
+      if (result.ok) {
+        const config = loadConfig(root)
+        if (getConsentState(config) === 'unset' && !isDeferralActive(root)) {
+          (result.data as Record<string, unknown>).telemetryNotice = consentNotice()
+        }
+      }
+      return toolText(result)
+    }
   )
 
   server.registerTool(
@@ -502,6 +514,32 @@ export function createServer(root: string): McpServer {
       },
     },
     async (args) => toolText(guarded(root, () => verifyWorkItemTool(root, args)))
+  )
+
+  // --- Telemetry (WI-016) ---
+  server.registerTool(
+    'kaddo_telemetry_status',
+    {
+      title: 'Telemetry status',
+      description: 'Read-only telemetry consent state, registration status, and pending events. Includes a consent notice when telemetry has not been configured.',
+      inputSchema: {},
+    },
+    async () => toolText(guarded(root, () => telemetryStatusTool(root)))
+  )
+
+  server.registerTool(
+    'kaddo_set_telemetry_consent',
+    {
+      title: 'Set telemetry consent',
+      description: 'Set telemetry consent to enabled, disabled, or not-now (defer 24h). '
+        + 'Without confirm=true returns a preview of the action. With confirm=true applies the change. '
+        + 'Writes only .kaddo/config.yml (consent field).',
+      inputSchema: {
+        consent: z.enum(['enabled', 'disabled', 'not-now']).describe('Consent decision: enable telemetry, disable it, or defer for 24 hours'),
+        confirm: z.boolean().optional().describe('Must be true to apply the change'),
+      },
+    },
+    async (args) => toolText(guarded(root, () => setTelemetryConsentTool(root, args)))
   )
 
   // --- Per-skill resources (kaddo://skills/<id>) — VS-059 ---

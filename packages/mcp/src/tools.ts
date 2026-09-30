@@ -17,6 +17,13 @@ import {
   buildImplementationHandoff,
   WorkItemNotReadyError,
   type CollectEvidenceInput,
+  getConsentState,
+  persistConsent,
+  isDeferralActive,
+  deferConsent,
+  consentNotice,
+  getTelemetryStatus,
+  loadConfig,
 } from '@kaddo/cli/core'
 import { listWorkItems, type WorkItemSummary } from './workitems.js'
 import { listCapsules, getCapsule, listAgents, getAgentPrompt } from './catalog.js'
@@ -349,4 +356,52 @@ export function verifyWorkItemTool(
     if (err instanceof WorkItemNotInProgressError) return fail(err.message)
     return fail('Work Item verification failed.')
   }
+}
+
+// --- Telemetry (WI-016) ---------------------------------------------------
+
+export function telemetryStatusTool(root: string): ToolResult {
+  const status = getTelemetryStatus(root)
+  const result: Record<string, unknown> = {
+    consent: status.consent,
+    registered: status.registered,
+    pendingEvents: status.pendingEvents,
+  }
+  if (status.consent === 'unset' && !isDeferralActive(root)) {
+    result.notice = consentNotice()
+  }
+  return ok(result)
+}
+
+export function setTelemetryConsentTool(
+  root: string,
+  args: { consent: string; confirm?: boolean },
+): ToolResult {
+  const valid = ['enabled', 'disabled', 'not-now']
+  if (!valid.includes(args.consent)) {
+    return fail(`consent must be one of: ${valid.join(', ')}`)
+  }
+
+  if (!args.confirm) {
+    const preview: Record<string, string> = {
+      action: args.consent,
+      effect:
+        args.consent === 'enabled'
+          ? 'Anonymous usage telemetry will be activated. Kaddo will send command usage, version, and lifecycle events to telemetry.kaddo.org. No source code, knowledge, prompts or PII is ever transmitted.'
+          : args.consent === 'disabled'
+            ? 'Telemetry will be permanently disabled. No data will be sent. Kaddo will not ask again.'
+            : 'Consent decision deferred for 24 hours. Telemetry remains inactive. Kaddo will remind again after the deferral expires.',
+      instruction: 'Call again with confirm=true to apply.',
+    }
+    return ok(preview)
+  }
+
+  if (args.consent === 'not-now') {
+    deferConsent(root)
+    return ok({ applied: true, consent: 'unset', deferred: true, message: 'Consent deferred for 24 hours.' })
+  }
+
+  const consent = args.consent as 'enabled' | 'disabled'
+  persistConsent(root, consent)
+  return ok({ applied: true, consent, message: `Telemetry ${consent}.` })
 }

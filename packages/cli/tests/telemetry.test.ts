@@ -7,7 +7,7 @@ import { ensureIdentity, loadIdentity, signPayload } from '../src/core/telemetry
 import { createEvent } from '../src/core/telemetry-events.js'
 import { enqueue, readBuffer, clearBuffer, bufferSize } from '../src/core/telemetry-buffer.js'
 import { isEnabled, getStatus } from '../src/core/telemetry.js'
-import { getConsentState, persistConsent, isInteractive } from '../src/core/telemetry-consent.js'
+import { getConsentState, persistConsent, isInteractive, isDeferralActive, deferConsent, consentNotice } from '../src/core/telemetry-consent.js'
 import { loadConfig } from '../src/core/config.js'
 
 function makeTempDir(): string {
@@ -203,6 +203,33 @@ describe('telemetry consent', () => {
       if (origCI === undefined) delete process.env.CI
       else process.env.CI = origCI
     }
+  })
+
+  it('deferConsent creates a deferral that isDeferralActive detects', () => {
+    expect(isDeferralActive(dir)).toBe(false)
+    deferConsent(dir)
+    expect(isDeferralActive(dir)).toBe(true)
+  })
+
+  it('isDeferralActive returns false for expired deferral', () => {
+    const p = path.join(dir, '.kaddo', 'telemetry-deferred.json')
+    fs.writeFileSync(p, JSON.stringify({ deferredUntil: Date.now() - 1000 }))
+    expect(isDeferralActive(dir)).toBe(false)
+  })
+
+  it('isDeferralActive returns false for missing file', () => {
+    expect(isDeferralActive(dir)).toBe(false)
+  })
+
+  it('isDeferralActive returns false for malformed file', () => {
+    const p = path.join(dir, '.kaddo', 'telemetry-deferred.json')
+    fs.writeFileSync(p, 'not json')
+    expect(isDeferralActive(dir)).toBe(false)
+  })
+
+  it('consentNotice returns a non-empty string', () => {
+    const notice = consentNotice()
+    expect(notice).toContain('kaddo_set_telemetry_consent')
   })
 })
 

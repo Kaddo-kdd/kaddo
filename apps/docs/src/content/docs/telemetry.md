@@ -19,8 +19,25 @@ Kaddo uses a three-state consent model:
 On the first interactive command after initialization, Kaddo asks once whether to enable
 telemetry. The decision is persisted and Kaddo does not ask again.
 
-In non-interactive environments (CI, scripts, MCP, agents, piped input) Kaddo never prompts
+In non-interactive environments (CI, scripts, piped input) Kaddo never prompts
 and never enables telemetry by default.
+
+### MCP / LLM interfaces
+
+When Kaddo is used via MCP (the primary LLM integration path), consent is managed through
+dedicated MCP tools instead of interactive prompts:
+
+- **`kaddo_telemetry_status`** — returns the current consent state, registration status,
+  and pending events. Includes a consent notice when telemetry has not been configured.
+- **`kaddo_set_telemetry_consent`** — sets consent to `enabled`, `disabled`, or `not-now`
+  (defer for 24 hours). Requires `confirm: true` to apply.
+- **`kaddo_project_status`** — includes a telemetry consent notice when consent is `unset`
+  and no deferral is active.
+
+The "not-now" option defers the notice for 24 hours without enabling or disabling telemetry.
+After the deferral expires, the notice reappears in status responses.
+
+Consent is shared across all interfaces: enabling via CLI is visible from MCP and vice versa.
 
 ## What data is sent
 
@@ -101,6 +118,11 @@ Kaddo detects non-interactive execution by checking:
 
 In these cases, `unset` consent is treated as `disabled` — no prompt, no telemetry, no
 interruption.
+
+## Initialization
+
+When running `kaddo init` interactively, the consent prompt is offered immediately after
+project setup. This ensures the first opportunity to opt in happens at the earliest point.
 
 ## Existing projects
 

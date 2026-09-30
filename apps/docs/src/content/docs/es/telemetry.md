@@ -19,8 +19,27 @@ Kaddo usa un modelo de consentimiento de tres estados:
 En el primer comando interactivo después de la inicialización, Kaddo pregunta una vez si
 habilitar telemetría. La decisión se persiste y Kaddo no vuelve a preguntar.
 
-En entornos no interactivos (CI, scripts, MCP, agentes, input redirigido) Kaddo nunca
+En entornos no interactivos (CI, scripts, input redirigido) Kaddo nunca
 hace prompts ni habilita telemetría por defecto.
+
+### Interfaces MCP / LLM
+
+Cuando Kaddo se usa vía MCP (la ruta principal de integración con LLMs), el consentimiento
+se gestiona a través de herramientas MCP dedicadas en vez de prompts interactivos:
+
+- **`kaddo_telemetry_status`** — retorna el estado actual de consentimiento, estado de
+  registro y eventos pendientes. Incluye un aviso de consentimiento cuando la telemetría
+  no ha sido configurada.
+- **`kaddo_set_telemetry_consent`** — establece el consentimiento como `enabled`, `disabled`
+  o `not-now` (diferir 24 horas). Requiere `confirm: true` para aplicar.
+- **`kaddo_project_status`** — incluye un aviso de consentimiento cuando el estado es `unset`
+  y no hay un diferimiento activo.
+
+La opción "not-now" difiere el aviso por 24 horas sin habilitar ni deshabilitar la telemetría.
+Después de expirar el diferimiento, el aviso reaparece en las respuestas de estado.
+
+El consentimiento es compartido entre todas las interfaces: habilitar vía CLI es visible
+desde MCP y viceversa.
 
 ## Qué datos se envían
 
@@ -101,6 +120,12 @@ Kaddo detecta ejecución no interactiva verificando:
 
 En estos casos, un consentimiento `unset` se trata como `disabled` — sin prompt, sin
 telemetría, sin interrupción.
+
+## Inicialización
+
+Al ejecutar `kaddo init` interactivamente, el prompt de consentimiento se ofrece
+inmediatamente después de la configuración del proyecto. Esto asegura que la primera
+oportunidad de optar ocurra en el punto más temprano.
 
 ## Proyectos existentes
 

@@ -1,6 +1,7 @@
 import path from 'path'
 import { exists, writeFile, ensureDir, readFile, cwd, join } from '../utils/fs.js'
 import { intro, outro, log, text, confirm, select } from '../utils/ui.js'
+import { persistConsent, isInteractive } from '../core/telemetry-consent.js'
 
 const KADDO_DIR = '.kaddo'
 const ARCH_DIR = 'knowledge'
@@ -388,6 +389,20 @@ export async function runInit(): Promise<void> {
     log.success('Created knowledge/delivery/roadmap.md')
     log.success('Created knowledge/delivery/work-items/')
     log.info('Next: run `kaddo scan` to detect your stack.')
+  }
+
+  if (isInteractive()) {
+    const enableTelemetry = await confirm({
+      message:
+        'Help improve Kaddo by sharing anonymous usage telemetry?\n' +
+        '  Collects: command usage, version, lifecycle events.\n' +
+        '  Never collects: source code, knowledge, prompts or PII.\n' +
+        '  Change anytime: kaddo telemetry enable/disable',
+      initialValue: false,
+    })
+    persistConsent(dir, enableTelemetry ? 'enabled' : 'disabled')
+    if (enableTelemetry) log.success('Telemetry enabled.')
+    else log.info('Telemetry disabled. Change anytime with `kaddo telemetry enable`.')
   }
 
   outro('Kaddo initialized.')

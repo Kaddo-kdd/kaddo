@@ -189,4 +189,15 @@ export {
   type ConnectionResult,
   type SchemaValidationFinding,
 } from '../../integrations/src/index.js'
+export {
+  getConsentState,
+  persistConsent,
+  isDeferralActive,
+  deferConsent,
+  consentNotice,
+  isInteractive,
+  CURRENT_CONSENT_VERSION,
+  type ConsentState,
+} from './core/telemetry-consent.js'
+export { getStatus as getTelemetryStatus, isEnabled as isTelemetryEnabled, type TelemetryStatus } from './core/telemetry.js'
 export { exists, readFile, join, cwd } from './utils/fs.js'
