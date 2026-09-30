@@ -42,6 +42,9 @@ import { runReady } from './commands/ready.js'
 import { runAdmin } from './commands/admin.js'
 import { runWorkItemImport } from './commands/work-item.js'
 import { runVerify } from './commands/verify.js'
+import { runTelemetryStatus, runTelemetryEnable, runTelemetryDisable } from './commands/telemetry.js'
+import { emit, flush } from './core/telemetry.js'
+import type { TelemetryInterface, KnownTelemetryEvent } from './core/telemetry-events.js'
 
 // Single source of truth for the version: read it from package.json at runtime so the CLI
 // `--version` can never drift from the published package version. `../package.json` resolves
@@ -554,6 +557,63 @@ program
   .action(async (opts: { port?: number; host?: string; open?: boolean }) => {
     await runAdmin({ port: opts.port, host: opts.host, noOpen: opts.open === false })
   })
+
+const telemetryCmd = program
+  .command('telemetry')
+  .description('Manage anonymous usage telemetry')
+
+telemetryCmd
+  .command('status')
+  .description('Show telemetry status (enabled, registered, pending events)')
+  .action(() => { runTelemetryStatus() })
+
+telemetryCmd
+  .command('enable')
+  .description('Enable anonymous usage telemetry')
+  .action(() => { runTelemetryEnable() })
+
+telemetryCmd
+  .command('disable')
+  .description('Disable anonymous usage telemetry')
+  .action(() => { runTelemetryDisable() })
+
+const LIFECYCLE_EVENTS: Record<string, KnownTelemetryEvent> = {
+  create: 'work_item_created',
+  ready: 'work_item_ready',
+  learn: 'work_item_completed',
+  verify: 'verification_completed',
+  context: 'knowledge_generated',
+  explain: 'knowledge_generated',
+  understand: 'knowledge_generated',
+}
+
+const CAPSULE_EVENTS: Record<string, KnownTelemetryEvent> = {
+  export: 'capsule_exported',
+  add: 'capsule_imported',
+}
+
+const commandStart = Date.now()
+
+program.hook('postAction', (_thisCommand, actionCommand) => {
+  const name = actionCommand.name()
+  const parent = actionCommand.parent?.name()
+  const iface: TelemetryInterface = 'cli'
+  const durationMs = Date.now() - commandStart
+
+  if (name === 'status' || name === 'enable' || name === 'disable') return
+
+  const lifecycleEvent = LIFECYCLE_EVENTS[name]
+  if (lifecycleEvent) {
+    void emit(cwd(), lifecycleEvent, iface, { interface: iface }).catch(() => {})
+  }
+
+  if (parent === 'capsule' && CAPSULE_EVENTS[name]) {
+    void emit(cwd(), CAPSULE_EVENTS[name], iface, { interface: iface }).catch(() => {})
+  }
+
+  void emit(cwd(), 'command_executed', iface, { command: parent ? `${parent} ${name}` : name, durationMs, interface: iface }).catch(() => {})
+  void flush(cwd()).catch(() => {})
+})
 
 program.parseAsync(process.argv).catch((err) => {
   console.error(err)

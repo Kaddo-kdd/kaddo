@@ -2,7 +2,7 @@ import { z } from 'zod'
 import { exists, readFile, join } from '../utils/fs.js'
 import { parse as parseYaml } from 'yaml'
 
-export type ProjectState = 'new' | 'pre-ai' | 'legacy'
+export type ProjectState = 'new' | 'pre-ai' | 'legacy' | 'ai-assisted'
 export type TeamSize = 'indie' | 'small' | 'medium' | 'enterprise'
 export type RepositoryStructure = 'monorepo' | 'multirepo'
 /** Language of the project KNOWLEDGE (not the CLI, which is always English). VS-051. */
@@ -10,7 +10,7 @@ export type ProjectLanguage = 'en' | 'es'
 /** Role of a repository in a multirepo system (VS-091). */
 export type MultirepoRole = 'core' | 'module'
 
-export const PROJECT_STATES: ProjectState[] = ['new', 'pre-ai', 'legacy']
+export const PROJECT_STATES: ProjectState[] = ['new', 'pre-ai', 'legacy', 'ai-assisted']
 export const TEAM_SIZES: TeamSize[] = ['indie', 'small', 'medium', 'enterprise']
 export const REPOSITORY_STRUCTURES: RepositoryStructure[] = ['monorepo', 'multirepo']
 export const PROJECT_LANGUAGES: ProjectLanguage[] = ['en', 'es']
@@ -43,7 +43,7 @@ export class ConfigError extends Error {
   }
 }
 
-const projectStateSchema = z.enum(['new', 'pre-ai', 'legacy'], {
+const projectStateSchema = z.enum(['new', 'pre-ai', 'legacy', 'ai-assisted'], {
   errorMap: () => ({
     message: `project.state must be one of: ${PROJECT_STATES.join(', ')}`,
   }),
@@ -113,6 +113,12 @@ const configSchema = z
     knowledge: z.unknown().optional(),
     guard: z.unknown().optional(),
     scan: z.unknown().optional(),
+    telemetry: z
+      .object({
+        enabled: z.boolean().default(false),
+      })
+      .passthrough()
+      .optional(),
   })
   .passthrough()
 

@@ -167,6 +167,7 @@ export default defineConfig({
             { label: 'Kaddo Power for Kiro', translations: { es: 'Kaddo Power para Kiro' }, slug: 'kaddo-power' },
             { label: 'MCP Server', translations: { es: 'Servidor MCP' }, slug: 'mcp-server' },
             { label: 'Integrations', translations: { es: 'Integraciones' }, slug: 'integrations' },
+            { label: 'Telemetry', translations: { es: 'Telemetría' }, slug: 'telemetry' },
             { label: 'Impact Report', translations: { es: 'Reporte de impacto' }, slug: 'impact-report' },
             { label: 'Savings Report', translations: { es: 'Reporte de ahorro' }, slug: 'savings-report' },
             { label: 'Drift Report', translations: { es: 'Reporte de drift' }, slug: 'drift-report' },
