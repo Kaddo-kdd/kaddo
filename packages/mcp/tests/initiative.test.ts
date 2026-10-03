@@ -11,7 +11,10 @@ import {
   updateInitiativeTool,
   addInitiativeCandidateTool,
   materializeInitiativeCandidateTool,
+  analyzeInitiativeTool,
+  completeInitiativeTool,
 } from '../src/initiatives.js'
+import { getInitiative } from '@kaddo/cli/core'
 import { makeProject, config, cleanup } from './helpers.js'
 
 let root: string
@@ -131,5 +134,49 @@ describe('kaddo_materialize_initiative_candidate (AC-12, AC-14)', () => {
     config(root)
     createInitiativeTool(root, { title: 'Auth', confirm: true })
     expect(materializeInitiativeCandidateTool(root, { id: 'INI-001', candidateId: 'WI-CANDIDATE-999', confirm: true }).ok).toBe(false)
+  })
+})
+
+describe('kaddo_analyze_initiative (AC-16)', () => {
+  it('returns findings and grounded suggestions', () => {
+    root = makeProject()
+    config(root)
+    createInitiativeTool(root, { title: 'Auth', confirm: true })
+    addInitiativeCandidateTool(root, { id: 'INI-001', title: 'Login', confirm: true })
+    const res = analyzeInitiativeTool(root, 'INI-001')
+    expect(res.ok).toBe(true)
+    const d = data(res)
+    expect((d.findings as Array<{ code: string }>).some((f) => f.code === 'pending-candidates')).toBe(true)
+    expect((d.suggestedCandidates as unknown[]).length).toBe(1)
+  })
+
+  it('fails for an unknown initiative', () => {
+    root = makeProject()
+    config(root)
+    expect(analyzeInitiativeTool(root, 'INI-999').ok).toBe(false)
+  })
+})
+
+describe('kaddo_complete_initiative (AC-19, AC-20)', () => {
+  it('without confirm returns readiness and does NOT complete', () => {
+    root = makeProject()
+    config(root)
+    createInitiativeTool(root, { title: 'Auth', confirm: true })
+    updateInitiativeTool(root, { id: 'INI-001', status: 'in-progress', confirm: true })
+    const preview = completeInitiativeTool(root, { id: 'INI-001' })
+    expect(preview.ok).toBe(true)
+    expect(data(preview).readiness).toBeTruthy()
+    expect(getInitiative(root, 'INI-001')!.status).toBe('in-progress') // not completed
+  })
+
+  it('with confirm transitions to completed (human gate relayed)', () => {
+    root = makeProject()
+    config(root)
+    createInitiativeTool(root, { title: 'Auth', confirm: true })
+    updateInitiativeTool(root, { id: 'INI-001', status: 'in-progress', confirm: true })
+    const done = completeInitiativeTool(root, { id: 'INI-001', confirm: true })
+    expect(done.ok).toBe(true)
+    expect(data(done).applied).toBe(true)
+    expect(getInitiative(root, 'INI-001')!.status).toBe('completed')
   })
 })

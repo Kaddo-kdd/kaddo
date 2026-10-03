@@ -51,6 +51,8 @@ import {
   runInitiativeCreate,
   runInitiativeUpdate,
   runInitiativeMaterialize,
+  runInitiativeAnalyze,
+  runInitiativeComplete,
 } from './commands/initiative.js'
 import { emit, flush } from './core/telemetry.js'
 import type { TelemetryInterface, KnownTelemetryEvent } from './core/telemetry-events.js'
@@ -609,6 +611,17 @@ initiativeCmd
   .command('materialize <id> <candidateId>')
   .description('Materialize an initiative candidate into a draft Work Item')
   .action((id: string, candidateId: string) => { runInitiativeMaterialize(id, candidateId) })
+
+initiativeCmd
+  .command('analyze <id>')
+  .description('Analyze an initiative: success-criteria coverage, gaps, and suggested candidates')
+  .action((id: string) => { runInitiativeAnalyze(id) })
+
+initiativeCmd
+  .command('complete <id>')
+  .description('Review completion readiness and mark an initiative completed (human-confirmed)')
+  .option('--yes', 'Skip the confirmation prompt')
+  .action(async (id: string, opts: { yes?: boolean }) => { await runInitiativeComplete(id, opts) })
 
 const telemetryCmd = program
   .command('telemetry')

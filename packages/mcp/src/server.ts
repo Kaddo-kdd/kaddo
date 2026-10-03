@@ -72,6 +72,8 @@ import {
   updateInitiativeTool,
   addInitiativeCandidateTool,
   materializeInitiativeCandidateTool,
+  analyzeInitiativeTool,
+  completeInitiativeTool,
 } from './initiatives.js'
 
 export const SERVER_NAME = 'kaddo'
@@ -615,6 +617,24 @@ export function createServer(root: string): McpServer {
       inputSchema: { id: z.string(), candidateId: z.string(), confirm: z.boolean().optional() },
     },
     async (args) => toolText(guarded(root, () => materializeInitiativeCandidateTool(root, args)))
+  )
+  server.registerTool(
+    'kaddo_analyze_initiative',
+    {
+      title: 'Analyze initiative',
+      description: `Read-only gap analysis: success-criteria coverage, pending candidates, delivery status, grounded findings, and the Initiative's own pending candidates as suggestions. Never invents work. ${INITIATIVE_READ_NOTE}`,
+      inputSchema: { id: z.string() },
+    },
+    async (args) => toolText(guarded(root, () => analyzeInitiativeTool(root, args.id)))
+  )
+  server.registerTool(
+    'kaddo_complete_initiative',
+    {
+      title: 'Complete initiative',
+      description: 'Human-gated completion. Without confirm returns completion readiness (does NOT complete). With confirm=true transitions the Initiative to completed; readiness findings are returned either way so uncovered scope stays visible. Never completes autonomously.',
+      inputSchema: { id: z.string(), confirm: z.boolean().optional() },
+    },
+    async (args) => toolText(guarded(root, () => completeInitiativeTool(root, args)))
   )
 
   // --- Telemetry (WI-016) ---

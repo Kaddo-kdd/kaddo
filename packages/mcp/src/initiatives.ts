@@ -14,6 +14,8 @@ import {
   updateInitiative,
   addCandidate,
   materializeCandidate,
+  analyzeInitiative,
+  evaluateInitiativeCompletion,
   InitiativeWriteError,
   type InitiativeStatus,
 } from '@kaddo/cli/core'
@@ -178,4 +180,41 @@ export function materializeInitiativeCandidateTool(
     `Candidate ${args.candidateId} ("${candidate.title}") will be materialized into a draft Work Item associated to ${args.id}.`,
     () => materializeCandidate(root, args.id, args.candidateId),
   )
+}
+
+export function analyzeInitiativeTool(root: string, id: string): ToolResult {
+  const ini = getInitiative(root, id)
+  if (!ini) return fail(`Initiative ${id} not found.`)
+  return ok(analyzeInitiative(root, ini))
+}
+
+/**
+ * Human-gated completion. Without confirm, returns the completion-readiness analysis (preview) and
+ * does NOT complete. With confirm=true (the human decision relayed by the agent), transitions the
+ * Initiative to completed; the readiness findings are returned either way so uncovered scope is
+ * visible even when the human chooses to complete anyway.
+ */
+export function completeInitiativeTool(
+  root: string,
+  args: { id: string; confirm?: boolean },
+): ToolResult {
+  const ini = getInitiative(root, args.id)
+  if (!ini) return fail(`Initiative ${args.id} not found.`)
+  const readiness = evaluateInitiativeCompletion(root, ini)
+  if (!args.confirm) {
+    return ok({
+      action: 'complete-initiative',
+      readiness,
+      instruction: readiness.ready
+        ? 'Initiative looks ready. Call again with confirm=true to complete (human decision).'
+        : 'Initiative is NOT ready (see readiness.reasons). Completion requires an explicit human decision: call again with confirm=true only if the human chooses to complete anyway.',
+    })
+  }
+  try {
+    const done = transitionInitiative(root, args.id, 'completed')
+    return ok({ applied: true, readiness, result: { id: done.id, status: done.status } })
+  } catch (err) {
+    if (err instanceof InitiativeWriteError) return fail(err.message)
+    throw err
+  }
 }

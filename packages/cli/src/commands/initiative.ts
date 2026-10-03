@@ -5,7 +5,7 @@
 
 import { cwd } from '../utils/fs.js'
 import { loadConfig } from '../core/config.js'
-import { intro, outro, log, text, select } from '../utils/ui.js'
+import { intro, outro, log, text, select, confirm, cancel } from '../utils/ui.js'
 import {
   discoverInitiatives,
   getInitiative,
@@ -18,6 +18,7 @@ import {
   materializeCandidate,
   InitiativeWriteError,
 } from '../core/initiative-write.js'
+import { analyzeInitiative, evaluateInitiativeCompletion } from '../core/initiative-analysis.js'
 
 function requireInit(dir: string): void {
   if (!loadConfig(dir)) {
@@ -158,6 +159,80 @@ export async function runInitiativeUpdate(id: string, opts: { status?: string })
     const updated = transitionInitiative(dir, id, to)
     log.success(`Status: ${updated.status}`)
     outro(`Initiative ${updated.id} updated.`)
+  } catch (err) {
+    log.error(err instanceof InitiativeWriteError ? err.message : String(err))
+    process.exit(1)
+  }
+}
+
+export function runInitiativeAnalyze(id: string): void {
+  const dir = cwd()
+  requireInit(dir)
+  intro(`kaddo initiative analyze ${id}`)
+  const ini = getInitiative(dir, id)
+  if (!ini) {
+    log.error(`Initiative ${id} not found.`)
+    process.exit(1)
+  }
+  const analysis = analyzeInitiative(dir, ini)
+  log.info(`  Status: ${analysis.status}`)
+  log.info(`  Success criteria: ${analysis.successCriteria.length}`)
+  log.info(`  Planning: ${analysis.progress.planning.materialized}/${analysis.progress.planning.totalCandidates} materialized`)
+  log.info(`  Delivery: ${analysis.progress.delivery.byState.completed}/${analysis.progress.delivery.total} completed`)
+  if (analysis.findings.length === 0) {
+    log.success('No gaps detected.')
+  } else {
+    log.info('')
+    for (const f of analysis.findings) {
+      const line = `  [${f.severity}] ${f.message}`
+      if (f.severity === 'blocking') log.warn(line)
+      else log.info(line)
+      for (const item of f.items ?? []) log.info(`      - ${item}`)
+    }
+  }
+  if (analysis.suggestedCandidates.length > 0) {
+    log.info('')
+    log.info('  Suggested (pending) candidates to materialize:')
+    for (const c of analysis.suggestedCandidates) log.info(`      - ${c.id}: ${c.title}`)
+  }
+  outro(`Analysis for ${ini.id}.`)
+}
+
+export async function runInitiativeComplete(id: string, opts: { yes?: boolean } = {}): Promise<void> {
+  const dir = cwd()
+  requireInit(dir)
+  intro(`kaddo initiative complete ${id}`)
+  const ini = getInitiative(dir, id)
+  if (!ini) {
+    log.error(`Initiative ${id} not found.`)
+    process.exit(1)
+  }
+  const readiness = evaluateInitiativeCompletion(dir, ini)
+  if (readiness.ready) {
+    log.success('Completion readiness: ready.')
+  } else {
+    log.warn('Completion readiness: NOT ready.')
+    for (const r of readiness.reasons) log.warn(`  - ${r}`)
+  }
+
+  if (!opts.yes) {
+    log.info('')
+    const proceed = await confirm({
+      message: readiness.ready
+        ? 'Mark this Initiative as completed?'
+        : 'This Initiative is not ready. Complete it anyway?',
+      initialValue: false,
+    })
+    if (!proceed) {
+      cancel('Cancelled. Initiative not completed.')
+      return
+    }
+  }
+
+  try {
+    const done = transitionInitiative(dir, id, 'completed')
+    log.success(`Status: ${done.status}`)
+    outro(`Initiative ${done.id} completed.`)
   } catch (err) {
     log.error(err instanceof InitiativeWriteError ? err.message : String(err))
     process.exit(1)

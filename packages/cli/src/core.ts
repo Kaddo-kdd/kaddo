@@ -235,4 +235,13 @@ export {
   type CandidateInput,
   type MaterializeCandidateResult,
 } from './core/initiative-write.js'
+export {
+  analyzeInitiative,
+  evaluateInitiativeCompletion,
+  parseSuccessCriteria,
+  type InitiativeAnalysis,
+  type InitiativeFinding,
+  type SuccessCriterion,
+  type CompletionReadiness,
+} from './core/initiative-analysis.js'
 export { exists, readFile, join, cwd } from './utils/fs.js'

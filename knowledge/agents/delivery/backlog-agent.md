@@ -34,9 +34,31 @@ in the right initiative and avoid duplicates.
 One of:
 
 1. A **Work Item draft** under `knowledge/delivery/work-items/draft/` when the scope is clear and
-   small.
+   small — **standalone**, or associated to an existing Initiative when it clearly belongs to one.
 2. A **roadmap candidate** (`WI-CANDIDATE-XXX`) to add later when the scope is too large.
-3. **Multiple** backlog items when the input contains several distinct ideas (split them).
+3. A **new Initiative candidate** when the idea is a large product outcome that does not fit an
+   existing Initiative.
+4. **Multiple** backlog items when the input contains several distinct ideas (split them).
+
+### Initiative placement (AC-21)
+
+Initiatives are **optional**. For each idea, decide where it belongs — never force everything under
+an Initiative:
+
+```text
+New idea
+  │
+  ├── belongs to an existing Initiative? → suggest a candidate/association under that INI-xxx
+  │
+  └── no →
+        ├── small, clear, no larger outcome → standalone Work Item draft (no initiative)
+        ├── large outcome, no matching Initiative → propose a NEW Initiative candidate
+        └── too large for a single item → roadmap candidate
+```
+
+Examples: a bugfix → standalone Work Item; a feature clearly inside an existing `INI-003` →
+candidate under INI-003; a large new product outcome → new Initiative candidate. Use
+`kaddo_list_initiatives` (or `kaddo initiative list`) to check existing Initiatives before deciding.
 
 ## Instructions
 
@@ -63,10 +85,10 @@ One of:
 # Backlog capture
 
 ## Item 1 — <title>
-- Output: Work Item draft | Roadmap candidate
+- Output: Standalone Work Item draft | Work Item under existing Initiative | New Initiative candidate | Roadmap candidate
 - Suggested type: feature | bugfix | hotfix | spike | chore
 - Suggested Knowledge Level: K1 / K2 / K3 / K4
-- Initiative:
+- Initiative: <existing INI-xxx · new Initiative candidate · none (standalone)>
 - Domains:
 - Suggested priority:
 - Duplicates / overlaps / dependencies:
