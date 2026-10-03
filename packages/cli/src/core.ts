@@ -208,6 +208,7 @@ export {
   associatedWorkItems,
   workItemBelongsToInitiative,
   computeInitiativeProgress,
+  getInitiativeContext,
   isValidInitiativeStatus,
   isValidInitiativeTransition,
   INITIATIVE_STATES,
@@ -218,16 +219,19 @@ export {
   type InitiativeCandidate,
   type InitiativeExternalLink,
   type InitiativeProgress,
+  type InitiativeContext,
   type AssociatedWorkItem,
 } from './core/initiative.js'
 export {
   createInitiative,
   transitionInitiative,
+  updateInitiative,
   addCandidate,
   materializeCandidate,
   materializeRoadmapInitiative,
   InitiativeWriteError,
   type CreateInitiativeInput,
+  type UpdateInitiativeInput,
   type CandidateInput,
   type MaterializeCandidateResult,
 } from './core/initiative-write.js'

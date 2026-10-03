@@ -43,6 +43,15 @@ import { runAdmin } from './commands/admin.js'
 import { runWorkItemImport } from './commands/work-item.js'
 import { runVerify } from './commands/verify.js'
 import { runTelemetryStatus, runTelemetryEnable, runTelemetryDisable } from './commands/telemetry.js'
+import {
+  runInitiativeList,
+  runInitiativeShow,
+  runInitiativeProgress,
+  runInitiativeCandidates,
+  runInitiativeCreate,
+  runInitiativeUpdate,
+  runInitiativeMaterialize,
+} from './commands/initiative.js'
 import { emit, flush } from './core/telemetry.js'
 import type { TelemetryInterface, KnownTelemetryEvent } from './core/telemetry-events.js'
 import { ensureTelemetryConsent } from './core/telemetry-consent.js'
@@ -559,6 +568,47 @@ program
   .action(async (opts: { port?: number; host?: string; open?: boolean }) => {
     await runAdmin({ port: opts.port, host: opts.host, noOpen: opts.open === false })
   })
+
+const initiativeCmd = program
+  .command('initiative')
+  .description('Manage initiatives — the optional outcome layer over Work Items')
+
+initiativeCmd
+  .command('list')
+  .description('List initiatives with planning and delivery progress')
+  .action(() => { runInitiativeList() })
+
+initiativeCmd
+  .command('show <id>')
+  .description('Show an initiative, its metadata and candidates')
+  .action((id: string) => { runInitiativeShow(id) })
+
+initiativeCmd
+  .command('progress <id>')
+  .description('Show planning coverage and delivery progress for an initiative')
+  .action((id: string) => { runInitiativeProgress(id) })
+
+initiativeCmd
+  .command('candidates <id>')
+  .description('List the Work Item candidates of an initiative')
+  .action((id: string) => { runInitiativeCandidates(id) })
+
+initiativeCmd
+  .command('create')
+  .description('Create a new initiative')
+  .option('--title <title>', 'Initiative title (prompts if omitted)')
+  .action(async (opts: { title?: string }) => { await runInitiativeCreate(opts) })
+
+initiativeCmd
+  .command('update <id>')
+  .description('Update an initiative status (valid lifecycle transitions only)')
+  .option('--status <status>', 'New status: planned, in-progress, completed, deferred, cancelled')
+  .action(async (id: string, opts: { status?: string }) => { await runInitiativeUpdate(id, opts) })
+
+initiativeCmd
+  .command('materialize <id> <candidateId>')
+  .description('Materialize an initiative candidate into a draft Work Item')
+  .action((id: string, candidateId: string) => { runInitiativeMaterialize(id, candidateId) })
 
 const telemetryCmd = program
   .command('telemetry')

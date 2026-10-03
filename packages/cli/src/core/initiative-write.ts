@@ -231,6 +231,40 @@ export function addCandidate(dir: string, id: string, candidate: CandidateInput)
   return updated
 }
 
+export type UpdateInitiativeInput = {
+  title?: string
+  horizon?: string
+  priority?: string
+  knowledgeLevel?: string
+  domains?: string[]
+  relatedCapabilities?: string[]
+}
+
+/**
+ * Update non-lifecycle fields of an Initiative. Status changes go through `transitionInitiative`
+ * (which enforces valid transitions) — this function never changes `status`.
+ */
+export function updateInitiative(dir: string, id: string, patch: UpdateInitiativeInput): Initiative {
+  const ini = getInitiative(dir, id)
+  if (!ini) throw new InitiativeWriteError(`Initiative ${id} not found.`)
+  const raw = readFile(ini.filePath)
+  const { data, content } = matter(raw, {})
+  if (patch.title !== undefined) {
+    if (!patch.title.trim()) throw new InitiativeWriteError('Initiative title cannot be empty.')
+    data.title = patch.title.trim()
+  }
+  if (patch.horizon !== undefined) data.horizon = patch.horizon
+  if (patch.priority !== undefined) data.priority = patch.priority
+  if (patch.knowledgeLevel !== undefined) data.knowledge_level = patch.knowledgeLevel
+  if (patch.domains !== undefined) data.domains = patch.domains
+  if (patch.relatedCapabilities !== undefined) data.related_capabilities = patch.relatedCapabilities
+  const newContent = matter.stringify(content, data)
+  writeFile(ini.filePath, newContent)
+  const updated = parseInitiative(dir, ini.filePath, newContent)
+  if (!updated) throw new InitiativeWriteError('Failed to parse the Initiative after update.')
+  return updated
+}
+
 /** Highest WI-NNN across the work-items tree + 1, zero-padded. */
 function nextWorkItemId(dir: string): string {
   const wiDir = join(dir, WORK_ITEMS_DIR)

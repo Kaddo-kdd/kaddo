@@ -63,6 +63,16 @@ import {
 } from './generate.js'
 import { assertKaddoProject, KaddoMcpError } from './project.js'
 import { getConsentState, isDeferralActive, consentNotice, loadConfig } from '@kaddo/cli/core'
+import {
+  listInitiativesTool,
+  getInitiativeTool,
+  getInitiativeContextTool,
+  getInitiativeProgressTool,
+  createInitiativeTool,
+  updateInitiativeTool,
+  addInitiativeCandidateTool,
+  materializeInitiativeCandidateTool,
+} from './initiatives.js'
 
 export const SERVER_NAME = 'kaddo'
 // Read the version from package.json at runtime so it never drifts from the published version.
@@ -514,6 +524,97 @@ export function createServer(root: string): McpServer {
       },
     },
     async (args) => toolText(guarded(root, () => verifyWorkItemTool(root, args)))
+  )
+
+  // --- Initiatives (WI-019) ---
+  const INITIATIVE_READ_NOTE =
+    'Read-only. Initiatives are an optional outcome/traceability layer over Work Items; a Work Item never requires one.'
+  server.registerTool(
+    'kaddo_list_initiatives',
+    { title: 'List initiatives', description: `List initiatives with planning coverage and delivery progress. ${INITIATIVE_READ_NOTE}`, inputSchema: {} },
+    async () => toolText(guarded(root, () => listInitiativesTool(root)))
+  )
+  server.registerTool(
+    'kaddo_get_initiative',
+    { title: 'Get initiative', description: `Get one initiative: metadata, candidates and body. ${INITIATIVE_READ_NOTE}`, inputSchema: { id: z.string() } },
+    async (args) => toolText(guarded(root, () => getInitiativeTool(root, args.id)))
+  )
+  server.registerTool(
+    'kaddo_get_initiative_context',
+    {
+      title: 'Get initiative context',
+      description: `Focused, initiative-scoped context for analysis: the initiative, progress, candidates (materialized/pending), associated Work Items and external links. Does NOT load the whole project. ${INITIATIVE_READ_NOTE}`,
+      inputSchema: { id: z.string() },
+    },
+    async (args) => toolText(guarded(root, () => getInitiativeContextTool(root, args.id)))
+  )
+  server.registerTool(
+    'kaddo_get_initiative_progress',
+    { title: 'Get initiative progress', description: `Planning coverage (candidates materialized/total) and delivery progress (Work Items by lifecycle state). ${INITIATIVE_READ_NOTE}`, inputSchema: { id: z.string() } },
+    async (args) => toolText(guarded(root, () => getInitiativeProgressTool(root, args.id)))
+  )
+
+  const INITIATIVE_WRITE_NOTE =
+    'Without confirm=true returns a preview. With confirm=true applies the change. Writes only under knowledge/delivery/.'
+  server.registerTool(
+    'kaddo_create_initiative',
+    {
+      title: 'Create initiative',
+      description: `Create a new initiative. ${INITIATIVE_WRITE_NOTE}`,
+      inputSchema: {
+        title: z.string(),
+        domains: z.array(z.string()).optional(),
+        relatedCapabilities: z.array(z.string()).optional(),
+        horizon: z.string().optional(),
+        priority: z.string().optional(),
+        confirm: z.boolean().optional(),
+      },
+    },
+    async (args) => toolText(guarded(root, () => createInitiativeTool(root, args)))
+  )
+  server.registerTool(
+    'kaddo_update_initiative',
+    {
+      title: 'Update initiative',
+      description: `Update an initiative's status (valid lifecycle transitions only) or non-lifecycle fields. ${INITIATIVE_WRITE_NOTE}`,
+      inputSchema: {
+        id: z.string(),
+        status: z.enum(['planned', 'in-progress', 'completed', 'deferred', 'cancelled']).optional(),
+        title: z.string().optional(),
+        horizon: z.string().optional(),
+        priority: z.string().optional(),
+        domains: z.array(z.string()).optional(),
+        relatedCapabilities: z.array(z.string()).optional(),
+        confirm: z.boolean().optional(),
+      },
+    },
+    async (args) => toolText(guarded(root, () => updateInitiativeTool(root, args)))
+  )
+  server.registerTool(
+    'kaddo_add_initiative_candidate',
+    {
+      title: 'Add initiative candidate',
+      description: `Add a Work Item candidate to an initiative (not yet materialized). ${INITIATIVE_WRITE_NOTE}`,
+      inputSchema: {
+        id: z.string(),
+        title: z.string(),
+        type: z.string().optional(),
+        suggestedKnowledgeLevel: z.string().optional(),
+        expectedValue: z.string().optional(),
+        notes: z.string().optional(),
+        confirm: z.boolean().optional(),
+      },
+    },
+    async (args) => toolText(guarded(root, () => addInitiativeCandidateTool(root, args)))
+  )
+  server.registerTool(
+    'kaddo_materialize_initiative_candidate',
+    {
+      title: 'Materialize initiative candidate',
+      description: `Materialize an initiative candidate into a draft Work Item associated via \`initiative: INI-xxx\`. ${INITIATIVE_WRITE_NOTE}`,
+      inputSchema: { id: z.string(), candidateId: z.string(), confirm: z.boolean().optional() },
+    },
+    async (args) => toolText(guarded(root, () => materializeInitiativeCandidateTool(root, args)))
   )
 
   // --- Telemetry (WI-016) ---

@@ -283,3 +283,57 @@ export function computeInitiativeProgress(dir: string, ini: Initiative): Initiat
     },
   }
 }
+
+export type InitiativeContext = {
+  initiative: {
+    id: string
+    title: string
+    status: InitiativeStatus
+    horizon: string | null
+    priority: string | null
+    knowledgeLevel: string | null
+    domains: string[]
+    relatedCapabilities: string[]
+    source: string | null
+    sourceId: string | null
+  }
+  progress: InitiativeProgress
+  candidates: {
+    total: number
+    materialized: InitiativeCandidate[]
+    pending: InitiativeCandidate[]
+  }
+  workItems: AssociatedWorkItem[]
+  externalLinks: InitiativeExternalLink[]
+}
+
+/**
+ * Assemble a focused, initiative-scoped context for analysis. Proportional by design: it carries
+ * the Initiative, its progress, candidates (split materialized/pending), associated Work Items and
+ * external links — never the whole project. Callers (CLI/MCP) present this; richer knowledge
+ * assembly (business/product/graph) is layered in a later Work Item.
+ */
+export function getInitiativeContext(dir: string, ini: Initiative): InitiativeContext {
+  return {
+    initiative: {
+      id: ini.id,
+      title: ini.title,
+      status: ini.status,
+      horizon: ini.horizon,
+      priority: ini.priority,
+      knowledgeLevel: ini.knowledgeLevel,
+      domains: ini.domains,
+      relatedCapabilities: ini.relatedCapabilities,
+      source: ini.source,
+      sourceId: ini.sourceId,
+    },
+    progress: computeInitiativeProgress(dir, ini),
+    candidates: {
+      total: ini.candidates.length,
+      materialized: ini.candidates.filter((c) => c.materializedAs),
+      pending: ini.candidates.filter((c) => !c.materializedAs),
+    },
+    workItems: associatedWorkItems(dir, ini.id),
+    externalLinks: ini.externalLinks,
+  }
+}
