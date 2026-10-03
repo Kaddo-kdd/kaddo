@@ -11,6 +11,7 @@ import { exists, readFile, join } from '../utils/fs.js'
 import { discoverKnowledge, type KnowledgeArtifact } from '../services/knowledge-artifacts.js'
 import { loadExternalRegistry } from './capsule.js'
 import { isActiveState } from './lifecycle.js'
+import { discoverInitiatives } from './initiative.js'
 import type { KaddoConfig } from './config.js'
 
 const KNOWLEDGE = 'knowledge'
@@ -29,6 +30,7 @@ export type GraphNodeType =
   | 'initiative'
   | 'roadmap-candidate'
   | 'knowledge-capsule'
+  | 'external-item'
   | 'project'
 
 export type GraphEdgeType =
@@ -41,6 +43,8 @@ export type GraphEdgeType =
   | 'governs'
   | 'provides_external_context'
   | 'uses_external_knowledge'
+  | 'targets'
+  | 'references_external'
 
 export type GraphNode = {
   id: string
@@ -140,6 +144,38 @@ export function buildGraph(
   const activeWICount = workItems.filter((a) => a.lifecycle && isActiveState(a.lifecycle)).length
   // Active scope: only active statuses. All scope: every status except archived.
   const selectedWIs = workItems.filter((a) => a.lifecycle && includedSet.has(a.lifecycle))
+
+  // --- Initiatives (first-class, WI-021) + capability / external-item / candidate edges ---
+  // Added before the Work Item loop so the full Initiative node (path/status) wins over the
+  // minimal node a Work Item's `initiative` reference would otherwise create. Node ids are keyed
+  // by slug(ini.id) so an existing `belongs_to` edge from a materialized Work Item resolves here.
+  for (const ini of discoverInitiatives(dir)) {
+    const iniNodeId = `initiative:${slug(ini.id) || ini.id}`
+    addNode({
+      id: iniNodeId,
+      type: 'initiative',
+      label: `${ini.id} ${ini.title}`.trim(),
+      path: ini.relPath,
+      status: ini.status,
+    })
+    for (const cap of ini.relatedCapabilities) {
+      if (!cap.trim()) continue
+      const capId = `capability:${slug(cap) || cap}`
+      addNode({ id: capId, type: 'capability', label: cap })
+      addEdge(iniNodeId, capId, 'targets')
+    }
+    for (const link of ini.externalLinks) {
+      const extId = `external-item:${slug(link.integration) || link.integration}:${slug(link.externalId) || link.externalId}`
+      addNode({ id: extId, type: 'external-item', label: `${link.integration}:${link.externalId}`, path: link.url })
+      addEdge(iniNodeId, extId, 'references_external')
+    }
+    for (const cand of ini.candidates) {
+      const candId = `candidate:${cand.id}`
+      addNode({ id: candId, type: 'roadmap-candidate', label: cand.id })
+      addEdge(candId, iniNodeId, 'belongs_to')
+      if (cand.materializedAs) addEdge(candId, `wi:${cand.materializedAs}`, 'materialized_as')
+    }
+  }
 
   for (const wi of selectedWIs) {
     const id = wi.id || wi.title
@@ -258,6 +294,8 @@ const RELATIONSHIP_EDGES = new Set<GraphEdgeType>([
   'governs',
   'provides_external_context',
   'uses_external_knowledge',
+  'targets',
+  'references_external',
 ])
 
 /** True when the graph has nodes but no real relationship edges (only the layer chain / isolated). */

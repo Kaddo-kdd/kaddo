@@ -61,6 +61,11 @@ export type InitiativeExternalLink = {
   externalId: string
   externalType?: string
   url?: string
+  /**
+   * Last-known status of the external item, stored as a SIGNAL only. Kaddo never reads this to
+   * change an Initiative's lifecycle (AC-23) — the Initiative keeps its own lifecycle and human gate.
+   */
+  externalStatus?: string
 }
 
 export type Initiative = {
@@ -138,6 +143,7 @@ function parseExternalLinks(data: Record<string, unknown>): InitiativeExternalLi
       externalId,
       externalType: optStr(o.external_type),
       url: optStr(o.url),
+      externalStatus: optStr(o.external_status),
     })
   }
   return out
@@ -336,4 +342,27 @@ export function getInitiativeContext(dir: string, ini: Initiative): InitiativeCo
     workItems: associatedWorkItems(dir, ini.id),
     externalLinks: ini.externalLinks,
   }
+}
+
+/**
+ * Suggest Initiatives that reference a given external planning item. Used to associate an imported
+ * Work Item with an Initiative (AC-24): given the imported item's external parent (e.g. a Jira Epic
+ * id), find Initiatives whose external_links point at it. Matching is deterministic — same
+ * integration and external id. The association itself still requires human confirmation.
+ */
+export function suggestInitiativesForExternalItem(
+  dir: string,
+  integration: string,
+  externalId: string,
+): Initiative[] {
+  const wantIntegration = integration.trim().toLowerCase()
+  const wantId = externalId.trim().toLowerCase()
+  if (!wantIntegration || !wantId) return []
+  return discoverInitiatives(dir).filter((ini) =>
+    ini.externalLinks.some(
+      (l) =>
+        l.integration.trim().toLowerCase() === wantIntegration &&
+        l.externalId.trim().toLowerCase() === wantId,
+    ),
+  )
 }

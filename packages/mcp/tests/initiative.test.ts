@@ -13,6 +13,8 @@ import {
   materializeInitiativeCandidateTool,
   analyzeInitiativeTool,
   completeInitiativeTool,
+  addInitiativeExternalLinkTool,
+  suggestInitiativeForExternalItemTool,
 } from '../src/initiatives.js'
 import { getInitiative } from '@kaddo/cli/core'
 import { makeProject, config, cleanup } from './helpers.js'
@@ -154,6 +156,32 @@ describe('kaddo_analyze_initiative (AC-16)', () => {
     root = makeProject()
     config(root)
     expect(analyzeInitiativeTool(root, 'INI-999').ok).toBe(false)
+  })
+})
+
+describe('kaddo_add_initiative_external_link / suggest (AC-22, AC-24)', () => {
+  it('previews then adds an external link, and suggests by it', () => {
+    root = makeProject()
+    config(root)
+    createInitiativeTool(root, { title: 'Auth', confirm: true })
+
+    const preview = addInitiativeExternalLinkTool(root, { id: 'INI-001', integration: 'jira', externalId: 'AUTH-20' })
+    expect(data(preview).instruction).toContain('confirm=true')
+
+    const applied = addInitiativeExternalLinkTool(root, { id: 'INI-001', integration: 'jira', externalId: 'AUTH-20', externalType: 'epic', confirm: true })
+    expect(applied.ok).toBe(true)
+
+    const suggest = suggestInitiativeForExternalItemTool(root, { integration: 'jira', externalId: 'AUTH-20' })
+    expect(suggest.ok).toBe(true)
+    expect((data(suggest).suggestions as Array<{ id: string }>)[0].id).toBe('INI-001')
+  })
+
+  it('suggest returns empty when nothing matches', () => {
+    root = makeProject()
+    config(root)
+    const res = suggestInitiativeForExternalItemTool(root, { integration: 'jira', externalId: 'NOPE' })
+    expect(res.ok).toBe(true)
+    expect((data(res).suggestions as unknown[]).length).toBe(0)
   })
 })
 

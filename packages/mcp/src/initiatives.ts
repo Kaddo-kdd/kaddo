@@ -14,8 +14,10 @@ import {
   updateInitiative,
   addCandidate,
   materializeCandidate,
+  addExternalLink,
   analyzeInitiative,
   evaluateInitiativeCompletion,
+  suggestInitiativesForExternalItem,
   InitiativeWriteError,
   type InitiativeStatus,
 } from '@kaddo/cli/core'
@@ -180,6 +182,52 @@ export function materializeInitiativeCandidateTool(
     `Candidate ${args.candidateId} ("${candidate.title}") will be materialized into a draft Work Item associated to ${args.id}.`,
     () => materializeCandidate(root, args.id, args.candidateId),
   )
+}
+
+export function addInitiativeExternalLinkTool(
+  root: string,
+  args: {
+    id: string
+    integration: string
+    externalId: string
+    externalType?: string
+    url?: string
+    externalStatus?: string
+    confirm?: boolean
+  },
+): ToolResult {
+  if (!args.integration?.trim() || !args.externalId?.trim()) {
+    return fail('integration and externalId are required.')
+  }
+  if (!getInitiative(root, args.id)) return fail(`Initiative ${args.id} not found.`)
+  return previewOrApply(
+    args.confirm,
+    'add-initiative-external-link',
+    `A provider-neutral reference ${args.integration}:${args.externalId} will be added to ${args.id}. An external status is stored as a signal only and never changes the Initiative lifecycle.`,
+    () => addExternalLink(root, args.id, {
+      integration: args.integration,
+      externalId: args.externalId,
+      externalType: args.externalType,
+      url: args.url,
+      externalStatus: args.externalStatus,
+    }),
+  )
+}
+
+export function suggestInitiativeForExternalItemTool(
+  root: string,
+  args: { integration: string; externalId: string },
+): ToolResult {
+  if (!args.integration?.trim() || !args.externalId?.trim()) {
+    return fail('integration and externalId are required.')
+  }
+  const matches = suggestInitiativesForExternalItem(root, args.integration, args.externalId)
+  return ok({
+    integration: args.integration,
+    externalId: args.externalId,
+    suggestions: matches.map((i) => ({ id: i.id, title: i.title, status: i.status })),
+    note: 'Suggestion only — associating a Work Item with an Initiative requires human confirmation.',
+  })
 }
 
 export function analyzeInitiativeTool(root: string, id: string): ToolResult {

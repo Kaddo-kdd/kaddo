@@ -72,6 +72,8 @@ import {
   updateInitiativeTool,
   addInitiativeCandidateTool,
   materializeInitiativeCandidateTool,
+  addInitiativeExternalLinkTool,
+  suggestInitiativeForExternalItemTool,
   analyzeInitiativeTool,
   completeInitiativeTool,
 } from './initiatives.js'
@@ -617,6 +619,32 @@ export function createServer(root: string): McpServer {
       inputSchema: { id: z.string(), candidateId: z.string(), confirm: z.boolean().optional() },
     },
     async (args) => toolText(guarded(root, () => materializeInitiativeCandidateTool(root, args)))
+  )
+  server.registerTool(
+    'kaddo_add_initiative_external_link',
+    {
+      title: 'Add initiative external link',
+      description: `Add a provider-neutral external planning reference (Jira/ADO/GitHub/…) to an initiative. An external status is stored as a signal only and never changes the Initiative lifecycle. ${INITIATIVE_WRITE_NOTE}`,
+      inputSchema: {
+        id: z.string(),
+        integration: z.string(),
+        externalId: z.string(),
+        externalType: z.string().optional(),
+        url: z.string().optional(),
+        externalStatus: z.string().optional(),
+        confirm: z.boolean().optional(),
+      },
+    },
+    async (args) => toolText(guarded(root, () => addInitiativeExternalLinkTool(root, args)))
+  )
+  server.registerTool(
+    'kaddo_suggest_initiative_for_external_item',
+    {
+      title: 'Suggest initiative for external item',
+      description: `Given an external planning item (e.g. an imported Work Item's parent epic), suggest Initiatives whose external links reference it. Suggestion only — association requires human confirmation. ${INITIATIVE_READ_NOTE}`,
+      inputSchema: { integration: z.string(), externalId: z.string() },
+    },
+    async (args) => toolText(guarded(root, () => suggestInitiativeForExternalItemTool(root, args)))
   )
   server.registerTool(
     'kaddo_analyze_initiative',

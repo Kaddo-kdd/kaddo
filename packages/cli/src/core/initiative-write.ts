@@ -73,6 +73,7 @@ function externalLinkToData(l: InitiativeExternalLink): Record<string, unknown> 
   const out: Record<string, unknown> = { integration: l.integration, external_id: l.externalId }
   if (l.externalType) out.external_type = l.externalType
   if (l.url) out.url = l.url
+  if (l.externalStatus) out.external_status = l.externalStatus
   return out
 }
 
@@ -262,6 +263,37 @@ export function updateInitiative(dir: string, id: string, patch: UpdateInitiativ
   writeFile(ini.filePath, newContent)
   const updated = parseInitiative(dir, ini.filePath, newContent)
   if (!updated) throw new InitiativeWriteError('Failed to parse the Initiative after update.')
+  return updated
+}
+
+/**
+ * Add a provider-neutral external planning reference to an Initiative (AC-22). Kaddo stores the
+ * reference (and an optional external status as a SIGNAL only); it never lets an external status
+ * drive the Initiative lifecycle (AC-23).
+ */
+export function addExternalLink(dir: string, id: string, link: InitiativeExternalLink): Initiative {
+  const ini = getInitiative(dir, id)
+  if (!ini) throw new InitiativeWriteError(`Initiative ${id} not found.`)
+  if (!link.integration?.trim() || !link.externalId?.trim()) {
+    throw new InitiativeWriteError('External link requires integration and externalId.')
+  }
+  if (
+    ini.externalLinks.some(
+      (l) =>
+        l.integration.trim().toLowerCase() === link.integration.trim().toLowerCase() &&
+        l.externalId.trim().toLowerCase() === link.externalId.trim().toLowerCase(),
+    )
+  ) {
+    throw new InitiativeWriteError(`External link ${link.integration}:${link.externalId} already exists on ${id}.`)
+  }
+  const raw = readFile(ini.filePath)
+  const { data, content } = matter(raw, {})
+  const existing = Array.isArray(data.external_links) ? (data.external_links as unknown[]) : []
+  data.external_links = [...existing, externalLinkToData(link)]
+  const newContent = matter.stringify(content, data)
+  writeFile(ini.filePath, newContent)
+  const updated = parseInitiative(dir, ini.filePath, newContent)
+  if (!updated) throw new InitiativeWriteError('Failed to parse the Initiative after adding an external link.')
   return updated
 }
 
