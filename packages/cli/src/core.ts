@@ -200,4 +200,35 @@ export {
   type ConsentState,
 } from './core/telemetry-consent.js'
 export { getStatus as getTelemetryStatus, isEnabled as isTelemetryEnabled, type TelemetryStatus } from './core/telemetry.js'
+export {
+  discoverInitiatives,
+  getInitiative,
+  nextInitiativeId,
+  parseInitiative,
+  associatedWorkItems,
+  workItemBelongsToInitiative,
+  computeInitiativeProgress,
+  isValidInitiativeStatus,
+  isValidInitiativeTransition,
+  INITIATIVE_STATES,
+  INITIATIVE_TRANSITIONS,
+  INITIATIVES_DIR,
+  type Initiative,
+  type InitiativeStatus,
+  type InitiativeCandidate,
+  type InitiativeExternalLink,
+  type InitiativeProgress,
+  type AssociatedWorkItem,
+} from './core/initiative.js'
+export {
+  createInitiative,
+  transitionInitiative,
+  addCandidate,
+  materializeCandidate,
+  materializeRoadmapInitiative,
+  InitiativeWriteError,
+  type CreateInitiativeInput,
+  type CandidateInput,
+  type MaterializeCandidateResult,
+} from './core/initiative-write.js'
 export { exists, readFile, join, cwd } from './utils/fs.js'
