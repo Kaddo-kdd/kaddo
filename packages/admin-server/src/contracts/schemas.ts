@@ -288,6 +288,22 @@ export const WorkItemTransitionSchema = z.object({
   expectedRevision: z.string().min(1),
 })
 
+// Initiatives (WI-022)
+export const InitiativeCreateSchema = z.object({
+  title: z.string().min(1),
+  domains: z.array(z.string()).optional(),
+  horizon: z.string().optional(),
+  priority: z.string().optional(),
+})
+
+export const InitiativeUpdateSchema = z.object({
+  status: z.enum(['planned', 'in-progress', 'completed', 'deferred', 'cancelled']).optional(),
+  title: z.string().min(1).optional(),
+  horizon: z.string().optional(),
+  priority: z.string().optional(),
+  domains: z.array(z.string()).optional(),
+})
+
 export const WorkItemEditModelSchema = WorkItemInputSchema.extend({
   id: z.string(),
   status: z.string(),

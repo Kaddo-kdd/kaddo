@@ -41,12 +41,30 @@ import {
   IntegrationError,
   IntegrationServiceError,
   WorkItemWriteError,
+  discoverInitiatives,
+  getInitiative as coreGetInitiative,
+  computeInitiativeProgress,
+  associatedWorkItems,
+  analyzeInitiative,
+  evaluateInitiativeCompletion,
+  createInitiative as coreCreateInitiative,
+  transitionInitiative as coreTransitionInitiative,
+  updateInitiative as coreUpdateInitiative,
+  InitiativeWriteError,
   exists,
   join,
   readFile,
   type WorkItemFilters,
   type WorkItemInput as CoreWorkItemInput,
   type ExternalWorkItemFilters,
+  type Initiative,
+  type InitiativeStatus,
+  type InitiativeProgress,
+  type InitiativeCandidate,
+  type InitiativeExternalLink,
+  type AssociatedWorkItem,
+  type InitiativeAnalysis,
+  type CompletionReadiness,
 } from '@kaddo/cli/core'
 import type {
   ProjectOverview,
@@ -515,6 +533,132 @@ export async function discoverExternalWorkItemsAdmin(
     return await coreDiscoverExternalWorkItems(dir, opts)
   } catch (err) {
     mapIntegrationError(err)
+  }
+}
+
+// --- Initiatives (WI-022) ---------------------------------------------------
+
+export type InitiativeListItemAdmin = {
+  id: string
+  title: string
+  status: InitiativeStatus
+  horizon: string | null
+  priority: string | null
+  planning: InitiativeProgress['planning']
+  delivery: InitiativeProgress['delivery']
+}
+
+export type InitiativeDetailAdmin = {
+  id: string
+  title: string
+  status: InitiativeStatus
+  horizon: string | null
+  priority: string | null
+  knowledgeLevel: string | null
+  domains: string[]
+  relatedCapabilities: string[]
+  source: string | null
+  sourceId: string | null
+  externalLinks: InitiativeExternalLink[]
+  candidates: InitiativeCandidate[]
+  progress: InitiativeProgress
+  workItems: AssociatedWorkItem[]
+  analysis: InitiativeAnalysis
+  completion: CompletionReadiness
+  body: string
+}
+
+function assertValidInitiativeId(id: string): void {
+  if (!id || id.includes('..') || id.includes('/') || id.includes('\\') || id.startsWith('.')) {
+    throw new CoreError('INVALID_INITIATIVE_ID', 'Invalid Initiative identifier.')
+  }
+}
+
+function mapInitiativeError(err: unknown): never {
+  if (err instanceof InitiativeWriteError) throw new CoreError('INITIATIVE_WRITE', err.message)
+  throw err as Error
+}
+
+export function getInitiativesListAdmin(dir: string): { initiatives: InitiativeListItemAdmin[] } {
+  const initiatives = discoverInitiatives(dir).map((ini: Initiative) => {
+    const p = computeInitiativeProgress(dir, ini)
+    return {
+      id: ini.id,
+      title: ini.title,
+      status: ini.status,
+      horizon: ini.horizon,
+      priority: ini.priority,
+      planning: p.planning,
+      delivery: p.delivery,
+    }
+  })
+  return { initiatives }
+}
+
+export function getInitiativeDetailAdmin(dir: string, id: string): InitiativeDetailAdmin {
+  assertValidInitiativeId(id)
+  const ini = coreGetInitiative(dir, id)
+  if (!ini) throw new CoreError('INITIATIVE_NOT_FOUND', 'This Initiative does not exist in the current project.')
+  return {
+    id: ini.id,
+    title: ini.title,
+    status: ini.status,
+    horizon: ini.horizon,
+    priority: ini.priority,
+    knowledgeLevel: ini.knowledgeLevel,
+    domains: ini.domains,
+    relatedCapabilities: ini.relatedCapabilities,
+    source: ini.source,
+    sourceId: ini.sourceId,
+    externalLinks: ini.externalLinks,
+    candidates: ini.candidates,
+    progress: computeInitiativeProgress(dir, ini),
+    workItems: associatedWorkItems(dir, ini.id),
+    analysis: analyzeInitiative(dir, ini),
+    completion: evaluateInitiativeCompletion(dir, ini),
+    body: ini.body,
+  }
+}
+
+export function createInitiativeAdmin(
+  dir: string,
+  body: { title: string; domains?: string[]; horizon?: string; priority?: string },
+): { id: string } {
+  try {
+    const ini = coreCreateInitiative(dir, {
+      title: body.title,
+      domains: body.domains,
+      horizon: body.horizon,
+      priority: body.priority,
+    })
+    return { id: ini.id }
+  } catch (err) { mapInitiativeError(err) }
+}
+
+export function updateInitiativeAdmin(
+  dir: string,
+  id: string,
+  body: { status?: string; title?: string; horizon?: string; priority?: string; domains?: string[] },
+): { id: string; status: InitiativeStatus } {
+  assertValidInitiativeId(id)
+  try {
+    let ini = coreGetInitiative(dir, id)
+    if (!ini) throw new CoreError('INITIATIVE_NOT_FOUND', 'This Initiative does not exist in the current project.')
+    if (body.status) {
+      ini = coreTransitionInitiative(dir, id, body.status as InitiativeStatus)
+    }
+    if (body.title !== undefined || body.horizon !== undefined || body.priority !== undefined || body.domains !== undefined) {
+      ini = coreUpdateInitiative(dir, id, {
+        title: body.title,
+        horizon: body.horizon,
+        priority: body.priority,
+        domains: body.domains,
+      })
+    }
+    return { id: ini.id, status: ini.status }
+  } catch (err) {
+    if (err instanceof CoreError) throw err
+    mapInitiativeError(err)
   }
 }
 

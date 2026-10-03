@@ -350,6 +350,62 @@ function toQuery(filters: WorkItemFilters): string {
   return s ? `?${s}` : ''
 }
 
+export type InitiativePlanning = { totalCandidates: number; materialized: number; remaining: number }
+export type InitiativeDelivery = { total: number; byState: Record<string, number> }
+
+export type InitiativeListItem = {
+  id: string
+  title: string
+  status: string
+  horizon: string | null
+  priority: string | null
+  planning: InitiativePlanning
+  delivery: InitiativeDelivery
+}
+
+export type InitiativeCandidate = {
+  id: string
+  title: string
+  type?: string
+  expectedValue?: string
+  materializedAs: string | null
+}
+
+export type InitiativeExternalLink = {
+  integration: string
+  externalId: string
+  externalType?: string
+  url?: string
+  externalStatus?: string
+}
+
+export type InitiativeFinding = {
+  code: string
+  severity: 'info' | 'warning' | 'blocking'
+  message: string
+  items?: string[]
+}
+
+export type InitiativeDetail = {
+  id: string
+  title: string
+  status: string
+  horizon: string | null
+  priority: string | null
+  knowledgeLevel: string | null
+  domains: string[]
+  relatedCapabilities: string[]
+  source: string | null
+  sourceId: string | null
+  externalLinks: InitiativeExternalLink[]
+  candidates: InitiativeCandidate[]
+  progress: { initiative: string; status: string; planning: InitiativePlanning; delivery: InitiativeDelivery }
+  workItems: { id: string; title: string; status: string }[]
+  analysis: { findings: InitiativeFinding[]; suggestedCandidates: InitiativeCandidate[]; successCriteria: { text: string; checked: boolean | null }[] }
+  completion: { ready: boolean; readiness: string; reasons: string[] }
+  body: string
+}
+
 export const api = {
   initSession: () => fetchApi<{ status: string }>('/session'),
   getOverview: () => fetchApi<ProjectOverview>('/overview'),
@@ -365,6 +421,13 @@ export const api = {
   getKnowledgeArtifact: (artifactId: string) => fetchApi<KnowledgeArtifactDetail>(`/knowledge/artifact/${encodeURIComponent(artifactId)}`),
   getWorkItemsList: (filters: WorkItemFilters = {}) => fetchApi<WorkItemsList>(`/work-items${toQuery(filters)}`),
   getWorkItem: (workItemId: string) => fetchApi<WorkItemDetail>(`/work-items/${encodeURIComponent(workItemId)}`),
+  // Initiatives (WI-022)
+  getInitiatives: () => fetchApi<{ initiatives: InitiativeListItem[] }>('/initiatives'),
+  getInitiative: (initiativeId: string) => fetchApi<InitiativeDetail>(`/initiatives/${encodeURIComponent(initiativeId)}`),
+  createInitiative: (body: { title: string; domains?: string[]; horizon?: string; priority?: string }) =>
+    mutateApi<{ id: string }>('/initiatives', 'POST', body),
+  updateInitiative: (initiativeId: string, body: { status?: string; title?: string; horizon?: string; priority?: string; domains?: string[] }) =>
+    mutateApi<{ id: string; status: string }>(`/initiatives/${encodeURIComponent(initiativeId)}`, 'PUT', body),
   // Writes (VS-099)
   getCaptureDefinition: () => fetchApi<WorkItemCaptureDefinition>('/work-items-capture'),
   createWorkItem: (intent: string, type: string, answers?: Record<string, string>) => mutateApi<WorkItemWriteResult>('/work-items', 'POST', { intent, type, ...(answers ? { answers } : {}) }),

@@ -44,12 +44,18 @@ import {
   discoverExternalWorkItemsAdmin,
   getIntegrationFiltersAdmin,
   updateIntegrationFiltersAdmin,
+  getInitiativesListAdmin,
+  getInitiativeDetailAdmin,
+  createInitiativeAdmin,
+  updateInitiativeAdmin,
   CoreError,
 } from './core-adapter.js'
 import {
   WorkItemCreateWithAnswersSchema,
   WorkItemUpdateSchema,
   WorkItemTransitionSchema,
+  InitiativeCreateSchema,
+  InitiativeUpdateSchema,
 } from './contracts/schemas.js'
 import type { AdminStorage } from './storage/admin-storage.js'
 
@@ -65,7 +71,10 @@ function statusForCode(code: string): number {
     case 'INVALID_INTEGRATION_ID':
     case 'INVALID_SECRET_NAME':
     case 'INVALID_EXTERNAL_ID':
+    case 'INVALID_INITIATIVE_ID':
+    case 'INITIATIVE_WRITE':
     case 'INVALID_TRANSITION': return 400
+    case 'INITIATIVE_NOT_FOUND': return 404
     default: return 500
   }
 }
@@ -241,6 +250,22 @@ export async function createAdminServer(opts: AdminServerOptions) {
       throw err
     }
   })
+  // Initiatives (WI-022)
+  app.get('/api/v1/admin/initiatives', coreRoute(getInitiativesListAdmin))
+  app.post('/api/v1/admin/initiatives', async (request, reply) => {
+    const parsed = InitiativeCreateSchema.safeParse(request.body)
+    if (!parsed.success) return reply.code(400).send({ error: { code: 'INVALID_INPUT', message: 'A title is required.' } })
+    return writeHandler(reply, () => createInitiativeAdmin(projectDir, parsed.data))
+  })
+  app.get<{ Params: { initiativeId: string } }>('/api/v1/admin/initiatives/:initiativeId', async (request, reply) => {
+    return writeHandler(reply, () => getInitiativeDetailAdmin(projectDir, request.params.initiativeId))
+  })
+  app.put<{ Params: { initiativeId: string } }>('/api/v1/admin/initiatives/:initiativeId', async (request, reply) => {
+    const parsed = InitiativeUpdateSchema.safeParse(request.body)
+    if (!parsed.success) return reply.code(400).send({ error: { code: 'INVALID_INPUT', message: 'Invalid initiative update.' } })
+    return writeHandler(reply, () => updateInitiativeAdmin(projectDir, request.params.initiativeId, parsed.data))
+  })
+
   app.get('/api/v1/admin/modules', coreRoute(getModules))
   app.get('/api/v1/admin/readiness', coreRoute(getProjectReadiness))
   app.get('/api/v1/admin/route', coreRoute(getProjectRoute))
