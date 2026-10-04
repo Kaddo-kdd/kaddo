@@ -1,0 +1,13 @@
+---
+import BlogLayout from '../../layouts/BlogLayout.astro'
+import BlogIndex from '../../components/BlogIndex.astro'
+import { getPosts, getTags } from '../../lib/blog'
+
+const posts = await getPosts('en')
+const tags = await getTags('en')
+const description =
+  'Technical articles about Knowledge-Driven Development, AI-assisted software engineering, software architecture, agents and evolving software systems.'
+---
+<BlogLayout title="Kaddo Blog" description={description} path="/blog/" locale="en">
+  <BlogIndex locale="en" posts={posts} tags={tags} heading="Kaddo Blog" lead={description} />
+</BlogLayout>

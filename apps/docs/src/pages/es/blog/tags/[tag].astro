@@ -1,0 +1,28 @@
+---
+import BlogLayout from '../../../../layouts/BlogLayout.astro'
+import { getPosts, getTags, postPath, formatDate } from '../../../../lib/blog'
+
+export async function getStaticPaths() {
+  const tags = await getTags('es')
+  return tags.map(({ tag }) => ({ params: { tag }, props: { tag } }))
+}
+
+const { tag } = Astro.props
+const posts = (await getPosts('es')).filter((p) => p.data.tags.includes(tag))
+const description = `Artículos del blog de Kaddo con la etiqueta "${tag}".`
+---
+<BlogLayout title={`#${tag} · Blog`} description={description} path={`/es/blog/tags/${tag}/`} locale="es">
+  <p style="margin:0 0 6px"><a href="/es/blog/">← Blog</a></p>
+  <h1 style="font-size:2rem;margin:0 0 20px">#{tag}</h1>
+  <div style="display:flex;flex-direction:column;gap:14px">
+    {posts.map((p) => (
+      <article style="border:1px solid rgba(255,255,255,0.1);border-radius:12px;background:#161e31;padding:16px 18px">
+        <a href={postPath(p)} style="color:inherit;text-decoration:none">
+          <h3 style="margin:0 0 6px;font-size:1.15rem;color:var(--kaddo-warm-white)">{p.data.title}</h3>
+          <p style="margin:0 0 8px;color:#c0c4cf;font-size:0.95rem">{p.data.description}</p>
+          <div style="font-size:0.82rem;color:#8a90a0"><time datetime={p.data.publishedAt.toISOString()}>{formatDate(p.data.publishedAt, 'es')}</time></div>
+        </a>
+      </article>
+    ))}
+  </div>
+</BlogLayout>
