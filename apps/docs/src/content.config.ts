@@ -23,6 +23,9 @@ const blog = defineCollection({
     // Cross-posting: when this article was first published elsewhere, point the canonical URL at the
     // original to avoid duplicate-content splitting. Omit for self-canonical (kaddo.org).
     canonicalUrl: z.string().url().optional(),
+    // Pairs an EN and an ES article as hreflang alternates when they use different slugs. When
+    // omitted, articles pair by shared base slug (same filename across en/ and es/).
+    translationKey: z.string().optional(),
   }),
 })
 

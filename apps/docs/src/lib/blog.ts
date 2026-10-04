@@ -65,9 +65,11 @@ export async function getRelated(post: BlogPost, max = 3): Promise<BlogPost[]> {
  */
 export async function getAlternate(post: BlogPost): Promise<{ locale: Locale; path: string } | null> {
   const other: Locale = post.data.locale === 'es' ? 'en' : 'es'
-  const slug = baseSlug(post)
   const candidates = await getPosts(other)
-  const match = candidates.find((p) => baseSlug(p) === slug)
+  const key = post.data.translationKey
+  const match = key
+    ? candidates.find((p) => p.data.translationKey === key)
+    : candidates.find((p) => baseSlug(p) === baseSlug(post))
   return match ? { locale: other, path: postPath(match) } : null
 }
 

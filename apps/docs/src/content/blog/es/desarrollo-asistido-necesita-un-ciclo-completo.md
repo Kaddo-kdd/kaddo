@@ -9,8 +9,9 @@ tags:
   - sdlc
   - agents
 locale: es
-cover: /banner.png
+cover: /blog/cycle/cover.webp
 featured: true
+translationKey: cycle-complete-ai-development
 ---
 
 > Publicado originalmente en [AWS Builder Center](https://builder.aws.com/content/3JsFSWtFxGITb1j8n0uwTMmfpxu/dar-contexto-a-la-ia-no-es-suficiente-el-desarrollo-asistido-necesita-un-ciclo-completo). Quinto artículo de la serie Knowledge Driven Development (KDD).
@@ -35,17 +36,10 @@ aprende algo que antes no sabía. Eso llevó a una evolución importante en Kadd
 
 ## El problema no termina cuando el agente entiende la tarea
 
-En muchos flujos de desarrollo asistido por IA, el proceso se parece a esto:
+En muchos flujos de desarrollo asistido por IA el proceso evoluciona de `Necesidad → Prompt →
+Código` a `Necesidad → Contexto → Agente → Código`:
 
-```text
-Necesidad → Prompt → Código
-```
-
-En escenarios un poco más maduros agregamos contexto:
-
-```text
-Necesidad → Contexto → Agente → Código
-```
+![Del prompt directo al flujo con contexto antes del agente](/blog/cycle/problem.webp)
 
 Eso mejora mucho el resultado, pero sigue dejando preguntas importantes sin resolver:
 
@@ -94,6 +88,8 @@ conversaciones que muchas veces mezclamos:
 - **Refinement** define WHAT + WHY.
 - **Implementation Handoff** define HOW, usando el contexto actual del proyecto.
 
+![Refinement define qué y por qué; el handoff define el cómo](/blog/cycle/refinement.webp)
+
 Esta separación resulta especialmente útil con agentes, porque evita que una descripción funcional
 termine llena de decisiones técnicas que podrían quedar obsoletas o depender del estado actual del
 sistema.
@@ -102,6 +98,8 @@ sistema.
 
 Antes de modificar código, Kaddo puede combinar el Work Item con conocimiento relevante del
 proyecto, contexto del sistema y contexto del repositorio para producir un Implementation Handoff.
+
+![El Implementation Handoff combina Work Item, conocimiento, sistema y repositorio](/blog/cycle/handoff.webp)
 
 Ese handoff puede incluir el enfoque técnico, las áreas afectadas, los pasos de implementación,
 restricciones relevantes, decisiones de diseño, alternativas, trade-offs y estrategia de validación,
@@ -122,6 +120,8 @@ Otro problema frecuente en desarrollo asistido por IA aparece cuando el agente t
 simplemente responde algo como:
 
 > "Implementation completed successfully."
+
+![Implementar produce evidencia; verificar contrasta esa evidencia contra lo pedido](/blog/cycle/verification.webp)
 
 Eso no debería ser suficiente.
 
@@ -162,11 +162,10 @@ tendrá que ser descubierto nuevamente en el futuro. Por eso el lifecycle termin
 aprendizajes relevantes pueden regresar al Knowledge del proyecto y convertirse en contexto para
 futuros Work Items.
 
-El ciclo termina siendo algo parecido a:
+El ciclo termina siendo algo parecido a `Knowledge → Work Item → Implementation → Evidence →
+Learning → Knowledge`:
 
-```text
-Knowledge → Work Item → Implementation → Evidence → Learning → Knowledge
-```
+![El conocimiento regresa al proyecto y el ciclo se cierra](/blog/cycle/learning.webp)
 
 Ahí el conocimiento deja de ser documentación estática y empieza a evolucionar junto con el
 software.
@@ -208,6 +207,8 @@ Incluso el trabajo necesario para eliminar OpenSpec fue gestionado como un Work 
 otras palabras: Kaddo define trabajo con Kaddo, lo planifica con Kaddo, lo implementa con Kaddo, lo
 verifica con Kaddo y utiliza lo aprendido para seguir mejorando Kaddo. Ese milestone lo resumí hace
 tiempo en una frase: "Build Kaddo with Kaddo".
+
+![Kaddo define, planifica, implementa y verifica Kaddo con Kaddo](/blog/cycle/dogfooding.webp)
 
 No significa que el ciclo esté terminado. Seguramente seguirán apareciendo fricciones y
 oportunidades para simplificarlo, pero sí representa algo importante: Kaddo ya puede evolucionar
