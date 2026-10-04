@@ -17,13 +17,22 @@ export interface Props {
   tags?: string[]
   /** hreflang alternate: the equivalent page in the other locale, when it exists. */
   alternate?: { locale: 'en' | 'es'; path: string } | null
+  /** Where the header language switcher sends the reader for the OTHER locale. Defaults to the
+   *  other locale's blog index when not provided (e.g. index/tag pages). */
+  altLangPath?: string
 }
 
 const site = Astro.site ?? new URL('https://kaddo.org')
 const {
   title, description, path, locale, image = '/banner.png', type = 'website',
   publishedAt, updatedAt, author = 'Julian Dario Luna Patiño', tags = [], alternate = null,
+  altLangPath,
 } = Astro.props
+
+// Language switcher target for the OTHER locale: the explicit alternate (equivalent article),
+// else the other locale's blog index.
+const otherIndex = locale === 'es' ? '/blog/' : '/es/blog/'
+const switchHref = altLangPath ?? alternate?.path ?? otherIndex
 
 const canonical = new URL(path, site).href
 const ogImage = new URL(image, site).href
@@ -99,6 +108,11 @@ const jsonLd = type === 'article'
         <a href={homeHref}>{docsLabel}</a>
         <a href={locale === 'es' ? '/es/blog/' : '/blog/'} aria-current="page">Blog</a>
         <a href="https://github.com/Kaddo-kdd/kaddo" rel="noopener">GitHub</a>
+        <span class="lang-switch" aria-label={locale === 'es' ? 'Cambiar idioma' : 'Switch language'}>
+          {locale === 'en' ? <span class="current" aria-current="true">EN</span> : <a href={switchHref}>EN</a>}
+          <span class="sep">/</span>
+          {locale === 'es' ? <span class="current" aria-current="true">ES</span> : <a href={switchHref}>ES</a>}
+        </span>
       </nav>
     </header>
 
@@ -138,9 +152,14 @@ const jsonLd = type === 'article'
         border-bottom: 1px solid rgba(255,255,255,0.08);
       }
       .brand { font-family: 'Poppins', sans-serif; font-weight: 800; font-size: 20px; color: var(--kaddo-warm-white); }
-      .blog-nav { display: flex; gap: 22px; font-size: 15px; }
-      .blog-nav a { color: #c0c4cf; }
-      .blog-nav a[aria-current='page'] { color: var(--kaddo-amber); }
+      .blog-nav { display: flex; align-items: center; gap: 22px; font-size: 15px; }
+      .blog-nav > a { color: #c0c4cf; }
+      .blog-nav > a[aria-current='page'] { color: var(--kaddo-amber); }
+      .lang-switch { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; }
+      .lang-switch a { color: #8a90a0; }
+      .lang-switch a:hover { color: var(--kaddo-amber); }
+      .lang-switch .current { color: var(--kaddo-warm-white); }
+      .lang-switch .sep { color: #565d70; font-weight: 400; }
 
       .blog-main { flex: 1; max-width: 760px; width: 100%; margin: 0 auto; padding: 40px 24px 64px; box-sizing: border-box; }
 
