@@ -2,6 +2,15 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import rehypeSanitize from 'rehype-sanitize'
 import type { Components } from 'react-markdown'
+import type { ReactNode } from 'react'
+import { MermaidDiagram } from './MermaidDiagram'
+
+function toText(children: ReactNode): string {
+  if (typeof children === 'string') return children
+  if (Array.isArray(children)) return children.map(toText).join('')
+  if (children == null || typeof children === 'boolean' || typeof children === 'number') return String(children ?? '')
+  return ''
+}
 
 const components: Components = {
   a: ({ href, children, ...props }) => {
@@ -22,6 +31,9 @@ const components: Components = {
   },
   code: ({ className, children, ...props }) => {
     const isBlock = className?.startsWith('language-')
+    if (className === 'language-mermaid') {
+      return <MermaidDiagram code={toText(children)} />
+    }
     if (isBlock) {
       return (
         <pre style={{

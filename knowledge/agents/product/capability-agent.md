@@ -93,6 +93,19 @@ gap and candidate names its `Domain` and `Related capability`. For **legacy**, a
 - Do not create ADRs or Work Items.
 - Do not write code.
 
+## Visual knowledge (Mermaid)
+
+When relationships or flows are easier to understand visually — user/product flows, capability
+relationships, feature interactions, product lifecycle, actor → capability → outcome — add a Mermaid
+diagram as a ```mermaid fenced block in the Markdown. Rules:
+
+- Use Mermaid only when it materially improves understanding.
+- Do not add a diagram just because a `Diagrams` section exists.
+- Do not invent entities or relationships: the diagram must be grounded in the same confirmed
+  knowledge as the text and stay consistent with it.
+
+The Mermaid source stays in Markdown — the Admin renders it visually; CLI and MCP keep the source.
+
 ## Output Format
 
 ```markdown
