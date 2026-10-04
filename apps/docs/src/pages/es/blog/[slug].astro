@@ -26,6 +26,7 @@ const alternate = await getAlternate(post)
   author={post.data.author}
   tags={post.data.tags}
   alternate={alternate}
+  canonicalUrl={post.data.canonicalUrl}
 >
   <ArticleView post={post} related={related} locale="es">
     <Content />

@@ -20,13 +20,15 @@ export interface Props {
   /** Where the header language switcher sends the reader for the OTHER locale. Defaults to the
    *  other locale's blog index when not provided (e.g. index/tag pages). */
   altLangPath?: string
+  /** Override the canonical URL (e.g. a cross-post's original source). Defaults to this page. */
+  canonicalUrl?: string
 }
 
 const site = Astro.site ?? new URL('https://kaddo.org')
 const {
   title, description, path, locale, image = '/banner.png', type = 'website',
   publishedAt, updatedAt, author = 'Julian Dario Luna Patiño', tags = [], alternate = null,
-  altLangPath,
+  altLangPath, canonicalUrl,
 } = Astro.props
 
 // Language switcher target for the OTHER locale: the explicit alternate (equivalent article),
@@ -34,7 +36,8 @@ const {
 const otherIndex = locale === 'es' ? '/blog/' : '/es/blog/'
 const switchHref = altLangPath ?? alternate?.path ?? otherIndex
 
-const canonical = new URL(path, site).href
+const pageUrl = new URL(path, site).href
+const canonical = canonicalUrl ?? pageUrl
 const ogImage = new URL(image, site).href
 const siteName = 'Kaddo'
 const fullTitle = `${title} · Kaddo`
@@ -73,7 +76,7 @@ const jsonLd = type === 'article'
     <meta property="og:site_name" content={siteName} />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
-    <meta property="og:url" content={canonical} />
+    <meta property="og:url" content={pageUrl} />
     <meta property="og:image" content={ogImage} />
     <meta property="og:locale" content={locale === 'es' ? 'es_ES' : 'en_US'} />
 

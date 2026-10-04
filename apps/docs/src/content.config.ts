@@ -20,6 +20,9 @@ const blog = defineCollection({
     cover: z.string().optional(),
     draft: z.boolean().default(false),
     featured: z.boolean().default(false),
+    // Cross-posting: when this article was first published elsewhere, point the canonical URL at the
+    // original to avoid duplicate-content splitting. Omit for self-canonical (kaddo.org).
+    canonicalUrl: z.string().url().optional(),
   }),
 })
 
