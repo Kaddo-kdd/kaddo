@@ -258,6 +258,27 @@ function freshBody(input: WorkItemInput): string {
   return `${preamble}\n\n${out.join('\n\n')}\n`.replace(/\n{3,}/g, '\n\n')
 }
 
+/**
+ * Compose the artifact body for an imported Work Item: Kaddo's canonical preamble
+ * (`# title` + `> Type:`) followed by the source's Markdown body verbatim. A leading H1 and an
+ * immediately following `> Type:` blockquote in the source are dropped so Kaddo owns the preamble;
+ * everything else (all `##` sections, prose, code fences) is preserved so nothing is lost. Blank
+ * lines inside the body are left untouched — the source may contain intentional spacing.
+ */
+function importedBody(title: string, type: string, sourceBody: string): string {
+  const lines = sourceBody.split(/\r?\n/)
+  let i = 0
+  while (i < lines.length && !lines[i].trim()) i++
+  if (i < lines.length && /^#\s+/.test(lines[i])) {
+    i++
+    while (i < lines.length && !lines[i].trim()) i++
+    if (i < lines.length && /^>\s*Type:/i.test(lines[i])) i++
+  }
+  const rest = lines.slice(i).join('\n').trim()
+  const preamble = `# ${title}\n\n> Type: ${type}`
+  return rest ? `${preamble}\n\n${rest}\n` : `${preamble}\n`
+}
+
 // --- Frontmatter merge -------------------------------------------------------
 
 /** Apply the structured input onto a frontmatter object, preserving unknown keys (no-lossy). */
@@ -435,7 +456,17 @@ export type ExternalSnapshot = {
 
 export function createWorkItem(
   dir: string,
-  opts: { intent: string; type: string; answers?: Record<string, string>; source?: WorkItemSourceInput; originalSnapshot?: ExternalSnapshot },
+  opts: {
+    intent: string
+    type: string
+    answers?: Record<string, string>
+    source?: WorkItemSourceInput
+    originalSnapshot?: ExternalSnapshot
+    /** A pre-formed Markdown body to use verbatim (import path) instead of a generated skeleton. */
+    body?: string
+    /** A short summary for the `summary:` frontmatter; falls back to the intent when absent. */
+    summary?: string
+  },
 ): { id: string; path: string; revision: string } {
   const intent = opts.intent.trim()
   if (!intent) throw new WorkItemWriteError('INVALID_INPUT', 'An intent or summary is required.')
@@ -444,6 +475,7 @@ export function createWorkItem(
 
   const id = nextWorkItemId(dir)
   const title = intent.split(/\r?\n/)[0].trim().slice(0, 120)
+  const summary = opts.summary?.trim() ? opts.summary.trim() : intent
   const today = new Date().toISOString().split('T')[0]
   const source: Record<string, unknown> = opts.source
     ? { ...opts.source, inferred: false }
@@ -458,18 +490,20 @@ export function createWorkItem(
     source,
     generated_by: 'kaddo-admin',
     affected_modules: [],
-    summary: intent,
+    summary,
   }
   if (opts.originalSnapshot) data.original_snapshot = opts.originalSnapshot
   const answers = opts.answers ?? {}
   const hasAnswers = Object.values(answers).some((v) => v?.trim())
-  const body = hasAnswers
-    ? captureBody(title, type, answers)
-    : freshBody({
-        title, type, summary: intent,
-        scopeUnknowns: [], affectedModules: [], moduleCoverage: [], impactAnalysis: [],
-        acceptanceCriteria: [], decisions: [], relatedKnowledge: [], scopeConfidence: null,
-      })
+  const body = opts.body?.trim()
+    ? importedBody(title, type, opts.body)
+    : hasAnswers
+      ? captureBody(title, type, answers)
+      : freshBody({
+          title, type, summary: intent,
+          scopeUnknowns: [], affectedModules: [], moduleCoverage: [], impactAnalysis: [],
+          acceptanceCriteria: [], decisions: [], relatedKnowledge: [], scopeConfidence: null,
+        })
   const relPath = `${WORK_ITEMS_DIR}/draft/${id}-${slugify(title)}.md`
   const filePath = join(dir, relPath)
   if (exists(filePath)) throw new WorkItemWriteError('INVALID_INPUT', `Work Item file already exists: ${relPath}`)

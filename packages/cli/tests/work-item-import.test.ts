@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import fs from 'fs'
 import path from 'path'
 import os from 'os'
+import matter from 'gray-matter'
 
 function tmpDir(): string { return fs.mkdtempSync(path.join(os.tmpdir(), 'kaddo-import-')) }
 function write(dir: string, rel: string, content: string) {
@@ -316,6 +317,48 @@ describe('VS-109 — importWorkItem', () => {
     expect(result.sourceFormat).toBe('markdown')
     const wi = readWI(dir, result.workItemId)
     expect(wi).toContain('Add monitoring')
+  })
+
+  it('preserves a long markdown-frontmatter body as the artifact body, not in summary', () => {
+    const bigBody = Array.from({ length: 60 }, (_, i) => `Detail line ${i} describing the behavior in depth.`).join('\n')
+    const content = [
+      '---',
+      'title: "Observability overhaul"',
+      'author: ChatGPT',
+      '---',
+      '# Observability overhaul',
+      '',
+      '## Intent',
+      'Operators need end-to-end visibility across the ingestion pipeline.',
+      '',
+      bigBody,
+      '',
+      '## Acceptance Criteria',
+      '- [ ] Dashboards render p95 latency per stage',
+      '- [ ] Alerts fire within 60s of an outage',
+      '',
+      '## Validation',
+      'Replay a production incident and confirm alerts trigger.',
+    ].join('\n')
+
+    const result = importWorkItem(dir, { content, source: 'cli', type: 'feature' })
+    expect(result.created).toBe(true)
+    expect(result.sourceFormat).toBe('markdown-frontmatter')
+
+    const wi = readWI(dir, result.workItemId)!
+    const parsed = matter(wi)
+
+    // The body must carry the source's Markdown sections verbatim.
+    expect(parsed.content).toContain('## Acceptance Criteria')
+    expect(parsed.content).toContain('Dashboards render p95 latency per stage')
+    expect(parsed.content).toContain('## Validation')
+    expect(parsed.content).toContain('Detail line 59 describing the behavior in depth.')
+
+    // The summary must be short — a single derived line, never the whole spec.
+    const summary = String(parsed.data.summary ?? '')
+    expect(summary.length).toBeLessThanOrEqual(281)
+    expect(summary).not.toContain('## Acceptance Criteria')
+    expect(summary).toContain('Operators need end-to-end visibility')
   })
 
   it('imports kaddo-format and overrides lifecycle fields', () => {

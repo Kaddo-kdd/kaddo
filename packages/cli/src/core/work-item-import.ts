@@ -112,7 +112,7 @@ export function parseContent(raw: string): ParsedContent {
   const candidateType = extractType(frontmatterFields)
   const sections = extractSections(bodyText)
 
-  const summary = bodyText || title
+  const summary = deriveSummary(bodyText, title)
 
   return {
     format,
@@ -133,6 +133,23 @@ function extractTitle(fields: Record<string, unknown>, body: string): string {
   if (h1Match) return h1Match[1].trim().slice(0, 120)
   const firstLine = body.split(/\r?\n/).find((l) => l.trim())
   return (firstLine?.trim() ?? 'Untitled Work Item').slice(0, 120)
+}
+
+/**
+ * A short summary for the `summary:` frontmatter — NOT the whole body. We take the first non-empty
+ * line that is not a Markdown heading or blockquote (typically the opening sentence/paragraph) and
+ * fall back to the title. The full body is preserved separately as the artifact body, so a long
+ * spec never gets folded into the `summary:` scalar.
+ */
+function deriveSummary(body: string, title: string): string {
+  for (const line of body.split(/\r?\n/)) {
+    const t = line.trim()
+    if (!t) continue
+    if (/^#{1,6}\s/.test(t)) continue // skip ATX headings
+    if (/^>/.test(t)) continue // skip blockquotes (e.g. "> Type:")
+    return t.slice(0, 280)
+  }
+  return title
 }
 
 function extractType(fields: Record<string, unknown>): string | undefined {
@@ -177,6 +194,10 @@ function extractSections(body: string): Map<string, string> {
 type NormalizedImport = {
   type: string
   intent: string
+  /** Short summary for the `summary:` frontmatter. */
+  summary: string
+  /** The source's Markdown body, to be written verbatim as the artifact body (when present). */
+  body?: string
   source: WorkItemSourceInput
   snapshot: ExternalSnapshot
   discardedFields: string[]
@@ -199,6 +220,11 @@ export function normalizeImportFields(
     ? `${parsed.title}\n\n${parsed.body}`
     : parsed.title
 
+  // Preserve the source's Markdown body as the artifact body whenever it carries real content
+  // beyond the title (sections, prose). For single-line sources (e.g. plain text) there is no
+  // distinct body, so the derived summary alone represents the intent.
+  const body = parsed.body && parsed.body.trim() !== parsed.title.trim() ? parsed.body : undefined
+
   const source: WorkItemSourceInput = {
     type: opts.importSource === 'chat' ? 'chat' : 'external',
     imported_at: new Date().toISOString().split('T')[0],
@@ -216,7 +242,7 @@ export function normalizeImportFields(
     if (labels.length > 0) snapshot.labels = labels
   }
 
-  return { type, intent, source, snapshot, discardedFields }
+  return { type, intent, summary: parsed.summary, body, source, snapshot, discardedFields }
 }
 
 // --- Content hash ------------------------------------------------------------
@@ -321,6 +347,8 @@ export function importWorkItem(dir: string, opts: ImportWorkItemOpts): ImportWor
     type: normalized.type,
     source: normalized.source,
     originalSnapshot: normalized.snapshot,
+    summary: normalized.summary,
+    body: normalized.body,
   })
 
   let refinementHandoff: RefinementHandoff | undefined
