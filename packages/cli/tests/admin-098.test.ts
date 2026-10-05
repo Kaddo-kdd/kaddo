@@ -374,6 +374,70 @@ describe('VS-098: Legacy work items', () => {
   })
 })
 
+// ─── WI-025: canonical Markdown body (no information loss) ──────────────────────
+
+const FUTURE_WI = [
+  '---',
+  'id: WI-FUTURE',
+  'title: Item with an unmodeled section',
+  'type: feature',
+  'status: completed',
+  'affected_modules: [core]',
+  '---',
+  '',
+  '# Item with an unmodeled section',
+  '',
+  '## Current behavior',
+  '',
+  'Something today.',
+  '',
+  '## Rollout Strategy',
+  '',
+  'Release progressively to the first tenant group.',
+  '',
+  '## Learning',
+  '',
+  'The original assumption about X was incorrect.',
+  '',
+].join('\n')
+
+describe('WI-025: canonical Markdown body', () => {
+  let dir: string
+  beforeEach(() => { dir = tmpDir() })
+  afterEach(() => { fs.rmSync(dir, { recursive: true, force: true }) })
+
+  it('exposes the verbatim body (not reconstructed from parsed fields)', async () => {
+    initProject(dir, { 'knowledge/delivery/work-items/completed/WI-006.md': RICH_WI })
+    const core = await import('../src/core.js')
+    const wi = core.getWorkItem(dir, 'WI-006')
+    // Starts at the artifact's own H1 and keeps the exact heading + bullet text.
+    expect(wi.markdownBody.startsWith('# Add profile birth date')).toBe(true)
+    expect(wi.markdownBody).toContain('## Acceptance criteria')
+    expect(wi.markdownBody).toContain('- [x] API accepts a nullable birth date.')
+    // Not the frontmatter.
+    expect(wi.markdownBody).not.toContain('id: WI-006')
+  })
+
+  it('keeps unmodeled and future sections visible (Rollout Strategy, Learning)', async () => {
+    initProject(dir, { 'knowledge/delivery/work-items/completed/WI-FUTURE.md': FUTURE_WI })
+    const core = await import('../src/core.js')
+    const wi = core.getWorkItem(dir, 'WI-FUTURE')
+    // Core models none of these headings, yet the body preserves them for Full Definition.
+    expect(wi.markdownBody).toContain('## Rollout Strategy')
+    expect(wi.markdownBody).toContain('Release progressively to the first tenant group.')
+    expect(wi.markdownBody).toContain('## Learning')
+    expect(wi.markdownBody).toContain('The original assumption about X was incorrect.')
+  })
+
+  it('is carried through the Admin Server adapter', async () => {
+    initProject(dir, { 'knowledge/delivery/work-items/completed/WI-006.md': RICH_WI })
+    const { getWorkItemDetail } = await import('../../admin-server/src/core-adapter.js')
+    const wi = getWorkItemDetail(dir, 'WI-006')
+    expect(typeof wi.markdownBody).toBe('string')
+    expect(wi.markdownBody).toContain('## Acceptance criteria')
+  })
+})
+
 // ─── Adapter + security ───────────────────────────────────────────────────────
 
 describe('VS-098: Admin Server adapter', () => {

@@ -1,0 +1,25 @@
+---
+// Override of Starlight's header SocialIcons to add a top-level "Blog" link next to GitHub,
+// giving docs pages access to the editorial surface (WI-023, AC-13). Reuses the default icons.
+import Default from '@astrojs/starlight/components/SocialIcons.astro'
+
+const isEs = Astro.url.pathname.startsWith('/es/')
+const blogHref = isEs ? '/es/blog/' : '/blog/'
+const label = isEs ? 'Blog' : 'Blog'
+---
+<a href={blogHref} class="kaddo-blog-link">{label}</a>
+<Default><slot /></Default>
+
+<style>
+  .kaddo-blog-link {
+    display: inline-flex;
+    align-items: center;
+    font-size: var(--sl-text-sm);
+    font-weight: 600;
+    color: var(--sl-color-text);
+    text-decoration: none;
+    padding: 0 0.4rem;
+    margin-inline-end: 0.25rem;
+  }
+  .kaddo-blog-link:hover { color: var(--sl-color-text-accent); }
+</style>

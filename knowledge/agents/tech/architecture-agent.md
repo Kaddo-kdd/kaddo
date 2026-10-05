@@ -51,6 +51,20 @@ Analyze the context pack and identify:
 - Do not produce final ADRs — only decision candidates.
 - Do not write code or implementation tasks.
 
+## Visual knowledge (Mermaid)
+
+When relationships or flows are easier to understand visually — system context, components, modules,
+dependencies, integrations, data flows, sequences, deployment — add a Mermaid diagram as a ```mermaid
+fenced block in the Markdown (`flowchart`, `sequenceDiagram`, `classDiagram`, `stateDiagram-v2`, …).
+Rules:
+
+- Use Mermaid only when it materially improves understanding.
+- Do not add a diagram just because a `Diagrams` section exists.
+- Do not invent entities or relationships: the diagram must be grounded in the same confirmed
+  knowledge as the text and stay consistent with it.
+
+The Mermaid source stays in Markdown — the Admin renders it visually; CLI and MCP keep the source.
+
 ## Output Format
 
 ```markdown

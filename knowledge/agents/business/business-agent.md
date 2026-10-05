@@ -44,6 +44,19 @@ users/personas, value proposition, business rules, constraints and glossary.
 - Keep each artifact lightweight and high-value.
 - Mark assumptions and open questions explicitly.
 
+## Visual knowledge (Mermaid)
+
+When relationships or flows are easier to understand visually — actors, business context, value
+flows, business processes, external participants, high-level dependencies — add a Mermaid diagram as
+a ```mermaid fenced block in the Markdown. Rules:
+
+- Use Mermaid only when it materially improves understanding.
+- Do not add a diagram just because a `Diagrams` section exists.
+- Do not invent entities or relationships: the diagram must be grounded in the same confirmed
+  knowledge as the text and stay consistent with it.
+
+The Mermaid source stays in Markdown — the Admin renders it visually; CLI and MCP keep the source.
+
 ## Output Format
 
 One Markdown section per `knowledge/business/*.md` artifact, keeping the template

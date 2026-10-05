@@ -21,6 +21,15 @@ kaddo add adr
 | `guard-advanced` | Reglas de guard para CI (`rules.yml`) |
 | `agents` | Definiciones de agentes |
 | `skills` | Definiciones de skills |
+| `standards` | Starter de convenciones globales de código/docs/testing |
+| `security` | Starter de consideraciones de seguridad (sin escaneo) |
+| `stack` | Starter de tecnologías y decisiones de stack |
+| `git-strategy` | Starter de estrategia de Git (GitHub Flow + Conventional Commits + SemVer) |
 
 Cada módulo declara sus directorios, tipos de work item y quality gates. Los módulos
 se registran en `.kaddo/config.yml` bajo una clave `module_<name>`.
+
+> **Módulos vs funcionalidades.** Un *módulo* es algo que instalas con `kaddo add` y que agrega
+> directorios, tipos de work item y gates. Todo lo demás en el sidebar — diagramas, reportes,
+> el servidor MCP, los adapters — es una funcionalidad o interfaz integrada de Kaddo, no un módulo
+> instalable.

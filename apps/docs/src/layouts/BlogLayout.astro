@@ -1,0 +1,182 @@
+---
+import '../styles/brand.css'
+
+export interface Props {
+  title: string
+  description: string
+  /** Path of this page, e.g. /blog/foo/ — used for canonical + og:url. */
+  path: string
+  locale: 'en' | 'es'
+  /** OG/Twitter image: a site-relative path or absolute URL. Defaults to the Kaddo banner. */
+  image?: string
+  /** 'article' renders BlogPosting JSON-LD + article meta; 'website' is the index/tag pages. */
+  type?: 'website' | 'article'
+  publishedAt?: Date
+  updatedAt?: Date
+  author?: string
+  tags?: string[]
+  /** hreflang alternate: the equivalent page in the other locale, when it exists. */
+  alternate?: { locale: 'en' | 'es'; path: string } | null
+  /** Where the header language switcher sends the reader for the OTHER locale. Defaults to the
+   *  other locale's blog index when not provided (e.g. index/tag pages). */
+  altLangPath?: string
+  /** Override the canonical URL (e.g. a cross-post's original source). Defaults to this page. */
+  canonicalUrl?: string
+}
+
+const site = Astro.site ?? new URL('https://kaddo.org')
+const {
+  title, description, path, locale, image = '/banner.png', type = 'website',
+  publishedAt, updatedAt, author = 'Julian Dario Luna Patiño', tags = [], alternate = null,
+  altLangPath, canonicalUrl,
+} = Astro.props
+
+// Language switcher target for the OTHER locale: the explicit alternate (equivalent article),
+// else the other locale's blog index.
+const otherIndex = locale === 'es' ? '/blog/' : '/es/blog/'
+const switchHref = altLangPath ?? alternate?.path ?? otherIndex
+
+const pageUrl = new URL(path, site).href
+const canonical = canonicalUrl ?? pageUrl
+const ogImage = new URL(image, site).href
+const siteName = 'Kaddo'
+const fullTitle = `${title} · Kaddo`
+const docsLabel = locale === 'es' ? 'Documentación' : 'Docs'
+const homeHref = locale === 'es' ? '/es/' : '/'
+
+const jsonLd = type === 'article'
+  ? {
+      '@context': 'https://schema.org',
+      '@type': 'BlogPosting',
+      headline: title,
+      description,
+      author: { '@type': 'Person', name: author, url: 'https://kaddo.org/about/' },
+      datePublished: publishedAt?.toISOString(),
+      dateModified: (updatedAt ?? publishedAt)?.toISOString(),
+      image: ogImage,
+      mainEntityOfPage: { '@type': 'WebPage', '@id': canonical },
+      publisher: { '@type': 'Organization', name: siteName, url: 'https://kaddo.org/' },
+      ...(tags.length ? { keywords: tags.join(', ') } : {}),
+      inLanguage: locale,
+    }
+  : null
+---
+
+<!doctype html>
+<html lang={locale} data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+
+    <meta property="og:type" content={type === 'article' ? 'article' : 'website'} />
+    <meta property="og:site_name" content={siteName} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={pageUrl} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:locale" content={locale === 'es' ? 'es_ES' : 'en_US'} />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImage} />
+
+    {type === 'article' && (
+      <>
+        <meta property="article:author" content={author} />
+        {publishedAt && <meta property="article:published_time" content={publishedAt.toISOString()} />}
+        {(updatedAt ?? publishedAt) && <meta property="article:modified_time" content={(updatedAt ?? publishedAt)!.toISOString()} />}
+        {tags.map((t) => <meta property="article:tag" content={t} />)}
+      </>
+    )}
+
+    <link rel="alternate" type="application/rss+xml" title="Kaddo Blog" href={locale === 'es' ? '/es/blog/rss.xml' : '/blog/rss.xml'} />
+    {alternate && <link rel="alternate" hreflang={alternate.locale} href={new URL(alternate.path, site).href} />}
+    {alternate && <link rel="alternate" hreflang={locale} href={canonical} />}
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700;800&display=swap" />
+
+    {jsonLd && <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />}
+  </head>
+  <body>
+    <header class="blog-header">
+      <a class="brand" href={homeHref}>Kaddo</a>
+      <nav class="blog-nav">
+        <a href={homeHref}>{docsLabel}</a>
+        <a href={locale === 'es' ? '/es/blog/' : '/blog/'} aria-current="page">Blog</a>
+        <a href="https://github.com/Kaddo-kdd/kaddo" rel="noopener">GitHub</a>
+        <span class="lang-switch" aria-label={locale === 'es' ? 'Cambiar idioma' : 'Switch language'}>
+          {locale === 'en' ? <span class="current" aria-current="true">EN</span> : <a href={switchHref}>EN</a>}
+          <span class="sep">/</span>
+          {locale === 'es' ? <span class="current" aria-current="true">ES</span> : <a href={switchHref}>ES</a>}
+        </span>
+      </nav>
+    </header>
+
+    <main class="blog-main">
+      <slot />
+    </main>
+
+    <footer class="blog-footer">
+      <span>© {new Date().getFullYear()} Kaddo</span>
+      <span>·</span>
+      <a href={homeHref}>{docsLabel}</a>
+      <span>·</span>
+      <a href="https://github.com/Kaddo-kdd/kaddo" rel="noopener">GitHub</a>
+    </footer>
+
+    <style is:global>
+      :root { color-scheme: dark; }
+      html { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+      body {
+        margin: 0;
+        background: var(--kaddo-navy);
+        color: var(--kaddo-warm-white);
+        line-height: 1.65;
+        -webkit-font-smoothing: antialiased;
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+      }
+      a { color: var(--kaddo-amber); text-decoration: none; }
+      a:hover { text-decoration: underline; }
+      h1, h2, h3 { font-family: 'Poppins', 'Inter', sans-serif; letter-spacing: -0.01em; line-height: 1.2; }
+
+      .blog-header {
+        display: flex; align-items: center; justify-content: space-between;
+        max-width: 1100px; margin: 0 auto; width: 100%;
+        padding: 18px 24px; box-sizing: border-box;
+        border-bottom: 1px solid rgba(255,255,255,0.08);
+      }
+      .brand { font-family: 'Poppins', sans-serif; font-weight: 800; font-size: 20px; color: var(--kaddo-warm-white); }
+      .blog-nav { display: flex; align-items: center; gap: 22px; font-size: 15px; }
+      .blog-nav > a { color: #c0c4cf; }
+      .blog-nav > a[aria-current='page'] { color: var(--kaddo-amber); }
+      .lang-switch { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; }
+      .lang-switch a { color: #8a90a0; }
+      .lang-switch a:hover { color: var(--kaddo-amber); }
+      .lang-switch .current { color: var(--kaddo-warm-white); }
+      .lang-switch .sep { color: #565d70; font-weight: 400; }
+
+      .blog-main { flex: 1; max-width: 760px; width: 100%; margin: 0 auto; padding: 40px 24px 64px; box-sizing: border-box; }
+
+      .blog-footer {
+        display: flex; gap: 10px; align-items: center; justify-content: center;
+        padding: 24px; font-size: 14px; color: #8a90a0;
+        border-top: 1px solid rgba(255,255,255,0.08);
+      }
+      .blog-footer a { color: #8a90a0; }
+
+      @media (max-width: 600px) {
+        .blog-nav { gap: 16px; font-size: 14px; }
+        .blog-main { padding: 28px 18px 48px; }
+      }
+    </style>
+  </body>
+</html>

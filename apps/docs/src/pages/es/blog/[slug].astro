@@ -1,0 +1,34 @@
+---
+import { render } from 'astro:content'
+import BlogLayout from '../../../layouts/BlogLayout.astro'
+import ArticleView from '../../../components/ArticleView.astro'
+import { getPosts, getRelated, getAlternate, baseSlug } from '../../../lib/blog'
+
+export async function getStaticPaths() {
+  const posts = await getPosts('es')
+  return posts.map((post) => ({ params: { slug: baseSlug(post) }, props: { post } }))
+}
+
+const { post } = Astro.props
+const { Content } = await render(post)
+const related = await getRelated(post)
+const alternate = await getAlternate(post)
+---
+<BlogLayout
+  title={post.data.title}
+  description={post.data.description}
+  path={`/es/blog/${baseSlug(post)}/`}
+  locale="es"
+  type="article"
+  image={post.data.cover}
+  publishedAt={post.data.publishedAt}
+  updatedAt={post.data.updatedAt}
+  author={post.data.author}
+  tags={post.data.tags}
+  alternate={alternate}
+  canonicalUrl={post.data.canonicalUrl}
+>
+  <ArticleView post={post} related={related} locale="es">
+    <Content />
+  </ArticleView>
+</BlogLayout>

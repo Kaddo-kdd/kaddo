@@ -246,6 +246,9 @@ export const WorkItemDetailSchema = WorkItemListItemSchema.extend({
     updated_at: z.string().optional(),
   }).nullable(),
   path: z.string(),
+  // Canonical Markdown body (verbatim, not reconstructed) so Admin can show the full definition
+  // including sections Core does not model (WI-025).
+  markdownBody: z.string(),
   refinement: z.object({
     status: z.enum(['needs-refinement', 'refined']),
     aspects: z.object({ outcome: z.boolean(), journey: z.boolean(), modules: z.boolean(), impact: z.boolean(), acceptance: z.boolean() }),

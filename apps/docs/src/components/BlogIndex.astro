@@ -1,0 +1,95 @@
+---
+import type { BlogPost, Locale } from '../lib/blog'
+import { postPath, tagPath, formatDate } from '../lib/blog'
+
+interface Props {
+  locale: Locale
+  posts: BlogPost[]
+  tags: { tag: string; count: number }[]
+  heading: string
+  lead: string
+}
+const { locale, posts, tags, heading, lead } = Astro.props
+const featured = posts.filter((p) => p.data.featured)
+const latest = posts
+const t = (en: string, es: string) => (locale === 'es' ? es : en)
+---
+
+<header class="index-head">
+  <h1>{heading}</h1>
+  <p class="lead">{lead}</p>
+</header>
+
+{tags.length > 0 && (
+  <nav class="tag-row" aria-label={t('Tags', 'Etiquetas')}>
+    {tags.map((x) => <a class="tag" href={tagPath(locale, x.tag)}>{x.tag} <span>{x.count}</span></a>)}
+  </nav>
+)}
+
+{featured.length > 0 && (
+  <section>
+    <h2 class="section-title">{t('Featured', 'Destacados')}</h2>
+    <div class="post-list">
+      {featured.map((p) => (
+        <article class="post-card featured">
+          <a href={postPath(p)} class="card-link">
+            {p.data.cover && <img class="cover" src={p.data.cover} alt="" loading="lazy" />}
+            <div class="card-body">
+              <h3>{p.data.title}</h3>
+              <p class="desc">{p.data.description}</p>
+              <div class="meta"><time datetime={p.data.publishedAt.toISOString()}>{formatDate(p.data.publishedAt, locale)}</time></div>
+            </div>
+          </a>
+        </article>
+      ))}
+    </div>
+  </section>
+)}
+
+<section>
+  <h2 class="section-title">{t('Latest', 'Recientes')}</h2>
+  {latest.length === 0 ? (
+    <p class="empty">{t('No articles yet.', 'Aún no hay artículos.')}</p>
+  ) : (
+    <div class="post-list">
+      {latest.map((p) => (
+        <article class="post-card">
+          <a href={postPath(p)} class="card-link">
+            <div class="card-body">
+              <h3>{p.data.title}</h3>
+              <p class="desc">{p.data.description}</p>
+              <div class="meta">
+                <time datetime={p.data.publishedAt.toISOString()}>{formatDate(p.data.publishedAt, locale)}</time>
+                {p.data.tags.length > 0 && <span class="meta-tags">· {p.data.tags.join(' · ')}</span>}
+              </div>
+            </div>
+          </a>
+        </article>
+      ))}
+    </div>
+  )}
+</section>
+
+<style>
+  .index-head { margin-bottom: 28px; }
+  h1 { font-size: 2.2rem; margin: 0 0 10px; }
+  .lead { font-size: 1.1rem; color: #c0c4cf; margin: 0; max-width: 60ch; }
+  .section-title { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em; color: #8a90a0; margin: 34px 0 14px; }
+  .tag-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 18px 0 6px; }
+  .tag { font-size: 13px; padding: 4px 10px; border: 1px solid rgba(255,255,255,0.14); border-radius: 999px; color: #c0c4cf; }
+  .tag span { color: #8a90a0; }
+  .post-list { display: flex; flex-direction: column; gap: 14px; }
+  .post-card { border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; background: #161e31; overflow: hidden; }
+  .post-card:hover { border-color: rgba(244,185,66,0.4); }
+  .card-link { display: block; color: inherit; text-decoration: none; }
+  .card-link:hover { text-decoration: none; }
+  .post-card.featured .card-link { display: grid; grid-template-columns: 200px 1fr; }
+  .cover { width: 100%; height: 100%; object-fit: cover; min-height: 120px; }
+  .card-body { padding: 16px 18px; }
+  .post-card h3 { margin: 0 0 6px; font-size: 1.15rem; color: var(--kaddo-warm-white); }
+  .desc { margin: 0 0 10px; color: #c0c4cf; font-size: 0.95rem; }
+  .meta { font-size: 0.82rem; color: #8a90a0; }
+  .meta-tags { color: #8a90a0; }
+  .empty { color: #8a90a0; }
+  @media (max-width: 600px) { .post-card.featured .card-link { grid-template-columns: 1fr; } .cover { max-height: 180px; } }
+</style>

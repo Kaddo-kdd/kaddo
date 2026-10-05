@@ -22,11 +22,15 @@ function isPortAvailable(port: number, host: string): Promise<boolean> {
 function resolveStaticDir(): string | null {
   const __dirname = path.dirname(fileURLToPath(import.meta.url))
   const candidates = [
-    // Bundled inside CLI dist (npm install)
-    path.resolve(__dirname, 'admin-dist'),
-    // Monorepo development
+    // Monorepo development: prefer the freshly built admin over the copy bundled into the CLI dist.
+    // The CLI build copies admin/dist into dist/admin-dist, but that copy can be stale when the admin
+    // was rebuilt after the CLI (build order is not guaranteed in `pnpm -r build`). Serving the admin
+    // package's own dist first ensures `kaddo admin` always shows the current frontend in dev. This
+    // path does not exist in a published npm install (admin is private), so it falls back below.
     path.resolve(__dirname, '..', '..', 'admin', 'dist'),
     path.resolve(__dirname, '..', 'node_modules', '@kaddo', 'admin', 'dist'),
+    // Bundled inside CLI dist (npm install)
+    path.resolve(__dirname, 'admin-dist'),
   ]
   for (const c of candidates) {
     if (exists(join(c, 'index.html'))) return c

@@ -1,0 +1,77 @@
+---
+import type { BlogPost, Locale } from '../lib/blog'
+import { postPath, tagPath, blogIndexPath, formatDate } from '../lib/blog'
+
+interface Props {
+  post: BlogPost
+  related: BlogPost[]
+  locale: Locale
+}
+const { post, related, locale } = Astro.props
+const t = (en: string, es: string) => (locale === 'es' ? es : en)
+---
+
+<article class="article">
+  <a class="back" href={blogIndexPath(locale)}>← Blog</a>
+  <h1>{post.data.title}</h1>
+  <p class="lead">{post.data.description}</p>
+  <div class="byline">
+    <span>{t('by', 'por')} {post.data.author}</span>
+    <span>·</span>
+    <time datetime={post.data.publishedAt.toISOString()}>{formatDate(post.data.publishedAt, locale)}</time>
+    {post.data.updatedAt && (
+      <span class="updated">· {t('updated', 'actualizado')} {formatDate(post.data.updatedAt, locale)}</span>
+    )}
+  </div>
+
+  {post.data.cover && <img class="cover" src={post.data.cover} alt="" />}
+
+  <div class="prose">
+    <slot />
+  </div>
+
+  {post.data.tags.length > 0 && (
+    <nav class="tags" aria-label={t('Tags', 'Etiquetas')}>
+      {post.data.tags.map((tag) => <a class="tag" href={tagPath(locale, tag)}>{tag}</a>)}
+    </nav>
+  )}
+
+  {related.length > 0 && (
+    <aside class="related">
+      <h2>{t('Related articles', 'Artículos relacionados')}</h2>
+      <ul>
+        {related.map((p) => <li><a href={postPath(p)}>{p.data.title}</a></li>)}
+      </ul>
+    </aside>
+  )}
+</article>
+
+<style>
+  .back { display: inline-block; margin-bottom: 18px; color: #8a90a0; font-size: 14px; }
+  .article h1 { font-size: 2.3rem; margin: 0 0 12px; }
+  .lead { font-size: 1.15rem; color: #c0c4cf; margin: 0 0 14px; }
+  .byline { font-size: 0.9rem; color: #8a90a0; display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px; }
+  .cover { width: 100%; border-radius: 12px; margin: 0 0 28px; border: 1px solid rgba(255,255,255,0.08); }
+  .tags { display: flex; flex-wrap: wrap; gap: 8px; margin: 36px 0 0; }
+  .tag { font-size: 13px; padding: 4px 10px; border: 1px solid rgba(255,255,255,0.14); border-radius: 999px; color: #c0c4cf; }
+  .related { margin-top: 44px; padding-top: 22px; border-top: 1px solid rgba(255,255,255,0.1); }
+  .related h2 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em; color: #8a90a0; margin: 0 0 12px; }
+  .related ul { margin: 0; padding-left: 18px; }
+  .related li { margin-bottom: 6px; }
+</style>
+
+<style is:global>
+  .prose { font-size: 1.05rem; }
+  .prose > :first-child { margin-top: 0; }
+  .prose h2 { font-size: 1.5rem; margin: 2em 0 0.6em; }
+  .prose h3 { font-size: 1.2rem; margin: 1.6em 0 0.5em; }
+  .prose p { margin: 0 0 1.1em; text-align: justify; hyphens: auto; }
+  .prose a { color: var(--kaddo-amber); }
+  .prose ul, .prose ol { margin: 0 0 1.1em; padding-left: 1.4em; }
+  .prose li { margin-bottom: 0.4em; }
+  .prose code { background: rgba(255,255,255,0.08); padding: 0.15em 0.4em; border-radius: 4px; font-size: 0.9em; }
+  .prose pre { background: #0e1424; border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 16px; overflow-x: auto; }
+  .prose pre code { background: none; padding: 0; }
+  .prose blockquote { margin: 0 0 1.1em; padding: 0.4em 1em; border-left: 3px solid var(--kaddo-amber); color: #c0c4cf; }
+  .prose img { max-width: 100%; border-radius: 8px; }
+</style>

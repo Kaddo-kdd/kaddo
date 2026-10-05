@@ -1,8 +1,10 @@
+import { useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useParams, useRouter } from '@tanstack/react-router'
 import { api } from '../lib/api'
 import type { WorkItemDetail as WorkItemDetailData } from '../lib/api'
 import { Breadcrumbs } from '../components/Breadcrumbs'
+import { MarkdownRenderer } from '../components/MarkdownRenderer'
 import { WorkItemStatus } from '../components/WorkItemStatus'
 import { DeliveryStatusSummary } from '../components/DeliveryStatusSummary'
 import { Section, Field } from '../components/Section'
@@ -31,6 +33,9 @@ export function WorkItemDetail() {
   const { workItemId } = useParams({ from: '/work-items/$workItemId' })
   const queryClient = useQueryClient()
   const router = useRouter()
+  // Two reading modes over the same canonical artifact (WI-025): the structured projection, and the
+  // full Markdown definition. Declared before any early return to keep hook order stable.
+  const [view, setView] = useState<'overview' | 'full'>('overview')
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['work-item', workItemId],
@@ -101,6 +106,39 @@ export function WorkItemDetail() {
         </div>
       </div>
 
+      {/* View switch (WI-025): structured Overview vs. the full canonical Markdown definition.
+          The structured view stays the default; Full definition is one click away and guarantees
+          no artifact section is hidden (Validation, Definition of Done, Learning, future headings). */}
+      <div role="tablist" aria-label="Work Item view" style={{ display: 'inline-flex', gap: 2, padding: 3, marginBottom: 16, background: 'var(--surface-muted)', borderRadius: 'var(--radius)' }}>
+        {([['overview', 'Overview'], ['full', 'Full definition']] as const).map(([key, label]) => (
+          <button
+            key={key}
+            role="tab"
+            aria-selected={view === key}
+            onClick={() => setView(key)}
+            style={{
+              padding: '6px 14px', border: 'none', borderRadius: 'calc(var(--radius) - 2px)', cursor: 'pointer',
+              fontSize: 13, fontWeight: 600, fontFamily: 'inherit',
+              background: view === key ? 'var(--surface)' : 'transparent',
+              color: view === key ? 'var(--foreground)' : 'var(--foreground-muted)',
+              boxShadow: view === key ? '0 1px 2px rgba(0,0,0,0.08)' : 'none',
+            }}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {view === 'full' ? (
+        /* Full definition — faithful render of the canonical Markdown body via the shared renderer
+           (headings, lists, tables, code, links, Mermaid). No parallel renderer, no reconstruction. */
+        <Section title="Full definition">
+          {wi.markdownBody.trim()
+            ? <MarkdownRenderer content={wi.markdownBody} />
+            : <p style={{ fontSize: 14, color: 'var(--foreground-muted)', margin: 0 }}>This Work Item has no Markdown body beyond its metadata.</p>}
+        </Section>
+      ) : (
+      <>
       {/* Captured intent — shown while the Work Item still only carries the initial request. */}
       {wi.status === 'draft' && wi.refinement.status === 'needs-refinement' && (
         <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '14px 18px', marginBottom: 4 }}>
@@ -275,6 +313,18 @@ export function WorkItemDetail() {
           <span>{presentWorkItemType(wi.type)}</span>
           <span style={{ color: 'var(--foreground-muted)' }}>Status</span>
           <span><WorkItemStatus status={wi.status} /></span>
+          {wi.initiative && (
+            <>
+              {/* Initiative traceability (WI-025): visible and navigable to the Initiative detail. */}
+              <span style={{ color: 'var(--foreground-muted)' }}>Initiative</span>
+              <button
+                onClick={() => router.navigate({ to: '/initiatives/$initiativeId', params: { initiativeId: wi.initiative! } })}
+                style={{ justifySelf: 'start', background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'var(--primary)', fontFamily: 'inherit', fontSize: 13 }}
+              >
+                <span className="font-mono" style={{ fontWeight: 600 }}>{wi.initiative}</span> &rarr;
+              </button>
+            </>
+          )}
           <span style={{ color: 'var(--foreground-muted)' }}>Path</span>
           <ArtifactPath path={wi.path} copyable />
           <span style={{ color: 'var(--foreground-muted)' }}>Source</span>
@@ -366,6 +416,8 @@ export function WorkItemDetail() {
             )}
           </div>
         </Section>
+      )}
+      </>
       )}
 
       {/* Actions zone reserved for VS-099 (create / edit / refine) — intentionally empty. */}

@@ -47,8 +47,22 @@ const T: Record<BaselineKind, Record<ProjectState, string>> = {
   },
 }
 
+// Optional visual-knowledge guidance (WI-024). Business/Product/Tech knowledge can include Mermaid
+// diagrams when relationships or flows are easier to understand visually. The source stays in
+// Markdown (CLI/MCP read it as text; the Admin renders it). Diagrams are optional — an artifact
+// without relationships worth drawing is still valid without one.
+const DIAGRAM_GUIDANCE =
+  '\n## Diagrams\n\n' +
+  '_Optional. Add Mermaid diagrams (```mermaid fenced blocks) when relationships or flows are easier' +
+  ' to understand visually. Keep them grounded in the knowledge above — do not invent entities or' +
+  ' relationships, and do not add an empty diagram just to fill this section._\n'
+
+/** Kinds whose templates include the optional Diagrams guidance (business, product, tech). */
+const DIAGRAM_KINDS = new Set<BaselineKind>(['business', 'product', 'capabilities', 'codebase', 'current-state'])
+
 /** State-aware baseline content (front matter + body) for a knowledge file. */
 export function baselineTemplate(kind: BaselineKind, state: ProjectState): string {
   const st: ProjectState = state === 'pre-ai' || state === 'legacy' ? state : 'new'
-  return fm(kind, st) + T[kind][st]
+  const body = T[kind][st] + (DIAGRAM_KINDS.has(kind) ? DIAGRAM_GUIDANCE : '')
+  return fm(kind, st) + body
 }
