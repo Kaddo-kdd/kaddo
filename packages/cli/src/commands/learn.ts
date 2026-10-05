@@ -1,20 +1,44 @@
+import fs from 'fs'
+import path from 'path'
 import matter from 'gray-matter'
-import { readArtifacts } from '../services/artifact-reader.js'
-import { exists, join, cwd, readFile, writeFile, readDir } from '../utils/fs.js'
+import { exists, join, cwd, readFile, writeFile, ensureDir } from '../utils/fs.js'
+import { discoverWorkItems } from '../services/knowledge-artifacts.js'
+import { lifecycleFolderOf } from '../core/lifecycle.js'
 import { intro, outro, log, text, select } from '../utils/ui.js'
 
 const ARCH_DIR = 'knowledge'
 const WORK_ITEMS_DIR = 'knowledge/delivery/work-items'
 
-function findWorkItemFile(dir: string, id: string): string | null {
-  const wiDir = join(dir, WORK_ITEMS_DIR)
-  if (!exists(wiDir)) return null
-  const files = readDir(wiDir).filter((f) => f.endsWith('.md'))
-  const match = files.find((f) => f.includes(id.toUpperCase()) || f.includes(id.toLowerCase()))
-  return match ? join(wiDir, match) : null
+/**
+ * Resolve a Work Item's real file path by id, using the same recursive discovery
+ * the other lifecycle commands (`ready`, `verify`) rely on. This finds Work Items
+ * wherever they currently sit in the lifecycle (draft/, ready/, in-progress/,
+ * completed/), not just the flat top-level work-items/ directory.
+ */
+export function findWorkItemFile(dir: string, id: string): string | null {
+  const wis = discoverWorkItems(dir)
+  const match =
+    wis.find((w) => w.id.toLowerCase() === id.toLowerCase()) ??
+    wis.find((w) => path.basename(w.filePath).toLowerCase().includes(id.toLowerCase()))
+  return match ? match.filePath : null
 }
 
-function updateWorkItemFile(filePath: string, learning: string): void {
+/** The path a Work Item should live at once completed, moving it to work-items/completed/. */
+function completedPathFor(filePath: string): string {
+  const folder = lifecycleFolderOf(filePath)
+  if (!folder || folder === 'completed') return filePath
+  const completedDir = path
+    .dirname(filePath)
+    .replace(new RegExp(`[/\\\\]${folder}$`), path.sep + 'completed')
+  return path.join(completedDir, path.basename(filePath))
+}
+
+/**
+ * Record the learning, mark the Work Item completed, and move the file to
+ * work-items/completed/ when it currently sits in another lifecycle subfolder.
+ * Returns the final path of the Work Item file.
+ */
+export function updateWorkItemFile(filePath: string, learning: string): string {
   const raw = readFile(filePath)
   const { data, content } = matter(raw)
 
@@ -38,7 +62,17 @@ function updateWorkItemFile(filePath: string, learning: string): void {
   }
 
   const newRaw = matter.stringify(updatedContent, data)
+
+  const targetPath = completedPathFor(filePath)
+  if (targetPath !== filePath) {
+    ensureDir(path.dirname(targetPath))
+    writeFile(targetPath, newRaw)
+    fs.unlinkSync(filePath)
+    return targetPath
+  }
+
   writeFile(filePath, newRaw)
+  return filePath
 }
 
 export async function runLearn(artifactId?: string, opts: { force?: boolean } = {}): Promise<void> {
@@ -51,12 +85,8 @@ export async function runLearn(artifactId?: string, opts: { force?: boolean } = 
 
   intro('kaddo learn')
 
-  const artifacts = readArtifacts(join(dir, ARCH_DIR))
-  const closable = artifacts.filter(
-    (a) =>
-      (a.status === 'in-progress' || a.status === 'completed' || a.status === 'done') &&
-      a.type !== 'current-state' &&
-      a.type !== 'roadmap'
+  const closable = discoverWorkItems(dir).filter(
+    (a) => a.lifecycle === 'in-progress' || a.lifecycle === 'completed'
   )
 
   if (closable.length === 0) {
@@ -155,10 +185,15 @@ export async function runLearn(artifactId?: string, opts: { force?: boolean } = 
     enrichedLearning += '\n\n> ' + notes.join(' ')
   }
 
-  updateWorkItemFile(filePath, enrichedLearning)
+  const finalPath = updateWorkItemFile(filePath, enrichedLearning)
 
   log.success(`${targetId} marked as completed`)
-  log.success(`Learning recorded in ${filePath.replace(dir + '/', '')}`)
+  if (finalPath !== filePath) {
+    log.success(`Moved file:`)
+    log.info(`  ${path.relative(dir, filePath)}`)
+    log.info(`  → ${path.relative(dir, finalPath)}`)
+  }
+  log.success(`Learning recorded in ${path.relative(dir, finalPath)}`)
   if (hasExceptions) {
     log.warn('Learning captured from a Work Item completed with validation exceptions.')
   }
