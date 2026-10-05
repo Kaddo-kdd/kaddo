@@ -87,6 +87,62 @@ and is not generated.
 
 Open an issue before starting work on any of these.
 
+## Contribution principle: One Work Item → One Branch → One Pull Request
+
+Kaddo is built with its own Knowledge-Driven Development model, and contributions follow the same
+idea: **knowledge and intent come before implementation, and code is reviewed against an explicit
+Work Item.**
+
+> **One Work Item → One Branch → One Pull Request.**
+
+A contribution should represent a single coherent outcome. This does not mean "small PR" — a K3/K4
+Work Item can justify a large PR. It means a PR should not bundle independent outcomes (e.g. a
+feature **and** an unrelated refactor **and** a separate bug fix). If work you discover during
+implementation does not belong to the current Work Item's scope or acceptance criteria, open a
+**separate** Work Item, branch and PR instead of growing the contribution silently.
+
+## Contribution workflow
+
+1. **Start from the latest `main`.**
+2. **Understand the relevant knowledge first.** Use the project's own knowledge before defining or
+   implementing — business/product/tech artifacts, architecture, capabilities, initiatives, the
+   roadmap, completed Work Items and their learnings. Explore it via the CLI (`kaddo context`,
+   `kaddo explain`), the MCP server, Kaddo agents, or your preferred LLM. You do not need to read the
+   whole repo by hand.
+3. **Define or select one Work Item.** The change needs a definition proportional to its size
+   (intent/problem, target outcome, scope, out of scope when relevant, acceptance criteria,
+   validation). Trivial changes can use a light definition.
+   - **Planned work:** if the change is already defined in Kaddo (an Initiative → a canonical
+     `WI-xxx`), just **reference** that Work Item — don't duplicate it.
+   - **New / external contributions:** you may propose work that has no canonical Work Item yet.
+     Include the Work Item **definition in the PR** instead of creating a `WI-xxx` in your fork (this
+     avoids ID conflicts across forks and parallel branches). A maintainer decides later whether to
+     materialize it into Kaddo's canonical traceability.
+   - An **Initiative is not required** — standalone contributions are fine.
+4. **Discuss first when required** (see "What requires a discussion first").
+5. **Create one dedicated branch** for the Work Item, e.g. `feat/initiative-gap-analysis`,
+   `fix/admin-work-item-rendering`, `docs/contribution-workflow`. Git stays your responsibility —
+   Kaddo Core does not manage branches.
+6. **Refine / prepare the implementation handoff** when the change warrants it (see the Build
+   Contract below and the `implementation-planning` skill).
+7. **Implement** the change with tests and documentation.
+8. **Validate / verify** against the acceptance criteria (`kaddo verify <WI-ID>` for canonical WIs).
+9. **Open one Pull Request** for the Work Item, using the PR template
+   (`.github/PULL_REQUEST_TEMPLATE.md`). Reference the canonical WI **or** embed the definition you
+   used, and include validation/evidence and any knowledge impact.
+
+**Review is against intent, not just the diff.** Reviewers check whether the implementation satisfies
+the Work Item — intent, scope, acceptance criteria and validation — without introducing undeclared
+scope. The PR template also asks whether business/product/tech/delivery knowledge needs updating;
+update the relevant artifacts when the change requires it (no forced documentation otherwise).
+
+**Example.** A contributor wants to improve scanner detection for a stack. They read the relevant
+tech knowledge, write a proportional Work Item definition, branch `fix/scanner-x`, implement with
+tests, and open a PR that embeds the Work Item definition plus validation. If, mid-way, they also
+spot an unrelated Admin improvement, that goes into its **own** Work Item, branch and PR — not this
+one. (For planned work the flow is the same, except the PR references an existing `WI-xxx` instead of
+embedding a definition.)
+
 ## Build Contract: the Kaddo-native workflow
 
 Changes follow the Kaddo Work Item lifecycle:
@@ -124,8 +180,12 @@ Publishing is automated by `.github/workflows/release.yml` — pushing a `vX.Y.Z
 version matches `packages/cli/package.json` builds, tests, publishes `@kaddo/cli` to npm
 (with provenance) and creates a GitHub Release.
 
+All five workspace packages share one version. Bump every `package.json` to the same `X.Y.Z` (the
+CLI reads its version from `package.json` at runtime, so there is nothing to change in
+`src/index.ts`), then:
+
 ```bash
-# bump packages/cli/package.json + the .version() in src/index.ts to X.Y.Z, then:
+# bump the version in all 5 packages/*/package.json to X.Y.Z, then:
 git commit -am "chore(release): vX.Y.Z"
 git tag -a vX.Y.Z -m "vX.Y.Z — …"
 git push && git push origin vX.Y.Z   # the Release workflow does the rest
