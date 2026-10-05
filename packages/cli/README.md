@@ -1,558 +1,305 @@
+<!-- Generated from /README.md by scripts/sync-npm-readme.mjs. Run `pnpm npm-readme:sync`; do not edit directly. -->
+
 <p align="center">
   <img src="https://raw.githubusercontent.com/Kaddo-kdd/kaddo/main/assets/banner.png" alt="Kaddo — Knowledge Driven Development Toolkit" width="100%" />
 </p>
 
 # Kaddo — Knowledge Driven Development
 
-> Observable knowledge for evolving software with humans and AI.
+> **Prepare any codebase for AI-assisted evolution.**
+> Kaddo helps your repo remember why the code exists.
 
-Kaddo is an open source CLI toolkit based on **Knowledge Driven Development (KDD)**. It helps teams keep the minimum necessary context alive next to the code — without turning development into bureaucracy.
+Kaddo is an open-source **Knowledge Driven Development (KDD) toolkit** for AI-assisted
+software engineering. It scans your repo, structures product knowledge into four layers
+(Business, Product, Tech, Delivery), manages the full Work Item lifecycle — from captured
+intent through implementation handoff, evidence collection and verification — and keeps
+knowledge alive as the system evolves.
 
-## Why Kaddo
+It works in two layers:
 
-Projects fail or degrade because knowledge is scattered across meetings, chats, tickets, emails, and outdated documents. With AI, this problem gets worse: agents build on assumptions when they lack context.
+- **The CLI** does the deterministic work — no AI, no API key.
+- **Your LLM** does the interpretation — using Kaddo agents in your chat (Claude, ChatGPT,
+  Cursor, Copilot, Windsurf…).
 
-Kaddo puts knowledge first, then lets AI help you build.
+> **Knowledge Driven Development ≠ Kaddo.** KDD is a prior concept in software engineering and
+> knowledge management. Kaddo is a **practical implementation of KDD principles** — it applies
+> them; it did not invent them.
 
-**The central question:** *How does Kaddo know the right knowledge was impacted by this change?*
-
-## What Kaddo is not
-
-- Not a code generator
-- Not an agent framework
-- Not a replacement for Jira, Linear, or documentation tools
-- Not a platform
-
-Kaddo occupies a different layer:
-
-```
-Execution tools
-      ↓
-Agent frameworks
-      ↓
-Specifications
-      ↓
-Kaddo
-      ↓
-Product knowledge
-```
-
-## Install
+## Quick Start
 
 ```bash
-npx @kaddo/cli init
+npx @kaddo/cli init       # configure project state, structure & language (en/es)
+kaddo bootstrap            # new projects: seed Business → Product → Tech → Delivery knowledge
+kaddo scan                 # deterministic technical inventory → .kaddo/scan.json
+kaddo add agents           # install agent prompt packs
+kaddo context              # LLM context pack → .kaddo/context-pack.md
+kaddo understand           # guided CLI → LLM handoff plan
 ```
 
-Or install globally:
+Then use your LLM with the context pack and agents to extract capabilities, architecture and
+a roadmap. Continue the delivery loop:
 
 ```bash
-npm install -g @kaddo/cli
-kaddo --help
+kaddo create --from roadmap   # roadmap candidate → Work Item draft
+kaddo verify                  # evidence collection + AC verification
+kaddo owners suggest          # declare code: ownership
+kaddo guard                   # detect possible knowledge drift
+kaddo explain                 # summarize what Kaddo currently knows
 ```
+
+**Lost? Run `kaddo understand`** — it always answers *"What should I do now?"* from the
+real state of your project.
+
+## The Knowledge Model
+
+Kaddo organizes project knowledge into four layers under `knowledge/`:
+
+| Layer | What it captures |
+|---|---|
+| **Business** | Problem, users, value proposition, constraints |
+| **Product** | Capabilities, decisions, quality attributes |
+| **Tech** | Architecture, stack, codebase foundation, ADRs, modules |
+| **Delivery** | Roadmap, Work Items, build contract, evidence |
+
+Each layer feeds the next. Agents don't guess — they read structured context.
+
+## The Kaddo Lifecycle
+
+Work Items follow the **Kaddo-native Build Contract** — a lifecycle that ensures every change
+is traceable from intent to verified delivery:
+
+```
+Captured Intent → Refinement → Human Review → Ready
+    → Implementation Handoff → Implementation
+    → Evidence Collection → Verification → Completed → Learning
+```
+
+| Stage | What happens | Tool |
+|---|---|---|
+| **Captured Intent** | An idea becomes a Work Item draft | `kaddo create` / `kaddo work-item import` |
+| **Refinement** | ACs, scope, affected modules, validation plan | work-item-agent |
+| **Human Review** | A person reviews and approves the refined WI | — |
+| **Ready** | WI moves from `draft/` to `ready/` | `kaddo mark-ready` |
+| **Implementation Handoff** | Agent-agnostic context assembly + design deliberation | implementation-agent |
+| **Implementation** | Code changes guided by the handoff | developer + agents |
+| **Evidence** | Changed paths, validations, AC checks | `kaddo verify` |
+| **Verification** | Evidence vs ACs, release gates, completion decision | `kaddo verify` |
+| **Completed** | WI moves to `completed/` with learning capture | — |
+| **Learning** | Friction and insights feed future work | — |
+
+Work Items physically move between directories: `draft/` → `ready/` → `in-progress/` →
+`completed/`. The lifecycle is enforced by convention — no lock-in, no platform dependency.
+
+## Interfaces
+
+Kaddo exposes its capabilities through four interfaces:
+
+| Interface | What it does |
+|---|---|
+| **CLI** (`@kaddo/cli`) | Deterministic commands: init, scan, context, create, guard, verify, explain. No LLM, no API key. |
+| **MCP Server** (`@kaddo/mcp`) | [Model Context Protocol](https://modelcontextprotocol.io) server — exposes knowledge, Work Items, graph, lifecycle tools and agent prompts to MCP-compatible IDEs and agents. |
+| **Admin** (`@kaddo/admin`) | Web UI for Work Item management, integration configuration, external work item discovery and import provenance. |
+| **Agents** | LLM prompt packs installed with `kaddo add agents` — business, product, architecture, roadmap, work-item, implementation, graph, capsule and more. |
+
+The MCP server is mostly read-only. Lifecycle tools (import, ready, handoff, evidence, verify)
+can write under `knowledge/delivery/work-items/`; derived tools regenerate artifacts under
+`.kaddo/`. Everything else is strictly read-only.
+
+```json
+{ "mcpServers": { "kaddo": { "command": "npx", "args": ["@kaddo/mcp"], "cwd": "/path/to/project" } } }
+```
+
+See the [MCP Server docs](https://kaddo.org/mcp-server/).
+
+## Integrations
+
+Kaddo connects to external work systems through the **Integration Adapter Foundation**:
+
+```
+External system (GitHub Issues, Jira, Azure DevOps…)
+    → discovery: browse & filter external items
+    → import: bring an item into Kaddo as a Work Item draft
+    → refinement: enrich with ACs, scope, affected modules
+```
+
+Import is always human-confirmed — Kaddo never creates Work Items silently. Secrets are
+managed through environment variables and never exposed. Configure integrations through the
+Admin UI or `@kaddo/integrations` programmatically.
+
+## Knowledge Capsules
+
+For repos you can't (or don't want to) map as multirepo modules — other teams, restricted
+access, integration-only context — exchange **Knowledge Capsules**:
+
+```bash
+kaddo capsule export   # share a minimal summary of this project
+kaddo capsule add      # import an external capsule into the context pack
+```
+
+No multirepo mapping needed, no source access required. See the
+[Knowledge Capsules docs](https://kaddo.org/knowledge-capsules/).
+
+## Operating Moments
+
+Kaddo matures a project's knowledge through four moments — **Base → Definition → Projection →
+Execution**:
+
+- **Base** — `init` · `bootstrap` · `scan` · `add agents` · `context` · `understand` (set up the
+  workspace and knowledge structure).
+- **Definition** — business-agent · product-agent · capability-agent · codebase-agent ·
+  architecture-agent (turn the idea into clear knowledge).
+- **Projection** — roadmap-agent · backlog-agent · `create --from roadmap` · work-item-agent ·
+  ownership-agent (turn knowledge into a delivery plan).
+- **Execution** — implementation-agent · `verify` · `scan` · `owners suggest` · `guard` · `explain`
+  (build, verify and keep knowledge in sync).
+
+See [**Operating Moments**](https://kaddo.org/operating-moments/) for the full breakdown.
 
 ## Commands
 
-### `kaddo init`
+Each command answers one question and has a clear next step.
 
-Initialize Kaddo in the current project.
-
-```bash
-kaddo init
-```
-
-Creates:
-```
-knowledge/
-  knowledge.md             ← current state of the product
-  delivery/
-    roadmap.md             ← intentions and priorities
-    work-items/            ← one file per work item
-.kaddo/
-  config.yml               ← project config
-```
-
-Asks for the project state (`new | pre-ai | legacy`), team size, repo structure and the
-**project knowledge language** (`en | es`) — the language your knowledge artifacts are
-written in; the CLI itself stays English.
-
----
-
-### `kaddo scan`
-
-Detect your project stack deterministically.
-
-```bash
-kaddo scan
-```
-
-Detects language, framework, package manager, code dirs, migration dirs, contract files, infra and test dirs. Suggests domains for human confirmation — never assumes.
-
-It also persists a reusable baseline of the project:
-
-- **`.kaddo/scan.json`** — structured, machine-readable (for the CLI and future context-pack commands).
-- **`knowledge/inventory.md`** — human-readable inventory you can paste into an LLM chat.
-
-Scan detects signals and asks confirmation questions — it never claims to understand your business capabilities or architecture.
-
----
-
-## CLI + LLM Agents
-
-Kaddo works in two layers:
-
-- **The CLI** handles deterministic work: initializing the knowledge repository,
-  scanning the codebase, creating work items, reading git diff and detecting possible
-  knowledge drift. No AI needed.
-- **Your LLM** handles interpretation: using Kaddo agents to extract capabilities,
-  reconstruct architecture, identify risks and propose a roadmap from the project context.
-
-> Kaddo does not try to make the CLI "understand everything". The CLI collects and
-> structures signals. The LLM agents turn those signals into product understanding.
-
-## From scan to knowledge baseline
-
-`kaddo scan` gives Kaddo a technical inventory. But inventory is not understanding.
-
-Kaddo does not start by creating tasks — it starts by understanding the state of the
-project. For pre-AI and legacy projects, the next step is to turn that inventory into a
-knowledge baseline using Kaddo agents in your preferred LLM chat (Claude, ChatGPT,
-Cursor, Copilot, Windsurf…):
-
-- capabilities
-- modules
-- risks and unknowns
-- ownership candidates
-- architecture notes
-- roadmap candidates
-
-Once the baseline exists and artifacts declare ownership, `create` and `guard` operate
-on real context instead of starting from scratch.
-
-```bash
-kaddo init                        # state: new | pre-ai | legacy, team size, structure
-kaddo scan                        # deterministic technical inventory
-kaddo context                     # assemble an LLM context pack for agent handoff
-kaddo add agents                  # install agent prompt packs for your LLM chat
-kaddo understand                  # guide the CLI → LLM handoff with a state-aware plan
-# ── use your LLM with the context pack + agents to create the baseline + roadmap ──
-kaddo create --from roadmap       # turn a roadmap candidate into a real work item
-kaddo owners suggest              # declare code: ownership on the work item
-kaddo guard                       # detect possible knowledge drift
-kaddo explain                     # summarize what Kaddo currently knows
-```
-
-The CLI prepares context; your LLM interprets it; Kaddo turns understanding into Work
-Items; Guard warns on drift; Explain summarizes the state. Kaddo does not call an LLM.
-
----
-
-### `kaddo context`
-
-Assemble an LLM context pack for handoff to a chat agent (Claude, ChatGPT, Cursor, Copilot, Windsurf…).
-
-```bash
-kaddo context
-```
-
-Reads existing Kaddo artifacts — `.kaddo/config.yml`, `.kaddo/scan.json`,
-`knowledge/inventory.md`, `knowledge/knowledge.md`, `knowledge/delivery/roadmap.md` and
-work-item front matter — and writes two files:
-
-- **`.kaddo/context-pack.md`** — compact, LLM-friendly markdown to paste into a chat.
-- **`.kaddo/context-pack.json`** — structured data for future tooling and automations.
-
-The pack is **deterministic**. Kaddo does not call an LLM, require an API key, or
-interpret your system — it assembles metadata and summaries, marks any missing context
-explicitly, and recommends which agents to use based on your project state:
-
-| State | Recommended handoff |
-|---|---|
-| `new` | roadmap-agent → architecture-agent |
-| `pre-ai` | capability-agent → architecture-agent → roadmap-agent |
-| `legacy` | legacy-agent → architecture-agent → capability-agent |
-
-> `scan` collects technical signals. `context` packages those signals (plus knowledge and
-> work items) for an LLM. `understand` ties it together — it refreshes the pack and tells
-> you which agent to run next, in what order, for your project state.
-
----
-
-### `kaddo add agents`
-
-Install Kaddo agent prompt packs — versionable Markdown prompts you use **in your LLM
-chat** (Claude, ChatGPT, Cursor, Copilot, Windsurf…). Kaddo does not execute them.
-
-```bash
-kaddo add agents
-```
-
-Creates `knowledge/agents/` with:
-
-- `capability-agent.md` — extract/propose system capabilities → `knowledge/product/capabilities.md`
-- `architecture-agent.md` — reconstruct the architecture baseline → `knowledge/tech/current-state.md`
-- `roadmap-agent.md` — propose roadmap candidates → `knowledge/delivery/roadmap.md`
-- `legacy-agent.md` — surface risks/unknowns before changing legacy code
-- `adr-agent.md` — propose candidate architecture decisions
-
-Each prompt declares its role, required input, expected output, constraints, output format,
-where to save the result, and a quality checklist. The primary input is always
-`.kaddo/context-pack.md`.
-
-**Workflow:**
-
-```bash
-kaddo scan          # technical signals
-kaddo context       # → .kaddo/context-pack.md
-kaddo add agents    # → knowledge/agents/*.md
-# then: paste context-pack.md + an agent prompt into your LLM chat
-```
-
-Recommended agent order by project state:
-
-| State | Order |
-|---|---|
-| `new` | roadmap-agent → architecture-agent |
-| `pre-ai` | capability-agent → architecture-agent → roadmap-agent |
-| `legacy` | legacy-agent → architecture-agent → capability-agent → roadmap-agent |
-
-Existing agent files are never overwritten silently. `kaddo init` does not install agents —
-add them only when you need them.
-
-#### Roadmap agent output
-
-The `roadmap-agent` is the bridge between understanding and execution. In your LLM chat it
-produces a **structured** `knowledge/delivery/roadmap.md`:
-
-```txt
-context pack → roadmap agent → knowledge/delivery/roadmap.md → kaddo create --from roadmap
-```
-
-Each initiative (`RM-001`, …) includes a goal, related capabilities, impact, risk, a
-suggested Knowledge Level (K1–K4), dependencies, and **candidate work items** (with type,
-suggested knowledge level, expected value and notes), plus assumptions, suggested execution
-order and the next recommended work item. Initiatives and work items are **candidates** for
-human review — not final commitments — and priorities adapt to the project state. Turn a
-candidate into a real Work Item with [`kaddo create --from roadmap`](#kaddo-create).
-
----
-
-### `kaddo understand`
-
-Guide the handoff from the CLI (deterministic context) to your LLM (interpretation).
-
-```bash
-kaddo understand
-```
-
-It refreshes the context pack, recommends which agents to use — in what order — based on
-your project state, flags any agents not yet installed, and writes a reusable guide:
-
-- **`.kaddo/context-pack.md`** / **`.kaddo/context-pack.json`** — the input for agents.
-- **`.kaddo/understand.md`** — the step-by-step handoff guide (recommended flow, expected
-  outputs, copy/paste instructions).
-
-`kaddo understand` is **deterministic** — it does not call an LLM, execute agents, or
-auto-generate architecture artifacts. It works even when context is incomplete: if the scan
-baseline or some agents are missing, it still produces a plan and tells you the next
-concrete step (`kaddo scan` or `kaddo add agents`).
-
-| State | Recommended flow |
-|---|---|
-| `new` | roadmap-agent → architecture-agent |
-| `pre-ai` | capability-agent → architecture-agent → roadmap-agent |
-| `legacy` | legacy-agent → architecture-agent → capability-agent → roadmap-agent |
-
----
-
-### `kaddo create`
-
-Create a Work Item with the minimum context for its Knowledge Level.
-
-```bash
-kaddo create feature   # K2: delivers a user-facing capability
-kaddo create bugfix    # K2: fixes a known defect
-kaddo create hotfix    # K1: urgent fix on a released version
-kaddo create spike     # K3: exploratory / reduce uncertainty
-kaddo create chore     # K1: maintenance, tooling, config, infra
-```
-
-New Work Items land in `knowledge/delivery/work-items/draft/` with `status: draft`
-(lifecycle: `draft → ready → in-progress → blocked → completed → archived`). Aliases like
-`setup`, `tooling`, `maintenance`, `infrastructure` or `refactor` resolve to `chore`.
-
-**From a roadmap candidate:**
-
-```bash
-kaddo create --from roadmap          # pick a candidate from knowledge/delivery/roadmap.md
-kaddo create feature --from roadmap  # same, with a default type
-```
-
-Reads `knowledge/delivery/roadmap.md`, lets you select a candidate work item (`WI-CANDIDATE-001`,
-…), and prefills the Work Item from the roadmap (title, type, suggested Knowledge Level,
-expected value, notes, related capabilities/impact/risk/dependencies and the parent
-initiative). It asks only for the required fields the candidate does not provide and keeps
-source traceability in the front matter (`source: roadmap`, `source_id`, `source_initiative`).
-This closes the loop `scan → context → agents → roadmap → work item`. If the roadmap is
-missing or has no candidates, Kaddo shows a helpful message. No LLM is called.
-
-**Knowledge Levels:**
-
-| Level | When | Questions |
+| Command | Question answered | Suggested next |
 |---|---|---|
-| K0 | Trivial change | None |
-| K1 | Hotfix / simple fix | Problem + expected result |
-| K2 | Feature or bugfix with functional impact | + impact + acceptance criteria |
-| K3 | Capability or significant change | + design |
-| K4 | Architecture change or migration | + risks |
+| `kaddo init` | How do I start a Kaddo project? | `kaddo bootstrap` |
+| `kaddo bootstrap` | What minimum knowledge should exist? | `kaddo add agents` → `kaddo context` |
+| `kaddo scan` | What technical signals exist in the repo? | `kaddo explain` / `kaddo context` |
+| `kaddo context` | What should I give to an LLM? | the recommended agent |
+| `kaddo understand` | What should I do now? | the recommended action |
+| `kaddo explain` | What does Kaddo know? | `kaddo understand` |
+| `kaddo create --from roadmap` | How do roadmap candidates become Work Items? | work-item-agent |
+| `kaddo verify` | Is the Work Item complete? | evidence + AC verification |
+| `kaddo owners suggest` | Who owns this code? | `kaddo guard` |
+| `kaddo guard` | Is knowledge drifting from code? | update the affected knowledge |
+| `kaddo add agents` | Which agents are available? | `kaddo understand` |
 
-The generated file includes front matter, Definition of Done, and a Learning section.
+Supporting commands: `kaddo status`, `kaddo learn`, `kaddo classify`, `kaddo history`,
+`kaddo module`, `kaddo modules map|list`, `kaddo capsule export|add`, `kaddo graph export`,
+`kaddo report impact`, `kaddo savings`, `kaddo guard --record`, `kaddo drift`, `kaddo questions`,
+`kaddo ignore`, `kaddo add <module>`, `kaddo work-item import`, `kaddo adapters install|list|status`.
 
-**To activate Guard Lite**, add code globs to the `code:` field of the generated front matter:
+## Multirepo Modules & Global Artifacts
 
-```yaml
----
-type: feature
-id: WI-001
-code:
-  - src/payments/**
-  - src/shared/payment/**
----
-```
-
----
-
-### `kaddo guard`
-
-Check if modified code has related artifacts that were not updated.
+Map secondary repositories as living modules of one system:
 
 ```bash
-kaddo guard           # checks staged + unstaged files
-kaddo guard --staged  # checks only staged files
+kaddo modules map    # register a secondary repo as a module
+kaddo modules list   # list mapped modules
 ```
 
-Guard Lite reads `git diff`, finds artifacts with matching `code:` globs, and shows a **non-blocking FYI** if the artifact was not updated in the same diff.
+Per-module knowledge (`module-design`, `stack`, `security`, `standards`) is generated under
+`knowledge/tech/modules/<id>/`. Global artifacts cover cross-cutting concerns:
 
-```
-Touched files:
-  - src/payments/payments.service.ts
-
-  ⚠ Possible knowledge drift: WI-001 (feature, K2)
-    Changed code matching this artifact:
-      - src/payments/payments.service.ts
-    Declared ownership:
-      - src/payments/**
-    WI-001 was not updated in this diff.
-    Evidence: 1/1 globs matched · artifact K2 · domain: payments
-    Suggested action: review WI-001 and update it if the behavior changed,
-    or ignore this artifact below if the change does not affect the knowledge.
+```bash
+kaddo add standards    # knowledge/tech/standards.md
+kaddo add security     # knowledge/tech/security.md
+kaddo add stack        # knowledge/tech/stack.md
+kaddo add git-strategy # knowledge/tech/git-strategy.md + .kaddo/git.yml
 ```
 
-Guard acts only on **declared ownership** (the `code:` globs) — it performs **no inference**
-and is **advisory/non-blocking** (it never fails your command or CI). If the artifact was
-also changed in the same diff, no FYI is shown. Guard is **silent** when no artifacts declare
-ownership. No noise on day one.
+## Skills
 
----
+**[Skills](https://kaddo.org/skills/)** standardize *how* agents do common things well
+(writing an ADR, refining a Work Item, planning implementation, collecting evidence). Agents
+orchestrate; skills standardize. Install with:
 
-## How ownership works
+```bash
+kaddo add skills                  # recommended (delivery + tech)
+kaddo add skills --all            # every skill
+kaddo add skills --group tech     # one group: delivery | tech | integration
+```
 
-Ownership is declared in the front matter of each artifact — no central mapping file.
+## Adapters (AGENTS.md / CLAUDE.md)
+
+Generate native instruction files so AI coding tools work inside a Kaddo repo:
+
+```bash
+kaddo adapters install codex        # AGENTS.md for Codex
+kaddo adapters install claude       # CLAUDE.md for Claude Code
+kaddo adapters install kiro         # AGENTS.md for Kiro
+kaddo adapters install opencode     # AGENTS.md for OpenCode
+kaddo adapters install antigravity  # AGENTS.md for Antigravity
+```
+
+Both are compact projections of the project's knowledge map — Kaddo stays the source of truth.
+See [Custom Adapters](https://kaddo.org/custom-adapters/) for the shared Adapter Contract.
+
+## Kaddo Power
+
+The official [`kaddo-power/`](https://github.com/Kaddo-kdd/kaddo/blob/main/kaddo-power/README.md) packages Kaddo Skills, KDD workflow
+guidance and `@kaddo/mcp` integration using the Agent Plugins specification. Kiro Powers is
+the first supported consumer.
+
+## Templates
+
+Kaddo ships templates for its main artifacts — organized into six categories: **core**,
+**business**, **architecture**, **module**, **operations** and **legacy**. Each carries a
+purpose, when-to-use, output path and quality checklist. See the
+[Templates docs](https://kaddo.org/templates/overview/).
+
+## Examples
+
+The [`examples/`](https://github.com/Kaddo-kdd/kaddo/tree/main/examples) folder has reproducible demo repositories:
+
+| Example | Scenario | State | Highlights |
+|---|---|---|---|
+| [Task Pilot](https://github.com/Kaddo-kdd/kaddo/tree/main/examples/new-project) | Greenfield app | `new` | Structured knowledge from day one; full loop |
+| [Loyalty Lite](https://github.com/Kaddo-kdd/kaddo/tree/main/examples/pre-ai-project) | Existing app | `pre-ai` | `scan` + agents + Guard drift demo |
+| [Old Orders](https://github.com/Kaddo-kdd/kaddo/tree/main/examples/legacy-project) | Legacy MVC app | `legacy` | Understand-before-change; legacy risks/unknowns |
+| [Commerce Stack](https://github.com/Kaddo-kdd/kaddo/tree/main/examples/multirepo-workspace) | Many repos | `multirepo` | `modules map` + per-module artifacts |
+
+Each includes a `prompt-flow.md` with a Mermaid diagram, CLI↔LLM split and copy/paste prompt
+handoffs. See the [Examples docs](https://kaddo.org/examples/).
+
+## Self-hosting
+
+Kaddo builds Kaddo with Kaddo. The project uses its own lifecycle to manage Work Items,
+collect evidence, verify ACs and capture learnings — the same workflow it provides to any
+project. The `knowledge/` directory contains Kaddo's own product knowledge; `.kaddo/` holds
+its derived artifacts. This self-hosting validates the lifecycle end-to-end and ensures that
+friction encountered internally feeds back into improvements.
+
+## How Ownership and Guard Work
+
+Ownership is declared in artifact front matter — no central mapping file:
 
 ```yaml
 ---
 type: feature
 id: WI-001
 title: "Add payment retry logic"
-knowledge_level: K2
 status: in-progress
 code:
   - src/payments/**
   - src/shared/payment/**
-summary: "Adds retry policy for failed payment attempts."
 ---
 ```
 
-Kaddo builds a simple Knowledge Graph from these front matters at runtime:
+`kaddo guard` reads `git diff`, finds artifacts whose `code:` globs match changed files, and
+shows a **non-blocking FYI** when the artifact was not updated in the same diff. Guard is
+**silent** when no artifacts declare ownership — no noise on day one.
 
-```
-artifact → code globs → git diff intersection
-```
+## What Kaddo Does Not Do
 
-### Declaring ownership with the assistant
+- Not a code generator
+- Not an agent execution framework (it ships agent *prompts*, it does not run them)
+- Not a replacement for Jira, Linear or documentation tools
+- Not a platform
+- Does not call an LLM or require an API key
 
-You don't have to edit YAML by hand. The ownership assistant proposes `code:` globs and
-updates the front matter for you:
+## About the Author
 
-```bash
-kaddo owners suggest
-```
-
-It lists Work Items missing ownership, suggests candidate globs from `.kaddo/scan.json` and
-the artifact's `domains`/`capabilities`, and lets you pick or type globs. It updates **only**
-the front matter (the body is preserved), is fully **deterministic** (no LLM, no source
-changes), and works with manual entry when no scan baseline exists.
-
-```
-create work item → kaddo owners suggest → kaddo guard
-```
-
----
-
-### `kaddo explain`
-
-Summarize what Kaddo currently knows about the project — useful for onboarding,
-handoff, project review or preparing an agent.
-
-```bash
-kaddo explain               # project explanation (human-readable)
-kaddo explain --for agent   # compact structured JSON
-```
-
-Run without filters, it reports project metadata, detected stack (from
-`.kaddo/scan.json`), knowledge status (inventory, context pack, capabilities,
-architecture baseline, roadmap, agents), work items, **ownership coverage**, the
-**missing knowledge** and **suggested next steps**. It also writes
-`.kaddo/explain.md` and `.kaddo/explain.json`. No LLM is called.
-
-`context` vs `explain`: `kaddo context` prepares input for an LLM agent;
-`kaddo explain` summarizes what Kaddo already knows. The focused flags
-(`--scope`, `--type`, `--since`) still explain a subset of artifacts.
-
----
-
-### `kaddo capsule`
-
-Share or consume minimal, portable knowledge about a system — a **Knowledge Capsule** —
-without mapping it as multirepo or reading its source.
-
-```bash
-kaddo capsule export        # → .kaddo/exports/<project>.capsule.md / .json
-kaddo capsule add <path>    # import an external capsule → knowledge/external/<id>.capsule.md
-```
-
-`export` builds a deterministic draft from `knowledge/` (purpose, capabilities, public
-contracts, risks, ADRs, owners — never source code or secrets); refine it with the
-`capsule-agent` before sharing. `add` registers the capsule in `.kaddo/external.yml`;
-`kaddo context` then includes an **External Knowledge** section and `kaddo explain` lists
-the capsules (warning when one looks stale). See the
-[Knowledge Capsules guide](https://kaddo.org/knowledge-capsules/).
-
----
-
-### `kaddo graph export`
-
-Export the connections that already exist between your knowledge artifacts as a **lightweight,
-file-based knowledge graph** — for onboarding, impact analysis and context selection.
-
-```bash
-kaddo graph export                  # → .kaddo/graph.json + .kaddo/graph.mmd
-kaddo graph export --scope all      # include every artifact (default: active)
-kaddo graph export --format mermaid # mermaid only (or --format json)
-```
-
-Nodes come from knowledge layers, Work Items, code globs, capabilities, ADRs and Knowledge
-Capsules; edges come from front matter (`code`, `capabilities`, `decisions`, `source_id`,
-`source_initiative`) and the external registry. It never reads `src/`, never reads source code
-and never calls an LLM. `kaddo explain` and `kaddo context` show a graph **summary** once it has
-been exported (they never generate it).
-
-Every export also rates **relationship quality** and writes non-blocking metadata hints
-(`.kaddo/graph-hints.md` + `.json`) — detecting active Work Items without `code`/`capabilities`,
-ADRs without governed `code`, capabilities/capsules with no Work Item link, and more. The
-`graph-agent` turns those hints into precise front matter you confirm and apply. See the
-[Knowledge Graph Export guide](https://kaddo.org/knowledge-graph-export/).
-
-## Roadmap
-
-The full knowledge loop ships today: `scan → context → agents → understand → roadmap →
-create --from roadmap → owners → guard → explain`.
-
-| Version | What shipped |
-|---|---|
-| v1.0 | `init`, `scan`, `create`, `guard` (Guard Lite) |
-| v1.1 | `explain`, `status`, `learn`, Evidence Score |
-| v1.2 | `classify` (Classification Drift), `history` |
-| v1.4 | `guard --ci` (JSON output for CI/PR) |
-| v2.0 | Optional module system (`kaddo add`) |
-| v2.1 | Semantic plugins: `prisma`, `openapi` |
-| v2.2 | Domain Owners (`kaddo owners`) |
-| v2.3 | Multirepo Module Descriptor (`kaddo module`) |
-| v2.4–2.5 | Modules: `contracts`, `capabilities`, `guard-advanced`, `agents`, `skills` |
-| v2.6 | Knowledge loop: `context`, `understand`, `add agents`, roadmap output, `create --from roadmap`, Guard Lite end-to-end, `owners suggest`, project `explain` |
-| v2.6 | Multirepo modules (`modules map/list`), global `standards`/`security`/`stack`/`git-strategy` artifacts, six operational agents |
-| v2.6 | Central template registry (23 templates, layer categories (business/product/tech/delivery)) |
-| v2.6 | Demo example repositories, prompt flows and a diagram-first Visual Guide (docs) |
-| v2.7 | Multirepo hardening: module artifacts from the template registry, module-aware `context`/`explain`, opt-in `guard --workspace` |
-| v2.8 | `kaddo bootstrap` for new projects (Business → Product → Tech → Delivery); business templates + bootstrap agents |
-| v3.0 | Knowledge-centric realignment: `architecture/` → `knowledge/` with layers Business → Product → Tech → Delivery; context/explain by layer (breaking) |
-| v3.1 | Minimum Sufficient Knowledge: bootstrap one consolidated file per layer; progressive `add agents` by group (state default, `--all`, `--group`) |
-| v3.2 | New-project flow hardening: agents in per-layer folders; `new` recommends capability+architecture agents; explain Work Item parser fix; intent vs reality (codebase vs current-state) |
-| v3.3 | Work Item delivery lifecycle: `understand` shows branch → scan → ownership → guard → knowledge → commit for active Work Items (suggestions only; Kaddo never runs git) |
-| v3.4 | Delivery protocol in the `work-item-agent`: branch first per the Git strategy, commit only with human confirmation (CLI never touches git) |
-| v3.5 | Knowledge discovery by front-matter type with per-layer maturity (explain/understand/context); context pack carries Operating Rules so agents never commit without confirmation |
-| v3.5.1 | Author attribution & knowledge identity: Kaddo as a practical implementation of KDD for AI-assisted development (docs/README) |
-| v3.6 | Flexible roadmap parsing and roadmap candidate/materialized Work Item reporting |
-| v3.7 | Work Item lifecycle active workspace (`draft`, `ready`, `in-progress`, `blocked`, `completed`, `archived`) |
-| v3.7.1 | Context Efficiency positioning: Repository Exploration Tax and structured-knowledge narrative |
-| v3.8 | Agent Trace & responsibility boundaries: every prompt declares Agent/Produced/Next; new `implementation-agent` (the only agent that may suggest a branch) |
-| v3.9 | New `chore` Work Item type (+ aliases setup/tooling/maintenance/infra); explain Work Items by Type; context Delivery Mix |
-| v3.9.1 | Unified knowledge artifact discovery: one service behind explain/context/owners/guard (fixes owners missing lifecycle subfolders) |
-| v3.10 | State-aware recommendations: real phase model (Discovery → Planning → Delivery Preparation → Active Delivery → Maintenance) drives understand/context/explain |
-| v3.11 | Command workflow clarity: official command matrix + "Question answered / Suggested next" footer on scan/context/explain/understand; `chore/` branch prefix |
-| v3.13 | New `backlog-agent`: capture raw ideas into a Work Item draft or roadmap candidate (human decides the next step) |
-| v3.14 | Project knowledge language (`project.language: en\|es`): knowledge in your language, CLI stays English; all agents respect it |
-| v3.15 | Delivery context consistency: phase-based handoff + per-phase LLM instructions; assisted `owners suggest` (normalize/validate globs); new `ownership-agent`; guard untracked-files warning; duplicate Work Item detection |
-| v3.16 | Knowledge Capsules: `kaddo capsule export/add`, External Knowledge in context/explain, new `capsule-agent` |
-| v3.17 | Knowledge Graph Export: `kaddo graph export` (`.kaddo/graph.json` + `.mmd`, `--scope`/`--format`); graph summary in context/explain |
-| v3.18 | Graph relationship quality & metadata hints: `graph-hints.md`/`.json`, quality levels, `graph-agent`; hints in context/explain/understand |
-| v3.19 | Read-only MCP server `@kaddo/mcp` (resources, tools, prompts over stdio) |
-| v3.20 | MCP derived tools: safe regeneration of context/explain/understand/graph/capsule-draft under `.kaddo/` |
-| v3.21 | Reusable Skills layer (`kaddo add skills`); skills in context/explain/understand, agent prompts and MCP |
-| v3.22 | Guard & graph scope semantics: graph scope metadata, contextual-empty messaging, Guard ownership scope (active + completed; `--include-archived`) |
-| v3.22.1 | Guard project-root path normalization: matches `code:` globs when the project is a subfolder of the Git root |
-| v3.23 | Knowledge Impact Report: `kaddo report impact` (Markdown/JSON, `--output`); evidence-first health/coverage/traceability/readiness/signals; MCP resource + tool |
-| v3.23.1 | Impact report Actionable Gaps: per-Work-Item missing source/initiative/ownership/level/acceptance/DoD/validation, broad globs, overlaps; Work-Item-specific Suggested Actions + Score Breakdown |
-| v3.23.2 | Impact report defaults to `all` scope (accumulated impact), graph built in memory; `--scope active`; `scope_source`/`default_scope` in JSON |
-| v3.24 | Estimated Savings Model: `kaddo savings` (+ `savings init`, `.kaddo/savings.yml`); evidence-based time/value estimates, confidence; MCP resource + tool |
-| v3.25 | Guard history & drift trend: `kaddo guard --record`, `kaddo drift`; feeds impact Guard Activity + savings Drift Prevention; MCP drift/guard-history resources + tool |
-| v3.25.1 | Savings guard-history messaging fix: distinguishes "no history" from "history with 0 resolved warnings" (drift prevention available at 0 h) |
-| v3.26 | Open-questions readiness gate: `kaddo questions`/`readiness`, blocking/important/deferred classification; MCP open-questions + roadmap-readiness resources + tool; roadmap/work-item/implementation/bootstrap agents check it |
-| v3.27 | Codex adapter: `kaddo adapters install codex` (alias `kaddo export codex`) generates a compact `AGENTS.md` projection (`--dry-run`/`--force`) |
-| v3.27.1 | Codex adapter command fallbacks: AGENTS.md tells Codex to try `corepack pnpm exec` / `pnpm exec` / `npx` kaddo when the global binary isn't on PATH |
-| v3.27.2 | Codex adapter safe merge: `kaddo adapters install codex --inject` adds/updates only a delimited Kaddo block in an existing AGENTS.md, preserving team content |
-| v3.27.3 | Codex adapter reference stabilization: package-manager-aware command fallbacks (lockfile detection) + Adapter Contract & Custom Adapters docs (reference for future adapters) |
-| v3.28 | Claude Code adapter: `kaddo adapters install claude` (alias `kaddo export claude`) generates a `CLAUDE.md` projection reusing the shared adapter common core (`--dry-run`/`--force`) |
-| v3.28.1 | Claude adapter safe merge: `--inject` works for `CLAUDE.md` too; adapter markers are now target-neutral (`KADDO ADAPTER`) and legacy Codex markers auto-migrate on update |
-| v3.28.2 | Adapter inject guard: `--inject` on a fully Kaddo-generated AGENTS.md/CLAUDE.md does nothing (suggests `--force`), preventing duplicated Kaddo guidance |
-| v3.29 | OpenCode adapter: `kaddo adapters install opencode` (alias `kaddo export opencode`) generates an `AGENTS.md` projection reusing the shared adapter common core (`--dry-run`/`--force`/`--inject` + inject guard) |
-| v3.30 | Antigravity adapter: `kaddo adapters install antigravity` (alias `kaddo export antigravity`) generates an `AGENTS.md` projection reusing the shared adapter common core (`--dry-run`/`--force`/`--inject` + inject guard) |
-| v3.31 | Kiro adapter: `kaddo adapters install kiro` (alias `kaddo export kiro`) generates an `AGENTS.md` projection reusing the shared adapter common core (`--dry-run`/`--force`/`--inject` + inject guard) |
-| v3.32 | Adapter discovery & status: `kaddo adapters list` (alias `ls`) and `kaddo adapters status` (alias `check`) — read-only catalog + per-adapter install state (missing/team-owned/injected/legacy-injected/full-generated/broken-markers), shared-`AGENTS.md` origin detection, `--json` |
-| v3.33 | Open questions resolution tracking: mark questions `[open]`/`[resolved]`/`[assumed]`/`[deferred]` (EN+ES); only `open` blocks readiness, so assumed/resolved/deferred decisions stop false blocks. `kaddo questions` shows status counts + `resolution_status` in JSON |
-| v3.34 | Pre-AI onboarding: `kaddo onboarding` (alias `onboard`) / `kaddo report onboarding` — read-only diagnosis of an existing project's readiness (scan/understand/knowledge/questions/roadmap/work-items/adapters) with a single recommended next step; `--json` |
-| v3.35 | Folded onboarding into `kaddo explain`: removed `kaddo onboarding`/`onboard`/`report onboarding`; project readiness + single recommended next step now live in `kaddo explain` (human `## Project Readiness` + `readiness` in agent JSON) |
-| v3.36 | State-aware bootstrap: `kaddo bootstrap` creates the full knowledge baseline for any `project.state` (new/pre-ai/legacy) with state-specific templates — no more new-only warning; idempotent, never overwrites, ensures `tech/decisions/` and `delivery/work-items/` |
-| v3.37 | Placeholder-aware readiness: knowledge files are classified missing/placeholder/weak/useful; a bootstrap file isn't treated as ready knowledge. Layers downgrade to Placeholder/Weak, a new Knowledge Refinement phase recommends the right agent, and `create --from roadmap` is never suggested with 0 candidates |
-| v3.37.1 | Unified next-step: one shared resolver (`core/next-step.ts`) powers `context`, `understand` and `explain` (Phase + Readiness) so they never diverge; agent JSON exposes `nextStepRecommendation`. Fixes duplicate `capabilities` line in explain |
-| v3.38 | Open-question source locations: `kaddo questions` shows each question's `Source` (path:line), `Status`, `Severity`, `Note` + a copy/paste resolution example and localized how-to-resolve guide; JSON/report/MCP carry `sourcePath`, `line`, `raw`, `note` |
-| v3.39 | Existing capability discovery: state-aware `capabilities.md` (pre-ai/legacy = evidence-backed Capability Inventory + Gaps + Roadmap Candidate Signals; legacy adds criticality/change-risk/modernization); capability-agent discovers with evidence, roadmap-agent treats capabilities as primary source |
-| v3.39.1 | Domain-oriented capability inventory: pre-ai/legacy `capabilities.md` groups capabilities under `## Capability Domains` (functional domains, not technical folders); gaps/candidates name their `Domain`; roadmap-agent reads it as a domain map; work-item-agent recommends `related_domain` + `related_capability` |
-| v3.40 | ADR materialization: `kaddo adr` (alias `decisions`) detects decision candidates + ADRs and hands off the ADR files to create; `tech_decisions` status (none/candidates/draft-adrs/accepted-adrs) surfaced in `explain`/`context`/`understand`; adr-writing skill formalized |
-| v3.40.1 | ADR slug cleanup + MCP: suggested ADR filenames strip list/heading prefixes (no `ADR-001-1-…`) and normalize acronyms; new read-only MCP resource `kaddo://tech-decisions` sharing `buildTechDecisions` with `kaddo adr` |
-| v3.41 | Tech knowledge structure: `knowledge/tech/discovery/` for architecture-notes/decision-candidates (core vs decisions vs discovery); `kaddo adr` reads discovery-first with legacy fallback; `kaddo tech organize` migrates safely; `explain` shows `## Tech Knowledge` |
-| v3.42 | Agent & skill version metadata: installed agents/skills carry a `version:`; `kaddo agents status` / `kaddo skills status` classify up-to-date/outdated/unknown-version/modified/missing; `agents update` / `skills update` refresh outdated safely (never overwrite edits without `--force`); MCP `kaddo://installed-assets` |
-| v3.43 | Capability-grounded roadmap: each `RM-xxx` candidate is graded on related domain / capability / source signals; `roadmap_quality` surfaced in `explain`/`context`/`understand`; `create --from roadmap` preserves `source_roadmap_candidate` + related metadata into the Work Item; roadmap-agent emits grounded fields (never materializes Work Items); MCP `kaddo://roadmap-quality` |
-| v3.44 | Roadmap counting alignment + materialization quality: `explain`/`context` separate **Roadmap initiatives** from **Work Item candidates** (`## Roadmap Status`); two-level `roadmapQuality` (initiatives + work_item_candidates); `create --from roadmap` normalizes metadata — fills `domains` from `related_domain`, splits comma-joined `related_capabilities` into a real list, carries `source_roadmap_initiative`/`source_work_item_candidate`/`source_signals`/`decision_candidates`, improved Source + Context-From-Roadmap body + ADR warning; MCP `kaddo://work-item-candidates` |
-| v3.45 | State-aware next step: `resolveNextStep` decides from the real delivery state (draft/ready/in-progress, ownership, ADRs, adapters) instead of always suggesting `create --from roadmap` — draft → work-item-agent, ready → adapter/implementation-agent, in-progress → guard; parallel **secondary** recommendations (ownership, ADRs, remaining candidates); `deliveryState` + recommendation in `explain`/`context`; MCP `kaddo://next-step` |
-| v3.86 | Official Kaddo Agent Plugin: portable Agent Plugins 1.0 packaging, Kiro Power integration, canonical Skill synchronization, MCP boundary documentation and automated drift validation |
-
-**Optional modules (installed with `kaddo add`):**
-
-`adr` · `rfc` · `incident` · `migration` · `legacy` · `contracts` · `capabilities` · `guard-advanced` · `agents` · `skills` · `standards` · `security` · `stack` · `git-strategy`
+Kaddo is created and maintained by **Julian Dario Luna Patiño** — Cloud Solutions Architect
+Lead, AWS Community Builder and content creator at [TryCatch.tv](https://trycatch.tv). It is
+the result of years designing software architectures, leading development teams and
+documenting systems. Kaddo applies Knowledge Driven Development principles to AI-assisted
+software development; it does not claim to have invented KDD.
+[GitHub](https://github.com/judlup) · [LinkedIn](https://www.linkedin.com/in/judlup/) ·
+[About](https://kaddo.org/about/).
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md).
+See [CONTRIBUTING.md](https://github.com/Kaddo-kdd/kaddo/blob/main/CONTRIBUTING.md).
 
 ## License
 

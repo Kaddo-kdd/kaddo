@@ -49,6 +49,20 @@ pnpm agent-plugin:check
 Do not edit `kaddo-power/skills/*/SKILL.md` directly. Client-specific guidance belongs under its
 extension directory, such as `kaddo-power/dev.kiro/`.
 
+### npm README
+
+`packages/cli/README.md` is the README shown on npm for `@kaddo/cli`, and it is **generated** from
+the canonical root `README.md`. Edit the root `README.md`, then regenerate and verify:
+
+```bash
+pnpm npm-readme:sync    # regenerate packages/cli/README.md from README.md
+pnpm npm-readme:check   # fail if it is out of sync (runs in CI and release)
+```
+
+The sync only rewrites relative asset/link references to absolute URLs so the README renders on npm.
+Do not edit `packages/cli/README.md` directly. `packages/mcp/README.md` is separate (MCP-specific)
+and is not generated.
+
 ## Principles
 
 - **No features beyond v1 scope** without a work item and discussion

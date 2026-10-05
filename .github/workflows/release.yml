@@ -32,6 +32,11 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
+      # Guard: the README that will be packed into @kaddo/cli must match the canonical root README
+      # of the tag being published. Fails the release on drift (WI-026).
+      - name: Verify npm README is in sync
+        run: pnpm npm-readme:check
+
       - name: Build
         run: pnpm -r build
 
