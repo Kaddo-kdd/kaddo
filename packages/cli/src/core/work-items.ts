@@ -106,6 +106,13 @@ export type WorkItemDetail = WorkItemListItem & {
   originalSnapshot: ExternalSnapshot | null
   /** POSIX path relative to the project root. */
   path: string
+  /**
+   * The canonical Markdown body of the artifact (everything after the frontmatter), verbatim.
+   * It is the faithful representation of the source of truth, NOT reconstructed from the parsed
+   * fields above — so sections Core does not model (Validation, Definition of Done, Learning,
+   * Risks, future headings) remain visible to interfaces (WI-025).
+   */
+  markdownBody: string
   /** How far the Work Item has been refined (independent of lifecycle). */
   refinement: RefinementStatus
   /** Graph-assisted impact (VS-101): semantic system entities the agent classified. */
@@ -288,6 +295,8 @@ export function getWorkItem(dir: string, workItemId: string): WorkItemDetail {
     source: parseWorkItemSource(fm),
     originalSnapshot: parseOriginalSnapshot(fm),
     path: match.relPath,
+    // Faithful source of truth: the artifact body already read above, not reconstructed (WI-025).
+    markdownBody: body.trim(),
     ...parseSystemImpact(dir, fm),
   }
   return { ...detail, refinement: computeRefinementStatus(detail) }

@@ -160,6 +160,8 @@ export type WorkItemDetail = WorkItemListItem & {
   }
   originalSnapshot: ExternalSnapshot | null
   path: string
+  /** Canonical Markdown body (verbatim) for the full-definition view (WI-025). */
+  markdownBody: string
   refinement: RefinementStatus
 }
 
