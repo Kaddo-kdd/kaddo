@@ -155,32 +155,55 @@ export default defineConfig({
           ],
         },
         {
+          // Modules = installable extensions (`kaddo add <name>`): directories, work-item types and
+          // quality gates, tracked in .kaddo/config.yml as module_<name>. Source of truth:
+          // packages/cli/src/modules/registry.ts. Only real modules belong here.
           label: 'Modules',
           translations: { es: 'Módulos' },
           items: [
             { label: 'Overview', translations: { es: 'Resumen' }, slug: 'modules/overview' },
             { label: 'Agent Prompt Packs', translations: { es: 'Agentes (Prompt Packs)' }, slug: 'modules/agents' },
             { label: 'Skills', translations: { es: 'Habilidades' }, slug: 'skills' },
-            { label: 'Domain Owners', translations: { es: 'Domain Owners' }, slug: 'modules/owners' },
-            { label: 'Multirepo modules', translations: { es: 'Módulos multirepo' }, slug: 'modules/multirepo' },
-            { label: 'Knowledge Capsules', translations: { es: 'Knowledge Capsules' }, slug: 'knowledge-capsules' },
-            { label: 'Knowledge Graph Export', translations: { es: 'Exportar el grafo de conocimiento' }, slug: 'knowledge-graph-export' },
-            { label: 'Diagrams in Knowledge (Mermaid)', translations: { es: 'Diagramas en el conocimiento (Mermaid)' }, slug: 'mermaid-knowledge' },
-            { label: 'Kaddo Power for Kiro', translations: { es: 'Kaddo Power para Kiro' }, slug: 'kaddo-power' },
-            { label: 'MCP Server', translations: { es: 'Servidor MCP' }, slug: 'mcp-server' },
-            { label: 'Integrations', translations: { es: 'Integraciones' }, slug: 'integrations' },
-            { label: 'Telemetry', translations: { es: 'Telemetría' }, slug: 'telemetry' },
-            { label: 'Impact Report', translations: { es: 'Reporte de impacto' }, slug: 'impact-report' },
-            { label: 'Savings Report', translations: { es: 'Reporte de ahorro' }, slug: 'savings-report' },
-            { label: 'Drift Report', translations: { es: 'Reporte de drift' }, slug: 'drift-report' },
-            { label: 'Open Questions Gate', translations: { es: 'Preguntas abiertas' }, slug: 'open-questions' },
             { label: 'Tech Decisions (ADRs)', translations: { es: 'Decisiones técnicas (ADRs)' }, slug: 'tech-decisions' },
-            { label: 'Roadmap Quality', translations: { es: 'Calidad del roadmap' }, slug: 'roadmap-quality' },
+            { label: 'Standards, security & stack', translations: { es: 'Estándares, seguridad y stack' }, slug: 'modules/global-docs' },
+            { label: 'Git strategy', translations: { es: 'Estrategia de Git' }, slug: 'modules/git-strategy' },
+          ],
+        },
+        {
+          // Features and gates used by a developer during the Kaddo lifecycle — not installable modules.
+          label: 'Features & gates',
+          translations: { es: 'Funcionalidades y gates' },
+          items: [
+            { label: 'Diagrams in Knowledge (Mermaid)', translations: { es: 'Diagramas en el conocimiento (Mermaid)' }, slug: 'mermaid-knowledge' },
+            { label: 'Knowledge Graph Export', translations: { es: 'Exportar el grafo de conocimiento' }, slug: 'knowledge-graph-export' },
+            { label: 'Knowledge Capsules', translations: { es: 'Knowledge Capsules' }, slug: 'knowledge-capsules' },
             { label: 'Initiatives', translations: { es: 'Iniciativas' }, slug: 'initiatives' },
-            { label: 'Writing a blog article', translations: { es: 'Escribir un artículo del blog' }, slug: 'blog-authoring' },
+            { label: 'Roadmap Quality', translations: { es: 'Calidad del roadmap' }, slug: 'roadmap-quality' },
+            { label: 'Open Questions Gate', translations: { es: 'Preguntas abiertas' }, slug: 'open-questions' },
             { label: 'State-Aware Next Step', translations: { es: 'Siguiente paso según el estado' }, slug: 'next-step' },
             { label: 'Project Route', translations: { es: 'Ruta del Proyecto' }, slug: 'project-route' },
             { label: 'Installed Assets', translations: { es: 'Assets instalados' }, slug: 'installed-assets' },
+            { label: 'Domain Owners', translations: { es: 'Domain Owners' }, slug: 'modules/owners' },
+            { label: 'Multirepo modules', translations: { es: 'Módulos multirepo' }, slug: 'modules/multirepo' },
+          ],
+        },
+        {
+          label: 'Reports',
+          translations: { es: 'Reportes' },
+          items: [
+            { label: 'Impact Report', translations: { es: 'Reporte de impacto' }, slug: 'impact-report' },
+            { label: 'Savings Report', translations: { es: 'Reporte de ahorro' }, slug: 'savings-report' },
+            { label: 'Drift Report', translations: { es: 'Reporte de drift' }, slug: 'drift-report' },
+          ],
+        },
+        {
+          label: 'Integrations & interfaces',
+          translations: { es: 'Integraciones e interfaces' },
+          items: [
+            { label: 'MCP Server', translations: { es: 'Servidor MCP' }, slug: 'mcp-server' },
+            { label: 'Integrations', translations: { es: 'Integraciones' }, slug: 'integrations' },
+            { label: 'Telemetry', translations: { es: 'Telemetría' }, slug: 'telemetry' },
+            { label: 'Kaddo Power for Kiro', translations: { es: 'Kaddo Power para Kiro' }, slug: 'kaddo-power' },
             {
               label: 'Adapters',
               translations: { es: 'Adapters' },
@@ -194,8 +217,13 @@ export default defineConfig({
                 { label: 'Custom Adapters', translations: { es: 'Adapters custom' }, slug: 'custom-adapters' },
               ],
             },
-            { label: 'Standards, security & stack', translations: { es: 'Estándares, seguridad y stack' }, slug: 'modules/global-docs' },
-            { label: 'Git strategy', translations: { es: 'Estrategia de Git' }, slug: 'modules/git-strategy' },
+          ],
+        },
+        {
+          label: 'Contributing',
+          translations: { es: 'Contribuir' },
+          items: [
+            { label: 'Writing a blog article', translations: { es: 'Escribir un artículo del blog' }, slug: 'blog-authoring' },
           ],
         },
       ],
