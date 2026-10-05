@@ -1,20 +1,32 @@
+import fs from 'node:fs'
+import path from 'node:path'
 import matter from 'gray-matter'
-import { readArtifacts } from '../services/artifact-reader.js'
-import { exists, join, cwd, readFile, writeFile, readDir } from '../utils/fs.js'
+import { readArtifacts, type Artifact } from '../services/artifact-reader.js'
+import { exists, join, cwd, readFile, writeFile, ensureDir } from '../utils/fs.js'
 import { intro, outro, log, text, select } from '../utils/ui.js'
 
 const ARCH_DIR = 'knowledge'
 const WORK_ITEMS_DIR = 'knowledge/delivery/work-items'
 
-function findWorkItemFile(dir: string, id: string): string | null {
-  const wiDir = join(dir, WORK_ITEMS_DIR)
-  if (!exists(wiDir)) return null
-  const files = readDir(wiDir).filter((f) => f.endsWith('.md'))
-  const match = files.find((f) => f.includes(id.toUpperCase()) || f.includes(id.toLowerCase()))
-  return match ? join(wiDir, match) : null
+/**
+ * Where a completed Work Item should live. The lifecycle keeps WIs in subdirectories
+ * (draft/ready/in-progress/blocked/completed); completing one moves it to completed/, mirroring how
+ * `kaddo ready` moves draft/ → ready/. Returns the original path when the WI is not in such a
+ * subdirectory (legacy flat layout), so nothing moves.
+ */
+export function completedPathFor(filePath: string): string {
+  const posix = filePath.replace(/\\/g, '/')
+  const m = posix.match(/\/work-items\/(draft|ready|in-progress|blocked)\//)
+  if (!m) return filePath
+  const completedDir = path.dirname(filePath).replace(
+    new RegExp(`[/\\\\]${m[1]}$`),
+    path.sep + 'completed'
+  )
+  return path.join(completedDir, path.basename(filePath))
 }
 
-function updateWorkItemFile(filePath: string, learning: string): void {
+/** Writes the completion + learning and moves the file to completed/. Returns the final path. */
+export function updateWorkItemFile(filePath: string, learning: string): string {
   const raw = readFile(filePath)
   const { data, content } = matter(raw)
 
@@ -38,7 +50,16 @@ function updateWorkItemFile(filePath: string, learning: string): void {
   }
 
   const newRaw = matter.stringify(updatedContent, data)
-  writeFile(filePath, newRaw)
+
+  const newPath = completedPathFor(filePath)
+  if (newPath !== filePath) {
+    ensureDir(path.dirname(newPath))
+    writeFile(newPath, newRaw)
+    fs.unlinkSync(filePath)
+  } else {
+    writeFile(filePath, newRaw)
+  }
+  return newPath
 }
 
 export async function runLearn(artifactId?: string, opts: { force?: boolean } = {}): Promise<void> {
@@ -84,7 +105,13 @@ export async function runLearn(artifactId?: string, opts: { force?: boolean } = 
     targetId = chosen
   }
 
-  const filePath = findWorkItemFile(dir, targetId)
+  // Resolve the artifact's real path from the recursive discovery above, so a Work Item is found
+  // wherever it currently sits in the lifecycle (draft/ready/in-progress/completed), not just at
+  // the top level of the work-items directory.
+  const targetArtifact: Artifact | undefined = closable.find(
+    (a) => (a.id || a.title) === targetId
+  ) ?? artifacts.find((a) => (a.id || a.title) === targetId)
+  const filePath = targetArtifact?.filePath ?? null
   if (!filePath) {
     log.error(`Work item "${targetId}" not found in ${WORK_ITEMS_DIR}/`)
     process.exit(1)
@@ -155,10 +182,10 @@ export async function runLearn(artifactId?: string, opts: { force?: boolean } = 
     enrichedLearning += '\n\n> ' + notes.join(' ')
   }
 
-  updateWorkItemFile(filePath, enrichedLearning)
+  const finalPath = updateWorkItemFile(filePath, enrichedLearning)
 
   log.success(`${targetId} marked as completed`)
-  log.success(`Learning recorded in ${filePath.replace(dir + '/', '')}`)
+  log.success(`Learning recorded in ${finalPath.replace(dir + path.sep, '').replace(/\\/g, '/')}`)
   if (hasExceptions) {
     log.warn('Learning captured from a Work Item completed with validation exceptions.')
   }

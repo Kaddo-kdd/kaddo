@@ -177,9 +177,23 @@ function extractSections(body: string): Map<string, string> {
 type NormalizedImport = {
   type: string
   intent: string
+  /** Short summary for the frontmatter — never the whole document. */
+  summary: string
+  /** Full canonical Markdown body to preserve verbatim, when the source has a real body. */
+  body?: string
   source: WorkItemSourceInput
   snapshot: ExternalSnapshot
   discardedFields: string[]
+}
+
+/** First meaningful paragraph (skipping headings/blockquotes), capped — a short captured summary. */
+function deriveShortSummary(parsed: ParsedContent): string {
+  const paragraph = parsed.body
+    .split(/\n{2,}/)
+    .map((p) => p.trim())
+    .find((p) => p && !/^#{1,6}\s/.test(p) && !/^>/.test(p) && p !== parsed.title)
+  const base = paragraph ? paragraph.replace(/\s+/g, ' ') : parsed.title
+  return base.length > 280 ? `${base.slice(0, 277).trimEnd()}…` : base
 }
 
 export function normalizeImportFields(
@@ -195,9 +209,12 @@ export function normalizeImportFields(
     ? (normalizeType(opts.userType) ?? 'feature')
     : (parsed.type ?? 'feature')
 
-  const intent = parsed.body && parsed.body !== parsed.title
-    ? `${parsed.title}\n\n${parsed.body}`
-    : parsed.title
+  // Keep the full document as the Work Item body; the summary stays short. This prevents the whole
+  // import from collapsing into the `summary` frontmatter field (the body is the source of truth).
+  const hasRealBody = !!parsed.body && parsed.body !== parsed.title
+  const intent = parsed.title
+  const body = hasRealBody ? parsed.body : undefined
+  const summary = hasRealBody ? deriveShortSummary(parsed) : parsed.title
 
   const source: WorkItemSourceInput = {
     type: opts.importSource === 'chat' ? 'chat' : 'external',
@@ -208,7 +225,9 @@ export function normalizeImportFields(
   ;(source as Record<string, unknown>).source_hash = opts.sourceHash
 
   const snapshot: ExternalSnapshot = { title: parsed.title }
-  if (parsed.summary !== parsed.title) snapshot.description = parsed.summary
+  // Keep the snapshot description short: when the full document is preserved in the Work Item body,
+  // storing the whole thing here too would just move the bloat into another frontmatter field.
+  if (summary !== parsed.title) snapshot.description = summary
   if (typeof parsed.candidateFields.type === 'string') snapshot.type = parsed.candidateFields.type
   if (typeof parsed.candidateFields.status === 'string') snapshot.status = parsed.candidateFields.status
   if (Array.isArray(parsed.candidateFields.labels)) {
@@ -216,7 +235,7 @@ export function normalizeImportFields(
     if (labels.length > 0) snapshot.labels = labels
   }
 
-  return { type, intent, source, snapshot, discardedFields }
+  return { type, intent, summary, body, source, snapshot, discardedFields }
 }
 
 // --- Content hash ------------------------------------------------------------
@@ -319,6 +338,8 @@ export function importWorkItem(dir: string, opts: ImportWorkItemOpts): ImportWor
   const result = createWorkItem(dir, {
     intent: normalized.intent,
     type: normalized.type,
+    summary: normalized.summary,
+    body: normalized.body,
     source: normalized.source,
     originalSnapshot: normalized.snapshot,
   })

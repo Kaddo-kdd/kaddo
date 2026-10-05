@@ -196,11 +196,14 @@ describe('VS-109 — normalizeImportFields', () => {
     expect(result.snapshot.labels).toEqual(['p1'])
   })
 
-  it('builds intent from title + body', () => {
+  it('keeps the full body separate from a short intent/summary', () => {
     const parsed = parseContent('# My Feature\n\nThis is the description.')
     const result = normalizeImportFields(parsed, { importSource: 'cli', sourceHash: 'abc', sourceFormat: 'markdown' })
-    expect(result.intent).toContain('My Feature')
-    expect(result.intent).toContain('This is the description.')
+    // intent stays short (the title); the body is preserved verbatim; the summary is short.
+    expect(result.intent).toBe('My Feature')
+    expect(result.body).toContain('This is the description.')
+    expect(result.summary).toBe('This is the description.')
+    expect(result.summary).not.toContain('# My Feature')
   })
 
   it('reports discarded lifecycle fields from imported content', () => {
@@ -316,6 +319,28 @@ describe('VS-109 — importWorkItem', () => {
     expect(result.sourceFormat).toBe('markdown')
     const wi = readWI(dir, result.workItemId)
     expect(wi).toContain('Add monitoring')
+  })
+
+  it('keeps a long body in the artifact body, not in the summary frontmatter', () => {
+    const content = [
+      '---', 'title: "Improve something"', 'type: feature', '---',
+      '# Improve something', '',
+      '## Problem', 'The current behavior loses information.', '',
+      '## Acceptance criteria', '- AC-01 — the body is preserved', '- AC-02 — the summary stays short', '',
+      '## Validation', 'Open the detail and confirm every section is visible.', '',
+    ].join('\n')
+    const result = importWorkItem(dir, { content, source: 'cli', type: 'feature' })
+    expect(result.created).toBe(true)
+    const wi = readWI(dir, result.workItemId)!
+    const [frontmatter, ...bodyParts] = wi.split(/\n---\n/)
+    const body = bodyParts.join('\n---\n')
+    // Full body preserved verbatim in the artifact body.
+    expect(body).toContain('## Acceptance criteria')
+    expect(body).toContain('AC-01 — the body is preserved')
+    expect(body).toContain('## Validation')
+    // The body did NOT collapse into the summary frontmatter field.
+    expect(frontmatter).not.toContain('## Acceptance criteria')
+    expect(frontmatter).not.toContain('AC-01 — the body is preserved')
   })
 
   it('imports kaddo-format and overrides lifecycle fields', () => {

@@ -258,6 +258,14 @@ function freshBody(input: WorkItemInput): string {
   return `${preamble}\n\n${out.join('\n\n')}\n`.replace(/\n{3,}/g, '\n\n')
 }
 
+/** Ensure a verbatim imported body starts with an H1 title; prepend one when it does not. */
+function ensureH1(body: string, title: string): string {
+  const trimmed = body.trim()
+  const firstMeaningful = trimmed.split(/\r?\n/).find((l) => l.trim())
+  if (firstMeaningful && /^#\s+/.test(firstMeaningful.trim())) return trimmed
+  return `# ${title}\n\n${trimmed}`
+}
+
 // --- Frontmatter merge -------------------------------------------------------
 
 /** Apply the structured input onto a frontmatter object, preserving unknown keys (no-lossy). */
@@ -435,7 +443,21 @@ export type ExternalSnapshot = {
 
 export function createWorkItem(
   dir: string,
-  opts: { intent: string; type: string; answers?: Record<string, string>; source?: WorkItemSourceInput; originalSnapshot?: ExternalSnapshot },
+  opts: {
+    intent: string
+    type: string
+    answers?: Record<string, string>
+    source?: WorkItemSourceInput
+    originalSnapshot?: ExternalSnapshot
+    /** A short summary for the frontmatter. Falls back to the intent when omitted. */
+    summary?: string
+    /**
+     * The canonical Markdown body to use verbatim (already contains its own sections). When set, the
+     * template body is NOT generated — this is how an imported document keeps its full content in the
+     * body instead of being collapsed into the `summary` frontmatter field.
+     */
+    body?: string
+  },
 ): { id: string; path: string; revision: string } {
   const intent = opts.intent.trim()
   if (!intent) throw new WorkItemWriteError('INVALID_INPUT', 'An intent or summary is required.')
@@ -445,6 +467,7 @@ export function createWorkItem(
   const id = nextWorkItemId(dir)
   const title = intent.split(/\r?\n/)[0].trim().slice(0, 120)
   const today = new Date().toISOString().split('T')[0]
+  const summary = opts.summary?.trim() || intent
   const source: Record<string, unknown> = opts.source
     ? { ...opts.source, inferred: false }
     : { type: 'manual', inferred: false }
@@ -458,18 +481,21 @@ export function createWorkItem(
     source,
     generated_by: 'kaddo-admin',
     affected_modules: [],
-    summary: intent,
+    summary,
   }
   if (opts.originalSnapshot) data.original_snapshot = opts.originalSnapshot
   const answers = opts.answers ?? {}
   const hasAnswers = Object.values(answers).some((v) => v?.trim())
-  const body = hasAnswers
-    ? captureBody(title, type, answers)
-    : freshBody({
-        title, type, summary: intent,
-        scopeUnknowns: [], affectedModules: [], moduleCoverage: [], impactAnalysis: [],
-        acceptanceCriteria: [], decisions: [], relatedKnowledge: [], scopeConfidence: null,
-      })
+  const providedBody = opts.body?.trim()
+  const body = providedBody
+    ? ensureH1(providedBody, title)
+    : hasAnswers
+      ? captureBody(title, type, answers)
+      : freshBody({
+          title, type, summary,
+          scopeUnknowns: [], affectedModules: [], moduleCoverage: [], impactAnalysis: [],
+          acceptanceCriteria: [], decisions: [], relatedKnowledge: [], scopeConfidence: null,
+        })
   const relPath = `${WORK_ITEMS_DIR}/draft/${id}-${slugify(title)}.md`
   const filePath = join(dir, relPath)
   if (exists(filePath)) throw new WorkItemWriteError('INVALID_INPUT', `Work Item file already exists: ${relPath}`)
