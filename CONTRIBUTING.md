@@ -93,6 +93,10 @@ Kaddo is built with its own Knowledge-Driven Development model, and contribution
 idea: **knowledge and intent come before implementation, and code is reviewed against an explicit
 Work Item.**
 
+<p align="center">
+  <img src="assets/contribution-cycle.webp" alt="Kaddo contribution cycle: Knowledge → Work Item → Branch → Implement → Verify → Pull Request → Review → Merge" width="100%" />
+</p>
+
 > **One Work Item → One Branch → One Pull Request.**
 
 A contribution should represent a single coherent outcome. This does not mean "small PR" — a K3/K4
