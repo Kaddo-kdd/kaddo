@@ -21,6 +21,7 @@ import { runBootstrap } from './commands/bootstrap.js'
 import { runCapsuleExport, runCapsuleAdd } from './commands/capsule.js'
 import { runGraphExport } from './commands/graph.js'
 import { runTopologyValidate, runTopologyApply } from './commands/topology.js'
+import { runResourcesList, runResourcesGet } from './commands/resources.js'
 import {
   runIntegrationsList,
   runIntegrationsStatus,
@@ -160,6 +161,22 @@ topologyCmd
   .action((file: string, opts: { yes?: boolean }) => {
     runTopologyApply(file, opts)
   })
+
+const resourcesCmd = program
+  .command('resources')
+  .description('List and inspect Project Resources — external systems the project uses (read-only, no secrets)')
+
+resourcesCmd
+  .command('list')
+  .description('List Project Resources defined under knowledge/tech/resources/')
+  .option('--json', 'Output JSON')
+  .action((opts: { json?: boolean }) => runResourcesList(cwd(), opts))
+
+resourcesCmd
+  .command('get <id>')
+  .description('Show one Project Resource: purpose, interfaces, boundaries and auth references')
+  .option('--json', 'Output JSON')
+  .action((id: string, opts: { json?: boolean }) => runResourcesGet(id, cwd(), opts))
 
 const integrationsCmd = program
   .command('integrations')

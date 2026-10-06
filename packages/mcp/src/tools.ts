@@ -29,6 +29,7 @@ import { listWorkItems, type WorkItemSummary } from './workitems.js'
 import { listCapsules, getCapsule, listAgents, getAgentPrompt } from './catalog.js'
 import { listSkills, getSkill } from './skills.js'
 import { readJson, readText, writeWorkItemTransition, removeWorkItemFile } from './project.js'
+import { getResources, getResource } from '../../cli/src/core/resources.js'
 
 export type ToolResult = { ok: true; data: unknown } | { ok: false; message: string }
 
@@ -404,4 +405,15 @@ export function setTelemetryConsentTool(
   const consent = args.consent as 'enabled' | 'disabled'
   persistConsent(root, consent)
   return ok({ applied: true, consent, message: `Telemetry ${consent}.` })
+}
+
+// Project Resources (WI-031) — read-only. Never connects to the system; never exposes secret values.
+export function listResourcesTool(root: string): ToolResult {
+  return ok(getResources(root))
+}
+
+export function getResourceTool(root: string, id: string): ToolResult {
+  const resource = getResource(root, id)
+  if (!resource) return fail(`Project Resource "${id}" not found.`)
+  return ok(resource)
 }

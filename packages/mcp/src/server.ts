@@ -24,6 +24,8 @@ import {
   verifyWorkItemTool,
   telemetryStatusTool,
   setTelemetryConsentTool,
+  listResourcesTool,
+  getResourceTool,
   type ToolResult,
 } from './tools.js'
 import { listSkills, getSkill } from './skills.js'
@@ -194,6 +196,18 @@ export function createServer(root: string): McpServer {
       inputSchema: { id: z.string(), confirm: z.boolean().optional() },
     },
     async (args) => toolText(guarded(root, () => markWorkItemReady(root, args.id, args.confirm)))
+  )
+
+  server.registerTool(
+    'kaddo_list_resources',
+    { title: 'List Project Resources', description: 'List external systems the project uses (databases, cloud, APIs…), read-only, no secrets.', inputSchema: {} },
+    async () => toolText(guarded(root, () => listResourcesTool(root)))
+  )
+
+  server.registerTool(
+    'kaddo_get_resource',
+    { title: 'Get Project Resource', description: 'Get one Project Resource by ID: purpose, environments, access interfaces, boundaries and auth references (never values).', inputSchema: { id: z.string() } },
+    async (args) => toolText(guarded(root, () => getResourceTool(root, args.id)))
   )
 
   server.registerTool(
