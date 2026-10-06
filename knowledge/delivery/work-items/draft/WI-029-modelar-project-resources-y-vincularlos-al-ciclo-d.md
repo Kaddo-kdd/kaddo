@@ -1,0 +1,267 @@
+---
+type: feature
+id: WI-029
+title: Modelar Project Resources y vincularlos al ciclo de Work Items
+status: draft
+work_type: feature
+created_at: '2026-10-06'
+source:
+  type: external
+  imported_at: '2026-10-06'
+  source_format: markdown-frontmatter
+  source_hash: 2efe11f9fcaf157dd0d62dea49c000001257a3adff0c04293737160cdd67d96a
+  inferred: false
+generated_by: kaddo-admin
+knowledge_level: K3
+affected_modules: []
+domains:
+  - Tech
+  - Delivery
+scope_confidence:
+  level: high
+  reasons:
+    - >-
+      Los puntos de extensión ya existen y están probados: discoverKnowledge por
+      tipo/layer (services/knowledge-artifacts.ts), el parsing de relaciones del
+      WI (parseRelatedKnowledge/parseDecisions en core/work-items.ts), el Graph
+      con uniones GraphNodeType/GraphEdgeType extensibles (core/graph.ts), el
+      context-pack e implementation-handoff, y el Admin WorkItemDetail.
+    - >-
+      Es aditivo y backward-compatible: resources es opcional; proyectos sin
+      knowledge/tech/resources/ no cambian (AC-06/AC-14).
+    - >-
+      Frontera clara y conocida: Resource ≠ Access Interface, Resource ≠ Module,
+      Resource ≠ Integration Adapter; sin ejecución remota ni credenciales.
+  note: >-
+    Alta en diseño/factibilidad, pero el ESFUERZO es grande (5 superficies). Se
+    recomienda tratar esta como épica y dividirla (ver "Recommended split").
+refined_by: work-item-refinement (manual)
+is_epic: true
+summary: >-
+  Kaddo describe Business/Product/Tech knowledge, arquitectura, módulos,
+  capabilities, Work Items, related knowledge, system impact, Implementation
+  Handoff y Evidence. Pero parte importante de muchos sistemas vive **fuera del
+  repositorio** (Supabase, PostgreSQL, AWS, Azure, Kafk…
+original_snapshot:
+  title: Modelar Project Resources y vincularlos al ciclo de Work Items
+  description: >-
+    Kaddo describe Business/Product/Tech knowledge, arquitectura, módulos,
+    capabilities, Work Items, related knowledge, system impact, Implementation
+    Handoff y Evidence. Pero parte importante de muchos sistemas vive **fuera
+    del repositorio** (Supabase, PostgreSQL, AWS, Azure, Kafk…
+  type: feature
+  status: draft
+---
+
+# Modelar Project Resources y vincularlos al ciclo de Work Items
+
+## Intent
+
+Kaddo describe Business/Product/Tech knowledge, arquitectura, módulos, capabilities, Work Items,
+related knowledge, system impact, Implementation Handoff y Evidence. Pero parte importante de muchos
+sistemas vive **fuera del repositorio** (Supabase, PostgreSQL, AWS, Azure, Kafka, Kubernetes, GitHub,
+S3, Redis, APIs externas, plataformas de terceros), y humanos/agentes interactúan con ellos por
+distintas interfaces (CLI, MCP, SQL, API, SDK, IaC, Web Console).
+
+Hoy Kaddo sabe qué módulos/archivos afecta un WI, pero no tiene un modelo explícito para responder:
+qué recursos externos forman parte del sistema, por qué existen, en qué ambientes, cómo se interactúa
+con ellos, qué límites tiene ese acceso, qué WIs los afectan/necesitan, y qué recursos deben estar
+disponibles en Handoff/Validation. El objetivo es introducir **Project Resources** como conocimiento
+técnico first-class y permitir que un Work Item declare su relación con ellos.
+
+## Product principle — Resource ≠ Access Interface
+
+Kaddo modela primero el **recurso real** del sistema (una parte estable). CLI, MCP, SQL o APIs son
+**mecanismos de acceso** a ese recurso, no el recurso. Ejemplo: el recurso es "Supabase Main
+Database"; sus interfaces de acceso son Supabase CLI, Supabase MCP, PostgreSQL y REST API.
+
+## Entry points (grounding técnico)
+
+Los puntos de extensión ya existen; esta épica los toca así:
+
+- **Discovery / tipo**: `packages/cli/src/services/knowledge-artifacts.ts` — `discoverKnowledge`
+  resuelve tipo por frontmatter → path/layer → nombre; `knowledge/tech/` ya mapea al layer `tech`.
+  Reconocer `type: project-resource` bajo `knowledge/tech/resources/`.
+- **WI relationships**: `packages/cli/src/core/work-items.ts` — junto a `parseRelatedKnowledge` /
+  `parseDecisions` / `moduleCoverage`, parsear `resources: [{id, role}]` del frontmatter a
+  `WorkItemDetail`. Mantener `affected_modules` y `resources` separados (AC-07 del modelo).
+- **Refinement**: skill `work-item-refinement` + agentes — pregunta de resources cuando el scope lo
+  justifique (sin inventar).
+- **Context / Handoff**: `packages/cli/src/core/context-pack.ts` + `core/implementation-handoff.ts` —
+  resolver e inyectar solo los resources relacionados (proporcional).
+- **Graph**: `packages/cli/src/core/graph.ts` — extender `GraphNodeType` con `project-resource` y
+  `GraphEdgeType` con `affects`/`uses`/`validates_with`/`delivers_through` (+ `depends_on` de módulo).
+- **CLI/MCP read**: comando `kaddo resources list|get` (patrón de `topology`/`modules`) + recurso/tool
+  MCP equivalente, sin exponer secretos.
+- **Admin**: `packages/admin/src/routes/WorkItemDetail.tsx` (+ api/contract) — sección "Resources" con
+  rol, navegable a la definición (reutiliza el patrón de decisions/related-knowledge/initiative).
+- **Docs**: `apps/docs/.../` EN/ES — Resource vs Access Interface, relación con WIs, security boundary.
+
+## Surface review
+
+- **Core / parsing** (afectado): discovery + modelo + relaciones WI↔Resource + backward compat.
+- **Intelligence** (afectado): refinement + context assembly + handoff.
+- **CLI / MCP** (afectado): superficies de lectura `list`/`get`.
+- **Graph** (afectado): nodo + aristas.
+- **Admin** (afectado): WI → Resource en el detalle.
+- **Docs** (afectado): EN/ES.
+- **Seguridad** (frontera dura): solo referencias de auth, nunca valores.
+- **Integration Adapters / telemetry / ejecución remota** (no afectado, fuera de alcance explícito).
+
+## Recommended split (esta es una épica)
+
+Por tamaño (5 superficies, outcomes independientes), se recomienda dividirla como se hizo con WI-017
+(→ WI-018..022). Propuesta de hijos:
+
+- **Resources Core** — artifact + modelo/contract + discovery (`knowledge/tech/resources/`),
+  resource_type + access interfaces + security boundary, relaciones `resources:[{id,role}]` en el WI,
+  modules≠resources, backward compat. (AC-01..06, 14) · módulos: cli.
+- **Resources surfaces (CLI + MCP read)** — `kaddo resources list|get` + recurso/tool MCP, sin
+  secretos. (AC-10) · módulos: cli, mcp.
+- **Resources intelligence** — refinement + context assembly proporcional + Implementation Handoff.
+  (AC-07, 08, 09) · módulos: cli.
+- **Resources graph, docs & project description** — Graph (nodos/aristas), integración en
+  codebase/current-state, Evidence referenciando validaciones, docs EN/ES, dogfooding E2E.
+  (AC-12, 13, 15) · módulos: cli, docs.
+- **Resources Admin** — sección WI → Resource en el detalle, navegable. (AC-11) · módulos: admin,
+  admin-server.
+
+Orden sugerido: Core → surfaces → intelligence → graph/docs → Admin (cada uno entregable y verificable
+por separado; los ACs quedan cubiertos entre los hijos).
+
+## Scope
+
+1. **Resource artifact**: artifact técnico bajo `knowledge/tech/resources/` (p. ej.
+   `supabase-main.md`). Opcionales; `bootstrap` no genera recursos artificiales si el proyecto no los
+   necesita.
+2. **Resource model**: identity, resource_type, provider/platform, purpose, environments, access
+   interfaces, access boundaries, authentication references y notas operativas. Schema refinable en
+   Handoff; mínimo suficiente (frontmatter chico que crece solo si hace falta).
+3. **Resource types** (mínimo extensible): `database`, `cloud`, `api`, `queue`, `storage`,
+   `repository`, `platform`, `service`, `other`. Un solo contract para todos los providers (no un
+   schema por proveedor).
+4. **Access interfaces** (0..n por recurso): `cli`, `mcp`, `api`, `sql`, `sdk`, `iac`, `console`,
+   `other`; cada una con tool/provider, purpose, operaciones disponibles, aplicabilidad por ambiente y
+   constraints. La definición es conocimiento, NO detección automática de disponibilidad en runtime.
+5. **Security boundary**: nunca almacenar credenciales. Permitido: nombre de credencial / env var /
+   secret reference / mecanismo de auth / rol requerido / boundary. Prohibido: tokens, passwords,
+   private keys, connection strings con secretos, credenciales de DB, cookies de sesión.
+6. **WI → Resource relationships**: un WI puede declarar `resources: [{id, role}]` con roles
+   `affected` (cambia estado/config/schema), `implementation` (se interactúa para implementar),
+   `validation` (se necesita para verificar), `delivery` (participa en deploy/release). Un recurso
+   puede tener más de una relación.
+7. **Modules ≠ Resources**: `affected_modules` = partes del software/codebase; `resources` = sistemas
+   externos. No convertir servicios externos en módulos solo para relacionarlos con un WI.
+8. **Refinement**: la guía de refinement evalúa resources cuando el scope lo justifica (¿el cambio
+   observa/modifica/valida/despliega sobre un recurso externo conocido?). No exigirlos para todo WI;
+   no inventar recursos sin respaldo en Knowledge.
+9. **Implementation Handoff**: el context assembly incluye solo los resources relevantes al WI (role,
+   purpose, environment, interfaces, boundaries). El Handoff **informa** al agente; no ejecuta ninguna
+   interfaz.
+10. **Context assembly**: resources relevantes en context / work-item context / handoff de forma
+    proporcional (resolver desde las relaciones del WI, no inyectar el catálogo completo).
+11. **CLI/MCP read**: capacidad equivalente a `list resources` / `get resource` en CLI y MCP
+    (nomenclatura en Handoff), entregando identity/purpose/environment/interfaces/boundaries sin
+    secretos. No requiere que MCP se conecte al recurso.
+12. **Admin**: mostrar los resources y sus relaciones con WIs; desde el detalle de un WI ver sus
+    resources y roles, navegables a la definición cuando sea posible. No es un portal operacional.
+13. **Knowledge Graph**: Project Resource como nodo semántico; relaciones `affects` / `uses` /
+    `validates_with` / `delivers_through` desde WIs; y `depends_on` desde módulos cuando haya
+    evidencia. No inferir relaciones sin evidencia.
+14. **Evidence**: la evidencia puede referenciar validaciones contra un recurso (p. ej. "migration
+    aplicada en development", "schema verificado") sin persistir contenidos/credenciales/dumps
+    sensibles. Describe la validación, no copia el recurso.
+15. **Project description integration**: `codebase.md`/`current-state.md` pueden referenciar resources
+    (lista breve en "External Resources") pero la definición detallada vive en
+    `knowledge/tech/resources/` (no duplicar).
+
+## Out of scope
+
+Ejecutar CLI contra resources; conectarse automáticamente a Supabase/AWS; instalar MCP servers;
+descubrir MCP connectors; ejecutar SQL; provisionar infra; ejecutar Terraform; almacenar credenciales;
+crear un secrets manager; sincronizar estado remoto; monitoreo; dashboards operacionales; gestionar
+infra desde Admin; reemplazar Integration Adapters; convertir Kaddo en un agent execution framework.
+
+## Acceptance criteria
+
+- [ ] AC-01 — Resource Artifact: Kaddo reconoce Project Resources canónicos bajo `knowledge/tech/resources/`.
+- [ ] AC-02 — Resource Contract: un resource representa identidad, tipo, provider, purpose, environments, access interfaces y access boundaries.
+- [ ] AC-03 — Secret Safety: permiten referencias de autenticación pero nunca requieren ni exponen valores de credenciales.
+- [ ] AC-04 — Access Interfaces: un resource puede declarar múltiples interfaces (CLI, MCP, API, SQL, SDK, IaC, Console).
+- [ ] AC-05 — WI Relationships: un WI puede relacionarse con resources mediante `affected`, `implementation`, `validation`, `delivery`.
+- [ ] AC-06 — Optional Model: WIs sin resources mantienen el lifecycle completo sin blockers ni migración.
+- [ ] AC-07 — Refinement: refinement considera resources cuando el scope lo justifica y no inventa recursos.
+- [ ] AC-08 — Context Assembly: el contexto de un WI incluye solo los resources relacionados, no todo el catálogo.
+- [ ] AC-09 — Implementation Handoff: el Handoff presenta purpose, role, interfaces y boundaries sin ejecutar acciones.
+- [ ] AC-10 — CLI/MCP Read: los resources se descubren/consultan desde CLI/MCP sin exponer secretos.
+- [ ] AC-11 — Admin: las relaciones WI → Resource son visibles desde el detalle del WI e identifican el recurso.
+- [ ] AC-12 — Graph: Project Resource es nodo del Graph y los roles del WI producen relaciones semánticas.
+- [ ] AC-13 — Evidence: verification/evidence puede referenciar validaciones sobre resources sin datos sensibles.
+- [ ] AC-14 — Backward Compatibility: proyectos sin `knowledge/tech/resources/` siguen funcionando sin migración.
+- [ ] AC-15 — Documentation: docs EN/ES explican Resource vs Access Interface, relación con WIs y frontera de seguridad.
+
+## Validation
+
+- **Supabase resource**: crear `knowledge/tech/resources/supabase-main.md` (type database, provider
+  supabase, interfaces CLI/MCP/PostgreSQL) → CLI/MCP lo descubren y devuelven purpose/interfaces/
+  boundaries, sin credenciales.
+- **WI relationship**: un WI con `affected_modules: [api]` y `resources: [{id: RES-supabase-main,
+  role: affected}]` → el WI muestra módulo afectado `api` y recurso afectado RES-supabase-main sin
+  confundir ambas relaciones.
+- **Implementation Handoff**: Handoff del WI anterior incluye RES-supabase-main (role, purpose,
+  interfaces, boundaries); NO incluye conexión automática, credenciales ni migración automática.
+- **Multiple roles**: WI con RES-supabase-main (affected) + RES-aws-platform (validation) → Handoff y
+  Graph preservan ambas relaciones de forma independiente.
+- **Resource not relevant**: un WI de documentación sin resources recorre ready → handoff →
+  implementation → evidence → verification → completed sin nuevos warnings/blockers.
+- **Graph**: `WI-xxx → RES-supabase-main` → grafo `WI-xxx --affects--> RES-supabase-main` con
+  provenance desde el WI.
+- **Secret safety**: introducir solo `SUPABASE_ACCESS_TOKEN` como referencia → context/MCP/Admin
+  muestran el nombre de la referencia, nunca resuelven ni exponen su valor.
+
+## Definition of Done
+
+Project Resource es concepto first-class de Tech Knowledge; artifacts bajo
+`knowledge/tech/resources/`; recurso distingue sistema externo de mecanismo de acceso; CLI/MCP/API/
+SQL/SDK/IaC/Console representables como interfaces; auth solo por referencias seguras; WIs se
+relacionan con resources por roles explícitos; `affected_modules` y `resources` con semánticas
+distintas; refinement los considera cuando aplica; context assembly incluye solo los relevantes;
+Handoff expone interfaces/boundaries útiles; Admin muestra WI → Resource; Graph representa Resource y
+sus relaciones; Evidence puede referenciar validaciones; proyectos actuales siguen igual; sin
+ejecución remota ni gestión de credenciales; tests cubren parsing, context assembly, Handoff, Graph y
+compatibilidad; docs EN/ES actualizadas; Evidence recolectada; Verification pasa; Learning capturado.
+
+## Implementation handoff guidance
+
+Puntos de extensión existentes a revisar: Tech Knowledge discovery; WorkItemDetail / Work Item
+parsing; related_knowledge; affected_modules; work-item-refinement; context assembly;
+implementation-handoff; Knowledge Graph; Admin Work Item Detail; MCP resources/tools.
+
+No diseñar Project Resources como Integration Adapter: **Integration Adapter** = provider externo de
+delivery/work-management (Jira/GitHub Issues/Azure DevOps); **Project Resource** = sistema externo que
+usa el producto (Supabase/PostgreSQL/AWS/Kafka/API). Tampoco modelar CLI/MCP como resources
+(incorrecto `RES-supabase-cli`); preferir `RES-supabase-main` con `interface: cli` + `interface: mcp`.
+
+Schema mínimo suficiente: una definición válida puede ser solo `type/id/title/resource_type/provider`
+y crecer solo cuando se necesiten interfaces o boundaries. Aplicar "Minimum Sufficient Knowledge"
+también a Resources. No exigir acceso real al sistema externo para registrar su conocimiento.
+
+## Open questions
+
+- **¿Dividir en hijos (recomendado) o un solo WI grande?** Ver "Recommended split". Decisión humana.
+- **Formato de `access interfaces` y `boundaries`**: ¿secciones Markdown (como el ejemplo del spec) o
+  frontmatter estructurado? Recomiendo frontmatter mínimo para identity/type/provider/environments +
+  secciones Markdown para interfaces/boundaries (legible y "minimum sufficient"); a confirmar en el
+  Handoff del hijo Core.
+- **Nombre del comando CLI**: `kaddo resources list|get` vs. integrarlo en `kaddo tech`/`modules`.
+  Recomiendo `kaddo resources` (paralelo a `topology`/`modules`).
+- **Evidence (AC-13)**: ¿vive en el hijo "intelligence" o en "graph/docs"? Propuesto en graph/docs
+  junto a la integración de evidencia; confirmar al dividir.
+
+## Dependencies
+
+- Reutiliza patrones ya en main: discovery de knowledge, parsing de relaciones del WI
+  (related_knowledge/decisions), Graph (VS-055), context-pack/handoff, y el detalle de WI del Admin
+  (incl. el enlace navegable de Initiative de WI-025).
+- Frontera con Integration Adapters (Jira/GitHub Issues) y con la telemetría del producto: ninguna
+  correlación ni solapamiento.

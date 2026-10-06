@@ -21,6 +21,7 @@ import {
   type LifecycleState,
 } from './lifecycle.js'
 import { parseWorkItemSource, type WorkItemSource } from './work-item-source.js'
+import { parseWorkItemResources, type WorkItemResource } from './resources.js'
 import type { ExternalSnapshot } from './work-item-write.js'
 import { loadSystemTopology } from './system-topology.js'
 
@@ -113,6 +114,9 @@ export type WorkItemDetail = WorkItemListItem & {
    * Risks, future headings) remain visible to interfaces (WI-025).
    */
   markdownBody: string
+  /** Project Resources (external systems) this Work Item relates to, by role. Separate from
+   * affectedModules (code). Parsed from the front matter `resources:` list (WI-030). */
+  resources: WorkItemResource[]
   /** How far the Work Item has been refined (independent of lifecycle). */
   refinement: RefinementStatus
   /** Graph-assisted impact (VS-101): semantic system entities the agent classified. */
@@ -297,6 +301,8 @@ export function getWorkItem(dir: string, workItemId: string): WorkItemDetail {
     path: match.relPath,
     // Faithful source of truth: the artifact body already read above, not reconstructed (WI-025).
     markdownBody: body.trim(),
+    // External systems this WI relates to (WI-030), separate from affectedModules (code).
+    resources: parseWorkItemResources(fm),
     ...parseSystemImpact(dir, fm),
   }
   return { ...detail, refinement: computeRefinementStatus(detail) }

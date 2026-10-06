@@ -8,6 +8,20 @@ export { buildProjectRoute, type ProjectRoute, type RouteStep, type RouteStepSta
 export { knowledgeLayers, type LayerStatus, type LayerName, type LayerMaturity } from './core/layers.js'
 export { loadConfig, isModule, type KaddoConfig, type ProjectState, type RepositoryStructure } from './core/config.js'
 export { discoverKnowledge, discoverWorkItems, type KnowledgeArtifact, type KnowledgeLayer } from './services/knowledge-artifacts.js'
+export {
+  getResources,
+  getResource,
+  parseWorkItemResources,
+  RESOURCE_ARTIFACT_TYPE,
+  RESOURCE_TYPES,
+  INTERFACE_TYPES,
+  RESOURCE_ROLES,
+  type ResourceSummary,
+  type ResourceDetail,
+  type AccessInterface,
+  type WorkItemResource,
+  type ResourceRole,
+} from './core/resources.js'
 export { loadMappedModules, type MappedModuleWithCoverage } from './services/mapped-modules.js'
 export { lifecycleStateOf, lifecycleCounts, isActiveState, type LifecycleState } from './core/lifecycle.js'
 export { analyzeScopeCoverage, type ScopeCoverageSummary } from './core/scope-coverage.js'
