@@ -41,8 +41,13 @@ dependencies.
    flags, content/copy, authentication/authorization, notifications, analytics, documentation,
    operations/release — as affected, reviewed-not-affected, unknown, or not-applicable.
 4. **Module review** — for multirepo, evaluate each mapped module with the same statuses.
-5. **Completeness review** — confirm: outcome covered, journey covered, modules assessed, unknowns
-   visible, acceptance criteria end-to-end, scope and out-of-scope coherent.
+5. **Resource review** — ask: does this change need to observe, modify, validate or deliver against a
+   known external resource of the project (a Project Resource under `knowledge/tech/resources/` —
+   database, cloud, API, queue, storage…)? If so, declare it in the WI front matter `resources:` with
+   a role (`affected`, `implementation`, `validation`, `delivery`). Resources are external systems,
+   distinct from `affected_modules` (code). Not every WI needs resources (e.g. a CSS change does not).
+6. **Completeness review** — confirm: outcome covered, journey covered, modules assessed, resources
+   assessed, unknowns visible, acceptance criteria end-to-end, scope and out-of-scope coherent.
 
 ## Rules
 
@@ -53,6 +58,8 @@ dependencies.
 - Include at least one end-to-end acceptance criterion for user-facing changes.
 - Do not reduce a product intent to the first technical implementation found.
 - Evaluate surfaces and modules before proposing files.
+- Consider Project Resources when the scope justifies it; never invent resources not backed by
+  project knowledge, and keep `resources` (external systems) separate from `affected_modules` (code).
 - This skill refines scope and acceptance criteria but does not approve implementation readiness.
   Readiness requires human confirmation through `kaddo ready` or the MCP `mark_work_item_ready` action.
 

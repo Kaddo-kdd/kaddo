@@ -12,6 +12,7 @@ import { lifecycleStateOf, type LifecycleState } from './lifecycle.js'
 import { getSystemMapProjection } from './system-map.js'
 import { buildTechDecisions, hasUnmaterializedDecisions } from './decisions.js'
 import { getLegacyKnowledgeSummary } from './legacy-knowledge.js'
+import { parseWorkItemResources, getResource } from './resources.js'
 
 // --- Types -------------------------------------------------------------------
 
@@ -21,6 +22,8 @@ export type ImplementationHandoff = {
   projectName: string
   lifecycle: LifecycleState
   affectedModules: string[]
+  /** Project Resources (external systems) relevant to this WI, by role (WI-032). */
+  resources: { id: string; role: string }[]
   domains: string[]
   scopeConfidence: { level: string; reasons: string[] } | null
   hasUnmaterializedDecisions: boolean
@@ -72,6 +75,9 @@ export function buildImplementationHandoff(dir: string, workItemId: string): Imp
   const affectedModules = match.affectedModules
   const domains = match.domains
   const scopeConfidence = match.scopeConfidence
+  // Project Resources relevant to THIS Work Item (WI-032): resolve only the WI's own relationships,
+  // never the whole catalog. The handoff INFORMS — it never connects to the resource or shows secrets.
+  const wiResources = parseWorkItemResources(match.rawFrontmatter)
 
   const lines: string[] = [
     `Implement Work Item ${wiId} — "${wiTitle}" — in project "${projectName}" using Kaddo.`,
@@ -167,6 +173,42 @@ export function buildImplementationHandoff(dir: string, workItemId: string): Imp
     )
   }
 
+  if (wiResources.length > 0) {
+    lines.push(
+      '',
+      '--- Relevant Resources ---',
+      '',
+      'This Work Item relates to external project resources. The handoff INFORMS you about them — it',
+      'never connects to them, runs any interface, or reveals credential values. Respect each boundary.',
+    )
+    for (const rel of wiResources) {
+      const res = getResource(dir, rel.id)
+      if (!res) {
+        lines.push('', `- ${rel.id} (role: ${rel.role}) — definition not found under knowledge/tech/resources/.`)
+        continue
+      }
+      lines.push('', `- ${res.id} — ${res.title} (role: ${rel.role})`)
+      if (res.resourceType || res.provider) {
+        lines.push(`    type: ${res.resourceType ?? '—'}${res.provider ? ` · provider: ${res.provider}` : ''}`)
+      }
+      if (res.purpose) lines.push(`    purpose: ${res.purpose}`)
+      if (res.environments.length > 0) lines.push(`    environments: ${res.environments.join(', ')}`)
+      if (res.interfaces.length > 0) {
+        const ifaces = res.interfaces.map((i) => (i.tool || i.provider ? `${i.type} (${i.tool ?? i.provider})` : i.type))
+        lines.push(`    interfaces: ${ifaces.join(', ')}`)
+      }
+      for (const [env, ops] of Object.entries(res.boundaries)) {
+        lines.push(`    boundary (${env}): ${ops.join(', ')}`)
+      }
+      if (res.authRefs.length > 0) lines.push(`    auth references (names only): ${res.authRefs.join(', ')}`)
+    }
+    lines.push(
+      '',
+      'Treat these as knowledge, not availability: an interface being declared does not mean it is',
+      'installed or connected. Do not execute any interface or migration without explicit human confirmation.',
+    )
+  }
+
   lines.push(
     '',
     '--- Implementation Plan ---',
@@ -188,6 +230,7 @@ export function buildImplementationHandoff(dir: string, workItemId: string): Imp
     projectName,
     lifecycle,
     affectedModules,
+    resources: wiResources,
     domains,
     scopeConfidence,
     hasUnmaterializedDecisions: unmaterialized,

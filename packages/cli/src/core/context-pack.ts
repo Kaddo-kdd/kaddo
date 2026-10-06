@@ -20,6 +20,7 @@ import { discoverInstalledSkills } from '../services/installed-skills.js'
 import { buildProjectRoute, type ProjectRoute } from './project-route.js'
 import { type ScanSignals } from './scan-signals.js'
 import { parseWorkItemSource, type WorkItemSource } from './work-item-source.js'
+import { parseWorkItemResources } from './resources.js'
 import { analyzeMetadataHealth, type MetadataHealth } from './metadata-health.js'
 
 export const CONTEXT_PACK_VERSION = '1'
@@ -41,6 +42,9 @@ export type ContextWorkItem = {
   moduleCoverage?: Record<string, { status: string; reason?: string }>
   impactAnalysis?: Record<string, { status: string; reason?: string }>
   scopeUnknowns?: string[]
+  /** Project Resources (external systems) this WI relates to, by role (WI-032). Lightweight — only
+   * the WI's own relationships, never the full catalog. */
+  resources?: { id: string; role: string }[]
 }
 
 export type ContextArtifact = {
@@ -272,6 +276,8 @@ function toContextWorkItem(a: Artifact): ContextWorkItem {
   wi.validationStatus = a.validationStatus || (isHistorical ? 'not-assessed' : undefined)
   wi.releaseStatus = a.releaseStatus || (isHistorical ? 'not-assessed' : undefined)
   if (a.affectedModules.length > 0) wi.affectedModules = a.affectedModules
+  const wiResources = parseWorkItemResources(a.rawFrontmatter)
+  if (wiResources.length > 0) wi.resources = wiResources
   if (a.scopeConfidence) wi.scopeConfidence = a.scopeConfidence
   if (a.moduleCoverage) wi.moduleCoverage = a.moduleCoverage
   if (a.impactAnalysis) wi.impactAnalysis = a.impactAnalysis
