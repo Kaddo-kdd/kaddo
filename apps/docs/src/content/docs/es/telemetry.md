@@ -6,6 +6,13 @@ description: Telemetría anónima de uso — qué es, cómo habilitarla, qué da
 Kaddo puede enviar opcionalmente **metadata anónima de uso** a `telemetry.kaddo.org`.
 La telemetría está **deshabilitada por defecto** y requiere consentimiento explícito.
 
+:::note[Analítica web ≠ telemetría del producto]
+Esta página trata la **telemetría del producto** (el CLI/MCP de Kaddo, enviada a
+`telemetry.kaddo.org`). Es distinta de la **analítica web** de `kaddo.org`, que usa Google Analytics
+4 (propiedad `G-Y4DND8TG81`) para entender el tráfico del sitio, con consentimiento y sin cookies
+hasta que aceptes. Los dos sistemas no comparten identidad y nunca se correlacionan.
+:::
+
 ## Modelo de consentimiento
 
 Kaddo usa un modelo de consentimiento de tres estados:

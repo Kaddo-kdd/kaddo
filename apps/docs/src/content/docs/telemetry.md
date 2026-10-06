@@ -6,6 +6,13 @@ description: Anonymous usage telemetry — what it is, how to enable it, what da
 Kaddo can optionally send **anonymous usage metadata** to `telemetry.kaddo.org`.
 Telemetry is **disabled by default** and requires explicit consent.
 
+:::note[Website analytics ≠ product telemetry]
+This page is about **product telemetry** (the Kaddo CLI/MCP, sent to `telemetry.kaddo.org`). It is
+separate from **website analytics** on `kaddo.org`, which uses Google Analytics 4 (property
+`G-Y4DND8TG81`) to understand site traffic only, with consent and no cookies until you opt in. The two
+systems share no identity and are never correlated.
+:::
+
 ## Consent model
 
 Kaddo uses a three-state consent model:

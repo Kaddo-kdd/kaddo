@@ -1,0 +1,143 @@
+---
+// Website analytics (WI-028) — Google Analytics 4 with Consent Mode v2. NOT Kaddo product telemetry.
+//
+// Reusable across the Starlight Head override and the blog layout so every kaddo.org page is covered.
+// Injected only in production builds that have PUBLIC_GA_MEASUREMENT_ID set (in Netlify), never in
+// local dev/preview. Denied by default; cookieless until the visitor opts in. Sends no PII, repo,
+// project or Work Item data, and shares no identity with telemetry.kaddo.org.
+const gaId = import.meta.env.PUBLIC_GA_MEASUREMENT_ID
+const analyticsEnabled = import.meta.env.PROD && !!gaId
+const isEs = Astro.url.pathname.startsWith('/es/')
+
+const t = isEs
+  ? {
+      msg: 'Usamos Google Analytics para entender el tráfico del sitio. ¿Aceptas las cookies de analítica?',
+      accept: 'Aceptar',
+      reject: 'Rechazar',
+    }
+  : {
+      msg: 'We use Google Analytics to understand site traffic. Allow analytics cookies?',
+      accept: 'Accept',
+      reject: 'Reject',
+    }
+---
+
+{analyticsEnabled && (
+  <Fragment>
+    {/* Consent Mode v2: deny by default, restore a previous opt-in before the tag loads. */}
+    <script is:inline>
+      window.dataLayer = window.dataLayer || [];
+      function gtag() { dataLayer.push(arguments); }
+      gtag('consent', 'default', {
+        ad_storage: 'denied',
+        ad_user_data: 'denied',
+        ad_personalization: 'denied',
+        analytics_storage: 'denied',
+        wait_for_update: 500,
+      });
+      try {
+        if (localStorage.getItem('kaddo-analytics-consent') === 'granted') {
+          gtag('consent', 'update', { analytics_storage: 'granted' });
+        }
+      } catch (e) { /* storage unavailable — stay denied */ }
+    </script>
+
+    <script async src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`}></script>
+
+    <script is:inline define:vars={{ gaId }}>
+      gtag('js', new Date());
+      gtag('config', gaId);
+
+      // Key CTA events via one delegated listener (resilient; no-op if gtag is blocked).
+      // Only the link URL is sent — never PII or product data.
+      document.addEventListener(
+        'click',
+        function (e) {
+          var a = e.target && e.target.closest ? e.target.closest('a[href]') : null;
+          if (!a) return;
+          var href = a.getAttribute('href') || '';
+          var name = null;
+          if (/github\.com\/Kaddo-kdd/i.test(href)) name = 'github_click';
+          else if (/npmjs\.com/i.test(href)) name = 'npm_click';
+          else if (/^\/(es\/)?getting-started\/?$/.test(href)) name = 'get_started_click';
+          if (name) gtag('event', name, { link_url: href });
+        },
+        { capture: true }
+      );
+    </script>
+
+    {/* Minimal consent banner — shown once, remembers the choice. */}
+    <script is:inline define:vars={{ t }}>
+      (function () {
+        var KEY = 'kaddo-analytics-consent';
+        var choice = null;
+        try { choice = localStorage.getItem(KEY); } catch (e) {}
+        if (choice === 'granted' || choice === 'denied') return;
+
+        function set(value) {
+          try { localStorage.setItem(KEY, value); } catch (e) {}
+          if (value === 'granted') {
+            gtag('consent', 'update', {
+              analytics_storage: 'granted',
+              ad_storage: 'denied',
+              ad_user_data: 'denied',
+              ad_personalization: 'denied',
+            });
+          }
+          if (bar && bar.parentNode) bar.parentNode.removeChild(bar);
+        }
+
+        var bar = document.createElement('div');
+        bar.setAttribute('role', 'dialog');
+        bar.setAttribute('aria-label', 'Analytics consent');
+        bar.style.cssText =
+          'position:fixed;z-index:1000;left:1rem;right:1rem;bottom:1rem;max-width:42rem;margin:0 auto;' +
+          'display:flex;flex-wrap:wrap;gap:.75rem;align-items:center;justify-content:space-between;' +
+          'padding:.85rem 1rem;border:1px solid var(--sl-color-gray-5,#3b3f46);border-radius:.6rem;' +
+          'background:var(--sl-color-black,#17181c);color:var(--sl-color-white,#fff);' +
+          'box-shadow:0 8px 30px rgba(0,0,0,.35);font-size:.875rem;line-height:1.4;';
+
+        var msg = document.createElement('span');
+        msg.textContent = t.msg;
+        msg.style.cssText = 'flex:1 1 16rem;';
+
+        var actions = document.createElement('div');
+        actions.style.cssText = 'display:flex;gap:.5rem;flex:0 0 auto;';
+
+        function button(label, kind) {
+          var b = document.createElement('button');
+          b.type = 'button';
+          b.textContent = label;
+          b.style.cssText =
+            'cursor:pointer;font:inherit;font-weight:600;padding:.4rem .9rem;border-radius:.4rem;border:1px solid var(--sl-color-gray-5,#3b3f46);';
+          if (kind === 'accept') {
+            b.style.background = 'var(--sl-color-text-accent,#f5a623)';
+            b.style.color = 'var(--sl-color-black,#17181c)';
+            b.style.borderColor = 'transparent';
+          } else {
+            b.style.background = 'transparent';
+            b.style.color = 'inherit';
+          }
+          return b;
+        }
+
+        var accept = button(t.accept, 'accept');
+        var reject = button(t.reject, 'reject');
+        accept.addEventListener('click', function () { set('granted'); });
+        reject.addEventListener('click', function () { set('denied'); });
+
+        actions.appendChild(reject);
+        actions.appendChild(accept);
+        bar.appendChild(msg);
+        bar.appendChild(actions);
+
+        function mount() { if (document.body) document.body.appendChild(bar); }
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', mount);
+        } else {
+          mount();
+        }
+      })();
+    </script>
+  </Fragment>
+)}

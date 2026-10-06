@@ -1,0 +1,9 @@
+---
+// Starlight Head override: keep the default head, then add website analytics (WI-028).
+// The analytics logic lives in Analytics.astro so the blog layout can reuse it for full coverage.
+import Default from '@astrojs/starlight/components/Head.astro'
+import Analytics from './Analytics.astro'
+---
+
+<Default><slot /></Default>
+<Analytics />

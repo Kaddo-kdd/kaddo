@@ -72,6 +72,8 @@ export default defineConfig({
         },
       ],
       components: {
+        // Head adds Google Analytics 4 (website analytics, production-only; WI-028).
+        Head: './src/components/Head.astro',
         Footer: './src/components/Footer.astro',
         SocialIcons: './src/components/SocialIcons.astro',
       },
