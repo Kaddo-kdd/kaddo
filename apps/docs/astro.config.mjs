@@ -223,6 +223,7 @@ export default defineConfig({
           label: 'Contributing',
           translations: { es: 'Contribuir' },
           items: [
+            { label: 'Contributing', translations: { es: 'Contribuir' }, slug: 'contributing' },
             { label: 'Writing a blog article', translations: { es: 'Escribir un artículo del blog' }, slug: 'blog-authoring' },
           ],
         },
