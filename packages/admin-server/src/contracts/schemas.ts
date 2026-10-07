@@ -249,6 +249,8 @@ export const WorkItemDetailSchema = WorkItemListItemSchema.extend({
   // Canonical Markdown body (verbatim, not reconstructed) so Admin can show the full definition
   // including sections Core does not model (WI-025).
   markdownBody: z.string(),
+  // Project Resources (external systems) this WI relates to, by role (WI-034).
+  resources: z.array(z.object({ id: z.string(), role: z.string() })),
   refinement: z.object({
     status: z.enum(['needs-refinement', 'refined']),
     aspects: z.object({ outcome: z.boolean(), journey: z.boolean(), modules: z.boolean(), impact: z.boolean(), acceptance: z.boolean() }),

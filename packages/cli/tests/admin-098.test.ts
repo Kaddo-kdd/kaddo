@@ -514,3 +514,34 @@ describe('VS-098: Source of truth', () => {
     expect(serverSrc).not.toContain('implementation_evidence')
   })
 })
+
+// ─── WI-034: Admin exposes WI → Resource relationships ─────────────────────────
+
+const WI_WITH_RESOURCES = [
+  '---', 'id: WI-770', 'title: Use the database', 'type: feature', 'status: ready',
+  'affected_modules: [core]',
+  'resources:', '  - id: RES-supabase-main', '    role: affected', '  - id: RES-aws', '    role: validation',
+  '---', '', '# Use the database', '',
+].join('\n')
+
+describe('WI-034: Admin Server exposes WI resources', () => {
+  let dir: string
+  beforeEach(() => { dir = tmpDir() })
+  afterEach(() => { fs.rmSync(dir, { recursive: true, force: true }) })
+
+  it('getWorkItemDetail returns the WI resources by role', async () => {
+    initProject(dir, { 'knowledge/delivery/work-items/ready/WI-770.md': WI_WITH_RESOURCES })
+    const { getWorkItemDetail } = await import('../../admin-server/src/core-adapter.js')
+    const wi = getWorkItemDetail(dir, 'WI-770')
+    expect(wi.resources).toEqual([
+      { id: 'RES-supabase-main', role: 'affected' },
+      { id: 'RES-aws', role: 'validation' },
+    ])
+  })
+
+  it('a WI without resources returns an empty array', async () => {
+    initProject(dir, { 'knowledge/delivery/work-items/ready/WI-771.md': ['---', 'id: WI-771', 'title: X', 'type: chore', 'status: ready', '---', '', '# X', ''].join('\n') })
+    const { getWorkItemDetail } = await import('../../admin-server/src/core-adapter.js')
+    expect(getWorkItemDetail(dir, 'WI-771').resources).toEqual([])
+  })
+})

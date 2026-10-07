@@ -162,6 +162,8 @@ export type WorkItemDetail = WorkItemListItem & {
   path: string
   /** Canonical Markdown body (verbatim) for the full-definition view (WI-025). */
   markdownBody: string
+  /** Project Resources (external systems) this WI relates to, by role (WI-034). */
+  resources: { id: string; role: string }[]
   refinement: RefinementStatus
 }
 

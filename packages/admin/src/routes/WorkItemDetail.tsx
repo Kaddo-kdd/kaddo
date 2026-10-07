@@ -216,6 +216,26 @@ export function WorkItemDetail() {
         </Section>
       )}
 
+      {/* Project Resources (WI-034) — external systems this WI relates to, by role. Navigable to the
+          resource definition (a tech knowledge artifact). Read-only; distinct from affected modules. */}
+      {wi.resources.length > 0 && (
+        <Section title="Resources">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {wi.resources.map((r, i) => (
+              <div key={`${r.id}-${r.role}-${i}`} style={{ fontSize: 14 }}>
+                <button
+                  onClick={() => router.navigate({ to: '/knowledge/$layer/$artifactId', params: { layer: 'tech', artifactId: r.id } })}
+                  style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'var(--primary)', fontFamily: 'inherit', fontSize: 14 }}
+                >
+                  <span className="font-mono" style={{ fontWeight: 600 }}>{r.id}</span> &rarr;
+                </button>
+                <span style={{ fontSize: 12, color: 'var(--foreground-muted)', marginLeft: 8 }}>{humanize(r.role)}</span>
+              </div>
+            ))}
+          </div>
+        </Section>
+      )}
+
       {/* System impact (VS-101) — graph-assisted, confirmed classification */}
       <SystemImpact
         workItemId={wi.id}
