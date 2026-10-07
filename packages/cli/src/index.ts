@@ -21,7 +21,7 @@ import { runBootstrap } from './commands/bootstrap.js'
 import { runCapsuleExport, runCapsuleAdd } from './commands/capsule.js'
 import { runGraphExport } from './commands/graph.js'
 import { runTopologyValidate, runTopologyApply } from './commands/topology.js'
-import { runResourcesList, runResourcesGet } from './commands/resources.js'
+import { runResourcesList, runResourcesGet, runResourcesCreate, runResourcesUpdate, runResourcesDelete } from './commands/resources.js'
 import {
   runIntegrationsList,
   runIntegrationsStatus,
@@ -177,6 +177,36 @@ resourcesCmd
   .description('Show one Project Resource: purpose, interfaces, boundaries and auth references')
   .option('--json', 'Output JSON')
   .action((id: string, opts: { json?: boolean }) => runResourcesGet(id, cwd(), opts))
+
+resourcesCmd
+  .command('create')
+  .description('Create a Project Resource (interactive, or with --title/--type). Writes via Core.')
+  .option('--title <title>', 'Resource name')
+  .option('--type <type>', 'Resource type (database, cloud, api, queue, storage, repository, platform, service, other)')
+  .option('--provider <provider>', 'Provider/platform')
+  .option('--scope <scope>', 'Ownership scope: system | module')
+  .option('--module <id>', 'Module id (implies module scope)')
+  .option('--json', 'Output JSON')
+  .action(async (opts: { title?: string; type?: string; provider?: string; scope?: string; module?: string; json?: boolean }) => { await runResourcesCreate(opts, cwd()) })
+
+resourcesCmd
+  .command('update <id>')
+  .description('Update a Project Resource (no-lossy). Pass the fields to change.')
+  .option('--title <title>', 'New title')
+  .option('--type <type>', 'New resource type')
+  .option('--provider <provider>', 'New provider')
+  .option('--purpose <purpose>', 'New purpose')
+  .option('--scope <scope>', 'Ownership scope: system | module')
+  .option('--module <id>', 'Module id (implies module scope)')
+  .option('--json', 'Output JSON')
+  .action((id: string, opts: { title?: string; type?: string; provider?: string; purpose?: string; scope?: string; module?: string; json?: boolean }) => runResourcesUpdate(id, opts, cwd()))
+
+resourcesCmd
+  .command('delete <id>')
+  .description('Delete a Project Resource after showing what references it (requires confirmation)')
+  .option('-y, --yes', 'Skip the confirmation prompt')
+  .option('--json', 'Output JSON')
+  .action(async (id: string, opts: { yes?: boolean; json?: boolean }) => { await runResourcesDelete(id, opts, cwd()) })
 
 const integrationsCmd = program
   .command('integrations')

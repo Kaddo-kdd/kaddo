@@ -126,6 +126,13 @@ export function parseScope(v: unknown): ResourceScope | null {
   return { type, module: str(o.module) }
 }
 
+/** The text under a `# Purpose` / `## Purpose` heading in the body, if present. */
+function purposeFromBody(body: string): string | null {
+  const m = body.match(/^#{1,2}\s+Purpose\s*\n+([\s\S]*?)(?=\n#{1,2}\s|\s*$)/m)
+  const text = m ? m[1].trim() : ''
+  return text || null
+}
+
 function toDetail(filePath: string, relPath: string, raw: string): ResourceDetail {
   const parsed = matter(raw)
   const fm = (parsed.data ?? {}) as Record<string, unknown>
@@ -140,7 +147,7 @@ function toDetail(filePath: string, relPath: string, raw: string): ResourceDetai
     scope: parseScope(fm.scope),
     modules: strArray(fm.modules),
     path: relPath,
-    purpose: str(fm.purpose),
+    purpose: str(fm.purpose) ?? purposeFromBody(body),
     interfaces: parseInterfaces(fm.access_interfaces),
     boundaries: parseBoundaries(fm.access_boundaries),
     ...(() => {
