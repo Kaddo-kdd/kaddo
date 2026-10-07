@@ -12,9 +12,18 @@ import { discoverKnowledge, type KnowledgeArtifact } from '../services/knowledge
 import { loadExternalRegistry } from './capsule.js'
 import { isActiveState } from './lifecycle.js'
 import { discoverInitiatives } from './initiative.js'
+import { getResources, parseWorkItemResources } from './resources.js'
 import type { KaddoConfig } from './config.js'
 
 const KNOWLEDGE = 'knowledge'
+
+/** Work Item → Project Resource edge type, by the relationship role (WI-033). */
+const RESOURCE_ROLE_EDGE: Record<string, GraphEdgeType> = {
+  affected: 'affects',
+  implementation: 'uses',
+  validation: 'validates_with',
+  delivery: 'delivers_through',
+}
 
 export type GraphScope = 'active' | 'all'
 
@@ -32,6 +41,7 @@ export type GraphNodeType =
   | 'knowledge-capsule'
   | 'external-item'
   | 'project'
+  | 'project-resource'
 
 export type GraphEdgeType =
   | 'informs'
@@ -45,6 +55,11 @@ export type GraphEdgeType =
   | 'uses_external_knowledge'
   | 'targets'
   | 'references_external'
+  // Work Item ↔ Project Resource, by role (WI-033).
+  | 'affects'
+  | 'uses'
+  | 'validates_with'
+  | 'delivers_through'
 
 export type GraphNode = {
   id: string
@@ -177,6 +192,18 @@ export function buildGraph(
     }
   }
 
+  // --- Project Resource nodes (WI-033): external systems as semantic knowledge nodes ---
+  const resourceTitleById = new Map<string, string>()
+  for (const r of getResources(dir)) {
+    resourceTitleById.set(r.id, r.title)
+    addNode({
+      id: `resource:${r.id}`,
+      type: 'project-resource',
+      label: r.title ? `${r.id} ${r.title}`.trim() : r.id,
+      path: r.path,
+    })
+  }
+
   for (const wi of selectedWIs) {
     const id = wi.id || wi.title
     if (!id || !id.trim()) continue
@@ -201,6 +228,13 @@ export function buildGraph(
       const capId = `capability:${slug(cap) || cap}`
       addNode({ id: capId, type: 'capability', label: cap })
       addEdge(wiNodeId, capId, 'implements')
+    }
+    // Work Item → Project Resource, by relationship role (WI-033). Provenance is the WI itself.
+    for (const rel of parseWorkItemResources(wi.rawFrontmatter)) {
+      const resId = `resource:${rel.id}`
+      const title = resourceTitleById.get(rel.id)
+      addNode({ id: resId, type: 'project-resource', label: title ? `${rel.id} ${title}`.trim() : rel.id })
+      addEdge(wiNodeId, resId, RESOURCE_ROLE_EDGE[rel.role] ?? 'uses')
     }
     for (const dec of wi.decisions) {
       if (!dec || !dec.trim()) continue
