@@ -15,6 +15,8 @@ import { Integrations } from './routes/Integrations'
 import { ExternalWorkItems } from './routes/ExternalWorkItems'
 import { Initiatives } from './routes/Initiatives'
 import { InitiativeDetail } from './routes/InitiativeDetail'
+import { Resources } from './routes/Resources'
+import { ResourceDetail } from './routes/ResourceDetail'
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 30_000, retry: 1 } },
@@ -48,8 +50,10 @@ const externalWorkItemsRoute = createRoute({ getParentRoute: () => rootRoute, pa
 
 const initiativesRoute = createRoute({ getParentRoute: () => rootRoute, path: '/initiatives', component: Initiatives, errorComponent: RouteErrorFallback })
 const initiativeDetailRoute = createRoute({ getParentRoute: () => rootRoute, path: '/initiatives/$initiativeId', component: InitiativeDetail, errorComponent: RouteErrorFallback })
+const resourcesRoute = createRoute({ getParentRoute: () => rootRoute, path: '/resources', component: Resources, errorComponent: RouteErrorFallback })
+const resourceDetailRoute = createRoute({ getParentRoute: () => rootRoute, path: '/resources/$resourceId', component: ResourceDetail, errorComponent: RouteErrorFallback })
 
-const routeTree = rootRoute.addChildren([indexRoute, overviewRoute, knowledgeRoute, knowledgeLayerRoute, knowledgeArtifactRoute, workItemsRoute, workItemNewRoute, workItemDetailRoute, workItemEditRoute, systemRoute, integrationsRoute, externalWorkItemsRoute, initiativesRoute, initiativeDetailRoute])
+const routeTree = rootRoute.addChildren([indexRoute, overviewRoute, knowledgeRoute, knowledgeLayerRoute, knowledgeArtifactRoute, workItemsRoute, workItemNewRoute, workItemDetailRoute, workItemEditRoute, systemRoute, integrationsRoute, externalWorkItemsRoute, initiativesRoute, initiativeDetailRoute, resourcesRoute, resourceDetailRoute])
 const router = createRouter({ routeTree })
 
 declare module '@tanstack/react-router' {

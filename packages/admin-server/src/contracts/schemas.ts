@@ -427,3 +427,27 @@ export type ValidationResult = z.infer<typeof ValidationResultSchema>
 export type WorkItemWriteResult = z.infer<typeof WorkItemWriteResultSchema>
 export type SystemMapProjection = z.infer<typeof SystemMapProjectionSchema>
 export type ErrorResponse = z.infer<typeof ErrorResponseSchema>
+
+// --- Project Resource mutations (WI-039). Body shape mirrors the Core ResourceInput. --------------
+const ResourceScopeInputSchema = z.object({ type: z.string(), module: z.string().nullish() })
+const AccessInterfaceInputSchema = z.object({
+  type: z.string(),
+  tool: z.string().optional(),
+  provider: z.string().optional(),
+  purpose: z.string().optional(),
+  operations: z.array(z.string()).optional(),
+  environments: z.array(z.string()).optional(),
+  constraints: z.string().optional(),
+})
+export const ResourceCreateSchema = z.object({
+  title: z.string().min(1),
+  resourceType: z.string().min(1),
+  provider: z.string().optional(),
+  environments: z.array(z.string()).optional(),
+  scope: ResourceScopeInputSchema.optional(),
+  modules: z.array(z.string()).optional(),
+  purpose: z.string().optional(),
+  accessInterfaces: z.array(AccessInterfaceInputSchema).optional(),
+  authentication: z.object({ mode: z.string().optional(), refs: z.array(z.string()).optional() }).optional(),
+})
+export const ResourceUpdateSchema = ResourceCreateSchema.partial()

@@ -8,6 +8,7 @@ const navItems: NavItem[] = [
   { label: 'Knowledge', path: '/knowledge', icon: '📚' },
   { label: 'Work Items', path: '/work-items', icon: '📋' },
   { label: 'Initiatives', path: '/initiatives', icon: '🎯' },
+  { label: 'Resources', path: '/resources', icon: '🗄' },
   { label: 'System', path: '/system', icon: '⚙' },
   { label: 'Integrations', path: '/integrations', icon: '🔌' },
   { label: 'External Items', path: '/external-items', icon: '🔍' },

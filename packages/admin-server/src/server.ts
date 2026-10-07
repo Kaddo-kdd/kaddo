@@ -48,6 +48,11 @@ import {
   getInitiativeDetailAdmin,
   createInitiativeAdmin,
   updateInitiativeAdmin,
+  getResourcesAdmin,
+  getResourceDetailAdmin,
+  createResourceAdmin,
+  updateResourceAdmin,
+  deleteResourceAdmin,
   CoreError,
 } from './core-adapter.js'
 import {
@@ -56,6 +61,8 @@ import {
   WorkItemTransitionSchema,
   InitiativeCreateSchema,
   InitiativeUpdateSchema,
+  ResourceCreateSchema,
+  ResourceUpdateSchema,
 } from './contracts/schemas.js'
 import type { AdminStorage } from './storage/admin-storage.js'
 
@@ -73,8 +80,12 @@ function statusForCode(code: string): number {
     case 'INVALID_EXTERNAL_ID':
     case 'INVALID_INITIATIVE_ID':
     case 'INITIATIVE_WRITE':
-    case 'INVALID_TRANSITION': return 400
-    case 'INITIATIVE_NOT_FOUND': return 404
+    case 'INVALID_TRANSITION':
+    case 'VALIDATION_FAILED': return 400
+    case 'INITIATIVE_NOT_FOUND':
+    case 'RESOURCE_NOT_FOUND':
+    case 'NOT_FOUND': return 404
+    case 'DUPLICATE': return 409
     default: return 500
   }
 }
@@ -264,6 +275,26 @@ export async function createAdminServer(opts: AdminServerOptions) {
     const parsed = InitiativeUpdateSchema.safeParse(request.body)
     if (!parsed.success) return reply.code(400).send({ error: { code: 'INVALID_INPUT', message: 'Invalid initiative update.' } })
     return writeHandler(reply, () => updateInitiativeAdmin(projectDir, request.params.initiativeId, parsed.data))
+  })
+
+  // Project Resources (WI-039): list/detail + CRUD, all via the Core contract.
+  app.get('/api/v1/admin/resources', coreRoute(getResourcesAdmin))
+  app.post('/api/v1/admin/resources', async (request, reply) => {
+    const parsed = ResourceCreateSchema.safeParse(request.body)
+    if (!parsed.success) return reply.code(400).send({ error: { code: 'INVALID_INPUT', message: 'A resource title and type are required.' } })
+    return writeHandler(reply, () => createResourceAdmin(projectDir, parsed.data))
+  })
+  app.get<{ Params: { resourceId: string } }>('/api/v1/admin/resources/:resourceId', async (request, reply) => {
+    return writeHandler(reply, () => getResourceDetailAdmin(projectDir, request.params.resourceId))
+  })
+  app.put<{ Params: { resourceId: string } }>('/api/v1/admin/resources/:resourceId', async (request, reply) => {
+    const parsed = ResourceUpdateSchema.safeParse(request.body)
+    if (!parsed.success) return reply.code(400).send({ error: { code: 'INVALID_INPUT', message: 'Invalid resource update.' } })
+    return writeHandler(reply, () => updateResourceAdmin(projectDir, request.params.resourceId, parsed.data))
+  })
+  app.delete<{ Params: { resourceId: string }; Querystring: { confirm?: string } }>('/api/v1/admin/resources/:resourceId', async (request, reply) => {
+    const confirm = request.query.confirm === 'true'
+    return writeHandler(reply, () => deleteResourceAdmin(projectDir, request.params.resourceId, confirm))
   })
 
   app.get('/api/v1/admin/modules', coreRoute(getModules))

@@ -545,3 +545,27 @@ describe('WI-034: Admin Server exposes WI resources', () => {
     expect(getWorkItemDetail(dir, 'WI-771').resources).toEqual([])
   })
 })
+
+// ─── WI-039: Admin resource management (adapter) ───────────────────────────────
+
+describe('WI-039: Admin Server resource adapter', () => {
+  let dir: string
+  beforeEach(() => { dir = tmpDir() })
+  afterEach(() => { fs.rmSync(dir, { recursive: true, force: true }) })
+
+  it('create → list → detail (with references) → delete, via the adapter', async () => {
+    initProject(dir)
+    const a = await import('../../admin-server/src/core-adapter.js')
+    const created = a.createResourceAdmin(dir, { title: 'Orders DB', resourceType: 'database', provider: 'supabase' })
+    expect(created!.id).toBe('RES-orders-db')
+    expect(a.getResourcesAdmin(dir).resources.map((r: { id: string }) => r.id)).toEqual(['RES-orders-db'])
+
+    writeFile(dir, 'knowledge/delivery/work-items/ready/WI-900.md', ['---', 'id: WI-900', 'title: X', 'type: feature', 'status: ready', 'resources:', '  - id: RES-orders-db', '    role: affected', '---', '', '# X', ''].join('\n'))
+    const detail = a.getResourceDetailAdmin(dir, 'RES-orders-db')
+    expect(detail.references).toEqual([{ kind: 'work-item', id: 'WI-900', role: 'affected', path: 'knowledge/delivery/work-items/ready/WI-900.md' }])
+
+    expect(a.deleteResourceAdmin(dir, 'RES-orders-db', false)!.deleted).toBe(false)
+    expect(a.deleteResourceAdmin(dir, 'RES-orders-db', true)!.deleted).toBe(true)
+    expect(() => a.getResourceDetailAdmin(dir, 'RES-orders-db')).toThrow()
+  })
+})

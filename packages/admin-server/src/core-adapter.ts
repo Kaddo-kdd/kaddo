@@ -51,6 +51,14 @@ import {
   transitionInitiative as coreTransitionInitiative,
   updateInitiative as coreUpdateInitiative,
   InitiativeWriteError,
+  getResources as coreGetResources,
+  getResource as coreGetResource,
+  createResource as coreCreateResource,
+  updateResource as coreUpdateResource,
+  deleteResource as coreDeleteResource,
+  getResourceReferences as coreGetResourceReferences,
+  ResourceWriteError,
+  type ResourceInput,
   exists,
   join,
   readFile,
@@ -670,4 +678,46 @@ export function getIntegrationFiltersAdmin(dir: string, id: string): ReturnType<
 export function updateIntegrationFiltersAdmin(dir: string, id: string, filters: ExternalWorkItemFilters): ReturnType<typeof coreUpdateIntegrationFilters> {
   assertIntegrationId(id)
   try { return coreUpdateIntegrationFilters(dir, id, filters) } catch (err) { mapIntegrationError(err) }
+}
+
+// --- Project Resources (WI-039) — read + CRUD, delegating to the Core contract. ------------------
+
+function mapResourceError(err: unknown): never {
+  if (err instanceof ResourceWriteError) throw new CoreError(err.code, err.message)
+  throw err
+}
+
+export function getResourcesAdmin(dir: string) {
+  return { resources: coreGetResources(dir) }
+}
+
+export function getResourceDetailAdmin(dir: string, id: string) {
+  const resource = coreGetResource(dir, id)
+  if (!resource) throw new CoreError('RESOURCE_NOT_FOUND', 'This Project Resource does not exist in the current project.')
+  const references = coreGetResourceReferences(dir, resource.id)
+  return { ...resource, references }
+}
+
+export function createResourceAdmin(dir: string, body: ResourceInput) {
+  try {
+    return coreCreateResource(dir, body)
+  } catch (err) {
+    mapResourceError(err)
+  }
+}
+
+export function updateResourceAdmin(dir: string, id: string, body: ResourceInput) {
+  try {
+    return coreUpdateResource(dir, id, body)
+  } catch (err) {
+    mapResourceError(err)
+  }
+}
+
+export function deleteResourceAdmin(dir: string, id: string, confirm: boolean) {
+  try {
+    return coreDeleteResource(dir, id, { confirm })
+  } catch (err) {
+    mapResourceError(err)
+  }
 }

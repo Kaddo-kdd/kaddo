@@ -410,6 +410,29 @@ export type InitiativeDetail = {
   body: string
 }
 
+// Project Resources (WI-039)
+export type ResourceAccessInterface = {
+  type: string; tool: string | null; provider: string | null; purpose: string | null
+  operations: string[]; environments: string[]; constraints: string | null
+}
+export type ResourceScope = { type: string; module: string | null }
+export type ResourceSummary = {
+  id: string; title: string; resourceType: string | null; provider: string | null
+  environments: string[]; scope: ResourceScope | null; modules: string[]; path: string
+}
+export type ResourceReference = { kind: string; id: string; role: string; path: string }
+export type ResourceDetail = ResourceSummary & {
+  purpose: string | null; interfaces: ResourceAccessInterface[]
+  boundaries: Record<string, string[]>; authRefs: string[]; authMode: string | null
+  markdownBody: string; references: ResourceReference[]
+}
+export type ResourceInput = {
+  title?: string; resourceType?: string; provider?: string; environments?: string[]
+  scope?: { type: string; module?: string | null }; modules?: string[]; purpose?: string
+  accessInterfaces?: { type: string; tool?: string; provider?: string; purpose?: string; operations?: string[]; environments?: string[]; constraints?: string }[]
+  authentication?: { mode?: string; refs?: string[] }
+}
+
 export const api = {
   initSession: () => fetchApi<{ status: string }>('/session'),
   getOverview: () => fetchApi<ProjectOverview>('/overview'),
@@ -432,6 +455,12 @@ export const api = {
     mutateApi<{ id: string }>('/initiatives', 'POST', body),
   updateInitiative: (initiativeId: string, body: { status?: string; title?: string; horizon?: string; priority?: string; domains?: string[] }) =>
     mutateApi<{ id: string; status: string }>(`/initiatives/${encodeURIComponent(initiativeId)}`, 'PUT', body),
+  // Project Resources (WI-039)
+  getResources: () => fetchApi<{ resources: ResourceSummary[] }>('/resources'),
+  getResource: (id: string) => fetchApi<ResourceDetail>(`/resources/${encodeURIComponent(id)}`),
+  createResource: (body: ResourceInput) => mutateApi<{ id: string; path: string }>('/resources', 'POST', body),
+  updateResource: (id: string, body: ResourceInput) => mutateApi<{ id: string; path: string }>(`/resources/${encodeURIComponent(id)}`, 'PUT', body),
+  deleteResource: (id: string, confirm: boolean) => mutateApi<{ deleted: boolean; path?: string; preview?: { id: string; references: ResourceReference[] } }>(`/resources/${encodeURIComponent(id)}?confirm=${confirm}`, 'DELETE'),
   // Writes (VS-099)
   getCaptureDefinition: () => fetchApi<WorkItemCaptureDefinition>('/work-items-capture'),
   createWorkItem: (intent: string, type: string, answers?: Record<string, string>) => mutateApi<WorkItemWriteResult>('/work-items', 'POST', { intent, type, ...(answers ? { answers } : {}) }),
