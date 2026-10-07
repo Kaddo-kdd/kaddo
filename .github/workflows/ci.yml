@@ -26,6 +26,9 @@ jobs:
       - name: Verify npm README is in sync
         run: pnpm npm-readme:check
 
+      - name: Verify Agent Plugin Skills are in sync
+        run: pnpm agent-plugin:check
+
       - name: Build
         run: pnpm -r build
 
