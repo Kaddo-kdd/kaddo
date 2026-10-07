@@ -1,0 +1,241 @@
+---
+type: feature
+id: WI-035
+title: >-
+  Gestionar e ingerir Project Resources desde CLI, LLM/MCP y Admin con soporte
+  multirepo
+status: draft
+work_type: feature
+created_at: '2026-10-07'
+source:
+  type: external
+  imported_at: '2026-10-07'
+  source_format: markdown-frontmatter
+  source_hash: 50e00a92608e5def5e62c45d846b5cf2f516a4fcb12d827040c2ff332be61634
+  inferred: false
+generated_by: kaddo-admin
+knowledge_level: K3
+affected_modules: []
+domains:
+  - Tech
+  - Delivery
+scope_confidence:
+  level: high
+  reasons:
+    - >-
+      Se construye ENCIMA del capability ya entregado (épica WI-029, en 3.115.0):
+      el read model, CLI/MCP read, relaciones WI, handoff, graph y Admin WI→Resource
+      ya existen y están testeados.
+    - >-
+      Todos los patrones a reutilizar ya están en main: writes de artifact seguros
+      (work-item-write.ts), mutaciones MCP confirmadas por humano (markWorkItemReady/
+      import), adapter Admin→Core (writes de WI VS-099), módulos multirepo
+      (modules.yml/loadMappedModules), provenance en el Graph.
+    - >-
+      Markdown sigue siendo canónico (sin DB); aditivo y backward-compatible.
+  note: >-
+    Alta en diseño/factibilidad, pero ESFUERZO grande (CRUD en 3 superficies +
+    multirepo). Es una épica — dividir en A..E (ver "Recommended split").
+refined_by: work-item-refinement (manual)
+is_epic: true
+summary: >-
+  Kaddo ya soporta **Project Resources** como conocimiento técnico first-class
+  (épica WI-029): viven en `knowledge/tech/resources/`, modelan sistemas
+  externos, declaran interfaces de acceso, environments y boundaries, se
+  relacionan con Work Items por rol, y participan en refinem…
+original_snapshot:
+  title: >-
+    Gestionar e ingerir Project Resources desde CLI, LLM/MCP y Admin con soporte
+    multirepo
+  description: >-
+    Kaddo ya soporta **Project Resources** como conocimiento técnico first-class
+    (épica WI-029): viven en `knowledge/tech/resources/`, modelan sistemas
+    externos, declaran interfaces de acceso, environments y boundaries, se
+    relacionan con Work Items por rol, y participan en refinem…
+  type: feature
+  status: draft
+---
+
+# Gestionar e ingerir Project Resources desde CLI, LLM/MCP y Admin con soporte multirepo
+
+## Intent
+
+Kaddo ya soporta **Project Resources** como conocimiento técnico first-class (épica WI-029): viven en
+`knowledge/tech/resources/`, modelan sistemas externos, declaran interfaces de acceso, environments y
+boundaries, se relacionan con Work Items por rol, y participan en refinement, context assembly,
+Implementation Handoff, Evidence, Graph y Admin; se consultan por CLI y MCP (read-only).
+
+Pero el **alta y mantenimiento** de un recurso sigue dependiendo de crear/editar su Markdown a mano.
+El objetivo de este WI es convertir Project Resources en una **capability gestionable (CRUD)** desde
+las interfaces principales (CLI, Admin, LLM/MCP), manteniendo el artifact Markdown versionado en Git
+como source of truth, y agregar **scope multirepo** (system/module) con validación de módulos.
+
+## Product principles
+
+1. **One Core, multiple interfaces**: CLI, MCP/LLM y Admin convergen en Resource Core (validación →
+   Markdown canónico en `knowledge/tech/resources/`). Sin reglas duplicadas por interfaz.
+2. **Markdown remains canonical**: la gestión visual/programática no reemplaza el artifact versionable;
+   NO introducir una base de datos como segundo source of truth.
+3. **LLM interpreta, Core persiste**: creación asistida = intent → LLM → propuesta estructurada →
+   preview → confirmación humana → Core. El agente no escribe recursos en silencio.
+4. **Management ≠ Execution**: gestiona conocimiento sobre recursos; NO ejecuta Supabase CLI, SQL,
+   AWS, IaC, ni instala MCP servers, ni se conecta a nada.
+
+## Entry points (grounding técnico)
+
+Los puntos de extensión ya existen (los entregó la épica WI-029, en 3.115.0):
+
+- **Core mutations**: `packages/cli/src/core/resources.ts` — añadir `createResource`/`updateResource`/
+  `deleteResource` + `nextResourceId` + validación + serialización no-lossy, espejando
+  `packages/cli/src/core/work-item-write.ts` (`atomicWrite`, `serialize`, merge no-lossy, ID gen). El
+  read model (`getResources`/`getResource`/`parseWorkItemResources`) ya está.
+- **Scope/module model**: extender el frontmatter del recurso con `scope: {type, module?}` y `modules:
+  [...]`; validar contra `.kaddo/modules.yml` vía `loadMappedModules` (services/mapped-modules.ts).
+- **CLI**: `packages/cli/src/commands/resources.ts` (ya tiene list/get) + prompts interactivos de
+  `utils/ui.ts` (`text`/`select`/`confirm`), patrón de `kaddo create`.
+- **MCP mutations**: `packages/mcp/src/tools.ts` + `server.ts` — espejar el patrón confirm/preview de
+  `markWorkItemReady`/`importWorkItemTool` (confirm ausente → preview; confirm=true → aplica).
+- **Admin**: sección "Resources" (nav + rutas + CRUD) espejando los writes de WI (VS-099:
+  `WorkItemNew`/`WorkItemEditor`, `admin-server` adapter + schemas, `core-adapter`).
+- **Graph**: `packages/cli/src/core/graph.ts` — ya tiene nodo `project-resource` y aristas WI→resource;
+  agregar `Module ──depends_on──→ Resource` desde `scope`/`modules`.
+- **Delete safety**: reference check escaneando WIs (`parseWorkItemResources`) + relaciones de módulo/Graph.
+- **Docs**: ampliar `apps/docs/.../project-resources.md` (EN/ES) con CRUD, LLM/MCP, Admin y scopes multirepo.
+
+## Recommended split (esta es una épica)
+
+Adoptando el "Suggested delivery split" del spec (A..E), propongo los hijos (con `parent: WI-035`):
+
+- **WI-036 — Resource management Core + multirepo contract** *(cli)* — create/update/delete, validación,
+  serialización, modelo scope/module, module validation vs modules.yml, reference/delete safety. (AC-01,
+  02, 04, 08, 09, 10, 12, 14)
+- **WI-037 — CLI resource management** *(cli)* — `create` interactivo / `update` / `delete`. (AC-03)
+- **WI-038 — MCP/LLM ingestion** *(mcp, cli)* — tools create/update/delete con preview+confirm; guía de
+  candidate discovery para agentes. (AC-05, 06)
+- **WI-039 — Admin resource management** *(admin, admin-server)* — sección Resources + CRUD + detalle +
+  WIs/módulos relacionados + representación multirepo por scope. (AC-07, 11 en UI)
+- **WI-040 — Multirepo graph, docs & dogfooding** *(cli, docs)* — aristas module→resource en el Graph,
+  docs EN/ES, dogfood creando un recurso real por una de las nuevas superficies. (AC-13, 15)
+
+Orden sugerido: Core → CLI → MCP/LLM → Admin → graph/docs. Cada hijo entregable y verificable por separado.
+
+## Scope
+
+1. **Core mutation contract**: `createResource` / `updateResource` / `deleteResource` determinísticos.
+   Core es responsable de: generación/validación de ID, validación del Resource Contract (tipo,
+   interfaces, environments, scope/module, secret-safety), detección de duplicados, serialización
+   Markdown segura (no-lossy), y reference checks antes de delete. Las interfaces no reconstruyen reglas.
+2. **CLI CRUD**: extender `kaddo resources` con `create` (interactivo, Minimum Sufficient Knowledge —
+   no un formulario obligatorio), `update <id>`, `delete <id>` (+ `list`/`get` existentes).
+3. **Progressive definition**: un recurso puede empezar con `type/id/title/resource_type/provider` y
+   enriquecerse después (environments, interfaces, boundaries, auth refs, module relationships, purpose).
+4. **LLM/MCP ingestion**: el usuario expresa intención natural; el LLM produce una propuesta
+   estructurada; se persiste solo con preview + confirmación humana explícita.
+5. **MCP mutation tools**: `kaddo_create_resource` / `kaddo_update_resource` / `kaddo_delete_resource`
+   con el patrón de confirmación existente (confirm ausente/false → preview; confirm=true → aplica).
+   No inferir consentimiento porque un agente lo pida.
+6. **Resource candidate discovery**: agentes pueden proponer **candidatos** a partir de conocimiento
+   existente (architecture, current-state, codebase, stack, module context). Discovery ≠ creación; no
+   inventar sistemas por nombres ambiguos de archivos.
+7. **Admin resource management**: sección de primer nivel "Resources" (list/inspect/create/edit/delete,
+   WIs relacionados, relaciones de módulos). El detalle muestra identity/type/provider/purpose/scope/
+   environments/interfaces/boundaries/auth refs/related modules/related WIs, sin secretos. El schema
+   vive en Core, no duplicado en el frontend.
+8. **Multirepo scope**: el Resource Contract expresa `scope: {type: system}` o `scope: {type: module,
+   module: <id>}`. No mover el artifact al repo secundario — el catálogo canónico vive en el core repo.
+9. **Shared resources + module relationships**: un recurso system-scoped puede ser usado por varios
+   módulos (`modules: [api, worker]`) sin duplicarse. Ownership/scope ≠ dependencia de módulo.
+10. **Validate against mapped modules**: referencias a módulos se validan contra `.kaddo/modules.yml`
+    cuando exista (known / unknown / unavailable-mapped-repo), sin acceso remoto. No permitir referencias
+    silenciosas a módulos inexistentes.
+11. **Admin multirepo representation**: agrupar recursos por scope (System / por módulo) y mostrar
+    recursos compartidos ("Stripe · scope System · used by: orders-api, billing-worker"). Sin catálogos
+    duplicados por repo.
+12. **WI compatibility**: `resources: [{id, role}]` mantiene su semántica (affected/implementation/
+    validation/delivery); WIs sin resources siguen funcionando. No hacer obligatorio un recurso/initiative.
+13. **Cross-check WI ↔ Resource ↔ Module**: cuando haya info suficiente, detectar relaciones que
+    merecen revisión (p. ej. WI afecta `storefront-web` pero usa un recurso scope `module/orders-api`).
+    Señales explicables y preferiblemente no bloqueantes salvo inconsistencia estructural clara.
+14. **Delete safety**: antes de borrar, revisar WIs que lo referencian, relaciones de módulos y del
+    Graph; mostrar el impacto y exigir confirmación explícita. No borrar referencias de otros artifacts
+    como efecto secundario oculto.
+15. **Graph integration**: mantener las aristas WI→Resource por rol y agregar `Module ──depends_on──→
+    Resource` cuando esté declarado; el Graph distingue ownership/scope de dependencia.
+
+## Out of scope
+
+Ejecutar comandos de los recursos; conectarse a Supabase/AWS/Azure; ejecutar SQL/Terraform;
+provisionar infra; instalar MCP servers; validar conectividad remota; almacenar credenciales; secrets
+manager; sincronizar estado remoto; copiar recursos a repos secundarios; gestionar infra desde Admin;
+discovery por lectura indiscriminada del código; reemplazar Integration Adapters; plataforma de
+infrastructure management.
+
+## Acceptance criteria
+
+- [ ] AC-01 — Core Mutations: contrato Core único para create/update/delete de Project Resources.
+- [ ] AC-02 — Canonical Artifact: todas las superficies persisten como Markdown bajo `knowledge/tech/resources/`.
+- [ ] AC-03 — CLI CRUD: `create`, `list`, `get`, `update`, `delete` usando las reglas de Core.
+- [ ] AC-04 — Progressive Capture: crear requiere solo Minimum Sufficient Knowledge; se enriquece después.
+- [ ] AC-05 — MCP/LLM Ingestion: un agente propone create/update/delete por MCP con preview + confirmación humana antes de persistir.
+- [ ] AC-06 — Resource Candidates: agentes proponen candidatos desde conocimiento existente sin materializarlos.
+- [ ] AC-07 — Admin CRUD: sección Resources en Admin con list/inspect/create/edit/delete.
+- [ ] AC-08 — Multirepo Scope: un recurso puede ser system- o module-scoped sin mover su artifact del core project.
+- [ ] AC-09 — Shared Resources: un recurso puede relacionarse con múltiples módulos sin duplicarse.
+- [ ] AC-10 — Module Validation: referencias a módulos se validan contra la config multirepo cuando exista.
+- [ ] AC-11 — WI Compatibility: `resources: [{id, role}]` mantiene semántica; WIs sin resources siguen igual.
+- [ ] AC-12 — Delete Safety: borrar un recurso referenciado exige mostrar impacto y confirmación explícita.
+- [ ] AC-13 — Graph: relaciones module↔resource aparecen en el Graph con provenance verificable.
+- [ ] AC-14 — Secret Safety: ninguna superficie acepta/persiste/expone valores secretos.
+- [ ] AC-15 — Documentation: docs EN/ES cubren creación por CLI, LLM/MCP, Admin, scopes multirepo y fronteras de seguridad.
+
+## Validation
+
+- **CLI creation**: `kaddo resources create` (Supabase Main / database / supabase / system) →
+  `knowledge/tech/resources/supabase-main.md`; `kaddo resources get RES-supabase-main` devuelve la
+  definición normalizada.
+- **LLM ingestion**: desde MCP, intención natural → propuesta → `kaddo_create_resource` → preview →
+  confirm → recurso canónico. Sin `confirm=true`, no se escribe nada.
+- **Admin creation**: Admin → Resources → Create → mismo recurso, vía admin-server → Core (sin schema
+  duplicado en frontend).
+- **Module-scoped**: con módulo `orders-api`, crear `scope: {type: module, module: orders-api}` → aceptado,
+  Admin lo agrupa bajo orders-api, el Graph puede relacionar orders-api → recurso.
+- **Invalid module**: `module: unknown-api` → validation finding, sin registrar relación falsa.
+- **Shared resource**: `scope: system` + `modules: [orders-api, billing-worker]` → Graph con dos
+  aristas `depends_on` y una sola definición canónica.
+- **Work Item**: WI con `affected_modules: [orders-api]` + `resources: [{RES-orders-db, affected}]` →
+  refinement/context/handoff/Admin/Graph siguen usando la relación.
+- **Delete safety**: borrar `RES-orders-db` referenciado por un WI → muestra referencias y pide
+  confirmación; no borra en silencio.
+
+## Definition of Done
+
+Resources se crean/modifican/eliminan sin editar Markdown a mano; Core es la única fuente de reglas;
+CLI ofrece gestión completa; LLM/MCP ingiere con preview+confirm; Admin ofrece gestión visual; Markdown
+sigue siendo source of truth; recursos system/module/compartidos; módulos referenciados validados;
+compartidos sin duplicar; WIs mantienen su modelo de roles; delete preserva trazabilidad con
+confirmación; Graph representa dependencias module/resource; ninguna superficie guarda secretos;
+single-repo y proyectos sin resources siguen igual; tests cubren Core/CLI/MCP/Admin/multirepo; docs
+EN/ES; al menos un recurso real creado por una de las nuevas superficies (dogfood); Evidence; Verification; Learning.
+
+## Suggested delivery split (épica)
+
+El parent conserva el outcome global; dividir en hijos con trazabilidad al parent (no un mega-WI):
+
+- **A. Resource Management Core + Multirepo Contract** — create/update/delete, validación,
+  serialización, modelo scope/module, reference/delete safety.
+- **B. CLI Resource Management** — create (interactivo)/update/delete (+ list/get existentes).
+- **C. MCP / LLM Resource Ingestion** — propuesta estructurada, preview/confirm, guía de candidate discovery.
+- **D. Admin Resource Management** — sección Resources, CRUD, detalle, WIs/módulos relacionados.
+- **E. Multirepo Graph + Docs + Dogfooding** — relaciones de módulos, proyección en el grafo, docs EN/ES,
+  validación en proyecto real.
+
+## Implementation handoff guidance
+
+Partir del capability actual (épica WI-029), no rediseñarlo: `knowledge/tech/resources/` → read model →
+CLI/MCP list/get → relaciones WI → refinement → handoff → graph → Admin WI→Resource. La capa nueva se
+agrega **encima** (mutation/management → Resource Core → artifact → capability existente). Reutilizar
+patrones ya presentes: mutaciones MCP confirmadas por humano (como `markWorkItemReady`/import),
+validación en Core, adapter Admin→Core (como los writes de WI, VS-099), módulos multirepo, provenance en
+el Graph, writes de artifact seguros (como `work-item-write.ts`). NO implementar writes independientes en
+CLI/MCP/Admin-Server que generen Markdown por su cuenta. Para multirepo, mantener el catálogo canónico en
+el core repo (evita writes distribuidos); la federación entre repos es una capability futura separada.

@@ -16,12 +16,28 @@ export {
   RESOURCE_TYPES,
   INTERFACE_TYPES,
   RESOURCE_ROLES,
+  parseScope,
   type ResourceSummary,
   type ResourceDetail,
+  type ResourceScope,
   type AccessInterface,
   type WorkItemResource,
   type ResourceRole,
 } from './core/resources.js'
+export {
+  createResource,
+  updateResource,
+  deleteResource,
+  getResourceReferences,
+  validateResource,
+  ResourceWriteError,
+  type ResourceInput,
+  type AccessInterfaceInput,
+  type ResourceFinding,
+  type ResourceReference,
+  type ResourceWriteResult,
+  type ResourceDeletePreview,
+} from './core/resource-write.js'
 export { loadMappedModules, type MappedModuleWithCoverage } from './services/mapped-modules.js'
 export { lifecycleStateOf, lifecycleCounts, isActiveState, type LifecycleState } from './core/lifecycle.js'
 export { analyzeScopeCoverage, type ScopeCoverageSummary } from './core/scope-coverage.js'

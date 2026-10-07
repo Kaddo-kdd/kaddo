@@ -34,12 +34,19 @@ export type AccessInterface = {
   constraints: string | null
 }
 
+/** Ownership/scope of a resource in a multirepo system (WI-036). Distinct from module dependency. */
+export type ResourceScope = { type: string; module: string | null }
+
 export type ResourceSummary = {
   id: string
   title: string
   resourceType: string | null
   provider: string | null
   environments: string[]
+  /** Ownership scope: system, or module/<id>. Null when not declared (defaults to system-ish). */
+  scope: ResourceScope | null
+  /** Modules that use this resource (dependency, not ownership). */
+  modules: string[]
   /** POSIX path relative to the project root. */
   path: string
 }
@@ -110,6 +117,15 @@ function parseAuth(v: unknown): { mode: string | null; refs: string[] } {
   return { mode: str(o.mode), refs }
 }
 
+/** Parse `scope: { type, module }`. Returns null when absent. */
+export function parseScope(v: unknown): ResourceScope | null {
+  if (!v || typeof v !== 'object' || Array.isArray(v)) return null
+  const o = v as Record<string, unknown>
+  const type = str(o.type)
+  if (!type) return null
+  return { type, module: str(o.module) }
+}
+
 function toDetail(filePath: string, relPath: string, raw: string): ResourceDetail {
   const parsed = matter(raw)
   const fm = (parsed.data ?? {}) as Record<string, unknown>
@@ -121,6 +137,8 @@ function toDetail(filePath: string, relPath: string, raw: string): ResourceDetai
     resourceType: str(fm.resource_type),
     provider: str(fm.provider),
     environments: strArray(fm.environments),
+    scope: parseScope(fm.scope),
+    modules: strArray(fm.modules),
     path: relPath,
     purpose: str(fm.purpose),
     interfaces: parseInterfaces(fm.access_interfaces),
@@ -145,6 +163,8 @@ export function getResources(dir: string): ResourceSummary[] {
         resourceType: str(fm.resource_type),
         provider: str(fm.provider),
         environments: strArray(fm.environments),
+        scope: parseScope(fm.scope),
+        modules: strArray(fm.modules),
         path: a.relPath,
       }
     })
