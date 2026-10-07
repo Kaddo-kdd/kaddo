@@ -11,7 +11,7 @@ tags:
   - multirepo
 locale: es
 cover: /blog/project-resources/cover.webp
-featured: false
+featured: true
 translationKey: project-resources-real-context
 ---
 
