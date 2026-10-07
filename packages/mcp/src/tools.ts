@@ -30,6 +30,15 @@ import { listCapsules, getCapsule, listAgents, getAgentPrompt } from './catalog.
 import { listSkills, getSkill } from './skills.js'
 import { readJson, readText, writeWorkItemTransition, removeWorkItemFile } from './project.js'
 import { getResources, getResource } from '../../cli/src/core/resources.js'
+import {
+  createResource,
+  updateResource,
+  deleteResource,
+  validateResource,
+  getResourceReferences,
+  ResourceWriteError,
+  type ResourceInput,
+} from '../../cli/src/core/resource-write.js'
 
 export type ToolResult = { ok: true; data: unknown } | { ok: false; message: string }
 
@@ -416,4 +425,77 @@ export function getResourceTool(root: string, id: string): ToolResult {
   const resource = getResource(root, id)
   if (!resource) return fail(`Project Resource "${id}" not found.`)
   return ok(resource)
+}
+
+// --- Project Resource mutations (WI-038) — LLM proposes, human confirms, Core persists. ----------
+// No surface writes Markdown itself; all go through the WI-036 Core contract. Never stores secrets.
+
+type ResourceArgs = {
+  title?: string
+  resource_type?: string
+  provider?: string
+  environments?: string[]
+  scope?: string
+  module?: string
+  modules?: string[]
+  purpose?: string
+  access_interfaces?: { type: string; tool?: string; provider?: string; purpose?: string; operations?: string[]; environments?: string[]; constraints?: string }[]
+  authentication?: { mode?: string; refs?: string[] }
+}
+
+function toResourceInput(args: ResourceArgs): ResourceInput {
+  const input: ResourceInput = {}
+  if (args.title != null) input.title = args.title
+  if (args.resource_type != null) input.resourceType = args.resource_type
+  if (args.provider != null) input.provider = args.provider
+  if (args.environments != null) input.environments = args.environments
+  if (args.scope != null || args.module != null) {
+    const type = args.scope || (args.module ? 'module' : 'system')
+    input.scope = type === 'module' ? { type: 'module', module: args.module ?? null } : { type: 'system' }
+  }
+  if (args.modules != null) input.modules = args.modules
+  if (args.purpose != null) input.purpose = args.purpose
+  if (args.access_interfaces != null) input.accessInterfaces = args.access_interfaces
+  if (args.authentication != null) input.authentication = args.authentication
+  return input
+}
+
+export function createResourceTool(root: string, args: ResourceArgs, confirm?: boolean): ToolResult {
+  const input = toResourceInput(args)
+  const findings = validateResource(root, input)
+  if (!confirm) {
+    return ok({ status: 'needs_confirmation', action: 'create', proposal: input, findings, message: 'Re-call with confirm=true to create this resource.' })
+  }
+  try {
+    return ok({ status: 'created', ...createResource(root, input) })
+  } catch (e) {
+    return fail(e instanceof ResourceWriteError ? e.message : String(e))
+  }
+}
+
+export function updateResourceTool(root: string, id: string, args: ResourceArgs, confirm?: boolean): ToolResult {
+  if (!getResource(root, id)) return fail(`Project Resource "${id}" not found.`)
+  const input = toResourceInput(args)
+  const findings = validateResource(root, input)
+  if (!confirm) {
+    return ok({ status: 'needs_confirmation', action: 'update', id, changes: input, findings, message: 'Re-call with confirm=true to apply this update.' })
+  }
+  try {
+    return ok({ status: 'updated', ...updateResource(root, id, input) })
+  } catch (e) {
+    return fail(e instanceof ResourceWriteError ? e.message : String(e))
+  }
+}
+
+export function deleteResourceTool(root: string, id: string, confirm?: boolean): ToolResult {
+  if (!getResource(root, id)) return fail(`Project Resource "${id}" not found.`)
+  if (!confirm) {
+    const references = getResourceReferences(root, id)
+    return ok({ status: 'needs_confirmation', action: 'delete', id, references, message: 'Re-call with confirm=true to delete. References in other artifacts are NOT removed.' })
+  }
+  try {
+    return ok({ status: 'deleted', ...deleteResource(root, id, { confirm: true }) })
+  } catch (e) {
+    return fail(e instanceof ResourceWriteError ? e.message : String(e))
+  }
 }

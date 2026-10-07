@@ -26,6 +26,9 @@ import {
   setTelemetryConsentTool,
   listResourcesTool,
   getResourceTool,
+  createResourceTool,
+  updateResourceTool,
+  deleteResourceTool,
   type ToolResult,
 } from './tools.js'
 import { listSkills, getSkill } from './skills.js'
@@ -208,6 +211,57 @@ export function createServer(root: string): McpServer {
     'kaddo_get_resource',
     { title: 'Get Project Resource', description: 'Get one Project Resource by ID: purpose, environments, access interfaces, boundaries and auth references (never values).', inputSchema: { id: z.string() } },
     async (args) => toolText(guarded(root, () => getResourceTool(root, args.id)))
+  )
+
+  const resourceFields = {
+    title: z.string().optional(),
+    resource_type: z.string().optional(),
+    provider: z.string().optional(),
+    environments: z.array(z.string()).optional(),
+    scope: z.string().optional(),
+    module: z.string().optional(),
+    modules: z.array(z.string()).optional(),
+    purpose: z.string().optional(),
+    access_interfaces: z.array(z.object({
+      type: z.string(),
+      tool: z.string().optional(),
+      provider: z.string().optional(),
+      purpose: z.string().optional(),
+      operations: z.array(z.string()).optional(),
+      environments: z.array(z.string()).optional(),
+      constraints: z.string().optional(),
+    })).optional(),
+    authentication: z.object({ mode: z.string().optional(), refs: z.array(z.string()).optional() }).optional(),
+  }
+
+  server.registerTool(
+    'kaddo_create_resource',
+    {
+      title: 'Create Project Resource',
+      description: 'Propose creating a Project Resource. Without confirm, returns a preview + validation findings (writes nothing). With confirm=true, Core persists it as Markdown. Never include credential values — only reference names.',
+      inputSchema: { ...resourceFields, confirm: z.boolean().optional() },
+    },
+    async (args) => toolText(guarded(root, () => createResourceTool(root, args, args.confirm)))
+  )
+
+  server.registerTool(
+    'kaddo_update_resource',
+    {
+      title: 'Update Project Resource',
+      description: 'Propose updating a Project Resource (no-lossy). Without confirm, returns a preview; with confirm=true, Core applies it. Never include credential values.',
+      inputSchema: { id: z.string(), ...resourceFields, confirm: z.boolean().optional() },
+    },
+    async (args) => toolText(guarded(root, () => updateResourceTool(root, args.id, args, args.confirm)))
+  )
+
+  server.registerTool(
+    'kaddo_delete_resource',
+    {
+      title: 'Delete Project Resource',
+      description: 'Delete a Project Resource. Without confirm, returns what references it (writes nothing); with confirm=true, Core removes only the resource — references in other artifacts are left intact.',
+      inputSchema: { id: z.string(), confirm: z.boolean().optional() },
+    },
+    async (args) => toolText(guarded(root, () => deleteResourceTool(root, args.id, args.confirm)))
   )
 
   server.registerTool(

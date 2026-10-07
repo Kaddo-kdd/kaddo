@@ -63,6 +63,27 @@ Rules:
 - Do not invent entities or relationships: the diagram must be grounded in the same confirmed
   knowledge as the text and stay consistent with it.
 
+## Project Resource candidates (WI-038)
+
+When existing knowledge (architecture, current-state, codebase, stack, module context, infrastructure
+notes) describes an **external system** the project depends on, you may propose it as a **candidate**
+Project Resource — you never create it silently. Examples:
+
+- a PostgreSQL/Supabase connection described → candidate `database` resource;
+- an S3 bucket dependency → candidate `storage` resource;
+- a Kafka/SQS topic → candidate `queue` resource;
+- a third-party API (Stripe, Auth0, …) → candidate `api`/`service` resource.
+
+Rules:
+
+- **Discovery ≠ creation.** Present candidates for human review; materialize only through
+  `kaddo_create_resource` / `kaddo resources create` with explicit human confirmation.
+- **Ground it.** Only propose resources the knowledge actually supports; do not invent systems from
+  ambiguous file names or guesses.
+- **Resource ≠ access interface ≠ module.** Model the stable system; CLI/MCP/SQL/API are its access
+  interfaces. Keep `resources` (external systems) separate from `affected_modules` (code).
+- **Never include secret values** — only reference names (an env var or secret name).
+
 The Mermaid source stays in Markdown — the Admin renders it visually; CLI and MCP keep the source.
 
 ## Output Format

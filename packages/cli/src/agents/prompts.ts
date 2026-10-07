@@ -300,6 +300,16 @@ supporting notes as \`knowledge/tech/discovery/architecture-notes.md\` and decis
 under \`knowledge/tech/decisions/\`. Kaddo still reads the legacy root locations for backward
 compatibility, but new output should use \`discovery/\`.
 
+## Project Resource candidates
+
+When the knowledge describes an external system the project depends on (a database, cloud account,
+API, queue, storage, service…), you may propose it as a **candidate** Project Resource — never create
+it silently. Discovery ≠ creation: present candidates for human review and materialize only through
+\`kaddo_create_resource\` / \`kaddo resources create\` with explicit confirmation. Ground every
+candidate in the knowledge (no guessing from ambiguous names). Model the stable system, not its access
+interface (CLI/MCP/SQL/API are interfaces); keep \`resources\` separate from \`affected_modules\`; and
+never include secret values — only reference names.
+
 ## Quality Checklist
 
 - Every component is backed by evidence from the context pack.
