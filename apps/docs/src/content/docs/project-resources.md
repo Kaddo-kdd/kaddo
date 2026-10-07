@@ -112,6 +112,58 @@ Implementation Evidence may reference validations performed against a resource �
 "migration applied in development" or "expected schema verified". Evidence describes the **validation**,
 never the resource's contents: no database records, query dumps, credential values or tokens.
 
+## Managing resources (create, update, delete)
+
+You don't have to write the Markdown by hand. Resources can be created, updated and deleted from the
+CLI, the Admin, or an LLM via MCP — all converge on one Core contract, so the rules are the same
+everywhere, and the artifact under `knowledge/tech/resources/` stays the source of truth.
+
+**CLI:**
+
+```bash
+kaddo resources create --title "Supabase Main" --type database --provider supabase   # or run it with no flags, interactively
+kaddo resources update RES-supabase-main --purpose "Primary application database"
+kaddo resources delete RES-supabase-main      # lists what references it, then asks to confirm (--yes to skip)
+```
+
+**MCP / LLM:** the `kaddo_create_resource`, `kaddo_update_resource` and `kaddo_delete_resource` tools
+follow a preview-then-confirm flow: without `confirm` they return a preview (and, for delete, what
+references the resource) and write nothing; with `confirm: true` Core persists the change. An agent
+proposes; a human confirms. The architecture agent can also suggest resource **candidates** from
+existing knowledge — it never creates them silently.
+
+**Admin:** the **Resources** section lists resources (grouped by scope), and lets you create, inspect,
+edit and delete them. Deleting first shows what references the resource; those references are never
+removed for you.
+
+Deleting a resource only removes its own artifact — the `resources:` entries in Work Items that pointed
+to it are left intact.
+
+## Multirepo scope
+
+In a multirepo project a resource can declare **ownership scope** — the system as a whole, or a
+specific module — without moving its artifact out of the core repository (the canonical catalog always
+lives in `knowledge/tech/resources/`):
+
+```yaml
+scope:
+  type: module
+  module: orders-api
+```
+
+A system-scoped resource can be **used by** several modules without being duplicated — this is a
+dependency, distinct from ownership:
+
+```yaml
+scope:
+  type: system
+modules: [orders-api, billing-worker]
+```
+
+Module ids are validated against `.kaddo/modules.yml` when it exists (unknown modules are flagged, not
+silently accepted). In the Knowledge Graph this produces `module ──depends_on──→ resource` edges, and
+the Admin groups resources by scope and shows shared resources as "used by" their modules.
+
 ## What this is not
 
 Project Resources are knowledge, not execution. Kaddo does not run CLI commands, connect to Supabase

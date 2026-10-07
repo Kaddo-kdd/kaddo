@@ -113,6 +113,60 @@ La Implementation Evidence puede referenciar validaciones hechas sobre un recurs
 **validación**, nunca el contenido del recurso: ni registros de base de datos, ni dumps de queries, ni
 valores de credenciales, ni tokens.
 
+## Gestionar recursos (crear, actualizar, eliminar)
+
+No hace falta escribir el Markdown a mano. Los recursos se pueden crear, actualizar y eliminar desde el
+CLI, el Admin o un LLM vía MCP — todos convergen en un único contrato de Core, así que las reglas son
+las mismas en todas partes, y el artifact bajo `knowledge/tech/resources/` sigue siendo la fuente de
+verdad.
+
+**CLI:**
+
+```bash
+kaddo resources create --title "Supabase Main" --type database --provider supabase   # o sin flags, interactivo
+kaddo resources update RES-supabase-main --purpose "Base de datos principal de la app"
+kaddo resources delete RES-supabase-main      # lista qué lo referencia y pide confirmación (--yes para saltarla)
+```
+
+**MCP / LLM:** los tools `kaddo_create_resource`, `kaddo_update_resource` y `kaddo_delete_resource`
+siguen un flujo preview-luego-confirm: sin `confirm` devuelven un preview (y, para delete, qué lo
+referencia) y no escriben nada; con `confirm: true` Core persiste el cambio. El agente propone; un
+humano confirma. El architecture-agent también puede sugerir **candidatos** a recurso a partir del
+conocimiento existente — nunca los crea en silencio.
+
+**Admin:** la sección **Resources** lista recursos (agrupados por scope) y permite crear, inspeccionar,
+editar y eliminar. Al eliminar, primero muestra qué lo referencia; esas referencias nunca se eliminan
+automáticamente.
+
+Eliminar un recurso solo borra su propio artifact — las entradas `resources:` de los Work Items que lo
+apuntaban quedan intactas.
+
+## Scope multirepo
+
+En un proyecto multirepo un recurso puede declarar un **scope de ownership** — el sistema completo, o un
+módulo concreto — sin mover su artifact fuera del repo core (el catálogo canónico siempre vive en
+`knowledge/tech/resources/`):
+
+```yaml
+scope:
+  type: module
+  module: orders-api
+```
+
+Un recurso system-scoped puede ser **usado por** varios módulos sin duplicarse — eso es una dependencia,
+distinta del ownership:
+
+```yaml
+scope:
+  type: system
+modules: [orders-api, billing-worker]
+```
+
+Los ids de módulo se validan contra `.kaddo/modules.yml` cuando existe (los módulos desconocidos se
+señalan, no se aceptan en silencio). En el Knowledge Graph esto produce aristas
+`module ──depends_on──→ resource`, y el Admin agrupa los recursos por scope y muestra los compartidos
+como "used by" sus módulos.
+
 ## Qué no es
 
 Los Project Resources son conocimiento, no ejecución. Kaddo no ejecuta comandos CLI, no se conecta a

@@ -36,6 +36,7 @@ export type GraphNodeType =
   | 'decision'
   | 'work-item'
   | 'code-glob'
+  | 'module'
   | 'initiative'
   | 'roadmap-candidate'
   | 'knowledge-capsule'
@@ -196,12 +197,22 @@ export function buildGraph(
   const resourceTitleById = new Map<string, string>()
   for (const r of getResources(dir)) {
     resourceTitleById.set(r.id, r.title)
+    const resId = `resource:${r.id}`
     addNode({
-      id: `resource:${r.id}`,
+      id: resId,
       type: 'project-resource',
       label: r.title ? `${r.id} ${r.title}`.trim() : r.id,
       path: r.path,
     })
+    // Module → Resource dependency (WI-040), from the resource's declared scope/modules. This is a
+    // dependency, distinct from the resource's ownership scope. Provenance: the resource declaration.
+    const depModules = new Set<string>(r.modules)
+    if (r.scope?.type === 'module' && r.scope.module) depModules.add(r.scope.module)
+    for (const mod of depModules) {
+      const modId = `module:${mod}`
+      addNode({ id: modId, type: 'module', label: mod })
+      addEdge(modId, resId, 'depends_on')
+    }
   }
 
   for (const wi of selectedWIs) {

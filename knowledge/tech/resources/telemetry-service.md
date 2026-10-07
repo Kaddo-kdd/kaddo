@@ -9,7 +9,7 @@ environments:
 access_interfaces:
   - type: api
     tool: HTTPS
-    purpose: receive anonymous, opt-in usage telemetry from the Kaddo CLI/MCP
+    purpose: 'receive anonymous, opt-in usage telemetry from the Kaddo CLI/MCP'
     operations:
       - ingest-events
 access_boundaries:
@@ -17,6 +17,8 @@ access_boundaries:
     - write-only (clients send events; they never read)
 authentication:
   mode: none
+scope:
+  type: system
 ---
 
 # Purpose

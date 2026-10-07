@@ -64,3 +64,21 @@ describe('WI-033 — Project Resources in the Knowledge Graph', () => {
     expect(g.nodes.some((n) => n.type === 'project-resource')).toBe(false)
   })
 })
+
+describe('WI-040 — module → resource dependency edges', () => {
+  let dir: string
+  beforeEach(() => { dir = tmpDir(); init(dir) })
+  afterEach(() => { fs.rmSync(dir, { recursive: true, force: true }) })
+
+  it('adds module→resource depends_on edges from scope/modules (AC-01, AC-02)', async () => {
+    write(dir, 'knowledge/tech/resources/stripe.md', ['---', 'type: project-resource', 'id: RES-stripe', 'title: Stripe', 'resource_type: service', 'scope:', '  type: system', 'modules: [orders-api, billing-worker]', '---', '', '# Purpose', '', 'Payments.', ''].join('\n'))
+    const { buildGraph } = await import('../src/core/graph.js')
+    const { loadConfig } = await import('../src/core/config.js')
+    const g = buildGraph(dir, loadConfig(dir)!)
+    expect(g.nodes.some((n) => n.id === 'module:orders-api' && n.type === 'module')).toBe(true)
+    const deps = g.edges.filter((e) => e.to === 'resource:RES-stripe' && e.type === 'depends_on').map((e) => e.from).sort()
+    expect(deps).toEqual(['module:billing-worker', 'module:orders-api'])
+    // One canonical resource definition (not duplicated per module).
+    expect(g.nodes.filter((n) => n.id === 'resource:RES-stripe').length).toBe(1)
+  })
+})
