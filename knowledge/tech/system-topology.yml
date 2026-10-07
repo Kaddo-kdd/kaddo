@@ -1,0 +1,176 @@
+entities:
+  - id: cli
+    kind: application
+    label: Kaddo CLI
+    purpose: Command-line toolkit that runs the deterministic KDD lifecycle (scan,
+      context, work items, guard, drift, verify).
+    module: cli
+    implementation:
+      - packages/cli/src/index.ts
+    provenance: agent-reviewed
+    evidence:
+      - packages/cli/src/index.ts
+      - .kaddo/modules.yml
+  - id: core
+    kind: component
+    label: Kaddo Core
+    purpose: Deterministic domain logic (knowledge discovery, work items, lifecycle,
+      topology, integrations services) reused by every interface.
+    module: core
+    implementation:
+      - packages/cli/src/core.ts
+      - packages/cli/src/core
+    provenance: agent-reviewed
+    evidence:
+      - packages/cli/src/core.ts
+  - id: mcp-server
+    kind: service
+    label: Kaddo MCP Server
+    purpose: MCP server that exposes project knowledge, resources, tools and prompts
+      to AI agents; read-only except narrow lifecycle transitions.
+    module: mcp
+    implementation:
+      - packages/mcp/src/server.ts
+      - packages/mcp/src/index.ts
+    provenance: agent-reviewed
+    evidence:
+      - packages/mcp/src/server.ts
+      - packages/mcp/src/tools.ts
+  - id: admin-server
+    kind: service
+    label: Kaddo Admin Server
+    purpose: Fastify service that serves the Admin REST API over Kaddo Core.
+    module: admin-server
+    implementation:
+      - packages/admin-server/src/server.ts
+      - packages/admin-server/src/index.ts
+    provenance: agent-reviewed
+    evidence:
+      - packages/admin-server/src/server.ts
+  - id: admin-api
+    kind: api
+    label: Admin REST API
+    purpose: HTTP API surface under /api/v1/admin consumed by the Admin UI.
+    module: admin-server
+    implementation:
+      - packages/admin-server/src/server.ts
+    provenance: agent-reviewed
+    evidence:
+      - packages/admin-server/src/server.ts
+      - packages/admin/src/lib/api.ts
+  - id: admin-ui
+    kind: application
+    label: Kaddo Admin UI
+    purpose: React web interface to browse knowledge, work items, initiatives and
+      integrations.
+    module: admin
+    implementation:
+      - packages/admin/src
+    provenance: agent-reviewed
+    evidence:
+      - packages/admin/src/lib/api.ts
+  - id: integrations
+    kind: component
+    label: Integration Adapter Foundation
+    purpose: Provider-agnostic contract, registry and normalized models for
+      connecting to external work systems; never a source of truth.
+    module: integrations
+    implementation:
+      - packages/integrations/src/index.ts
+    provenance: agent-reviewed
+    evidence:
+      - packages/integrations/src/registry.ts
+      - packages/integrations/src/contract.ts
+  - id: knowledge-store
+    kind: datastore
+    label: Project Knowledge Store
+    purpose: File-based, Git-versioned project knowledge under knowledge/ (source of
+      truth) plus derived artifacts under .kaddo/.
+    implementation:
+      - knowledge
+    provenance: agent-reviewed
+    evidence:
+      - packages/cli/src/services/knowledge-artifacts.ts
+  - id: telemetry-service
+    kind: external-system
+    label: Kaddo Telemetry Service
+    purpose: External anonymous usage telemetry service at telemetry.kaddo.org.
+    provenance: agent-reviewed
+    evidence:
+      - packages/cli/src/core/telemetry.ts
+  - id: external-work-systems
+    kind: external-system
+    label: External Work Systems
+    purpose: External planning tools (e.g. Jira) integrated through adapters; never
+      a source of truth.
+    provenance: agent-reviewed
+    evidence:
+      - packages/integrations/src/jira-adapter.ts
+      - packages/integrations/src/registry.ts
+relationships:
+  - from: cli
+    to: core
+    type: contains
+    evidence:
+      - packages/cli/src/core.ts
+  - from: core
+    to: integrations
+    type: depends-on
+    evidence:
+      - packages/cli/src/core.ts
+  - from: mcp-server
+    to: core
+    type: depends-on
+    evidence:
+      - packages/mcp/src/tools.ts
+      - packages/mcp/src/server.ts
+  - from: admin-server
+    to: core
+    type: depends-on
+    evidence:
+      - packages/admin-server/src/core-adapter.ts
+  - from: admin-server
+    to: admin-api
+    type: contains
+    evidence:
+      - packages/admin-server/src/server.ts
+  - from: admin-ui
+    to: admin-api
+    type: calls
+    evidence:
+      - packages/admin/src/lib/api.ts
+  - from: cli
+    to: knowledge-store
+    type: reads-from
+    evidence:
+      - packages/cli/src/services/knowledge-artifacts.ts
+  - from: cli
+    to: knowledge-store
+    type: writes-to
+    evidence:
+      - packages/cli/src/core/work-item-write.ts
+  - from: mcp-server
+    to: knowledge-store
+    type: reads-from
+    evidence:
+      - packages/mcp/src/project.ts
+  - from: admin-server
+    to: knowledge-store
+    type: reads-from
+    evidence:
+      - packages/admin-server/src/core-adapter.ts
+  - from: admin-server
+    to: knowledge-store
+    type: writes-to
+    evidence:
+      - packages/admin-server/src/core-adapter.ts
+  - from: cli
+    to: telemetry-service
+    type: integrates-with
+    evidence:
+      - packages/cli/src/core/telemetry.ts
+  - from: integrations
+    to: external-work-systems
+    type: integrates-with
+    evidence:
+      - packages/integrations/src/jira-adapter.ts
