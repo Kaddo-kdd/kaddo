@@ -4,6 +4,8 @@ import {
   buildProjectRoute,
   knowledgeLayers,
   loadConfig,
+  projectMode,
+  setProjectMode,
   isModule,
   loadMappedModules,
   discoverKnowledge,
@@ -100,10 +102,17 @@ export function getProjectSummary(dir: string): ProjectSummary {
   return {
     name: config.project.name ?? 'unknown',
     state: config.project.state ?? 'unknown',
+    mode: projectMode(config),
     structure: config.project.structure ?? 'unknown',
     language: (config.project as { language?: string }).language ?? 'en',
     teamSize: config.team.size ?? 'unknown',
   }
+}
+
+/** Admin mutation delegates to the same Core boundary used by the CLI. */
+export function updateProjectMode(dir: string, mode: 'standard' | 'poc'): ProjectSummary {
+  setProjectMode(dir, mode)
+  return getProjectSummary(dir)
 }
 
 export function getKnowledgeSummary(dir: string): KnowledgeSummary {

@@ -1,6 +1,6 @@
 import matter from 'gray-matter'
 import { exists, readFile, join } from '../utils/fs.js'
-import { loadConfig, isModule, languageLabel, projectLanguage, type KaddoConfig, type ProjectState } from './config.js'
+import { loadConfig, isModule, languageLabel, projectLanguage, projectMode, type KaddoConfig, type ProjectState } from './config.js'
 import { type Artifact } from '../services/artifact-reader.js'
 import { discoverKnowledge } from '../services/knowledge-artifacts.js'
 import { loadMappedModules, readModuleContext, detectModuleStatus, type MappedModuleWithCoverage, type ModuleStatusInfo } from '../services/mapped-modules.js'
@@ -22,6 +22,7 @@ import { type ScanSignals } from './scan-signals.js'
 import { parseWorkItemSource, type WorkItemSource } from './work-item-source.js'
 import { parseWorkItemResources } from './resources.js'
 import { analyzeMetadataHealth, type MetadataHealth } from './metadata-health.js'
+import { readPocSummary, type PocSummary } from './poc.js'
 
 export const CONTEXT_PACK_VERSION = '1'
 
@@ -61,6 +62,7 @@ export type ContextPack = {
   project: {
     name: string
     state: string
+    mode: string
     teamSize: string
     structure: string
     /** Knowledge language label, e.g. "English" / "Spanish" (VS-051). */
@@ -88,6 +90,8 @@ export type ContextPack = {
     allWorkItems: ContextWorkItem[]
     artifacts: ContextArtifact[]
   }
+  /** Present only for POC projects; keeps the agent focused on evidence and conclusion. */
+  poc?: PocSummary
   layers: LayerStatus[]
   /** Per-layer knowledge quality (VS-073.1): file existence ≠ ready knowledge. */
   knowledgeQuality: Record<'business' | 'product' | 'tech' | 'delivery', { status: string; artifacts: Record<string, ArtifactQuality> }>
@@ -354,6 +358,7 @@ export function buildContextPack(
   }
 
   const state = config.project.state
+  const mode = projectMode(config)
 
   // Roadmap candidates vs materialized work items (any roadmap format).
   const roadmapPath = join(dir, ARCH_DIR, 'delivery', 'roadmap.md')
@@ -466,6 +471,7 @@ export function buildContextPack(
     project: {
       name: config.project.name,
       state,
+      mode,
       teamSize: config.team.size,
       structure: config.project.structure,
       language: languageLabel(projectLanguage(config)),
@@ -491,6 +497,7 @@ export function buildContextPack(
       allWorkItems: allWorkItemArtifacts.map(toContextWorkItem),
       artifacts: allArtifacts.filter((a) => a.codeGlobs.length > 0).map(toContextArtifact),
     },
+    ...(mode === 'poc' ? { poc: readPocSummary(dir) } : {}),
     layers,
     knowledgeQuality,
     roadmap,

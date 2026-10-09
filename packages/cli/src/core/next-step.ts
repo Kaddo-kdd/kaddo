@@ -6,7 +6,7 @@
 // conservative and never recommends `create --from roadmap` with an empty roadmap.
 
 import { exists, readFile, join, isFile } from '../utils/fs.js'
-import { loadConfig, isModule, isCore, systemName } from './config.js'
+import { loadConfig, isModule, isCore, projectMode, systemName } from './config.js'
 import { parse as parseYaml } from 'yaml'
 import { agentInstallPath, agentGroupOf } from '../agents/groups.js'
 import { analyzeKnowledgeArtifact } from './artifact-quality.js'
@@ -16,6 +16,7 @@ import { buildAdapterStatuses, buildCodexAdapterContext } from './codex-adapter.
 import { buildTechDecisions } from './decisions.js'
 import { roadmapStats } from './roadmap.js'
 import { type LifecycleState } from './lifecycle.js'
+import { readPocSummary, POC_ARTIFACT_PATH } from './poc.js'
 
 export type RoadmapSignal = 'missing' | 'empty' | 'has-candidates'
 export type WorkItemsSignal = 'none' | 'none-ready' | 'ready' | 'in-progress' | 'completed-only'
@@ -182,6 +183,43 @@ export function resolveNextStep(dir: string, now: Date = new Date()): NextStepRe
     return { id: 'init', phase: 'Setup', label: 'Run `kaddo init` to initialize Kaddo.', command: 'kaddo init', reason: 'Kaddo is not initialized in this project.' }
   }
   const state = config.project.state
+
+  // POC is an operating mode, not a lifecycle state. Its route deliberately avoids the
+  // standard roadmap/capability flow and keeps work focused on an evidence-backed experiment.
+  if (projectMode(config) === 'poc') {
+    const poc = readPocSummary(dir)
+    if (!poc.exists) {
+      return { id: 'bootstrap', phase: 'Setup', label: 'Run `kaddo bootstrap` to create the POC knowledge baseline.', command: 'kaddo bootstrap', reason: `Missing ${POC_ARTIFACT_PATH}.` }
+    }
+    if (!poc.hypothesisDefined) {
+      return { id: 'poc-hypothesis', phase: 'POC Definition', label: 'Define the POC hypothesis.', target: POC_ARTIFACT_PATH, reason: 'The POC needs a testable hypothesis before work begins.' }
+    }
+    if (poc.successCriteriaCount === 0) {
+      return { id: 'poc-success-criteria', phase: 'POC Definition', label: 'Define observable POC success criteria.', target: POC_ARTIFACT_PATH, reason: 'No success criteria are defined for the hypothesis.' }
+    }
+    const qCurrentState = analyzeKnowledgeArtifact(dir, CS)
+    const qCodebase = analyzeKnowledgeArtifact(dir, CB)
+    if (qCurrentState !== 'useful' || qCodebase !== 'useful') {
+      return { id: 'poc-technical-context', phase: 'POC Discovery', label: 'Document the minimal technical context for the experiment.', target: qCurrentState !== 'useful' ? CS : CB, agent: 'architecture-agent', reason: 'The experiment surface and constraints are not yet sufficiently documented.' }
+    }
+    if (!exists(join(dir, 'knowledge', 'resources'))) {
+      return { id: 'poc-resources', phase: 'POC Discovery', label: 'Identify the project resources relevant to the experiment.', command: 'kaddo resources list', reason: 'No project resource catalog is available for the experiment context.' }
+    }
+    const delivery = buildDeliveryState(dir)
+    if (delivery.total_work_items === 0) {
+      return { id: 'poc-create-experiment', phase: 'Experiment', label: 'Create the first experiment Work Item (prefer `spike`).', command: 'kaddo create spike', reason: 'The POC has no Work Item to produce evidence.' }
+    }
+    if (delivery.in_progress_work_items > 0) {
+      return { id: 'guard', phase: 'Experiment', label: 'Run `kaddo guard` and capture evidence from the experiment.', command: 'kaddo guard', reason: `${delivery.in_progress_work_items} experiment Work Item(s) are in progress.` }
+    }
+    if (delivery.ready_work_items > 0 || delivery.draft_work_items > 0 || delivery.blocked_work_items > 0) {
+      return { id: delivery.ready_work_items > 0 ? 'implement-work-item' : 'refine-work-item', phase: 'Experiment', label: delivery.ready_work_items > 0 ? 'Implement the ready experiment Work Item and collect evidence.' : 'Refine the experiment Work Item before running it.', agent: 'work-item-agent', reason: 'The POC evidence Work Item is not complete yet.' }
+    }
+    if (poc.conclusion === 'pending') {
+      return { id: 'poc-evaluate', phase: 'Evaluation', label: 'Evaluate the experiment evidence and record the POC conclusion.', target: POC_ARTIFACT_PATH, reason: 'Experiment Work Items are complete but the POC conclusion is pending.' }
+    }
+    return { id: 'poc-complete', phase: 'Conclusion', label: `POC concluded: ${poc.conclusion}. Decide whether to graduate it to standard delivery.`, target: POC_ARTIFACT_PATH, reason: 'The POC conclusion is recorded from experiment evidence.' }
+  }
 
   const q = (rel: string) => analyzeKnowledgeArtifact(dir, rel)
   const resolveAgent = (agent: string) => {

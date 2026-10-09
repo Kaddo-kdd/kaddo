@@ -48,6 +48,25 @@ kaddo explain                 # summarize what Kaddo currently knows
 **Lost? Run `kaddo understand`** — it always answers *"What should I do now?"* from the
 real state of your project.
 
+## Proof of Concept mode
+
+Use POC mode when the immediate question is whether an assumption is true, rather than how to
+plan a complete product increment. It is independent from project state and keeps the work focused
+on a hypothesis, observable success criteria, minimal technical context, experiment evidence, and
+a conclusion.
+
+```bash
+kaddo init --mode poc
+# or change an existing project
+kaddo project mode poc
+kaddo bootstrap
+```
+
+The canonical record is `knowledge/delivery/poc.md`. It concludes as `validated`, `rejected`, or
+`inconclusive`; Work Items retain their normal lifecycle, with a `spike` often being the right
+first experiment. Token savings can result from this focused context, but the goal is better
+evidence and decisions, not prompt optimization.
+
 ## The Knowledge Model
 
 Kaddo organizes project knowledge into four layers under `knowledge/`:

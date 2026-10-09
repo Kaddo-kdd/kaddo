@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useRouter } from '@tanstack/react-router'
 import { api } from '../lib/api'
 import { ReadinessBadge } from '../components/ReadinessBadge'
@@ -58,6 +58,10 @@ export function Overview() {
     queryFn: api.getOverview,
     refetchOnWindowFocus: true,
   })
+  const { mutate: updateMode, isPending: isUpdatingMode } = useMutation({
+    mutationFn: api.updateProjectMode,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['overview'] }),
+  })
 
   if (isLoading) return <Skeleton />
   if (error) return (
@@ -84,6 +88,18 @@ export function Overview() {
             <span className="font-mono" style={{ fontSize: 13, color: 'var(--foreground-muted)' }}>
               {presentStructure(project.structure)}
             </span>
+            <span style={{ color: 'var(--border-strong)' }}>&middot;</span>
+            <select
+              aria-label="Project mode"
+              value={project.mode}
+              disabled={isUpdatingMode}
+              onChange={(event) => updateMode(event.target.value as 'standard' | 'poc')}
+              style={{ fontSize: 12, fontFamily: 'inherit', color: 'var(--foreground-muted)', border: '1px solid var(--border)', background: 'var(--surface)', borderRadius: 4, padding: '3px 6px' }}
+            >
+              <option value="standard">Standard</option>
+              <option value="poc">POC</option>
+            </select>
+            {project.mode === 'poc' && <span style={{ fontSize: 12, color: 'var(--foreground-muted)' }}>Evidence-led experiment</span>}
             <span style={{ color: 'var(--border-strong)' }}>&middot;</span>
             <ReadinessBadge status={readiness.overall} />
           </div>

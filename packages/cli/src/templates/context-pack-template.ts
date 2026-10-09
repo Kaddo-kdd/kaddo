@@ -28,11 +28,24 @@ export function renderContextPack(pack: ContextPack): string {
     [
       `- Name: ${project.name}`,
       `- State: ${project.state}`,
+      `- Mode: ${project.mode}`,
       `- Team size: ${project.teamSize}`,
       `- Structure: ${project.structure}`,
       `- Language: ${project.language}`,
     ].join('\n') + '\n'
   )
+
+  if (pack.poc) {
+    parts.push('## Proof of Concept\n')
+    parts.push([
+      `- Hypothesis: ${pack.poc.hypothesisDefined ? 'defined' : 'missing'}`,
+      `- Success criteria: ${pack.poc.successCriteriaCount}`,
+      `- Constraints: ${pack.poc.constraintsDefined ? 'defined' : 'missing'}`,
+      `- Non-goals: ${pack.poc.nonGoalsDefined ? 'defined' : 'missing'}`,
+      `- Conclusion: ${pack.poc.conclusion}`,
+      '- Canonical artifact: `knowledge/delivery/poc.md`',
+    ].join('\n') + '\n')
+  }
 
   // 1a. Current phase + recommended next agent (VS-047) — state-aware, not just project.state.
   parts.push('## Current Phase\n')
@@ -127,9 +140,10 @@ export function renderContextPack(pack: ContextPack): string {
   parts.push('## Current Knowledge\n')
   parts.push((knowledge.summary || 'No project knowledge summary found yet.') + '\n')
 
-  // 4. Roadmap Status (VS-077.1) — initiatives vs Work Item candidates vs materialization.
-  parts.push('## Roadmap Status\n')
-  if (pack.roadmap.present) {
+  // 4. Roadmap Status (VS-077.1) — a POC intentionally does not require a roadmap.
+  if (project.mode !== 'poc') {
+    parts.push('## Roadmap Status\n')
+    if (pack.roadmap.present) {
     parts.push(
       [
         `- Initiatives: ${pack.roadmap.initiatives}`,
@@ -143,14 +157,15 @@ export function renderContextPack(pack: ContextPack): string {
         'Work Item candidates are not yet Work Items. Materialize them with `kaddo create --from roadmap`.\n'
       )
     }
+    }
+    parts.push((knowledge.roadmapSummary || 'No roadmap baseline found.') + '\n')
   }
-  parts.push((knowledge.roadmapSummary || 'No roadmap baseline found.') + '\n')
 
   // 4b. Roadmap Quality (VS-077 / VS-077.1) — grade initiatives and Work Item candidates separately.
   const rq = pack.roadmapQuality
   const rqi = rq.initiatives
   const rqw = rq.work_item_candidates
-  if (rqi.total > 0 || rqw.total > 0) {
+  if (project.mode !== 'poc' && (rqi.total > 0 || rqw.total > 0)) {
     parts.push('## Roadmap Quality\n')
     if (rqi.total > 0) {
       parts.push(

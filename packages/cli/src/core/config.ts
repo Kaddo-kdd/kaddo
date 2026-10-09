@@ -1,8 +1,10 @@
 import { z } from 'zod'
-import { exists, readFile, join } from '../utils/fs.js'
-import { parse as parseYaml } from 'yaml'
+import { exists, readFile, writeFile, join } from '../utils/fs.js'
+import { parse as parseYaml, stringify as stringifyYaml } from 'yaml'
 
 export type ProjectState = 'new' | 'pre-ai' | 'legacy' | 'ai-assisted'
+/** The operating mode is orthogonal to the project's lifecycle state. */
+export type ProjectMode = 'standard' | 'poc'
 export type TeamSize = 'indie' | 'small' | 'medium' | 'enterprise'
 export type RepositoryStructure = 'monorepo' | 'multirepo'
 /** Language of the project KNOWLEDGE (not the CLI, which is always English). VS-051. */
@@ -11,6 +13,7 @@ export type ProjectLanguage = 'en' | 'es'
 export type MultirepoRole = 'core' | 'module'
 
 export const PROJECT_STATES: ProjectState[] = ['new', 'pre-ai', 'legacy', 'ai-assisted']
+export const PROJECT_MODES: ProjectMode[] = ['standard', 'poc']
 export const TEAM_SIZES: TeamSize[] = ['indie', 'small', 'medium', 'enterprise']
 export const REPOSITORY_STRUCTURES: RepositoryStructure[] = ['monorepo', 'multirepo']
 export const PROJECT_LANGUAGES: ProjectLanguage[] = ['en', 'es']
@@ -19,6 +22,7 @@ export const MULTIREPO_ROLES: MultirepoRole[] = ['core', 'module']
 /** Safe defaults applied only when optional fields are absent. */
 const DEFAULTS = {
   state: 'pre-ai' as ProjectState,
+  mode: 'standard' as ProjectMode,
   structure: 'monorepo' as RepositoryStructure,
   teamSize: 'indie' as TeamSize,
   language: 'en' as ProjectLanguage,
@@ -35,6 +39,11 @@ export function projectLanguage(config: KaddoConfig): ProjectLanguage {
   return lang === 'es' ? 'es' : 'en'
 }
 
+/** Project operating mode, defaulting to standard for existing configurations. */
+export function projectMode(config: KaddoConfig): ProjectMode {
+  return (config.project as { mode?: ProjectMode }).mode === 'poc' ? 'poc' : 'standard'
+}
+
 /** Raised when config exists but cannot be read or fails validation. */
 export class ConfigError extends Error {
   constructor(message: string) {
@@ -46,6 +55,12 @@ export class ConfigError extends Error {
 const projectStateSchema = z.enum(['new', 'pre-ai', 'legacy', 'ai-assisted'], {
   errorMap: () => ({
     message: `project.state must be one of: ${PROJECT_STATES.join(', ')}`,
+  }),
+})
+
+const projectModeSchema = z.enum(['standard', 'poc'], {
+  errorMap: () => ({
+    message: `project.mode must be one of: ${PROJECT_MODES.join(', ')}`,
   }),
 })
 
@@ -76,6 +91,7 @@ const configSchema = z
       .object({
         name: z.string().default('project'),
         state: projectStateSchema.default(DEFAULTS.state),
+        mode: projectModeSchema.default(DEFAULTS.mode),
         structure: structureSchema.default(DEFAULTS.structure),
         language: languageSchema.default(DEFAULTS.language),
         role: multirepoRoleSchema,
@@ -159,6 +175,32 @@ export function loadConfig(dir: string): KaddoConfig | null {
   }
 
   return parsed.data
+}
+
+/**
+ * Persist only the project operating mode while retaining unrelated configuration.
+ * This is the shared mutation boundary for CLI and Admin.
+ */
+export function setProjectMode(dir: string, mode: ProjectMode): KaddoConfig {
+  const configPath = configPathFor(dir)
+  if (!exists(configPath)) throw new ConfigError('No .kaddo/config.yml found. Run `kaddo init` first.')
+
+  let raw: Record<string, unknown>
+  try {
+    raw = (parseYaml(readFile(configPath)) ?? {}) as Record<string, unknown>
+  } catch (err) {
+    const detail = err instanceof Error ? err.message : String(err)
+    throw new ConfigError(`Could not parse .kaddo/config.yml: ${detail}`)
+  }
+  const project = (raw.project && typeof raw.project === 'object' && !Array.isArray(raw.project))
+    ? raw.project as Record<string, unknown>
+    : {}
+  raw.project = { ...project, mode }
+  writeFile(configPath, stringifyYaml(raw))
+
+  const updated = loadConfig(dir)
+  if (!updated) throw new ConfigError('Could not reload .kaddo/config.yml after updating project.mode.')
+  return updated
 }
 
 /**

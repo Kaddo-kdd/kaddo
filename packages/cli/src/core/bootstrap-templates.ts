@@ -4,9 +4,9 @@
 // no interpretation — just the right scaffolding prose per state. Bootstrap writes these; existing
 // files are never overwritten.
 
-import type { ProjectState } from './config.js'
+import type { ProjectMode, ProjectState } from './config.js'
 
-export type BaselineKind = 'business' | 'product' | 'capabilities' | 'codebase' | 'current-state' | 'roadmap'
+export type BaselineKind = 'business' | 'product' | 'capabilities' | 'codebase' | 'current-state' | 'roadmap' | 'poc'
 
 // `generated_by` + `template_version` mark freshly scaffolded files. Quality detection does NOT rely
 // on this metadata (older files won't have it) — it's an extra, best-effort hint (VS-073.1).
@@ -45,6 +45,11 @@ const T: Record<BaselineKind, Record<ProjectState, string>> = {
     'pre-ai': `# Roadmap\n\n## Now\n\n_First outcomes to pursue for this existing project._\n\n## Next\n\n_What comes after._\n\n## Later\n\n_Deferred ideas._\n`,
     legacy: `# Modernization Roadmap\n\n## Stabilize\n\n_What must be made safe first._\n\n## Modernize\n\n_Controlled modernization steps._\n\n## Later\n\n_Deferred modernization ideas._\n`,
   },
+  poc: {
+    new: `# Proof of Concept\n\n## Hypothesis\n\n_What assumption are we testing?_\n\n## Success Criteria\n\n- [ ] _Observable result that would support the hypothesis._\n\n## Constraints\n\n_Technical, time, budget, compliance, or operational constraints._\n\n## Non-goals\n\n_What this experiment intentionally will not prove or deliver._\n\n## Evidence\n\n_Link experiments, Work Items, measurements, and observations here._\n\n## Conclusion\n\nStatus: pending\n\n_Record validated, rejected, or inconclusive only after reviewing evidence._\n`,
+    'pre-ai': `# Proof of Concept\n\n## Hypothesis\n\n_What assumption about this existing system are we testing?_\n\n## Success Criteria\n\n- [ ] _Observable result that would support the hypothesis._\n\n## Constraints\n\n_Technical, time, budget, compliance, or operational constraints._\n\n## Non-goals\n\n_What this experiment intentionally will not prove or deliver._\n\n## Evidence\n\n_Link experiments, Work Items, measurements, and observations here._\n\n## Conclusion\n\nStatus: pending\n\n_Record validated, rejected, or inconclusive only after reviewing evidence._\n`,
+    legacy: `# Proof of Concept\n\n## Hypothesis\n\n_What assumption can be tested safely without disrupting the legacy system?_\n\n## Success Criteria\n\n- [ ] _Observable result that would support the hypothesis._\n\n## Constraints\n\n_Change-safety, technical, time, compliance, or operational constraints._\n\n## Non-goals\n\n_What this experiment intentionally will not prove or deliver._\n\n## Evidence\n\n_Link experiments, Work Items, measurements, and observations here._\n\n## Conclusion\n\nStatus: pending\n\n_Record validated, rejected, or inconclusive only after reviewing evidence._\n`,
+  },
 }
 
 // Optional visual-knowledge guidance (WI-024). Business/Product/Tech knowledge can include Mermaid
@@ -61,8 +66,20 @@ const DIAGRAM_GUIDANCE =
 const DIAGRAM_KINDS = new Set<BaselineKind>(['business', 'product', 'capabilities', 'codebase', 'current-state'])
 
 /** State-aware baseline content (front matter + body) for a knowledge file. */
-export function baselineTemplate(kind: BaselineKind, state: ProjectState): string {
+export function baselineTemplate(kind: BaselineKind, state: ProjectState, mode: ProjectMode = 'standard'): string {
   const st: ProjectState = state === 'pre-ai' || state === 'legacy' ? state : 'new'
+  if (mode === 'poc' && kind === 'business') {
+    return fm(kind, st) + `# Business Context\n\n## Problem\n\n_What problem makes this experiment worth running?_\n\n## Expected value\n\n_What decision or outcome could this POC unlock?_\n`
+  }
+  if (mode === 'poc' && kind === 'product') {
+    return fm(kind, st) + `# Product Context\n\n## Scenario\n\n_Which user or system scenario is being tested?_\n\n## Expected behavior\n\n_What minimal behavior should the experiment demonstrate?_\n\n## Non-goals\n\n_What product scope is deliberately excluded?_\n`
+  }
+  if (mode === 'poc' && kind === 'current-state') {
+    return fm(kind, st) + `# Minimal Technical Context\n\n## Technical hypothesis\n\n_What technical assumption is being tested?_\n\n## Minimal architecture\n\n_Only the components, boundaries, and dependencies required for this experiment._\n\n## Constraints\n\n_Constraints that can affect the experiment or its interpretation._\n`
+  }
+  if (mode === 'poc' && kind === 'codebase') {
+    return fm(kind, st) + `# Experiment Surface\n\n## Relevant areas\n\n_List only the repository areas, services, or resources needed by this experiment._\n\n## How to run\n\n_Document the smallest reproducible experiment path._\n\n## How to observe\n\n_Document logs, metrics, tests, or manual evidence to inspect._\n`
+  }
   const body = T[kind][st] + (DIAGRAM_KINDS.has(kind) ? DIAGRAM_GUIDANCE : '')
   return fm(kind, st) + body
 }

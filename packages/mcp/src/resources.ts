@@ -156,6 +156,19 @@ export const RESOURCES: ResourceDescriptor[] = [
       ),
   },
   {
+    uri: 'kaddo://poc',
+    name: 'Kaddo proof of concept',
+    description: 'Canonical POC hypothesis, success criteria, evidence, and conclusion.',
+    mimeType: 'text/markdown',
+    read: (root) =>
+      fileOrHint(
+        root,
+        'kaddo://poc',
+        'knowledge/delivery/poc.md',
+        'POC artifact not found. Set `project.mode: poc` and run `kaddo bootstrap` first.'
+      ),
+  },
+  {
     uri: 'kaddo://capsules',
     name: 'Kaddo knowledge capsules',
     description: 'External Knowledge Capsules from .kaddo/external.yml and knowledge/external/.',

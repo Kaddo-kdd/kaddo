@@ -3,9 +3,14 @@ import { z } from 'zod'
 export const ProjectSummarySchema = z.object({
   name: z.string(),
   state: z.string(),
+  mode: z.enum(['standard', 'poc']),
   structure: z.string(),
   language: z.string(),
   teamSize: z.string(),
+})
+
+export const ProjectModeUpdateSchema = z.object({
+  mode: z.enum(['standard', 'poc']),
 })
 
 export const KnowledgeSummarySchema = z.object({

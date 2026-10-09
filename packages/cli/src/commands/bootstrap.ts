@@ -10,14 +10,14 @@
 
 import { cwd, exists, join, writeFile, ensureDir } from '../utils/fs.js'
 import { intro, outro, log } from '../utils/ui.js'
-import { loadConfig, projectLanguage, ConfigError, type ProjectLanguage, type ProjectState } from '../core/config.js'
+import { loadConfig, projectLanguage, projectMode, ConfigError, type ProjectLanguage, type ProjectMode, type ProjectState } from '../core/config.js'
 import { baselineTemplate, type BaselineKind } from '../core/bootstrap-templates.js'
 import { printCommandFooter } from '../core/command-help.js'
 
 const CONFIG_PATH = '.kaddo/config.yml'
 
 type FileTarget = { path: string; kind: BaselineKind }
-const FILE_TARGETS: FileTarget[] = [
+const STANDARD_FILE_TARGETS: FileTarget[] = [
   { path: 'knowledge/business/business.md', kind: 'business' },
   { path: 'knowledge/product/product.md', kind: 'product' },
   { path: 'knowledge/product/capabilities.md', kind: 'capabilities' },
@@ -25,11 +25,19 @@ const FILE_TARGETS: FileTarget[] = [
   { path: 'knowledge/tech/current-state.md', kind: 'current-state' },
   { path: 'knowledge/delivery/roadmap.md', kind: 'roadmap' },
 ]
+const POC_FILE_TARGETS: FileTarget[] = [
+  { path: 'knowledge/business/business.md', kind: 'business' },
+  { path: 'knowledge/product/product.md', kind: 'product' },
+  { path: 'knowledge/tech/codebase.md', kind: 'codebase' },
+  { path: 'knowledge/tech/current-state.md', kind: 'current-state' },
+  { path: 'knowledge/delivery/poc.md', kind: 'poc' },
+]
 // Directories that must exist for later artifacts (kept via a .gitkeep placeholder).
 const DIR_TARGETS = ['knowledge/tech/decisions', 'knowledge/tech/discovery', 'knowledge/delivery/work-items']
 
 export type BootstrapResult = {
   state: ProjectState
+  mode: ProjectMode
   written: string[]
   skipped: string[]
   createdDirs: string[]
@@ -56,24 +64,26 @@ export function bootstrap(dir: string): BootstrapResult {
   const createdDirs: string[] = []
 
   let state: ProjectState = 'new'
+  let mode: ProjectMode = 'standard'
   let language: ProjectLanguage = 'en'
   try {
     const config = loadConfig(dir)
     if (config) {
       state = config.project.state
+      mode = projectMode(config)
       language = projectLanguage(config)
     }
   } catch {
     // fall back to defaults on unreadable config
   }
 
-  for (const target of FILE_TARGETS) {
+  for (const target of (mode === 'poc' ? POC_FILE_TARGETS : STANDARD_FILE_TARGETS)) {
     const full = join(dir, target.path)
     if (exists(full)) {
       skipped.push(target.path)
       continue
     }
-    const content = withLanguageDirective(baselineTemplate(target.kind, state), language)
+    const content = withLanguageDirective(baselineTemplate(target.kind, state, mode), language)
     writeFile(full, content.endsWith('\n') ? content : `${content}\n`)
     written.push(target.path)
   }
@@ -89,7 +99,7 @@ export function bootstrap(dir: string): BootstrapResult {
     createdDirs.push(`${d}/`)
   }
 
-  return { state, written, skipped, createdDirs }
+  return { state, mode, written, skipped, createdDirs }
 }
 
 export async function runBootstrap(dir: string = cwd()): Promise<void> {
@@ -102,9 +112,11 @@ export async function runBootstrap(dir: string = cwd()): Promise<void> {
   }
 
   let state: ProjectState = 'new'
+  let mode: ProjectMode = 'standard'
   try {
     const config = loadConfig(dir)
     state = config?.project.state ?? 'new'
+    if (config) mode = projectMode(config)
   } catch (err) {
     console.error(err instanceof ConfigError ? err.message : String(err))
     process.exit(1)
@@ -112,7 +124,8 @@ export async function runBootstrap(dir: string = cwd()): Promise<void> {
 
   const stateLabel = state === 'pre-ai' ? 'pre-ai' : state
   log.info(`Project state: ${stateLabel}`)
-  log.info(`Creating ${stateLabel} knowledge baseline.`)
+  log.info(`Project mode: ${mode}`)
+  log.info(`Creating ${mode === 'poc' ? 'POC' : stateLabel} knowledge baseline.`)
   log.info('Existing files will not be overwritten.')
 
   const result = bootstrap(dir)
@@ -136,7 +149,7 @@ export async function runBootstrap(dir: string = cwd()): Promise<void> {
   )
   printCommandFooter('bootstrap')
   outro(
-    `${stateLabel} knowledge baseline ready. Next: \`kaddo add agents\` (then \`kaddo add skills\`), ` +
-      'and refine the knowledge with the relevant agents.'
+    `${mode === 'poc' ? 'POC' : stateLabel} knowledge baseline ready. Next: \`kaddo add agents\` (then \`kaddo add skills\`), ` +
+      (mode === 'poc' ? 'then define the POC hypothesis and success criteria.' : 'and refine the knowledge with the relevant agents.')
   )
 }

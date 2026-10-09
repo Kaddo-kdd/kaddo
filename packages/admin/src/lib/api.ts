@@ -36,7 +36,7 @@ async function mutateApi<T>(path: string, method: 'POST' | 'PUT' | 'DELETE', bod
 }
 
 export type ProjectOverview = {
-  project: { name: string; state: string; structure: string; language: string; teamSize: string }
+  project: { name: string; state: string; mode: 'standard' | 'poc'; structure: string; language: string; teamSize: string }
   knowledge: { layers: { layer: string; status: string }[]; missing: string[] }
   workItems: {
     total: number
@@ -437,6 +437,7 @@ export const api = {
   initSession: () => fetchApi<{ status: string }>('/session'),
   getOverview: () => fetchApi<ProjectOverview>('/overview'),
   getProject: () => fetchApi<ProjectOverview['project']>('/project'),
+  updateProjectMode: (mode: 'standard' | 'poc') => mutateApi<ProjectOverview['project']>('/project/mode', 'PUT', { mode }),
   getKnowledge: () => fetchApi<ProjectOverview['knowledge']>('/knowledge'),
   getModules: () => fetchApi<ProjectOverview['modules']>('/modules'),
   getReadiness: () => fetchApi<ProjectOverview['readiness']>('/readiness'),

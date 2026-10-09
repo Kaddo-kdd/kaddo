@@ -187,7 +187,7 @@ describe('VS-096: Contracts', () => {
   it('Zod schemas parse valid overview response', async () => {
     const { ProjectOverviewSchema } = await import('../../admin-server/src/contracts/schemas.js')
     const valid = {
-      project: { name: 'test', state: 'pre-ai', structure: 'monorepo', language: 'en', teamSize: 'small' },
+      project: { name: 'test', state: 'pre-ai', mode: 'standard', structure: 'monorepo', language: 'en', teamSize: 'small' },
       knowledge: { layers: [{ layer: 'Business', status: 'Missing' }], missing: [] },
       workItems: { total: 0, byState: {}, byType: {}, items: [] },
       modules: { modules: [] },

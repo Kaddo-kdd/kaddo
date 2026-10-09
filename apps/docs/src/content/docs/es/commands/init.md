@@ -32,3 +32,18 @@ Work Items, ADRs, capabilities, current-state) — **no** el del CLI. El CLI (co
 claves de configuración, prompts y mensajes) siempre está en inglés, y los nombres de archivo se
 mantienen estables (`business.md`, `product.md`, `codebase.md`) sin importar el idioma. Por defecto
 es `en`; los config antiguos sin `language` asumen inglés.
+
+## Modo de proyecto
+
+El modo de proyecto es independiente del estado del proyecto. `standard` usa la ruta completa de
+conocimiento y delivery; `poc` usa una ruta enfocada: hipótesis → criterios de éxito → contexto
+técnico mínimo → evidencia → conclusión.
+
+```bash
+kaddo init --mode poc
+# o en un proyecto existente
+kaddo project mode poc
+```
+
+Los proyectos existentes sin `project.mode` siguen funcionando y se interpretan como `standard`.
+Consulta [Modo Proof of Concept](/es/poc-mode/).

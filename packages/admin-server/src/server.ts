@@ -7,6 +7,7 @@ import { SessionManager } from './session.js'
 import {
   getProjectOverview,
   getProjectSummary,
+  updateProjectMode,
   getKnowledgeSummary,
   getModules,
   getProjectReadiness,
@@ -63,6 +64,7 @@ import {
   InitiativeUpdateSchema,
   ResourceCreateSchema,
   ResourceUpdateSchema,
+  ProjectModeUpdateSchema,
 } from './contracts/schemas.js'
 import type { AdminStorage } from './storage/admin-storage.js'
 
@@ -175,6 +177,11 @@ export async function createAdminServer(opts: AdminServerOptions) {
 
   app.get('/api/v1/admin/overview', coreRoute(getProjectOverview))
   app.get('/api/v1/admin/project', coreRoute(getProjectSummary))
+  app.put<{ Body: { mode?: string } }>('/api/v1/admin/project/mode', async (request, reply) => {
+    const parsed = ProjectModeUpdateSchema.safeParse(request.body)
+    if (!parsed.success) return reply.code(400).send({ error: { code: 'INVALID_INPUT', message: 'mode must be standard or poc.' } })
+    return writeHandler(reply, () => updateProjectMode(projectDir, parsed.data.mode))
+  })
   app.get('/api/v1/admin/knowledge', coreRoute(getKnowledgeSummary))
   app.get<{ Querystring: { status?: string; module?: string; query?: string } }>(
     '/api/v1/admin/work-items',

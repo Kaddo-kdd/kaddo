@@ -185,6 +185,7 @@ export default defineConfig({
             { label: 'Open Questions Gate', translations: { es: 'Preguntas abiertas' }, slug: 'open-questions' },
             { label: 'State-Aware Next Step', translations: { es: 'Siguiente paso según el estado' }, slug: 'next-step' },
             { label: 'Project Route', translations: { es: 'Ruta del Proyecto' }, slug: 'project-route' },
+            { label: 'Proof of Concept mode', translations: { es: 'Modo Proof of Concept' }, slug: 'poc-mode' },
             { label: 'Installed Assets', translations: { es: 'Assets instalados' }, slug: 'installed-assets' },
             { label: 'Domain Owners', translations: { es: 'Domain Owners' }, slug: 'modules/owners' },
             { label: 'Multirepo modules', translations: { es: 'Módulos multirepo' }, slug: 'modules/multirepo' },

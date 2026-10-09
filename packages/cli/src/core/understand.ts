@@ -1,6 +1,6 @@
 import { exists, join } from '../utils/fs.js'
-import type { KaddoConfig, ProjectState } from './config.js'
-import { isModule } from './config.js'
+import type { KaddoConfig, ProjectMode, ProjectState } from './config.js'
+import { isModule, projectMode } from './config.js'
 import { agentInstallPath } from '../agents/groups.js'
 import type { NextStepRecommendation, DeliveryState } from './next-step.js'
 import type { ProjectRoute } from './project-route.js'
@@ -40,6 +40,7 @@ export type UnderstandPlan = {
   project: {
     name: string
     state: ProjectState
+    mode: ProjectMode
     teamSize: string
     structure: string
     language: string
@@ -66,7 +67,13 @@ export type UnderstandPlan = {
 }
 
 /** State-aware agent flow: each agent mapped to its expected output artifact. */
-function flowForState(state: ProjectState): { agent: string; output: string }[] {
+function flowForState(state: ProjectState, mode: ProjectMode): { agent: string; output: string }[] {
+  if (mode === 'poc') {
+    return [
+      { agent: 'architecture-agent.md', output: 'knowledge/tech/current-state.md' },
+      { agent: 'work-item-agent.md', output: 'knowledge/delivery/poc.md' },
+    ]
+  }
   switch (state) {
     case 'new':
       return [
@@ -96,9 +103,10 @@ function flowForState(state: ProjectState): { agent: string; output: string }[] 
  */
 export function buildUnderstandPlan(dir: string, config: KaddoConfig): UnderstandPlan {
   const state = config.project.state
+  const mode = projectMode(config)
   if (isModule(config)) {
     return {
-      project: { name: config.project.name, state, teamSize: config.team.size, structure: config.project.structure, language: 'English' },
+      project: { name: config.project.name, state, mode, teamSize: config.team.size, structure: config.project.structure, language: 'English' },
       steps: [],
       missingAgents: [],
       agentsInstalled: true,
@@ -108,7 +116,7 @@ export function buildUnderstandPlan(dir: string, config: KaddoConfig): Understan
   }
   // Knowledge-aware (VS-047): drop foundational steps whose output already exists, so the plan
   // never recommends re-generating a roadmap/architecture/capabilities that are already present.
-  const flow = flowForState(state).filter((s) => !exists(join(dir, s.output)))
+  const flow = flowForState(state, mode).filter((s) => !exists(join(dir, s.output)))
 
   const steps: AgentStep[] = flow.map((s) => {
     const installed = agentIsInstalled(dir, s.agent)
@@ -122,6 +130,7 @@ export function buildUnderstandPlan(dir: string, config: KaddoConfig): Understan
     project: {
       name: config.project.name,
       state,
+      mode,
       teamSize: config.team.size,
       structure: config.project.structure,
       language: 'English',

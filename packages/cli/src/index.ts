@@ -2,6 +2,7 @@ import { createRequire } from 'node:module'
 import { Command } from 'commander'
 import { cwd } from './utils/fs.js'
 import { runInit } from './commands/init.js'
+import { runProjectMode } from './commands/project.js'
 import { runScan } from './commands/scan.js'
 import { runCreate } from './commands/create.js'
 import { runGuard } from './commands/guard.js'
@@ -76,9 +77,19 @@ program
 program
   .command('init')
   .description('Initialize Kaddo in the current project')
-  .action(async () => {
-    await runInit()
+  .option('--mode <mode>', 'Project mode: standard or poc')
+  .action(async (opts: { mode?: 'standard' | 'poc' }) => {
+    await runInit(opts)
   })
+
+const projectCmd = program
+  .command('project')
+  .description('Inspect and configure project metadata')
+
+projectCmd
+  .command('mode [mode]')
+  .description('Show or set the project mode: standard or poc')
+  .action((mode: string | undefined) => { runProjectMode(mode) })
 
 program
   .command('scan')

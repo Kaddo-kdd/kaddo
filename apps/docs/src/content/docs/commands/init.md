@@ -28,6 +28,7 @@ version: 1
 project:
   name: "my-app"
   state: pre-ai      # new | pre-ai | legacy
+  mode: standard     # standard | poc
   structure: monorepo # monorepo | multirepo
   language: en       # en | es — language of the project KNOWLEDGE
   domains: []
@@ -43,6 +44,11 @@ team:
 | `pre-ai` | Existing system without an AI/knowledge baseline yet. |
 | `legacy` | Older system where risks and unknowns matter most. |
 
+**Project mode** — `standard` follows the full knowledge and delivery route. `poc` is orthogonal
+to state and uses a focused hypothesis → evidence → conclusion route. Select it interactively,
+pass `kaddo init --mode poc`, or change it later with `kaddo project mode poc`. See
+[Proof of Concept mode](/poc-mode/).
+
 **Team size** — `indie`, `small`, `medium`, `enterprise`.
 
 **Repository structure** — `monorepo` or `multirepo`.
@@ -53,5 +59,5 @@ its commands, flags, prompts and messages — is always English. See
 [Project knowledge language](/getting-started/#project-knowledge-language-vs-cli-language).
 
 Old config files keep working: missing fields fall back to safe defaults
-(`state: pre-ai`, `structure: monorepo`, `team.size: indie`, `language: en`). Invalid enum values
+(`state: pre-ai`, `mode: standard`, `structure: monorepo`, `team.size: indie`, `language: en`). Invalid enum values
 produce a clear validation error listing the valid options.

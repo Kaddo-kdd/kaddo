@@ -6,7 +6,8 @@ export { buildProjectExplanation, type ProjectExplanation } from './core/project
 export { buildReadinessReport, type ReadinessReport, type ReadinessStatus } from './core/readiness.js'
 export { buildProjectRoute, type ProjectRoute, type RouteStep, type RouteStepStatus } from './core/project-route.js'
 export { knowledgeLayers, type LayerStatus, type LayerName, type LayerMaturity } from './core/layers.js'
-export { loadConfig, isModule, type KaddoConfig, type ProjectState, type RepositoryStructure } from './core/config.js'
+export { loadConfig, isModule, projectMode, setProjectMode, type KaddoConfig, type ProjectState, type ProjectMode, type RepositoryStructure } from './core/config.js'
+export { readPocSummary, POC_ARTIFACT_PATH, type PocSummary, type PocConclusion } from './core/poc.js'
 export { discoverKnowledge, discoverWorkItems, type KnowledgeArtifact, type KnowledgeLayer } from './services/knowledge-artifacts.js'
 export {
   getResources,

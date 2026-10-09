@@ -5,7 +5,7 @@
 // knowledge layers, roadmap, work items, ownership, decisions, adapters).
 
 import { exists, join } from '../utils/fs.js'
-import { loadConfig, isModule, type ProjectState } from './config.js'
+import { loadConfig, isModule, projectMode, type ProjectState } from './config.js'
 import { analyzeKnowledgeArtifact, type ArtifactQuality } from './artifact-quality.js'
 import { hasWarnings as hasScanSignalWarnings } from './scan-signals.js'
 import { parseWorkItemSource } from './work-item-source.js'
@@ -14,6 +14,7 @@ import { buildTechDecisions } from './decisions.js'
 import { roadmapStats } from './roadmap.js'
 import { resolveNextStep, buildDeliveryState, installedAdapters } from './next-step.js'
 import { readFile } from '../utils/fs.js'
+import { readPocSummary, POC_ARTIFACT_PATH } from './poc.js'
 
 export type RouteStepStatus = 'done' | 'current' | 'next' | 'pending' | 'optional' | 'blocked' | 'warning' | 'skipped'
 
@@ -429,6 +430,50 @@ const LEGACY_STEPS: StepDef[] = [
   captureLearning,
 ]
 
+const definePocHypothesis: StepDef = {
+  id: 'poc-hypothesis', label: 'Define hypothesis',
+  evaluate: (ctx) => {
+    const poc = readPocSummary(ctx.dir)
+    return { status: poc.hypothesisDefined ? 'done' : 'current', evidence: poc.hypothesisDefined ? [POC_ARTIFACT_PATH] : undefined, reason: poc.hypothesisDefined ? undefined : 'A POC starts with one testable hypothesis.' }
+  },
+}
+const definePocCriteria: StepDef = {
+  id: 'poc-success-criteria', label: 'Define success criteria',
+  evaluate: (ctx) => {
+    const poc = readPocSummary(ctx.dir)
+    return { status: poc.successCriteriaCount > 0 ? 'done' : 'pending', evidence: poc.successCriteriaCount > 0 ? [POC_ARTIFACT_PATH] : undefined, reason: poc.successCriteriaCount > 0 ? undefined : 'Define observable evidence for the hypothesis.' }
+  },
+}
+const describePocTech: StepDef = { ...describeArchitecture, id: 'poc-technical-context', label: 'Document minimal technical context' }
+const identifyPocResources: StepDef = {
+  id: 'poc-resources', label: 'Identify relevant resources',
+  evaluate: (ctx) => exists(join(ctx.dir, 'knowledge/resources'))
+    ? { status: 'done', evidence: ['knowledge/resources/'] }
+    : { status: 'pending', command: 'kaddo resources list' },
+}
+const createPocExperiment: StepDef = {
+  id: 'poc-create-experiment', label: 'Create experiment Work Item',
+  evaluate: (ctx) => ctx.totalWorkItems > 0
+    ? { status: 'done', evidence: ['knowledge/delivery/work-items/'] }
+    : { status: 'pending', command: 'kaddo create spike', reason: 'Prefer a spike for a focused experiment.' },
+}
+const capturePocEvidence: StepDef = {
+  id: 'poc-evidence', label: 'Capture experiment evidence',
+  evaluate: (ctx) => ctx.completedWorkItems > 0
+    ? { status: 'done', evidence: ['knowledge/delivery/work-items/'] }
+    : { status: 'pending', reason: 'Complete an experiment Work Item and link its evidence in the POC artifact.' },
+}
+const concludePoc: StepDef = {
+  id: 'poc-evaluate', label: 'Evaluate and conclude',
+  evaluate: (ctx) => {
+    const conclusion = readPocSummary(ctx.dir).conclusion
+    return conclusion === 'pending'
+      ? { status: 'pending', reason: 'Record validated, rejected, or inconclusive from the evidence.' }
+      : { status: 'done', evidence: [POC_ARTIFACT_PATH], reason: `Conclusion: ${conclusion}.` }
+  },
+}
+const POC_STEPS: StepDef[] = [enableKaddo, bootstrapBaseline, definePocHypothesis, definePocCriteria, describePocTech, identifyPocResources, createPocExperiment, capturePocEvidence, concludePoc]
+
 function stepsForState(state: ProjectState): StepDef[] {
   switch (state) {
     case 'new': return NEW_STEPS
@@ -528,6 +573,13 @@ function mapNextStepId(id: string): string {
     'module-ready': 'ready-for-core-orchestration',
     'validate-work-item-modules': 'validate-module-knowledge',
     'modules-discover': 'enable-kaddo',
+    'poc-hypothesis': 'poc-hypothesis',
+    'poc-success-criteria': 'poc-success-criteria',
+    'poc-technical-context': 'poc-technical-context',
+    'poc-resources': 'poc-resources',
+    'poc-create-experiment': 'poc-create-experiment',
+    'poc-evaluate': 'poc-evaluate',
+    'poc-complete': 'poc-evaluate',
   }
   return MAP[id] ?? id
 }
@@ -535,7 +587,7 @@ function mapNextStepId(id: string): string {
 export function buildProjectRoute(dir: string): ProjectRoute {
   const config = loadConfig(dir)
   const state: ProjectState = config?.project.state ?? 'pre-ai'
-  const defs = config && isModule(config) ? MODULE_STEPS : stepsForState(state)
+  const defs = config && projectMode(config) === 'poc' ? POC_STEPS : (config && isModule(config) ? MODULE_STEPS : stepsForState(state))
   const ctx = buildRouteContext(dir)
 
   const steps: RouteStep[] = defs.map((d) => {

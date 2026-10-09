@@ -26,6 +26,7 @@ function hasGit(dir: string): boolean {
 interface ProjectMeta {
   name: string
   state: string
+  mode: string
   teamSize: string
   structure: string
   language: string
@@ -40,6 +41,7 @@ function buildConfig(meta: ProjectMeta): string {
 project:
   name: "${meta.name}"
   state: ${meta.state}
+  mode: ${meta.mode}
   structure: ${meta.structure}
   language: ${meta.language}${meta.role ? `\n  role: ${meta.role}` : ''}
   domains: []
@@ -220,10 +222,52 @@ _Ideas and intentions not yet committed._
 `
 }
 
-export async function runInit(): Promise<void> {
+function buildPoc(projectName: string): string {
+  return `---
+type: poc
+status: active
+generated_by: kaddo-init
+template_version: 1
+---
+
+# ${projectName} — Proof of Concept
+
+## Hypothesis
+
+_What assumption are we testing?_
+
+## Success Criteria
+
+- [ ] _Observable result that would support the hypothesis._
+
+## Constraints
+
+_Technical, time, budget, compliance, or operational constraints._
+
+## Non-goals
+
+_What this experiment intentionally will not prove or deliver._
+
+## Evidence
+
+_Link experiments, Work Items, measurements, and observations here._
+
+## Conclusion
+
+Status: pending
+`
+}
+
+export async function runInit(opts: { mode?: 'standard' | 'poc' } = {}): Promise<void> {
   const dir = cwd()
 
   intro('kaddo init')
+
+  if (opts.mode !== undefined && opts.mode !== 'standard' && opts.mode !== 'poc') {
+    console.error('Project mode must be `standard` or `poc`.')
+    process.exitCode = 1
+    return
+  }
 
   if (!hasGit(dir)) {
     log.warn('No Git repository detected. Kaddo works best inside a Git repo.')
@@ -306,6 +350,15 @@ export async function runInit(): Promise<void> {
     initialValue: 'pre-ai',
   })
 
+  const mode = opts.mode ?? await select<string>({
+    message: 'Project mode',
+    options: [
+      { value: 'standard', label: 'Standard', hint: 'Product and delivery lifecycle' },
+      { value: 'poc', label: 'Proof of Concept', hint: 'Test a hypothesis with focused evidence' },
+    ],
+    initialValue: 'standard',
+  })
+
   // Knowledge language (VS-051) — the CLI stays in English; this only affects generated knowledge.
   const language = await select<string>({
     message: 'Project knowledge language (the CLI stays in English)',
@@ -330,6 +383,7 @@ export async function runInit(): Promise<void> {
   const meta: ProjectMeta = {
     name: projectName.trim(),
     state,
+    mode,
     teamSize,
     structure,
     language,
@@ -357,10 +411,17 @@ export async function runInit(): Promise<void> {
     if (!exists(join(dir, ARCH_DIR, 'tech', 'codebase.md'))) {
       writeFile(join(dir, ARCH_DIR, 'tech', 'codebase.md'), buildKnowledge(projectName.trim()))
     }
+    if (mode === 'poc') {
+      ensureDir(join(dir, ARCH_DIR, 'delivery', 'work-items'))
+      writeFile(join(dir, ARCH_DIR, 'delivery', 'poc.md'), buildPoc(projectName.trim()))
+      log.success('Created knowledge/delivery/poc.md')
+    }
     log.success('Created knowledge/tech/module/module-context.md')
     log.success('Created knowledge/tech/current-state.md')
     log.success('Created knowledge/tech/codebase.md')
-    log.info('Next: run `kaddo scan` to detect your stack, then use module-context-agent to refine module-context.md.')
+    log.info(mode === 'poc'
+      ? 'Next: define the POC hypothesis and success criteria, then document the minimal experiment context.'
+      : 'Next: run `kaddo scan` to detect your stack, then use module-context-agent to refine module-context.md.')
   } else if (role === 'core') {
     // Core: delivery structure + system context + modules map + modules.yml.
     const sysName = systemName?.trim() ?? projectName.trim()
@@ -370,12 +431,14 @@ export async function runInit(): Promise<void> {
     ensureDir(join(dir, ARCH_DIR, 'agents'))
     ensureDir(join(dir, ARCH_DIR, 'skills'))
     writeFile(join(dir, ARCH_DIR, 'knowledge.md'), buildKnowledge(projectName.trim()))
-    writeFile(join(dir, ARCH_DIR, 'delivery', 'roadmap.md'), buildRoadmap(projectName.trim()))
+    if (mode === 'poc') writeFile(join(dir, ARCH_DIR, 'delivery', 'poc.md'), buildPoc(projectName.trim()))
+    else writeFile(join(dir, ARCH_DIR, 'delivery', 'roadmap.md'), buildRoadmap(projectName.trim()))
     writeFile(join(dir, ARCH_DIR, 'tech', 'system', 'system-context.md'), buildSystemContext(sysName))
     writeFile(join(dir, ARCH_DIR, 'tech', 'modules', 'modules.md'), buildModulesFile(sysName))
     writeFile(join(dir, KADDO_DIR, 'modules.yml'), buildModulesYml(sysName))
     log.success('Created knowledge/knowledge.md')
-    log.success('Created knowledge/delivery/roadmap.md')
+    if (mode === 'poc') log.success('Created knowledge/delivery/poc.md')
+    else log.success('Created knowledge/delivery/roadmap.md')
     log.success('Created knowledge/tech/system/system-context.md')
     log.success('Created knowledge/tech/modules/modules.md')
     log.success('Created .kaddo/modules.yml')
@@ -384,11 +447,13 @@ export async function runInit(): Promise<void> {
     // Single repo or plain multirepo without role.
     ensureDir(join(dir, ARCH_DIR, 'delivery', 'work-items'))
     writeFile(join(dir, ARCH_DIR, 'knowledge.md'), buildKnowledge(projectName.trim()))
-    writeFile(join(dir, ARCH_DIR, 'delivery', 'roadmap.md'), buildRoadmap(projectName.trim()))
+    if (mode === 'poc') writeFile(join(dir, ARCH_DIR, 'delivery', 'poc.md'), buildPoc(projectName.trim()))
+    else writeFile(join(dir, ARCH_DIR, 'delivery', 'roadmap.md'), buildRoadmap(projectName.trim()))
     log.success('Created knowledge/knowledge.md')
-    log.success('Created knowledge/delivery/roadmap.md')
+    if (mode === 'poc') log.success('Created knowledge/delivery/poc.md')
+    else log.success('Created knowledge/delivery/roadmap.md')
     log.success('Created knowledge/delivery/work-items/')
-    log.info('Next: run `kaddo scan` to detect your stack.')
+    log.info(mode === 'poc' ? 'Next: define the POC hypothesis and success criteria, then complete the minimal baseline with `kaddo bootstrap`.' : 'Next: run `kaddo scan` to detect your stack.')
   }
 
   if (isInteractive()) {
