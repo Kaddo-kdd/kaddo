@@ -59,6 +59,8 @@ a conclusion.
 kaddo init --mode poc
 # or change an existing project
 kaddo project mode poc
+kaddo add agents
+kaddo add skills
 # define the hypothesis and success criteria in knowledge/delivery/poc.md
 kaddo context
 kaddo understand
@@ -72,6 +74,9 @@ evidence and decisions, not prompt optimization.
 
 POC mode does not require the standard Business/Product knowledge baseline. Add technical context
 or Project Resources only when they are relevant to the experiment.
+
+Install the agent prompts and reusable skills as part of the initial POC setup. They provide the
+guided refinement and implementation context; they do not add a Business/Product baseline.
 
 ## The Knowledge Model
 

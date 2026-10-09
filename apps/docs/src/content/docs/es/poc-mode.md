@@ -13,6 +13,8 @@ producto completo.
 kaddo init --mode poc
 # o, para un proyecto existente
 kaddo project mode poc
+kaddo add agents
+kaddo add skills
 ```
 
 Los proyectos existentes permanecen en modo `standard` cuando `project.mode` no existe.
@@ -46,6 +48,9 @@ El modo POC queda listo después de inicializarse: define la hipótesis y los cr
 `poc.md`, y crea un `spike` cuando el experimento esté claro. No exige la línea base estándar de
 Business/Product, un roadmap ni un mapa completo de capacidades. Agrega contexto técnico y
 Project Resources únicamente cuando el experimento los necesite.
+
+Instala los agentes y las skills durante la configuración inicial de la POC. Proveen el contexto
+guiado de refinamiento e implementación sin crear una línea base estándar de Business/Product.
 
 Ejecuta `kaddo understand`, `kaddo context` o consulta `kaddo://poc` mediante MCP para ver el
 estado POC y el siguiente paso recomendado.

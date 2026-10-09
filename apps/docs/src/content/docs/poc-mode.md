@@ -13,6 +13,8 @@ roadmap.
 kaddo init --mode poc
 # or, for an existing project
 kaddo project mode poc
+kaddo add agents
+kaddo add skills
 ```
 
 Existing projects remain in `standard` mode when `project.mode` is absent.
@@ -46,6 +48,9 @@ POC mode is ready after initialization: define the hypothesis and success criter
 then create a `spike` when the experiment is clear. It does not require the standard
 Business/Product baseline, a roadmap, or a complete capability map. Add technical context and
 Project Resources only when the experiment needs them.
+
+Install agents and skills during the initial POC setup. They provide the guided refinement and
+implementation context without creating a standard Business/Product baseline.
 
 Run `kaddo understand`, `kaddo context`, or inspect `kaddo://poc` through MCP to see the current
 POC status and the next recommended step.
