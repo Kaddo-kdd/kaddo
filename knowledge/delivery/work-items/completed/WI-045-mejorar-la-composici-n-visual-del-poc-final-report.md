@@ -52,6 +52,7 @@ implementation_status: completed
 validation_status: accepted-with-exceptions
 verified_at: '2026-10-09'
 completed_at: '2026-10-09'
+release_version: v3.121.0
 completion_exceptions:
   - id: POC-DOGFOOD-PENDING
     status: accepted
