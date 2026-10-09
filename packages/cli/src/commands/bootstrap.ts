@@ -25,13 +25,6 @@ const STANDARD_FILE_TARGETS: FileTarget[] = [
   { path: 'knowledge/tech/current-state.md', kind: 'current-state' },
   { path: 'knowledge/delivery/roadmap.md', kind: 'roadmap' },
 ]
-const POC_FILE_TARGETS: FileTarget[] = [
-  { path: 'knowledge/business/business.md', kind: 'business' },
-  { path: 'knowledge/product/product.md', kind: 'product' },
-  { path: 'knowledge/tech/codebase.md', kind: 'codebase' },
-  { path: 'knowledge/tech/current-state.md', kind: 'current-state' },
-  { path: 'knowledge/delivery/poc.md', kind: 'poc' },
-]
 // Directories that must exist for later artifacts (kept via a .gitkeep placeholder).
 const DIR_TARGETS = ['knowledge/tech/decisions', 'knowledge/tech/discovery', 'knowledge/delivery/work-items']
 
@@ -77,7 +70,9 @@ export function bootstrap(dir: string): BootstrapResult {
     // fall back to defaults on unreadable config
   }
 
-  for (const target of (mode === 'poc' ? POC_FILE_TARGETS : STANDARD_FILE_TARGETS)) {
+  if (mode === 'poc') return { state, mode, written, skipped, createdDirs }
+
+  for (const target of STANDARD_FILE_TARGETS) {
     const full = join(dir, target.path)
     if (exists(full)) {
       skipped.push(target.path)
@@ -125,7 +120,13 @@ export async function runBootstrap(dir: string = cwd()): Promise<void> {
   const stateLabel = state === 'pre-ai' ? 'pre-ai' : state
   log.info(`Project state: ${stateLabel}`)
   log.info(`Project mode: ${mode}`)
-  log.info(`Creating ${mode === 'poc' ? 'POC' : stateLabel} knowledge baseline.`)
+  if (mode === 'poc') {
+    log.info('POC mode does not require a standard bootstrap. Define the hypothesis and success criteria in `knowledge/delivery/poc.md`.')
+    outro('Nothing changed. POC mode uses a proportional, experiment-first baseline.')
+    return
+  }
+
+  log.info(`Creating ${stateLabel} knowledge baseline.`)
   log.info('Existing files will not be overwritten.')
 
   const result = bootstrap(dir)
@@ -149,7 +150,6 @@ export async function runBootstrap(dir: string = cwd()): Promise<void> {
   )
   printCommandFooter('bootstrap')
   outro(
-    `${mode === 'poc' ? 'POC' : stateLabel} knowledge baseline ready. Next: \`kaddo add agents\` (then \`kaddo add skills\`), ` +
-      (mode === 'poc' ? 'then define the POC hypothesis and success criteria.' : 'and refine the knowledge with the relevant agents.')
+    `${stateLabel} knowledge baseline ready. Next: \`kaddo add agents\` (then \`kaddo add skills\`), and refine the knowledge with the relevant agents.`
   )
 }

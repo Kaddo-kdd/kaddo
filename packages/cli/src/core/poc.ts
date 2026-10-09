@@ -1,6 +1,62 @@
-import { exists, join, readFile } from '../utils/fs.js'
+import { ensureDir, exists, join, readFile, writeFile } from '../utils/fs.js'
 
 export const POC_ARTIFACT_PATH = 'knowledge/delivery/poc.md'
+
+export function pocTemplate(projectName: string): string {
+  return `---
+type: poc
+status: active
+generated_by: kaddo-init
+template_version: 1
+---
+
+# ${projectName} — Proof of Concept
+
+## Problem
+
+_What are we trying to understand or solve?_
+
+## Hypothesis
+
+_What assumption are we testing?_
+
+## Expected Value
+
+_Why is validating this worth doing?_
+
+## Scenario
+
+_What concrete scenario will demonstrate the hypothesis?_
+
+## Success Criteria
+
+- [ ] _Observable result that would support the hypothesis._
+
+## Constraints
+
+_Technical, time, budget, compliance, or operational constraints._
+
+## Non-goals
+
+_What this experiment intentionally will not prove or deliver._
+
+## Evidence
+
+_Link experiments, Work Items, measurements, and observations here._
+
+## Conclusion
+
+Status: pending
+`
+}
+
+export function ensurePocArtifact(dir: string, projectName: string): boolean {
+  const path = join(dir, POC_ARTIFACT_PATH)
+  if (exists(path)) return false
+  ensureDir(join(dir, 'knowledge', 'delivery'))
+  writeFile(path, pocTemplate(projectName))
+  return true
+}
 
 export type PocConclusion = 'pending' | 'validated' | 'rejected' | 'inconclusive'
 

@@ -189,7 +189,7 @@ export function resolveNextStep(dir: string, now: Date = new Date()): NextStepRe
   if (projectMode(config) === 'poc') {
     const poc = readPocSummary(dir)
     if (!poc.exists) {
-      return { id: 'bootstrap', phase: 'Setup', label: 'Run `kaddo bootstrap` to create the POC knowledge baseline.', command: 'kaddo bootstrap', reason: `Missing ${POC_ARTIFACT_PATH}.` }
+      return { id: 'poc-artifact', phase: 'POC Definition', label: 'Create or restore the POC artifact.', command: 'kaddo project mode poc', target: POC_ARTIFACT_PATH, reason: `Missing ${POC_ARTIFACT_PATH}.` }
     }
     if (!poc.hypothesisDefined) {
       return { id: 'poc-hypothesis', phase: 'POC Definition', label: 'Define the POC hypothesis.', target: POC_ARTIFACT_PATH, reason: 'The POC needs a testable hypothesis before work begins.' }
@@ -199,11 +199,8 @@ export function resolveNextStep(dir: string, now: Date = new Date()): NextStepRe
     }
     const qCurrentState = analyzeKnowledgeArtifact(dir, CS)
     const qCodebase = analyzeKnowledgeArtifact(dir, CB)
-    if (qCurrentState !== 'useful' || qCodebase !== 'useful') {
+    if (exists(join(dir, '.kaddo', 'scan.json')) && (qCurrentState !== 'useful' || qCodebase !== 'useful')) {
       return { id: 'poc-technical-context', phase: 'POC Discovery', label: 'Document the minimal technical context for the experiment.', target: qCurrentState !== 'useful' ? CS : CB, agent: 'architecture-agent', reason: 'The experiment surface and constraints are not yet sufficiently documented.' }
-    }
-    if (!exists(join(dir, 'knowledge', 'resources'))) {
-      return { id: 'poc-resources', phase: 'POC Discovery', label: 'Identify the project resources relevant to the experiment.', command: 'kaddo resources list', reason: 'No project resource catalog is available for the experiment context.' }
     }
     const delivery = buildDeliveryState(dir)
     if (delivery.total_work_items === 0) {

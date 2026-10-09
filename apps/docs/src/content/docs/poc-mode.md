@@ -13,7 +13,6 @@ roadmap.
 kaddo init --mode poc
 # or, for an existing project
 kaddo project mode poc
-kaddo bootstrap
 ```
 
 Existing projects remain in `standard` mode when `project.mode` is absent.
@@ -33,17 +32,20 @@ flowchart LR
 
 The canonical artifact is `knowledge/delivery/poc.md`. It records:
 
+- Problem
 - Hypothesis
+- Expected Value
+- Scenario
 - Success Criteria
 - Constraints
 - Non-goals
 - Evidence
 - Conclusion: `validated`, `rejected`, or `inconclusive`
 
-POC mode creates a proportional baseline: business problem and expected value, product scenario,
-minimal technical context, and the POC artifact. It does not require a roadmap or a complete
-capability map. Work Items keep their normal lifecycle; a `spike` is often the most natural first
-experiment.
+POC mode is ready after initialization: define the hypothesis and success criteria in `poc.md`,
+then create a `spike` when the experiment is clear. It does not require the standard
+Business/Product baseline, a roadmap, or a complete capability map. Add technical context and
+Project Resources only when the experiment needs them.
 
 Run `kaddo understand`, `kaddo context`, or inspect `kaddo://poc` through MCP to see the current
 POC status and the next recommended step.

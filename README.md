@@ -59,13 +59,19 @@ a conclusion.
 kaddo init --mode poc
 # or change an existing project
 kaddo project mode poc
-kaddo bootstrap
+# define the hypothesis and success criteria in knowledge/delivery/poc.md
+kaddo context
+kaddo understand
+kaddo create spike
 ```
 
 The canonical record is `knowledge/delivery/poc.md`. It concludes as `validated`, `rejected`, or
 `inconclusive`; Work Items retain their normal lifecycle, with a `spike` often being the right
 first experiment. Token savings can result from this focused context, but the goal is better
 evidence and decisions, not prompt optimization.
+
+POC mode does not require the standard Business/Product knowledge baseline. Add technical context
+or Project Resources only when they are relevant to the experiment.
 
 ## The Knowledge Model
 

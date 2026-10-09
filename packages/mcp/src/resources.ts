@@ -165,7 +165,7 @@ export const RESOURCES: ResourceDescriptor[] = [
         root,
         'kaddo://poc',
         'knowledge/delivery/poc.md',
-        'POC artifact not found. Set `project.mode: poc` and run `kaddo bootstrap` first.'
+        'POC artifact not found. Initialize in POC mode or switch with `kaddo project mode poc`.'
       ),
   },
   {

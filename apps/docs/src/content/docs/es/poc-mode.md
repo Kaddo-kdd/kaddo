@@ -13,7 +13,6 @@ producto completo.
 kaddo init --mode poc
 # o, para un proyecto existente
 kaddo project mode poc
-kaddo bootstrap
 ```
 
 Los proyectos existentes permanecen en modo `standard` cuando `project.mode` no existe.
@@ -33,17 +32,20 @@ flowchart LR
 
 El artefacto canónico es `knowledge/delivery/poc.md`. Registra:
 
+- Problema
 - Hipótesis
+- Valor esperado
+- Escenario
 - Criterios de éxito
 - Restricciones
 - No objetivos
 - Evidencia
 - Conclusión: `validated`, `rejected` o `inconclusive`
 
-El modo POC crea una línea base proporcional: problema y valor esperado de negocio, escenario de
-producto, contexto técnico mínimo y el artefacto POC. No exige un roadmap ni un mapa completo de
-capacidades. Los Work Items mantienen su ciclo de vida normal; un `spike` suele ser el primer
-experimento natural.
+El modo POC queda listo después de inicializarse: define la hipótesis y los criterios de éxito en
+`poc.md`, y crea un `spike` cuando el experimento esté claro. No exige la línea base estándar de
+Business/Product, un roadmap ni un mapa completo de capacidades. Agrega contexto técnico y
+Project Resources únicamente cuando el experimento los necesite.
 
 Ejecuta `kaddo understand`, `kaddo context` o consulta `kaddo://poc` mediante MCP para ver el
 estado POC y el siguiente paso recomendado.

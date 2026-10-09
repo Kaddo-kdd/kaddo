@@ -437,6 +437,12 @@ const definePocHypothesis: StepDef = {
     return { status: poc.hypothesisDefined ? 'done' : 'current', evidence: poc.hypothesisDefined ? [POC_ARTIFACT_PATH] : undefined, reason: poc.hypothesisDefined ? undefined : 'A POC starts with one testable hypothesis.' }
   },
 }
+const ensurePocArtifact: StepDef = {
+  id: 'poc-artifact', label: 'Create POC artifact',
+  evaluate: (ctx) => exists(join(ctx.dir, POC_ARTIFACT_PATH))
+    ? { status: 'done', evidence: [POC_ARTIFACT_PATH] }
+    : { status: 'current', command: 'kaddo project mode poc', reason: 'Create the canonical POC artifact before defining the experiment.' },
+}
 const definePocCriteria: StepDef = {
   id: 'poc-success-criteria', label: 'Define success criteria',
   evaluate: (ctx) => {
@@ -444,12 +450,17 @@ const definePocCriteria: StepDef = {
     return { status: poc.successCriteriaCount > 0 ? 'done' : 'pending', evidence: poc.successCriteriaCount > 0 ? [POC_ARTIFACT_PATH] : undefined, reason: poc.successCriteriaCount > 0 ? undefined : 'Define observable evidence for the hypothesis.' }
   },
 }
-const describePocTech: StepDef = { ...describeArchitecture, id: 'poc-technical-context', label: 'Document minimal technical context' }
+const describePocTech: StepDef = {
+  id: 'poc-technical-context', label: 'Document minimal technical context',
+  evaluate: (ctx) => ctx.hasScan
+    ? describeArchitecture.evaluate(ctx)
+    : { status: 'optional', command: 'kaddo scan', reason: 'Add technical context only when the experiment needs to inspect existing code.' },
+}
 const identifyPocResources: StepDef = {
   id: 'poc-resources', label: 'Identify relevant resources',
   evaluate: (ctx) => exists(join(ctx.dir, 'knowledge/resources'))
     ? { status: 'done', evidence: ['knowledge/resources/'] }
-    : { status: 'pending', command: 'kaddo resources list' },
+    : { status: 'optional', command: 'kaddo resources list', reason: 'Add Project Resources only when the experiment depends on external systems.' },
 }
 const createPocExperiment: StepDef = {
   id: 'poc-create-experiment', label: 'Create experiment Work Item',
@@ -472,7 +483,7 @@ const concludePoc: StepDef = {
       : { status: 'done', evidence: [POC_ARTIFACT_PATH], reason: `Conclusion: ${conclusion}.` }
   },
 }
-const POC_STEPS: StepDef[] = [enableKaddo, bootstrapBaseline, definePocHypothesis, definePocCriteria, describePocTech, identifyPocResources, createPocExperiment, capturePocEvidence, concludePoc]
+const POC_STEPS: StepDef[] = [enableKaddo, ensurePocArtifact, definePocHypothesis, definePocCriteria, describePocTech, identifyPocResources, createPocExperiment, capturePocEvidence, concludePoc]
 
 function stepsForState(state: ProjectState): StepDef[] {
   switch (state) {

@@ -13,6 +13,7 @@ describe('POC MCP resource', () => {
     dirs.push(dir)
     const resource = RESOURCES.find((item) => item.uri === 'kaddo://poc')!
     expect(resource.read(dir)[0].text).toMatch(/POC artifact not found/)
+    expect(resource.read(dir)[0].text).not.toContain('bootstrap')
     fs.mkdirSync(path.join(dir, 'knowledge/delivery'), { recursive: true })
     fs.writeFileSync(path.join(dir, 'knowledge/delivery/poc.md'), '# Proof of Concept')
     expect(resource.read(dir)[0].text).toBe('# Proof of Concept')

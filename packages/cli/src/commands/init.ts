@@ -2,6 +2,7 @@ import path from 'path'
 import { exists, writeFile, ensureDir, readFile, cwd, join } from '../utils/fs.js'
 import { intro, outro, log, text, confirm, select } from '../utils/ui.js'
 import { persistConsent, isInteractive } from '../core/telemetry-consent.js'
+import { pocTemplate } from '../core/poc.js'
 
 const KADDO_DIR = '.kaddo'
 const ARCH_DIR = 'knowledge'
@@ -222,42 +223,6 @@ _Ideas and intentions not yet committed._
 `
 }
 
-function buildPoc(projectName: string): string {
-  return `---
-type: poc
-status: active
-generated_by: kaddo-init
-template_version: 1
----
-
-# ${projectName} — Proof of Concept
-
-## Hypothesis
-
-_What assumption are we testing?_
-
-## Success Criteria
-
-- [ ] _Observable result that would support the hypothesis._
-
-## Constraints
-
-_Technical, time, budget, compliance, or operational constraints._
-
-## Non-goals
-
-_What this experiment intentionally will not prove or deliver._
-
-## Evidence
-
-_Link experiments, Work Items, measurements, and observations here._
-
-## Conclusion
-
-Status: pending
-`
-}
-
 export async function runInit(opts: { mode?: 'standard' | 'poc' } = {}): Promise<void> {
   const dir = cwd()
 
@@ -413,7 +378,7 @@ export async function runInit(opts: { mode?: 'standard' | 'poc' } = {}): Promise
     }
     if (mode === 'poc') {
       ensureDir(join(dir, ARCH_DIR, 'delivery', 'work-items'))
-      writeFile(join(dir, ARCH_DIR, 'delivery', 'poc.md'), buildPoc(projectName.trim()))
+      writeFile(join(dir, ARCH_DIR, 'delivery', 'poc.md'), pocTemplate(projectName.trim()))
       log.success('Created knowledge/delivery/poc.md')
     }
     log.success('Created knowledge/tech/module/module-context.md')
@@ -431,7 +396,7 @@ export async function runInit(opts: { mode?: 'standard' | 'poc' } = {}): Promise
     ensureDir(join(dir, ARCH_DIR, 'agents'))
     ensureDir(join(dir, ARCH_DIR, 'skills'))
     writeFile(join(dir, ARCH_DIR, 'knowledge.md'), buildKnowledge(projectName.trim()))
-    if (mode === 'poc') writeFile(join(dir, ARCH_DIR, 'delivery', 'poc.md'), buildPoc(projectName.trim()))
+    if (mode === 'poc') writeFile(join(dir, ARCH_DIR, 'delivery', 'poc.md'), pocTemplate(projectName.trim()))
     else writeFile(join(dir, ARCH_DIR, 'delivery', 'roadmap.md'), buildRoadmap(projectName.trim()))
     writeFile(join(dir, ARCH_DIR, 'tech', 'system', 'system-context.md'), buildSystemContext(sysName))
     writeFile(join(dir, ARCH_DIR, 'tech', 'modules', 'modules.md'), buildModulesFile(sysName))
@@ -447,13 +412,13 @@ export async function runInit(opts: { mode?: 'standard' | 'poc' } = {}): Promise
     // Single repo or plain multirepo without role.
     ensureDir(join(dir, ARCH_DIR, 'delivery', 'work-items'))
     writeFile(join(dir, ARCH_DIR, 'knowledge.md'), buildKnowledge(projectName.trim()))
-    if (mode === 'poc') writeFile(join(dir, ARCH_DIR, 'delivery', 'poc.md'), buildPoc(projectName.trim()))
+    if (mode === 'poc') writeFile(join(dir, ARCH_DIR, 'delivery', 'poc.md'), pocTemplate(projectName.trim()))
     else writeFile(join(dir, ARCH_DIR, 'delivery', 'roadmap.md'), buildRoadmap(projectName.trim()))
     log.success('Created knowledge/knowledge.md')
     if (mode === 'poc') log.success('Created knowledge/delivery/poc.md')
     else log.success('Created knowledge/delivery/roadmap.md')
     log.success('Created knowledge/delivery/work-items/')
-    log.info(mode === 'poc' ? 'Next: define the POC hypothesis and success criteria, then complete the minimal baseline with `kaddo bootstrap`.' : 'Next: run `kaddo scan` to detect your stack.')
+    log.info(mode === 'poc' ? 'Next: define the POC hypothesis and success criteria in `knowledge/delivery/poc.md`.' : 'Next: run `kaddo scan` to detect your stack.')
   }
 
   if (isInteractive()) {
