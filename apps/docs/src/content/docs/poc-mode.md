@@ -30,7 +30,7 @@ flowchart LR
   E --> F[Experiment Work Item]
   F --> G[Evidence]
   G --> H[Conclusion]
-  H --> I[Final report (optional)]
+  H --> I["Final report (optional)"]
 ```
 
 The canonical artifact is `knowledge/delivery/poc.md`. It records:

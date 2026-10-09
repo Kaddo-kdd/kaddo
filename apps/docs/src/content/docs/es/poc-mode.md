@@ -30,7 +30,7 @@ flowchart LR
   E --> F[Work Item de experimento]
   F --> G[Evidencia]
   G --> H[Conclusión]
-  H --> I[Informe final opcional]
+  H --> I["Informe final opcional"]
 ```
 
 El artefacto canónico es `knowledge/delivery/poc.md`. Registra:
