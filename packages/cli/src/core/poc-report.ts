@@ -118,6 +118,9 @@ export function buildPocReportContext(dir: string): PocReportContext {
       `Canonical conclusion: ${poc.conclusion}. Do not contradict it.`,
       'Use the 15 canonical sections. Mark missing evidence as Not evaluated, Not applicable, or No evidence available.',
       'Distinguish measured, calculated, estimated, and projected values. Never include secret values.',
+      'Choose the representation that best communicates each grounded fact: Markdown tables for structured comparisons, Mermaid for grounded architecture, flows, or relationships, and prose for explanation and interpretation.',
+      'Do not invent data, entities, relationships, priorities, or metrics to create a table or diagram. Do not use ASCII diagrams when Mermaid can represent the same grounded flow.',
+      'In Traceability, use repository-relative Markdown links or paths. Never use file:/// URLs or local absolute filesystem paths.',
       '', 'Selected sources:', sourceList,
     ].join('\n'),
   }

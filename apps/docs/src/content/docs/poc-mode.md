@@ -95,6 +95,61 @@ The report uses this canonical structure:
 14. Recommendation and Next Steps
 15. Traceability and Sources
 
+### Evidence-driven representation
+
+Choose the form that communicates the supplied evidence most clearly. Tables and diagrams are
+communication tools, not completeness requirements: do not add either one just to make a report
+look more complete. Use prose for context and interpretation, Markdown tables for comparable
+evidence, and Mermaid for grounded architecture, topology, or flows. Do not invent rows, metrics,
+priorities, components, or relationships. Prefer Mermaid to an ASCII diagram when both can express
+the same grounded flow.
+
+| Section | Preferred representation when supported by evidence |
+|---|---|
+| Executive Summary | Snapshot table and short prose |
+| Problem and Objective | Prose |
+| Hypothesis and Success Criteria | Evaluation matrix |
+| Scope, Constraints and Non-goals | Compact bullets or table |
+| Technical Approach and Architecture | Mermaid and prose |
+| Infrastructure and Project Resources | Table, with optional Mermaid |
+| Implementation and Relevant Technical Decisions | Table or concise prose |
+| Experiments and Validation | Validation matrix |
+| Results and Measurements | Measurement tables |
+| Cost and Efficiency Analysis | Comparison table |
+| Observability and Operational Findings | Table or prose |
+| Findings, Learnings, Limitations and Risks | Structured matrix |
+| Conclusion | Status and concise prose |
+| Recommendation and Next Steps | Recommendation matrix when priority is evidenced |
+| Traceability and Sources | Relative-link table or list |
+
+For example, a success-criteria matrix is useful when each outcome has direct evidence:
+
+| Success criterion | Status | Evidence |
+|---|---|---|
+| API endpoint available | Passed | End-to-end verification |
+| Three scenarios validated | Passed | 3/3 recorded results |
+
+When selected sources describe a real relationship or flow, use a grounded Mermaid diagram:
+
+```mermaid
+flowchart LR
+  Client --> API
+  API --> Rules
+  Rules --> Result
+```
+
+Likewise, Project Resources are easier to scan as a table when the sources provide comparable
+attributes:
+
+| Resource | Type / provider | Purpose | Environment |
+|---|---|---|---|
+| `RES-model` | AI provider | Model inference | `poc` |
+| `RES-monitoring` | Monitoring service | Experiment observability | `poc` |
+
+Traceability must remain portable across GitHub, Kaddo Admin, and local clones. Use
+repository-relative links such as `[POC definition](./poc.md)` or
+`[WI-001](./work-items/completed/WI-001.md)`, never `file:///` URLs or local absolute paths.
+
 Sections without evidence state `Not evaluated in this POC.`, `Not applicable.`, or `No evidence
 available.` rather than inventing data. A report can recommend graduation to standard mode, but
 the human decides whether to run `kaddo project mode standard`.
