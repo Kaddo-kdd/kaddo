@@ -9,6 +9,7 @@ import { NextAction } from '../components/NextAction'
 import { SummaryCard } from '../components/SummaryCard'
 import { ProjectRouteSummary } from '../components/ProjectRouteSummary'
 import { FindingSummary } from '../components/FindingSummary'
+import { PocFinalReport } from '../components/PocFinalReport'
 import {
   presentStructure,
   presentKnowledgeCount,
@@ -74,7 +75,7 @@ export function Overview() {
   )
   if (!data) return <EmptyState title="No project data" description="Could not load project information." />
 
-  const { project, knowledge, workItems, modules, readiness, route, findings } = data
+  const { project, knowledge, workItems, modules, readiness, route, findings, pocReport } = data
   const knowledgeCount = presentKnowledgeCount(knowledge.layers)
   const findingsPresentation = presentFindingsSummary(findings.blocking, findings.warning, findings.fyi)
 
@@ -167,6 +168,8 @@ export function Overview() {
           items={findings.items}
         />
       </div>
+
+      {project.mode === 'poc' && pocReport && <PocFinalReport report={pocReport} />}
 
       {/* Knowledge layers + Modules */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(380px, 1fr))', gap: 16 }}>

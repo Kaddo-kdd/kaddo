@@ -60,6 +60,8 @@ import {
   deleteResource as coreDeleteResource,
   getResourceReferences as coreGetResourceReferences,
   ResourceWriteError,
+  buildPocReportContext,
+  redactSecrets,
   type ResourceInput,
   exists,
   join,
@@ -85,6 +87,7 @@ import type {
   ProjectReadiness,
   ProjectRouteResponse,
   FindingsSummary,
+  PocReportSummary,
   KnowledgeInventory,
   KnowledgeArtifactDetail,
   WorkItemsList,
@@ -304,15 +307,39 @@ export function getFindings(dir: string): FindingsSummary {
   return { blocking, warning, fyi, items }
 }
 
-export function getProjectOverview(dir: string): ProjectOverview {
+/** Project the Core report context without leaking source contents or fingerprints. */
+export function getPocReportSummary(dir: string): PocReportSummary {
+  const report = buildPocReportContext(dir)
+  const reportContent = report.latestReport
+    ? redactSecrets(readFile(join(dir, report.latestReport.path)))
+    : null
+
   return {
-    project: getProjectSummary(dir),
+    eligible: report.eligible,
+    conclusion: report.conclusion,
+    status: report.status,
+    latestReport: report.latestReport
+      ? { path: report.latestReport.path, version: report.latestReport.version }
+      : null,
+    nextPath: report.nextPath,
+    sources: report.sources.map(({ path, kind }) => ({ path, kind })),
+    changesSinceLatest: report.changesSinceLatest,
+    handoff: report.handoff,
+    reportContent,
+  }
+}
+
+export function getProjectOverview(dir: string): ProjectOverview {
+  const project = getProjectSummary(dir)
+  return {
+    project,
     knowledge: getKnowledgeSummary(dir),
     workItems: getWorkItemSummary(dir),
     modules: getModules(dir),
     readiness: getProjectReadiness(dir),
     route: getProjectRoute(dir),
     findings: getFindings(dir),
+    ...(project.mode === 'poc' ? { pocReport: getPocReportSummary(dir) } : {}),
   }
 }
 

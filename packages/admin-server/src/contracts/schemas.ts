@@ -78,6 +78,24 @@ export const FindingsSummarySchema = z.object({
   })),
 })
 
+export const PocReportSummarySchema = z.object({
+  eligible: z.boolean(),
+  conclusion: z.enum(['pending', 'validated', 'rejected', 'inconclusive']),
+  status: z.enum(['missing', 'current', 'stale']),
+  latestReport: z.object({
+    path: z.string(),
+    version: z.number(),
+  }).nullable(),
+  nextPath: z.string(),
+  sources: z.array(z.object({
+    path: z.string(),
+    kind: z.enum(['poc', 'work-item', 'resource', 'knowledge']),
+  })),
+  changesSinceLatest: z.array(z.string()),
+  handoff: z.string(),
+  reportContent: z.string().nullable(),
+})
+
 export const ProjectOverviewSchema = z.object({
   project: ProjectSummarySchema,
   knowledge: KnowledgeSummarySchema,
@@ -86,6 +104,7 @@ export const ProjectOverviewSchema = z.object({
   readiness: ProjectReadinessSchema,
   route: ProjectRouteSchema,
   findings: FindingsSummarySchema,
+  pocReport: PocReportSummarySchema.optional(),
 })
 
 export const KnowledgeArtifactSummarySchema = z.object({
@@ -421,6 +440,7 @@ export type ModuleSummary = z.infer<typeof ModuleSummarySchema>
 export type ProjectReadiness = z.infer<typeof ProjectReadinessSchema>
 export type ProjectRouteResponse = z.infer<typeof ProjectRouteSchema>
 export type FindingsSummary = z.infer<typeof FindingsSummarySchema>
+export type PocReportSummary = z.infer<typeof PocReportSummarySchema>
 export type KnowledgeInventory = z.infer<typeof KnowledgeInventorySchema>
 export type KnowledgeArtifactDetail = z.infer<typeof KnowledgeArtifactDetailSchema>
 export type WorkItemsList = z.infer<typeof WorkItemsListSchema>
