@@ -15,6 +15,7 @@ import { buildRoadmapQuality } from '../../cli/src/core/roadmap-quality.js'
 import { parseRoadmapCandidates } from '../../cli/src/core/roadmap.js'
 import { resolveNextStep, buildDeliveryState } from '../../cli/src/core/next-step.js'
 import { buildProjectRoute } from '../../cli/src/core/project-route.js'
+import { buildPocReportContext } from '../../cli/src/core/poc-report.js'
 import { listWorkItems } from './workitems.js'
 import { hasKnowledge, readText } from './project.js'
 
@@ -167,6 +168,25 @@ export const RESOURCES: ResourceDescriptor[] = [
         'knowledge/delivery/poc.md',
         'POC artifact not found. Initialize in POC mode or switch with `kaddo project mode poc`.'
       ),
+  },
+  {
+    uri: 'kaddo://poc-report',
+    name: 'Kaddo final POC report',
+    description: 'Latest final POC report, or deterministic report status and source selection.',
+    mimeType: 'text/markdown',
+    read: (root) => {
+      const context = buildPocReportContext(root)
+      if (context.latestReport) {
+        const saved = readText(root, context.latestReport.path)
+        if (saved) return text('kaddo://poc-report', saved)
+      }
+      const lines = [
+        `Final POC report: ${context.status}`,
+        `Conclusion: ${context.conclusion}`,
+        context.handoff,
+      ]
+      return text('kaddo://poc-report', lines.join('\n\n'))
+    },
   },
   {
     uri: 'kaddo://capsules',

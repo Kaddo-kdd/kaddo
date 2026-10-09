@@ -24,6 +24,8 @@ import {
   consentNotice,
   getTelemetryStatus,
   loadConfig,
+  buildPocReportContext,
+  persistPocReport,
 } from '@kaddo/cli/core'
 import { listWorkItems, type WorkItemSummary } from './workitems.js'
 import { listCapsules, getCapsule, listAgents, getAgentPrompt } from './catalog.js'
@@ -44,6 +46,23 @@ export type ToolResult = { ok: true; data: unknown } | { ok: false; message: str
 
 const ok = (data: unknown): ToolResult => ({ ok: true, data })
 const fail = (message: string): ToolResult => ({ ok: false, message })
+
+// --- POC final report -----------------------------------------------------
+
+/** Prepare a bounded, deterministic context; synthesis remains the caller's responsibility. */
+export function preparePocReportTool(root: string): ToolResult {
+  const context = buildPocReportContext(root)
+  return context.eligible ? ok(context) : fail(context.handoff)
+}
+
+/** Preview by default; write only after explicit human confirmation. */
+export function persistPocReportTool(root: string, proposal: string, confirm?: boolean, force?: boolean): ToolResult {
+  try {
+    return ok(persistPocReport(root, proposal, { confirm, force }))
+  } catch (err) {
+    return fail(err instanceof Error ? err.message : String(err))
+  }
+}
 
 // --- kaddo_project_status -------------------------------------------------
 

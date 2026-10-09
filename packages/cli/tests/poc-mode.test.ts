@@ -77,6 +77,10 @@ describe('Project Mode POC', () => {
     fs.mkdirSync(path.join(dir, 'knowledge/delivery'), { recursive: true })
     fs.writeFileSync(path.join(dir, 'knowledge/delivery/poc.md'), '# Proof of Concept\n\n## Conclusion\n\nStatus: validated\n')
     expect(readPocSummary(dir).conclusion).toBe('validated')
+    const route = buildProjectRoute(dir)
+    const report = route.steps.find((step) => step.id === 'poc-final-report')!
+    expect(report.status).toBe('optional')
+    expect(route.total).toBe(route.steps.filter((step) => step.status !== 'optional').length)
   })
 
   it('keeps the standard bootstrap baseline unchanged', () => {

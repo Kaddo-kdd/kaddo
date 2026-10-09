@@ -8,6 +8,15 @@ export { buildProjectRoute, type ProjectRoute, type RouteStep, type RouteStepSta
 export { knowledgeLayers, type LayerStatus, type LayerName, type LayerMaturity } from './core/layers.js'
 export { loadConfig, isModule, projectMode, setProjectMode, type KaddoConfig, type ProjectState, type ProjectMode, type RepositoryStructure } from './core/config.js'
 export { readPocSummary, POC_ARTIFACT_PATH, type PocSummary, type PocConclusion } from './core/poc.js'
+export {
+  buildPocReportContext,
+  persistPocReport,
+  redactSecrets,
+  POC_REPORT_PREFIX,
+  type PocReportStatus,
+  type PocReportSource,
+  type PocReportContext,
+} from './core/poc-report.js'
 export { discoverKnowledge, discoverWorkItems, type KnowledgeArtifact, type KnowledgeLayer } from './services/knowledge-artifacts.js'
 export {
   getResources,

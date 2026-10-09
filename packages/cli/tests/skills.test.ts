@@ -39,6 +39,7 @@ describe('Skills layer (VS-059)', () => {
         'legacy-risk-assessment',
         'module-context-refinement',
         'ownership-suggestion',
+        'poc-report-writing',
         'work-item-refinement',
       ].sort()
     )

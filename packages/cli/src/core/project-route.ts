@@ -15,6 +15,7 @@ import { roadmapStats } from './roadmap.js'
 import { resolveNextStep, buildDeliveryState, installedAdapters } from './next-step.js'
 import { readFile } from '../utils/fs.js'
 import { readPocSummary, POC_ARTIFACT_PATH } from './poc.js'
+import { buildPocReportContext } from './poc-report.js'
 
 export type RouteStepStatus = 'done' | 'current' | 'next' | 'pending' | 'optional' | 'blocked' | 'warning' | 'skipped'
 
@@ -483,7 +484,16 @@ const concludePoc: StepDef = {
       : { status: 'done', evidence: [POC_ARTIFACT_PATH], reason: `Conclusion: ${conclusion}.` }
   },
 }
-const POC_STEPS: StepDef[] = [enableKaddo, ensurePocArtifact, definePocHypothesis, definePocCriteria, describePocTech, identifyPocResources, createPocExperiment, capturePocEvidence, concludePoc]
+const finalPocReport: StepDef = {
+  id: 'poc-final-report', label: 'Generate final report (optional)',
+  evaluate: (ctx) => {
+    const report = buildPocReportContext(ctx.dir)
+    if (!report.eligible) return { status: 'optional', reason: 'Available after recording a POC conclusion.' }
+    if (report.status === 'current') return { status: 'done', evidence: [report.latestReport!.path] }
+    return { status: 'optional', command: 'kaddo poc report', reason: report.status === 'stale' ? 'Latest report is stale.' : 'A final report is optional.' }
+  },
+}
+const POC_STEPS: StepDef[] = [enableKaddo, ensurePocArtifact, definePocHypothesis, definePocCriteria, describePocTech, identifyPocResources, createPocExperiment, capturePocEvidence, concludePoc, finalPocReport]
 
 function stepsForState(state: ProjectState): StepDef[] {
   switch (state) {
@@ -590,6 +600,7 @@ function mapNextStepId(id: string): string {
     'poc-resources': 'poc-resources',
     'poc-create-experiment': 'poc-create-experiment',
     'poc-evaluate': 'poc-evaluate',
+    'poc-final-report': 'poc-final-report',
     'poc-complete': 'poc-evaluate',
   }
   return MAP[id] ?? id
@@ -608,7 +619,7 @@ export function buildProjectRoute(dir: string): ProjectRoute {
 
   // Override status: the step matching nextStepRecommendation.id is always 'current' if not already done.
   for (const s of steps) {
-    if (s.id === ctx.nextStepId && s.status !== 'done') {
+    if (s.id === ctx.nextStepId && s.status !== 'done' && s.status !== 'optional') {
       s.status = 'current'
     }
   }
@@ -623,8 +634,9 @@ export function buildProjectRoute(dir: string): ProjectRoute {
     }
   }
 
-  const completed = steps.filter((s) => s.status === 'done').length
-  const total = steps.length
+  const completed = steps.filter((s) => s.status === 'done' && s.status !== 'optional').length
+  // Optional steps are visible but never reduce lifecycle completion progress.
+  const total = steps.filter((s) => s.status !== 'optional').length
   const progressPercent = total > 0 ? Math.round((completed / total) * 100) : 0
 
   return {

@@ -29,6 +29,8 @@ import {
   createResourceTool,
   updateResourceTool,
   deleteResourceTool,
+  preparePocReportTool,
+  persistPocReportTool,
   type ToolResult,
 } from './tools.js'
 import { listSkills, getSkill } from './skills.js'
@@ -199,6 +201,26 @@ export function createServer(root: string): McpServer {
       inputSchema: { id: z.string(), confirm: z.boolean().optional() },
     },
     async (args) => toolText(guarded(root, () => markWorkItemReady(root, args.id, args.confirm)))
+  )
+
+  server.registerTool(
+    'kaddo_prepare_poc_report',
+    {
+      title: 'Prepare final POC report context',
+      description: 'Build a deterministic, source-attributed POC report context. Does not call an LLM or write a report.',
+      inputSchema: {},
+    },
+    async () => toolText(guarded(root, () => preparePocReportTool(root)))
+  )
+
+  server.registerTool(
+    'kaddo_persist_poc_report',
+    {
+      title: 'Persist confirmed final POC report',
+      description: 'Preview a proposed final POC report by default. With confirm=true, persist the next immutable version. Never provide credential values.',
+      inputSchema: { proposal: z.string(), confirm: z.boolean().optional(), force: z.boolean().optional() },
+    },
+    async (args) => toolText(guarded(root, () => persistPocReportTool(root, args.proposal, args.confirm, args.force)))
   )
 
   server.registerTool(

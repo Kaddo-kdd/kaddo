@@ -42,6 +42,7 @@ import { runAssetsStatus, runAssetsUpdate } from './commands/assets.js'
 import { runReady } from './commands/ready.js'
 import { runAdmin } from './commands/admin.js'
 import { runWorkItemImport } from './commands/work-item.js'
+import { runPocReport } from './commands/poc.js'
 import { runVerify } from './commands/verify.js'
 import { runTelemetryStatus, runTelemetryEnable, runTelemetryDisable } from './commands/telemetry.js'
 import {
@@ -120,6 +121,16 @@ program
   .action(async (id: string, opts: { yes?: boolean }) => {
     await runReady(id, opts)
   })
+
+const pocCmd = program
+  .command('poc')
+  .description('Proof of Concept lifecycle helpers')
+
+pocCmd
+  .command('report')
+  .description('Prepare a deterministic final POC report handoff (no LLM call, no write)')
+  .option('--json', 'Output the report context as JSON')
+  .action((opts: { json?: boolean }) => { runPocReport(opts) })
 
 const capsuleCmd = program
   .command('capsule')

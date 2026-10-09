@@ -78,6 +78,12 @@ or Project Resources only when they are relevant to the experiment.
 Install the agent prompts and reusable skills as part of the initial POC setup. They provide the
 guided refinement and implementation context; they do not add a Business/Product baseline.
 
+After recording `validated`, `rejected`, or `inconclusive`, run `kaddo poc report` to prepare a
+deterministic, source-attributed final-report handoff. The report is optional; a reviewed proposal
+is persisted only with confirmation as immutable `knowledge/delivery/poc-report-v001.md` (later
+versions never overwrite earlier ones). It is `missing`, `current`, or `stale` based on a source
+fingerprint; new evidence never regenerates it automatically.
+
 ## The Knowledge Model
 
 Kaddo organizes project knowledge into four layers under `knowledge/`:

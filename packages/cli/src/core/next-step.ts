@@ -17,6 +17,7 @@ import { buildTechDecisions } from './decisions.js'
 import { roadmapStats } from './roadmap.js'
 import { type LifecycleState } from './lifecycle.js'
 import { readPocSummary, POC_ARTIFACT_PATH } from './poc.js'
+import { buildPocReportContext } from './poc-report.js'
 
 export type RoadmapSignal = 'missing' | 'empty' | 'has-candidates'
 export type WorkItemsSignal = 'none' | 'none-ready' | 'ready' | 'in-progress' | 'completed-only'
@@ -215,7 +216,11 @@ export function resolveNextStep(dir: string, now: Date = new Date()): NextStepRe
     if (poc.conclusion === 'pending') {
       return { id: 'poc-evaluate', phase: 'Evaluation', label: 'Evaluate the experiment evidence and record the POC conclusion.', target: POC_ARTIFACT_PATH, reason: 'Experiment Work Items are complete but the POC conclusion is pending.' }
     }
-    return { id: 'poc-complete', phase: 'Conclusion', label: `POC concluded: ${poc.conclusion}. Decide whether to graduate it to standard delivery.`, target: POC_ARTIFACT_PATH, reason: 'The POC conclusion is recorded from experiment evidence.' }
+    const report = buildPocReportContext(dir)
+    if (report.status !== 'current') {
+      return { id: 'poc-final-report', phase: 'Conclusion', label: `POC concluded: ${poc.conclusion}. Generate a final report if it would help communicate the result.`, command: 'kaddo poc report', target: POC_ARTIFACT_PATH, reason: report.status === 'stale' ? 'The latest final report is stale after source changes.' : 'A final report is optional and has not been generated.' }
+    }
+    return { id: 'poc-complete', phase: 'Conclusion', label: `POC concluded: ${poc.conclusion}. Decide whether to graduate it to standard delivery.`, target: POC_ARTIFACT_PATH, reason: 'The POC conclusion and final report are current.' }
   }
 
   const q = (rel: string) => analyzeKnowledgeArtifact(dir, rel)
