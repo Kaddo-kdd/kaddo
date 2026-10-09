@@ -48,6 +48,17 @@ export type ProjectOverview = {
   readiness: { overall: string; recommendedNextStep: { label: string; command?: string } }
   route: { type: string; completed: number; total: number; progressPercent: number; steps: { id: string; label: string; status: string }[] }
   findings: { blocking: number; warning: number; fyi: number; items: { level: string; message: string }[] }
+  pocReport?: {
+    eligible: boolean
+    conclusion: 'pending' | 'validated' | 'rejected' | 'inconclusive'
+    status: 'missing' | 'current' | 'stale'
+    latestReport: { path: string; version: number } | null
+    nextPath: string
+    sources: { path: string; kind: 'poc' | 'work-item' | 'resource' | 'knowledge' }[]
+    changesSinceLatest: string[]
+    handoff: string
+    reportContent: string | null
+  }
 }
 
 export type KnowledgeArtifactSummary = {
