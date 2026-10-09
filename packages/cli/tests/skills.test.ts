@@ -120,4 +120,14 @@ describe('Skills layer (VS-059)', () => {
     expect(fs.existsSync(path.join(tmp, 'knowledge/skills/adr-writing/skill.md'))).toBe(true)
     expect(fs.existsSync(path.join(tmp, 'knowledge/skills/README.md'))).toBe(true)
   })
+
+  it('POC report skill guides evidence-driven representation and portable traceability', () => {
+    const reportSkill = SKILLS.find((skill) => skill.id === 'poc-report-writing')!
+    expect(reportSkill.content).toContain('## Representation selection')
+    expect(reportSkill.content).toContain('Markdown table')
+    expect(reportSkill.content).toContain('Mermaid')
+    expect(reportSkill.content).toContain('ASCII diagram')
+    expect(reportSkill.content).toContain('repository-relative Markdown links')
+    expect(reportSkill.content).toContain('## Quality checklist')
+  })
 })

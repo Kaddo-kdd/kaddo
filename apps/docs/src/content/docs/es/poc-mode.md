@@ -97,6 +97,62 @@ La estructura canónica del informe es:
 14. Recommendation and Next Steps
 15. Traceability and Sources
 
+### Representación basada en evidencia
+
+Elige la forma que comunique con mayor claridad la evidencia entregada. Las tablas y los diagramas
+son herramientas de comunicación, no requisitos de completitud: no agregues ninguno solo para que
+el informe parezca más completo. Usa prosa para contexto e interpretación, tablas Markdown para
+evidencia comparable y Mermaid para arquitectura, topología o flujos respaldados. No inventes
+filas, métricas, prioridades, componentes ni relaciones. Prefiere Mermaid frente a diagramas ASCII
+cuando ambos puedan expresar el mismo flujo respaldado.
+
+| Sección | Representación preferida cuando la evidencia la respalda |
+|---|---|
+| Executive Summary | Tabla snapshot y prosa breve |
+| Problem and Objective | Prosa |
+| Hypothesis and Success Criteria | Matriz de evaluación |
+| Scope, Constraints and Non-goals | Lista compacta o tabla |
+| Technical Approach and Architecture | Mermaid y prosa |
+| Infrastructure and Project Resources | Tabla, con Mermaid opcional |
+| Implementation and Relevant Technical Decisions | Tabla o prosa concisa |
+| Experiments and Validation | Matriz de validación |
+| Results and Measurements | Tablas de mediciones |
+| Cost and Efficiency Analysis | Tabla comparativa |
+| Observability and Operational Findings | Tabla o prosa |
+| Findings, Learnings, Limitations and Risks | Matriz estructurada |
+| Conclusion | Estado y prosa concisa |
+| Recommendation and Next Steps | Matriz de recomendaciones cuando exista prioridad sustentada |
+| Traceability and Sources | Tabla o lista con enlaces relativos |
+
+Por ejemplo, una matriz de criterios de éxito es útil cuando cada resultado tiene evidencia directa:
+
+| Criterio de éxito | Estado | Evidencia |
+|---|---|---|
+| Endpoint API disponible | Passed | Verificación end-to-end |
+| Tres escenarios validados | Passed | 3/3 resultados registrados |
+
+Cuando las fuentes seleccionadas describan una relación o flujo real, usa un diagrama Mermaid
+respaldado:
+
+```mermaid
+flowchart LR
+  Client --> API
+  API --> Rules
+  Rules --> Result
+```
+
+Del mismo modo, los Project Resources son más fáciles de revisar como tabla cuando las fuentes
+proporcionan atributos comparables:
+
+| Recurso | Tipo / proveedor | Propósito | Ambiente |
+|---|---|---|---|
+| `RES-model` | Proveedor de IA | Inferencia de modelo | `poc` |
+| `RES-monitoring` | Servicio de monitoreo | Observabilidad del experimento | `poc` |
+
+La trazabilidad debe ser portable entre GitHub, Kaddo Admin y clones locales. Usa enlaces relativos
+al repositorio como `[Definición POC](./poc.md)` o
+`[WI-001](./work-items/completed/WI-001.md)`; nunca URL `file:///` ni rutas locales absolutas.
+
 Las secciones sin evidencia deben indicar `Not evaluated in this POC.`, `Not applicable.` o `No
 evidence available.` en lugar de inventar datos. El informe puede recomendar graduar al modo
 standard, pero la decisión de ejecutar `kaddo project mode standard` siempre es humana.
