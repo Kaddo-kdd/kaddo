@@ -55,6 +55,13 @@ retirar. Kaddo crea un plan en **draft** con cero targets. Crear un plan registr
 ambientes. Admin muestra entonces que el plan requiere refinamiento (sin targets, análisis no realizado,
 dependencias desconocidas, waves no calculadas).
 
+Una **intención capturada** y un **plan refinado** son etapas distintas, y Admin muestra el detalle de
+forma progresiva. Un plan con cero targets muestra solo la tarjeta de intención capturada y un empty
+state de refinamiento — las vistas operativas (pipeline, retirement waves, matriz de ambientes, board,
+targets) aparecen a medida que el plan gana conocimiento: las vistas de targets cuando se descubren
+targets, y las retirement waves cuando existe un orden de dependencias real. La ausencia de análisis
+nunca se muestra como ausencia de dependencias (`not analyzed ≠ none`, `0 targets ≠ 0 dependencies`).
+
 **LLM/MCP — descubrir, agrupar y refinar varias.** Cuando tienes varias cosas potencialmente obsoletas,
 o no estás seguro de si van juntas, usa un agente conectado por MCP. El agente analiza las relaciones y
 propone cómo agruparlas antes de crear nada:

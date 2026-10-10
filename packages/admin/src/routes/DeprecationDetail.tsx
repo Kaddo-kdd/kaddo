@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useParams, useRouter } from '@tanstack/react-router'
 import { api, type DeprecationTarget } from '../lib/api'
+import { deprecationView } from '../lib/deprecation-view'
 
 export function DeprecationDetail() {
   const { planId } = useParams({ from: '/deprecations/$planId' })
@@ -8,25 +9,36 @@ export function DeprecationDetail() {
   const { data: plan, isLoading, error } = useQuery({ queryKey: ['deprecation', planId], queryFn: () => api.getDeprecation(planId), retry: false })
   if (isLoading) return <div style={{ padding: 24 }}>Loading...</div>
   if (error || !plan) return <div style={{ padding: 24, color: 'var(--danger)' }}>{(error as Error)?.message ?? 'Not found.'}</div>
+  const view = deprecationView(plan)
   return <div style={{ padding: '24px 32px', maxWidth: 1200, margin: '0 auto' }}>
     <button onClick={() => router.navigate({ to: '/deprecations' })} style={back}>← Deprecations</button>
     <h2 style={{ fontSize: 22, margin: '10px 0 2px' }}><span className="font-mono">{plan.id}</span> {plan.title}</h2>
     {plan.purpose && <p style={{ color: 'var(--foreground-muted)' }}>{plan.purpose}</p>}
-    {plan.targets.length === 0 && <div style={guidance}>
-      <strong>This deprecation intent has been captured.</strong>
-      <div style={{ marginTop: 6, color: 'var(--foreground-muted)' }}>
-        Next: refine it with an MCP-connected agent to discover targets, usage evidence and dependencies
-        before any removal work begins. Creating this plan did not authorize removal.
+    {view.showEmptyState && <>
+      <div style={guidance}>
+        <strong>This deprecation intent has been captured.</strong>
+        <div style={{ marginTop: 6, color: 'var(--foreground-muted)' }}>
+          Next: refine it with an MCP-connected agent to discover targets, usage evidence and dependencies
+          before any removal work begins. Creating this plan did not authorize removal.
+        </div>
+        <div style={{ marginTop: 8, display: 'flex', gap: 18, flexWrap: 'wrap', fontSize: 12.5, color: 'var(--foreground-muted)' }}>
+          <span>Targets <b>0</b></span><span>Analysis <b>Not performed</b></span><span>Dependencies <b>Unknown</b></span><span>Removal waves <b>Not calculated</b></span>
+        </div>
       </div>
-      <div style={{ marginTop: 8, display: 'flex', gap: 18, flexWrap: 'wrap', fontSize: 12.5, color: 'var(--foreground-muted)' }}>
-        <span>Targets <b>0</b></span><span>Analysis <b>Not performed</b></span><span>Dependencies <b>Unknown</b></span><span>Removal waves <b>Not calculated</b></span>
+      <div style={emptyState}>
+        <strong>No targets yet</strong>
+        <div style={{ marginTop: 6, color: 'var(--foreground-muted)' }}>This deprecation has not been refined.</div>
+        <div style={{ marginTop: 8, color: 'var(--foreground-muted)' }}>
+          Use an MCP-connected agent to discover candidate targets, inspect usage evidence, map
+          dependencies, propose removal waves, and define the soft-deprecation strategy.
+        </div>
       </div>
-    </div>}
-    <Section title="Pipeline"><div style={chips}>{Object.entries(plan.pipeline).map(([state, count]) => <span key={state} style={chip}><b>{count}</b> {state}</span>)}</div></Section>
-    <Section title="Retirement waves">{plan.dependency.waves.map((wave, index) => <div key={index} style={{ marginBottom: 6 }}>Wave {index + 1}: <span className="font-mono">{wave.join(', ')}</span></div>)}{plan.dependency.blocked.map((item) => <div key={item.target} style={{ color: 'var(--danger)' }}>{item.target}: {item.reason}</div>)}</Section>
-    <Section title="Environment matrix"><table style={table}><thead><tr><th>Target</th><th>Dev</th><th>Test</th><th>Prod</th><th>Lifecycle</th><th>Wave</th></tr></thead><tbody>{plan.targets.map((target) => <tr key={target.id} onClick={() => router.navigate({ to: '/deprecations/$planId', params: { planId } })}><td className="font-mono">{target.id}</td><td>{target.environment.perEnvironment.development}</td><td>{target.environment.perEnvironment.test}</td><td>{target.environment.perEnvironment.production}</td><td>{target.lifecycle}</td><td>{target.wave ?? '—'}</td></tr>)}</tbody></table></Section>
-    <Section title="Board"><div style={board}>{plan.board.filter((column) => column.count > 0).map((column) => <div key={column.state} style={columnStyle}><b>{column.state}</b><small>{column.count} target(s)</small>{column.targets.map((id) => <span key={id} className="font-mono" style={ticket}>{id}</span>)}</div>)}</div></Section>
-    <Section title="Targets">{plan.targets.map((target) => <Target key={target.id} target={target} />)}</Section>
+    </>}
+    {view.showPipeline && <Section title="Pipeline"><div style={chips}>{Object.entries(plan.pipeline).map(([state, count]) => <span key={state} style={chip}><b>{count}</b> {state}</span>)}</div></Section>}
+    {view.showWaves && <Section title="Retirement waves">{plan.dependency.waves.map((wave, index) => <div key={index} style={{ marginBottom: 6 }}>Wave {index + 1}: <span className="font-mono">{wave.join(', ')}</span></div>)}{plan.dependency.blocked.map((item) => <div key={item.target} style={{ color: 'var(--danger)' }}>{item.target}: {item.reason}</div>)}</Section>}
+    {view.showEnvironmentMatrix && <Section title="Environment matrix"><table style={table}><thead><tr><th>Target</th><th>Dev</th><th>Test</th><th>Prod</th><th>Lifecycle</th><th>Wave</th></tr></thead><tbody>{plan.targets.map((target) => <tr key={target.id} onClick={() => router.navigate({ to: '/deprecations/$planId', params: { planId } })}><td className="font-mono">{target.id}</td><td>{target.environment.perEnvironment.development}</td><td>{target.environment.perEnvironment.test}</td><td>{target.environment.perEnvironment.production}</td><td>{target.lifecycle}</td><td>{target.wave ?? '—'}</td></tr>)}</tbody></table></Section>}
+    {view.showBoard && <Section title="Board"><div style={board}>{plan.board.filter((column) => column.count > 0).map((column) => <div key={column.state} style={columnStyle}><b>{column.state}</b><small>{column.count} target(s)</small>{column.targets.map((id) => <span key={id} className="font-mono" style={ticket}>{id}</span>)}</div>)}</div></Section>}
+    {view.showTargets && <Section title="Targets">{plan.targets.map((target) => <Target key={target.id} target={target} />)}</Section>}
   </div>
 }
 function Target({ target }: { target: DeprecationTarget }) { return <div style={targetCard}><div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}><div><b className="font-mono">{target.id}</b> <span>{target.title ?? target.locator ?? target.type}</span></div><span>{target.lifecycle}</span></div><div style={details}>Type: {target.type} · Locator: {target.locator ?? '—'} · Module: {target.module ?? '—'} · Resource: {target.resource?.id ?? '—'}</div><div style={details}>Dependencies: {target.dependsOnRemoval.join(', ') || '—'} · Dependents: {target.dependents.join(', ') || '—'} · Wave: {target.wave ?? '—'}</div><div style={details}>Observation: {target.observation.reasons.join(' ')}</div>{target.runbooks.length > 0 && <div style={details}>Runbooks: {target.runbooks.map((runbook) => `${runbook.id} (${runbook.approval.status})`).join(', ')}</div>}</div> }
@@ -41,3 +53,4 @@ const ticket: React.CSSProperties = { padding: 6, background: 'var(--surface-mut
 const targetCard: React.CSSProperties = { padding: 14, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', marginBottom: 10 }
 const details: React.CSSProperties = { color: 'var(--foreground-muted)', fontSize: 12, marginTop: 7 }
 const guidance: React.CSSProperties = { marginTop: 14, padding: 14, border: '1px dashed var(--border)', background: 'var(--surface)', borderRadius: 'var(--radius)' }
+const emptyState: React.CSSProperties = { marginTop: 14, padding: 20, border: '1px solid var(--border)', background: 'var(--surface)', borderRadius: 'var(--radius)', textAlign: 'center' }

@@ -55,6 +55,13 @@ want to retire. Kaddo creates a **draft** plan with zero targets. Creating a pla
 or environments. Admin then shows the plan needs refinement (no targets, analysis not performed,
 dependencies unknown, removal waves not calculated).
 
+A **captured intent** and a **refined plan** are different stages, and Admin shows the detail
+progressively. A plan with zero targets shows only the captured-intent card and a refinement empty
+state — the operational views (pipeline, retirement waves, environment matrix, board, targets) appear
+as the plan gains knowledge: target views once targets are discovered, and retirement waves once there
+is a real dependency ordering. Absence of analysis is never shown as absence of dependencies (`not
+analyzed ≠ none`, `0 targets ≠ 0 dependencies`).
+
 **LLM/MCP — discover, group and refine many.** When you have several possibly-obsolete things, or you
 are not sure whether they belong together, use an MCP-connected agent. The agent analyses
 relationships and proposes how to group them before creating anything:

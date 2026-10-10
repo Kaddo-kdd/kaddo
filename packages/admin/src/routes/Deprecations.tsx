@@ -28,7 +28,7 @@ export function Deprecations() {
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 20 }}>
       <div>
         <h2 style={{ fontSize: 22, margin: 0 }}>Deprecations</h2>
-        <p style={{ color: 'var(--foreground-muted)', marginTop: 4 }}>Controlled retirement plans, derived from canonical Kaddo knowledge.</p>
+        <p style={{ color: 'var(--foreground-muted)', marginTop: 4 }}>Plan and track controlled retirement of legacy functionality.</p>
       </div>
       {!creating && <button onClick={() => setCreating(true)} style={primaryBtn}>+ New Deprecation</button>}
     </div>
