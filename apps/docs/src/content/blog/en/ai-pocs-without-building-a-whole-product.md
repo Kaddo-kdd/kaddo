@@ -11,7 +11,7 @@ tags:
   - software-architecture
 locale: en
 cover: /blog/poc-mode/cover.webp
-featured: false
+featured: true
 translationKey: ai-proof-of-concept-mode
 ---
 
