@@ -24,6 +24,17 @@ import { runGraphExport } from './commands/graph.js'
 import { runTopologyValidate, runTopologyApply } from './commands/topology.js'
 import { runResourcesList, runResourcesGet, runResourcesCreate, runResourcesUpdate, runResourcesDelete } from './commands/resources.js'
 import {
+  runDeprecationList,
+  runDeprecationShow,
+  runDeprecationStatus,
+  runDeprecationPlan,
+  runDeprecationAnalyze,
+  runDeprecationCreate,
+  runDeprecationAddTarget,
+  runDeprecationUpdateTarget,
+  runDeprecationRemoveTarget,
+} from './commands/deprecation.js'
+import {
   runIntegrationsList,
   runIntegrationsStatus,
   runIntegrationsVerify,
@@ -229,6 +240,83 @@ resourcesCmd
   .option('-y, --yes', 'Skip the confirmation prompt')
   .option('--json', 'Output JSON')
   .action(async (id: string, opts: { yes?: boolean; json?: boolean }) => { await runResourcesDelete(id, opts, cwd()) })
+
+const deprecationCmd = program
+  .command('deprecation')
+  .description('Controlled Deprecation — plan the safe, traceable retirement of legacy functionality')
+
+deprecationCmd
+  .command('list')
+  .description('List Deprecation Plans under knowledge/legacy/deprecations/')
+  .option('--json', 'Output JSON')
+  .action((opts: { json?: boolean }) => runDeprecationList(cwd(), opts))
+
+deprecationCmd
+  .command('show <id>')
+  .description('Show one Deprecation Plan: purpose, targets, lifecycle and environments')
+  .option('--json', 'Output JSON')
+  .action((id: string, opts: { json?: boolean }) => runDeprecationShow(id, cwd(), opts))
+
+deprecationCmd
+  .command('status <id>')
+  .description('Pipeline view: target counts by lifecycle state + targets eligible for removal review')
+  .option('--json', 'Output JSON')
+  .action((id: string, opts: { json?: boolean }) => runDeprecationStatus(id, cwd(), opts))
+
+deprecationCmd
+  .command('plan <id>')
+  .description('Derive the removal waves (dependents first) from depends_on_removal')
+  .option('--json', 'Output JSON')
+  .action((id: string, opts: { json?: boolean }) => runDeprecationPlan(id, cwd(), opts))
+
+deprecationCmd
+  .command('analyze <id>')
+  .description('Per-target unused-confidence from usage evidence (never auto-removes)')
+  .option('--json', 'Output JSON')
+  .action((id: string, opts: { json?: boolean }) => runDeprecationAnalyze(id, cwd(), opts))
+
+deprecationCmd
+  .command('create')
+  .description('Create a Deprecation Plan (interactive, or with --title). Writes via Core.')
+  .option('--title <title>', 'Plan title')
+  .option('--purpose <purpose>', 'What this plan retires and why')
+  .option('--status <status>', 'Plan status (default: draft)')
+  .option('--json', 'Output JSON')
+  .action(async (opts: { title?: string; purpose?: string; status?: string; json?: boolean }) => { await runDeprecationCreate(opts, cwd()) })
+
+deprecationCmd
+  .command('add-target <planId>')
+  .description('Add a typed Deprecation Target to a plan (no-lossy). Writes via Core.')
+  .option('--id <id>', 'Explicit target id (otherwise derived)')
+  .option('--type <type>', 'Target type: module|route|function|ui|job|database-object|integration|config|other')
+  .option('--locator <locator>', 'Type-appropriate locator (path#symbol, route, DB object…)')
+  .option('--title <title>', 'Human title')
+  .option('--lifecycle <state>', 'Lifecycle state (default: candidate)')
+  .option('--resource <id>', 'Project Resource id (RES-…) for database/external targets')
+  .option('--module <id>', 'Module id (validated against .kaddo/modules.yml)')
+  .option('--depends-on <ids>', 'Comma-separated target ids that must retire before this one')
+  .option('--json', 'Output JSON')
+  .action((planId: string, opts: { id?: string; type?: string; locator?: string; title?: string; lifecycle?: string; resource?: string; module?: string; dependsOn?: string; json?: boolean }) => runDeprecationAddTarget(planId, opts, cwd()))
+
+deprecationCmd
+  .command('update-target <planId> <targetId>')
+  .description('Update a target in place (no-lossy). Pass the fields to change.')
+  .option('--type <type>', 'New target type')
+  .option('--locator <locator>', 'New locator')
+  .option('--title <title>', 'New title')
+  .option('--lifecycle <state>', 'New lifecycle state')
+  .option('--resource <id>', 'Project Resource id')
+  .option('--module <id>', 'Module id')
+  .option('--depends-on <ids>', 'Comma-separated target ids that must retire before this one')
+  .option('--json', 'Output JSON')
+  .action((planId: string, targetId: string, opts: { type?: string; locator?: string; title?: string; lifecycle?: string; resource?: string; module?: string; dependsOn?: string; json?: boolean }) => runDeprecationUpdateTarget(planId, targetId, opts, cwd()))
+
+deprecationCmd
+  .command('remove-target <planId> <targetId>')
+  .description('Remove a target after showing what depends on it (requires confirmation)')
+  .option('-y, --yes', 'Skip the confirmation prompt')
+  .option('--json', 'Output JSON')
+  .action(async (planId: string, targetId: string, opts: { yes?: boolean; json?: boolean }) => { await runDeprecationRemoveTarget(planId, targetId, opts, cwd()) })
 
 const integrationsCmd = program
   .command('integrations')

@@ -41,6 +41,18 @@ import {
   ResourceWriteError,
   type ResourceInput,
 } from '../../cli/src/core/resource-write.js'
+import { getDeprecationPlans, getDeprecationPlan } from '../../cli/src/core/deprecation.js'
+import { deriveRemovalWaves, planIntelligence } from '../../cli/src/core/deprecation-intelligence.js'
+import {
+  createPlan,
+  addTarget,
+  updateTarget,
+  removeTarget,
+  validateTargetInput,
+  DeprecationWriteError,
+  type PlanInput,
+  type TargetInput,
+} from '../../cli/src/core/deprecation-write.js'
 
 export type ToolResult = { ok: true; data: unknown } | { ok: false; message: string }
 
@@ -516,5 +528,86 @@ export function deleteResourceTool(root: string, id: string, confirm?: boolean):
     return ok({ status: 'deleted', ...deleteResource(root, id, { confirm: true }) })
   } catch (e) {
     return fail(e instanceof ResourceWriteError ? e.message : String(e))
+  }
+}
+
+// --- Controlled Deprecation (WI-049) ---------------------------------------------------------------
+// Reads consume the Core read model + intelligence. Mutations are proposal → preview → confirm; a
+// destructive change (remove-target) never applies without confirm=true. Core persists all Markdown.
+
+export function listDeprecationsTool(root: string): ToolResult {
+  return ok(getDeprecationPlans(root))
+}
+
+export function getDeprecationTool(root: string, id: string): ToolResult {
+  const plan = getDeprecationPlan(root, id)
+  if (!plan) return fail(`Deprecation Plan "${id}" not found.`)
+  return ok(plan)
+}
+
+/** Dependency-ordered removal waves + blocked targets (derived, explainable). */
+export function planDeprecationTool(root: string, id: string): ToolResult {
+  const plan = getDeprecationPlan(root, id)
+  if (!plan) return fail(`Deprecation Plan "${id}" not found.`)
+  return ok(deriveRemovalWaves(plan))
+}
+
+/** Per-target unused-confidence + eligibility (never decides a removal). */
+export function analyzeDeprecationTool(root: string, id: string): ToolResult {
+  const plan = getDeprecationPlan(root, id)
+  if (!plan) return fail(`Deprecation Plan "${id}" not found.`)
+  return ok(planIntelligence(plan))
+}
+
+export function createDeprecationTool(root: string, args: PlanInput, confirm?: boolean): ToolResult {
+  if (!confirm) {
+    return ok({ status: 'needs_confirmation', action: 'create', proposal: args, message: 'Re-call with confirm=true to create this Deprecation Plan.' })
+  }
+  try {
+    return ok({ status: 'created', ...createPlan(root, args) })
+  } catch (e) {
+    return fail(e instanceof DeprecationWriteError ? e.message : String(e))
+  }
+}
+
+export function addDeprecationTargetTool(root: string, planId: string, args: TargetInput, confirm?: boolean): ToolResult {
+  if (!getDeprecationPlan(root, planId)) return fail(`Deprecation Plan "${planId}" not found.`)
+  if (!confirm) {
+    const findings = validateTargetInput(root, { ...args, id: args.id ?? 'DEP-TGT-NEW', lifecycle: args.lifecycle ?? 'candidate' })
+    return ok({ status: 'needs_confirmation', action: 'add_target', planId, proposal: args, findings, message: 'Re-call with confirm=true to add this target.' })
+  }
+  try {
+    return ok({ status: 'added', ...addTarget(root, planId, args) })
+  } catch (e) {
+    return fail(e instanceof DeprecationWriteError ? e.message : String(e))
+  }
+}
+
+export function updateDeprecationTargetTool(root: string, planId: string, targetId: string, args: TargetInput, confirm?: boolean): ToolResult {
+  if (!getDeprecationPlan(root, planId)) return fail(`Deprecation Plan "${planId}" not found.`)
+  if (!confirm) {
+    return ok({ status: 'needs_confirmation', action: 'update_target', planId, targetId, changes: args, message: 'Re-call with confirm=true to apply this update.' })
+  }
+  try {
+    return ok({ status: 'updated', ...updateTarget(root, planId, targetId, args) })
+  } catch (e) {
+    return fail(e instanceof DeprecationWriteError ? e.message : String(e))
+  }
+}
+
+export function removeDeprecationTargetTool(root: string, planId: string, targetId: string, confirm?: boolean): ToolResult {
+  if (!getDeprecationPlan(root, planId)) return fail(`Deprecation Plan "${planId}" not found.`)
+  if (!confirm) {
+    try {
+      const preview = removeTarget(root, planId, targetId)
+      return ok({ status: 'needs_confirmation', action: 'remove_target', ...preview.preview, message: 'Re-call with confirm=true to remove. Dependents’ depends_on_removal are NOT rewritten.' })
+    } catch (e) {
+      return fail(e instanceof DeprecationWriteError ? e.message : String(e))
+    }
+  }
+  try {
+    return ok({ status: 'removed', ...removeTarget(root, planId, targetId, { confirm: true }) })
+  } catch (e) {
+    return fail(e instanceof DeprecationWriteError ? e.message : String(e))
   }
 }

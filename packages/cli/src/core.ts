@@ -335,4 +335,20 @@ export {
   type RemovalWavePlan,
   type TargetIntelligence,
 } from './core/deprecation-intelligence.js'
+export {
+  createPlan,
+  addTarget,
+  updateTarget,
+  removeTarget,
+  validateTargetInput,
+  nextPlanId,
+  nextTargetId,
+  DeprecationWriteError,
+  type PlanInput,
+  type TargetInput,
+  type PlanWriteResult,
+  type TargetWriteResult,
+  type TargetRemovePreview,
+  type DepFinding,
+} from './core/deprecation-write.js'
 export { exists, readFile, join, cwd } from './utils/fs.js'

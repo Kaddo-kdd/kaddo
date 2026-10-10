@@ -29,6 +29,14 @@ import {
   createResourceTool,
   updateResourceTool,
   deleteResourceTool,
+  listDeprecationsTool,
+  getDeprecationTool,
+  planDeprecationTool,
+  analyzeDeprecationTool,
+  createDeprecationTool,
+  addDeprecationTargetTool,
+  updateDeprecationTargetTool,
+  removeDeprecationTargetTool,
   preparePocReportTool,
   persistPocReportTool,
   type ToolResult,
@@ -284,6 +292,84 @@ export function createServer(root: string): McpServer {
       inputSchema: { id: z.string(), confirm: z.boolean().optional() },
     },
     async (args) => toolText(guarded(root, () => deleteResourceTool(root, args.id, args.confirm)))
+  )
+
+  // --- Controlled Deprecation (WI-049) ---
+  server.registerTool(
+    'kaddo_list_deprecations',
+    { title: 'List Deprecation Plans', description: 'List Controlled Deprecation Plans under knowledge/legacy/deprecations/ (read-only).', inputSchema: {} },
+    async () => toolText(guarded(root, () => listDeprecationsTool(root)))
+  )
+
+  server.registerTool(
+    'kaddo_get_deprecation',
+    { title: 'Get Deprecation Plan', description: 'Get one Deprecation Plan by ID: purpose, typed targets, lifecycle and per-environment state.', inputSchema: { id: z.string() } },
+    async (args) => toolText(guarded(root, () => getDeprecationTool(root, args.id)))
+  )
+
+  server.registerTool(
+    'kaddo_plan_deprecation',
+    { title: 'Deprecation Removal Waves', description: 'Derive the dependency-ordered removal waves (dependents first) and blocked targets for a plan. Explainable, not a manual priority.', inputSchema: { id: z.string() } },
+    async (args) => toolText(guarded(root, () => planDeprecationTool(root, args.id)))
+  )
+
+  server.registerTool(
+    'kaddo_analyze_deprecation',
+    { title: 'Analyze Deprecation Plan', description: 'Per-target unused-confidence from usage evidence + removal eligibility. Absence of a reference is never treated as no-usage; removal always requires human confirmation.', inputSchema: { id: z.string() } },
+    async (args) => toolText(guarded(root, () => analyzeDeprecationTool(root, args.id)))
+  )
+
+  const targetFields = {
+    id: z.string().optional(),
+    type: z.string().optional(),
+    locator: z.string().optional(),
+    title: z.string().optional(),
+    lifecycle: z.string().optional(),
+    environments: z.record(z.string()).optional(),
+    assessment: z.object({ unusedConfidence: z.string().optional(), blastRadius: z.string().optional(), reversibility: z.string().optional() }).optional(),
+    dependsOnRemoval: z.array(z.string()).optional(),
+    resource: z.string().optional(),
+    module: z.string().optional(),
+  }
+
+  server.registerTool(
+    'kaddo_create_deprecation',
+    {
+      title: 'Create Deprecation Plan',
+      description: 'Propose creating a Deprecation Plan. Without confirm, returns a preview (writes nothing); with confirm=true, Core persists it as Markdown.',
+      inputSchema: { title: z.string().optional(), purpose: z.string().optional(), status: z.string().optional(), confirm: z.boolean().optional() },
+    },
+    async (args) => toolText(guarded(root, () => createDeprecationTool(root, args, args.confirm)))
+  )
+
+  server.registerTool(
+    'kaddo_add_deprecation_target',
+    {
+      title: 'Add Deprecation Target',
+      description: 'Propose adding a typed target to a plan. Without confirm, returns a preview + validation findings; with confirm=true, Core appends it (no-lossy).',
+      inputSchema: { planId: z.string(), ...targetFields, confirm: z.boolean().optional() },
+    },
+    async (args) => toolText(guarded(root, () => addDeprecationTargetTool(root, args.planId, args, args.confirm)))
+  )
+
+  server.registerTool(
+    'kaddo_update_deprecation_target',
+    {
+      title: 'Update Deprecation Target',
+      description: 'Propose updating a target in place (no-lossy). Without confirm, returns a preview; with confirm=true, Core applies it.',
+      inputSchema: { planId: z.string(), targetId: z.string(), ...targetFields, confirm: z.boolean().optional() },
+    },
+    async (args) => toolText(guarded(root, () => updateDeprecationTargetTool(root, args.planId, args.targetId, args, args.confirm)))
+  )
+
+  server.registerTool(
+    'kaddo_remove_deprecation_target',
+    {
+      title: 'Remove Deprecation Target',
+      description: 'Remove a target. Without confirm, returns what depends on it (writes nothing); with confirm=true, Core removes it — dependents’ depends_on_removal are left intact.',
+      inputSchema: { planId: z.string(), targetId: z.string(), confirm: z.boolean().optional() },
+    },
+    async (args) => toolText(guarded(root, () => removeDeprecationTargetTool(root, args.planId, args.targetId, args.confirm)))
   )
 
   server.registerTool(
