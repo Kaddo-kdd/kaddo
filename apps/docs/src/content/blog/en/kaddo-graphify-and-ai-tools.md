@@ -19,8 +19,6 @@ translationKey: kaddo-graphify-ai-tools
 
 Kaddo, Graphify, GitNexus, OpenSpec and Spec Kit all relate to a problem that has become central when building software with AI agents: providing the context they need to work well. Their capabilities overlap only partly, though. Some tools discover repository structure, some organize change specifications and others guide a development process.
 
-![A knowledge core connects code exploration, product intent and verification](/blog/kaddo-graphify/cover.webp)
-
 To see where Kaddo fits, it helps to distinguish those responsibilities first.
 
 ## Context is not one thing
