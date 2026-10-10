@@ -1,15 +1,16 @@
 import { useRouter, useRouterState } from '@tanstack/react-router'
+import { ArchiveX, Database, type LucideIcon } from 'lucide-react'
 import { isNavItemActive } from '../lib/presentation'
 
-type NavItem = { label: string; path: string; icon: string; disabled?: boolean }
+type NavItem = { label: string; path: string; icon: string | LucideIcon; disabled?: boolean }
 
 const navItems: NavItem[] = [
   { label: 'Overview', path: '/overview', icon: '◎' },
   { label: 'Knowledge', path: '/knowledge', icon: '📚' },
   { label: 'Work Items', path: '/work-items', icon: '📋' },
   { label: 'Initiatives', path: '/initiatives', icon: '🎯' },
-  { label: 'Resources', path: '/resources', icon: '🗄' },
-  { label: 'Deprecations', path: '/deprecations', icon: '◌' },
+  { label: 'Resources', path: '/resources', icon: Database },
+  { label: 'Deprecations', path: '/deprecations', icon: ArchiveX },
   { label: 'System', path: '/system', icon: '⚙' },
   { label: 'Integrations', path: '/integrations', icon: '🔌' },
   { label: 'External Items', path: '/external-items', icon: '🔍' },
@@ -40,6 +41,7 @@ export function Sidebar({ projectName }: { projectName: string }) {
       <nav style={{ padding: '8px 0', flex: 1 }}>
         {navItems.map((item) => {
           const active = isNavItemActive(currentPath, item.path)
+          const Icon = item.icon
           return (
             <button
               key={item.path}
@@ -64,7 +66,9 @@ export function Sidebar({ projectName }: { projectName: string }) {
                 fontFamily: 'inherit',
               }}
             >
-              <span style={{ width: 20, textAlign: 'center' }}>{item.icon}</span>
+              <span style={{ width: 20, height: 20, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                {typeof Icon === 'string' ? Icon : <Icon size={20} aria-hidden="true" />}
+              </span>
               <span>{item.label}</span>
               {item.disabled && <span style={{ fontSize: 10, marginLeft: 'auto' }}>Soon</span>}
             </button>
