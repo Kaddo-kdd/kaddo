@@ -34,6 +34,9 @@ import {
   runDeprecationAddTarget,
   runDeprecationUpdateTarget,
   runDeprecationRemoveTarget,
+  runDeprecationRunbookContext,
+  runDeprecationRunbookCreate,
+  runDeprecationRunbookValidate,
 } from './commands/deprecation.js'
 import {
   runIntegrationsList,
@@ -324,6 +327,28 @@ deprecationCmd
   .option('-y, --yes', 'Skip the confirmation prompt')
   .option('--json', 'Output JSON')
   .action(async (planId: string, targetId: string, opts: { yes?: boolean; json?: boolean }) => { await runDeprecationRemoveTarget(planId, targetId, opts, cwd()) })
+
+const deprecationRunbookCmd = deprecationCmd
+  .command('runbook')
+  .description('Prepare and validate versioned production runbooks (never executes production commands)')
+
+deprecationRunbookCmd
+  .command('context <planId> <targetId>')
+  .description('Show bounded target/resource/evidence context and safeguards (read-only)')
+  .option('--json', 'Output JSON')
+  .action((planId: string, targetId: string, opts: { json?: boolean }) => runDeprecationRunbookContext(planId, targetId, cwd(), opts))
+
+deprecationRunbookCmd
+  .command('create <planId> <targetId>')
+  .description('Create a production runbook proposal; execution always remains manual')
+  .option('--json', 'Output JSON')
+  .action((planId: string, targetId: string, opts: { json?: boolean }) => runDeprecationRunbookCreate(planId, targetId, cwd(), opts))
+
+deprecationRunbookCmd
+  .command('validate <id>')
+  .description('Validate required sections and the human approval boundary')
+  .option('--json', 'Output JSON')
+  .action((id: string, opts: { json?: boolean }) => runDeprecationRunbookValidate(id, cwd(), opts))
 
 const integrationsCmd = program
   .command('integrations')

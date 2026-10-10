@@ -11,6 +11,13 @@ import {
   type TargetInput,
   type DepFinding,
 } from '../core/deprecation-write.js'
+import {
+  buildProductionRunbookContext,
+  createProductionRunbook,
+  getProductionRunbook,
+  ProductionRunbookError,
+  validateProductionRunbook,
+} from '../core/deprecation-runbook.js'
 import { intro, outro, log, text, confirm } from '../utils/ui.js'
 
 // Read + mutation surfaces for Controlled Deprecation (WI-049). Reads consume the Core read model;
@@ -225,4 +232,41 @@ export async function runDeprecationRemoveTarget(planId: string, targetId: strin
   } catch (err) {
     console.error(err instanceof DeprecationWriteError ? err.message : String(err)); process.exit(1)
   }
+}
+
+export function runDeprecationRunbookContext(planId: string, targetId: string, dir: string = cwd(), opts: { json?: boolean } = {}): void {
+  try {
+    const context = buildProductionRunbookContext(dir, planId, targetId)
+    if (opts.json) { console.log(JSON.stringify(context, null, 2)); return }
+    console.log(`\n${context.plan.id}/${context.target.id} — production runbook context`)
+    console.log(`  Eligible: ${context.eligible ? 'yes' : 'no'}`)
+    console.log(`  Next path: ${context.nextPath}`)
+    if (context.blockers.length > 0) for (const blocker of context.blockers) console.log(`  Blocked: ${blocker}`)
+    console.log(`\n  ${context.nextStep}\n`)
+  } catch (err) {
+    console.error(err instanceof ProductionRunbookError ? err.message : String(err)); process.exitCode = 1
+  }
+}
+
+export function runDeprecationRunbookCreate(planId: string, targetId: string, dir: string = cwd(), opts: { json?: boolean } = {}): void {
+  try {
+    const runbook = createProductionRunbook(dir, planId, targetId)
+    if (opts.json) { console.log(JSON.stringify(runbook, null, 2)); return }
+    console.log(`\nCreated ${runbook.id}: ${runbook.path}`)
+    console.log('This is a proposal only. Obtain human approval, execute manually, record evidence, then validate it.\n')
+  } catch (err) {
+    console.error(err instanceof ProductionRunbookError ? err.message : String(err)); process.exitCode = 1
+  }
+}
+
+export function runDeprecationRunbookValidate(id: string, dir: string = cwd(), opts: { json?: boolean } = {}): void {
+  const runbook = getProductionRunbook(dir, id)
+  if (!runbook) { console.error(`Production Runbook "${id}" not found.`); process.exitCode = 1; return }
+  const findings = validateProductionRunbook(runbook)
+  const payload = { runbook: { id: runbook.id, path: runbook.path }, valid: !findings.some((item) => item.level === 'error'), findings }
+  if (opts.json) { console.log(JSON.stringify(payload, null, 2)); return }
+  console.log(`\n${runbook.id} — ${payload.valid ? 'valid' : 'invalid'}`)
+  for (const finding of findings) console.log(`  ${finding.level}: ${finding.message}`)
+  console.log('')
+  if (!payload.valid) process.exitCode = 1
 }

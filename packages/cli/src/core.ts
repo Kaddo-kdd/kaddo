@@ -366,4 +366,18 @@ export {
   type TargetRemovePreview,
   type DepFinding,
 } from './core/deprecation-write.js'
+export {
+  buildProductionRunbookContext,
+  createProductionRunbook,
+  getProductionRunbook,
+  validateProductionRunbook,
+  PRODUCTION_RUNBOOK_ARTIFACT_TYPE,
+  PRODUCTION_RUNBOOKS_DIR,
+  RUNBOOK_SECTIONS,
+  ProductionRunbookError,
+  type ProductionRunbookContext,
+  type ProductionRunbook,
+  type RunbookApproval,
+  type RunbookFinding,
+} from './core/deprecation-runbook.js'
 export { exists, readFile, join, cwd } from './utils/fs.js'

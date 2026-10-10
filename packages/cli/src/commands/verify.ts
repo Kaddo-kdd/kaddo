@@ -30,22 +30,25 @@ function findWorkItemFile(dir: string, id: string): string | null {
   return null
 }
 
-function extractACsFromBody(body: string): string[] {
+export type ParsedAcceptanceCriterion = { criterion: string; checked: boolean }
+
+/** Read canonical EN/ES acceptance criteria and preserve the author's explicit checkbox evidence. */
+export function extractACsFromBody(body: string): ParsedAcceptanceCriterion[] {
   const lines = body.split(/\r?\n/)
   let inAC = false
-  const acs: string[] = []
+  const acs: ParsedAcceptanceCriterion[] = []
   for (const line of lines) {
-    if (/^#{1,6}\s+acceptance\s+criteria/i.test(line)) {
+    if (/^#{1,6}\s+(acceptance\s+criteria|criterios\s+de\s+aceptaci[oó]n)/i.test(line)) {
       inAC = true
       continue
     }
     if (inAC && /^#{1,6}\s+/.test(line)) break
     if (inAC) {
-      const m = line.match(/^\s*[-*+]\s+(?:\[[ xX]\]\s*)?(.+)$/)
+      const m = line.match(/^\s*[-*+]\s+(?:\[([ xX])\]\s*)?(.+)$/)
       if (m) {
-        const text = m[1].trim()
+        const text = m[2].trim()
         if (text && !/^_.*_$/.test(text) && !/^tbd$/i.test(text)) {
-          acs.push(text)
+          acs.push({ criterion: text, checked: m[1]?.toLowerCase() === 'x' })
         }
       }
     }
@@ -126,8 +129,9 @@ export async function runVerify(workItemId: string, opts: { json?: boolean; yes?
 
   // AC verifications: mark all as not-verified by default (agent fills these)
   const acVerifications = acs.map((ac) => ({
-    criterion: ac,
-    status: 'not-verified' as const,
+    criterion: ac.criterion,
+    status: ac.checked ? 'passed' as const : 'not-verified' as const,
+    ...(ac.checked ? { evidence: 'Explicitly checked in the Work Item acceptance criteria.' } : {}),
   }))
 
   const input: CollectEvidenceInput = {
