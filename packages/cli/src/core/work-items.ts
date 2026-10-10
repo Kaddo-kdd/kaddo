@@ -22,6 +22,7 @@ import {
 } from './lifecycle.js'
 import { parseWorkItemSource, type WorkItemSource } from './work-item-source.js'
 import { parseWorkItemResources, type WorkItemResource } from './resources.js'
+import { parseWorkItemDeprecationTargets, type WorkItemDeprecationRef } from './deprecation.js'
 import type { ExternalSnapshot } from './work-item-write.js'
 import { loadSystemTopology } from './system-topology.js'
 
@@ -117,6 +118,9 @@ export type WorkItemDetail = WorkItemListItem & {
   /** Project Resources (external systems) this Work Item relates to, by role. Separate from
    * affectedModules (code). Parsed from the front matter `resources:` list (WI-030). */
   resources: WorkItemResource[]
+  /** Deprecation Targets this Work Item retires (WI-050). The WI references them (WI → DEP →
+   * target); it never copies the target definition. Parsed from `deprecation_targets:`. */
+  deprecationTargets: WorkItemDeprecationRef[]
   /** How far the Work Item has been refined (independent of lifecycle). */
   refinement: RefinementStatus
   /** Graph-assisted impact (VS-101): semantic system entities the agent classified. */
@@ -303,6 +307,8 @@ export function getWorkItem(dir: string, workItemId: string): WorkItemDetail {
     markdownBody: body.trim(),
     // External systems this WI relates to (WI-030), separate from affectedModules (code).
     resources: parseWorkItemResources(fm),
+    // Deprecation Targets this WI retires (WI-050), referenced not copied.
+    deprecationTargets: parseWorkItemDeprecationTargets(fm),
     ...parseSystemImpact(dir, fm),
   }
   return { ...detail, refinement: computeRefinementStatus(detail) }

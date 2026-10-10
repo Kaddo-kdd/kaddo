@@ -13,6 +13,8 @@ import { getSystemMapProjection } from './system-map.js'
 import { buildTechDecisions, hasUnmaterializedDecisions } from './decisions.js'
 import { getLegacyKnowledgeSummary } from './legacy-knowledge.js'
 import { parseWorkItemResources, getResource } from './resources.js'
+import { getDeprecationPlans, getDeprecationPlan, parseWorkItemDeprecationTargets, type DeprecationTarget } from './deprecation.js'
+import { deriveUnusedConfidence } from './deprecation-intelligence.js'
 
 // --- Types -------------------------------------------------------------------
 
@@ -24,6 +26,8 @@ export type ImplementationHandoff = {
   affectedModules: string[]
   /** Project Resources (external systems) relevant to this WI, by role (WI-032). */
   resources: { id: string; role: string }[]
+  /** Deprecation Targets this WI retires, as plan/target refs (WI-050). */
+  deprecationTargets: { plan: string | null; target: string }[]
   domains: string[]
   scopeConfidence: { level: string; reasons: string[] } | null
   hasUnmaterializedDecisions: boolean
@@ -78,6 +82,17 @@ export function buildImplementationHandoff(dir: string, workItemId: string): Imp
   // Project Resources relevant to THIS Work Item (WI-032): resolve only the WI's own relationships,
   // never the whole catalog. The handoff INFORMS — it never connects to the resource or shows secrets.
   const wiResources = parseWorkItemResources(match.rawFrontmatter)
+  // Deprecation Targets this WI retires (WI-050): resolve each ref to its target across plans.
+  const wiDeprecationRefs = parseWorkItemDeprecationTargets(match.rawFrontmatter)
+  const resolveTarget = (ref: { plan: string | null; target: string }): { planId: string; target: DeprecationTarget } | null => {
+    const plans = ref.plan ? [getDeprecationPlan(dir, ref.plan)].filter(Boolean) : getDeprecationPlans(dir).map((p) => getDeprecationPlan(dir, p.id))
+    for (const p of plans) {
+      if (!p) continue
+      const t = p.targets.find((x) => x.id.toUpperCase() === ref.target.toUpperCase())
+      if (t) return { planId: p.id, target: t }
+    }
+    return null
+  }
 
   const lines: string[] = [
     `Implement Work Item ${wiId} — "${wiTitle}" — in project "${projectName}" using Kaddo.`,
@@ -209,6 +224,49 @@ export function buildImplementationHandoff(dir: string, workItemId: string): Imp
     )
   }
 
+  if (wiDeprecationRefs.length > 0) {
+    lines.push(
+      '',
+      '--- Relevant Deprecation Targets ---',
+      '',
+      'This Work Item is part of a Controlled Deprecation plan. It RETIRES the targets below. Soft',
+      'deprecation precedes physical removal; in Dev/Test you may remove code/endpoints/dev-test data',
+      'when the resource boundary allows and there is confirmation. A production change needs a Runbook',
+      'and explicit human approval — never execute a destructive production operation autonomously.',
+    )
+    for (const ref of wiDeprecationRefs) {
+      const resolved = resolveTarget(ref)
+      if (!resolved) {
+        lines.push('', `- ${ref.target}${ref.plan ? ` (plan ${ref.plan})` : ''} — target not found in any Deprecation Plan.`)
+        continue
+      }
+      const { planId, target: t } = resolved
+      lines.push('', `- ${t.id} [${t.type}] — plan ${planId}, lifecycle: ${t.lifecycle}`)
+      if (t.locator) lines.push(`    locator: ${t.locator}`)
+      const envs = Object.entries(t.environments).map(([e, s]) => `${e}=${s}`).join(' ')
+      if (envs) lines.push(`    environments: ${envs}`)
+      const unused = deriveUnusedConfidence(t.usageEvidence)
+      lines.push(`    unused confidence: ${unused.confidence}${unused.requiresHumanConfirmation ? ' (human confirmation required)' : ''}`)
+      if (t.assessment.blastRadius) lines.push(`    blast radius: ${t.assessment.blastRadius}`)
+      if (t.assessment.reversibility) lines.push(`    reversibility: ${t.assessment.reversibility}`)
+      if (t.dependsOnRemoval.length > 0) lines.push(`    depends_on_removal: ${t.dependsOnRemoval.join(', ')} (retire these first)`)
+      if (t.resource) {
+        const res = getResource(dir, t.resource)
+        if (res) {
+          const bounds = Object.entries(res.boundaries).map(([env, ops]) => `${env}: ${ops.join('/')}`).join(' · ')
+          lines.push(`    resource: ${res.id} — ${res.title}${bounds ? ` (boundaries — ${bounds})` : ''}`)
+        } else {
+          lines.push(`    resource: ${t.resource} — definition not found under knowledge/tech/resources/.`)
+        }
+      }
+    }
+    lines.push(
+      '',
+      'Record what you actually retired as Evidence. Prepare a rollback for every change; for production,',
+      'the rollback/abort path lives in the Runbook, not here.',
+    )
+  }
+
   lines.push(
     '',
     '--- Implementation Plan ---',
@@ -231,6 +289,7 @@ export function buildImplementationHandoff(dir: string, workItemId: string): Imp
     lifecycle,
     affectedModules,
     resources: wiResources,
+    deprecationTargets: wiDeprecationRefs,
     domains,
     scopeConfidence,
     hasUnmaterializedDecisions: unmaterialized,

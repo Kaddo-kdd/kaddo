@@ -196,6 +196,66 @@ export function planIntelligence(plan: DeprecationPlanDetail): {
   return { waves, eligible: [...eligible], targets }
 }
 
+// --- Work Item candidates (WI-050) -------------------------------------------
+
+/**
+ * A proposed Work Item to materialize from the plan. One candidate per (wave, module) so each
+ * becomes one WI → one branch → one PR, and multirepo plans fan out to the owning repos. The WI will
+ * REFERENCE these target ids (deprecation_targets), never copy their definitions.
+ */
+export type WorkItemCandidate = {
+  wave: number
+  /** Owning module id, or null for targets with no module (e.g. a shared/core surface). */
+  module: string | null
+  title: string
+  deprecationTargets: string[]
+  /** Distinct Project Resource ids across the grouped targets. */
+  resources: string[]
+}
+
+/**
+ * Propose Work Item candidates from a plan's removal waves, grouped by (wave, module). Deterministic
+ * and side-effect-free: materializing an actual Work Item is a separate, human-gated step.
+ */
+export function proposeWorkItemCandidates(plan: DeprecationPlanDetail): WorkItemCandidate[] {
+  const { waves } = deriveRemovalWaves(plan)
+  const byId = new Map(plan.targets.map((t) => [t.id, t]))
+  const candidates: WorkItemCandidate[] = []
+
+  waves.forEach((waveIds, waveIndex) => {
+    const wave = waveIndex + 1
+    // Group this wave's targets by owning module (null grouped under a stable key).
+    const groups = new Map<string | null, DeprecationTarget[]>()
+    for (const id of waveIds) {
+      const t = byId.get(id)
+      if (!t) continue
+      const key = t.module
+      const list = groups.get(key) ?? []
+      list.push(t)
+      groups.set(key, list)
+    }
+    // Stable order: modules alphabetically, null last.
+    const keys = [...groups.keys()].sort((a, b) => {
+      if (a === null) return 1
+      if (b === null) return -1
+      return a.localeCompare(b)
+    })
+    for (const key of keys) {
+      const targets = groups.get(key)!
+      const resources = [...new Set(targets.map((t) => t.resource).filter((r): r is string => Boolean(r)))]
+      candidates.push({
+        wave,
+        module: key,
+        title: `${plan.id} wave ${wave}${key ? ` (${key})` : ''}: retire ${targets.map((t) => t.id).join(', ')}`,
+        deprecationTargets: targets.map((t) => t.id),
+        resources,
+      })
+    }
+  })
+
+  return candidates
+}
+
 // --- Candidate discovery guidance (for legacy/architecture agents) -----------
 
 /**

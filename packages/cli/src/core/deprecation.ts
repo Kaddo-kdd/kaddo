@@ -149,8 +149,41 @@ export type DeprecationFinding = {
   message: string
 }
 
+/**
+ * How a Work Item references a Deprecation Target (WI-050). Parsed from the WI front matter
+ * `deprecation_targets:` list. The WI points at the target; it never copies the target's definition.
+ */
+export type WorkItemDeprecationRef = { plan: string | null; target: string }
+
 function str(v: unknown): string | null {
   return typeof v === 'string' && v.trim() ? v.trim() : null
+}
+
+/**
+ * Parse a Work Item's `deprecation_targets:` front matter into plan/target refs. Accepts a string
+ * `DEP-TGT-001`, a `DEP-001/DEP-TGT-001` (plan-qualified), or an object `{ plan?, target|id }`.
+ */
+export function parseWorkItemDeprecationTargets(fm: Record<string, unknown>): WorkItemDeprecationRef[] {
+  const v = fm.deprecation_targets
+  if (!Array.isArray(v)) return []
+  const out: WorkItemDeprecationRef[] = []
+  for (const raw of v) {
+    if (typeof raw === 'string') {
+      const s = raw.trim()
+      if (!s) continue
+      const slash = s.indexOf('/')
+      if (slash > 0) out.push({ plan: s.slice(0, slash).trim(), target: s.slice(slash + 1).trim() })
+      else out.push({ plan: null, target: s })
+      continue
+    }
+    if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
+      const o = raw as Record<string, unknown>
+      const target = str(o.target) ?? str(o.id)
+      if (!target) continue
+      out.push({ plan: str(o.plan), target })
+    }
+  }
+  return out
 }
 
 function strArray(v: unknown): string[] {

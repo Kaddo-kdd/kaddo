@@ -29,6 +29,7 @@ import {
   runDeprecationStatus,
   runDeprecationPlan,
   runDeprecationAnalyze,
+  runDeprecationCandidates,
   runDeprecationCreate,
   runDeprecationAddTarget,
   runDeprecationUpdateTarget,
@@ -274,6 +275,12 @@ deprecationCmd
   .description('Per-target unused-confidence from usage evidence (never auto-removes)')
   .option('--json', 'Output JSON')
   .action((id: string, opts: { json?: boolean }) => runDeprecationAnalyze(id, cwd(), opts))
+
+deprecationCmd
+  .command('candidates <id>')
+  .description('Propose Work Item candidates from the plan (one WI per wave/module). Does not create WIs.')
+  .option('--json', 'Output JSON')
+  .action((id: string, opts: { json?: boolean }) => runDeprecationCandidates(id, cwd(), opts))
 
 deprecationCmd
   .command('create')

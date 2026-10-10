@@ -1,6 +1,6 @@
 import { cwd } from '../utils/fs.js'
 import { getDeprecationPlans, getDeprecationPlan } from '../core/deprecation.js'
-import { deriveRemovalWaves, planIntelligence } from '../core/deprecation-intelligence.js'
+import { deriveRemovalWaves, planIntelligence, proposeWorkItemCandidates } from '../core/deprecation-intelligence.js'
 import {
   createPlan,
   addTarget,
@@ -104,6 +104,20 @@ export function runDeprecationAnalyze(id: string, dir: string = cwd(), opts: { j
     if (t.blockedBy.length > 0) console.log(`      blocked by: ${t.blockedBy.join(', ')}`)
   }
   console.log('')
+}
+
+export function runDeprecationCandidates(id: string, dir: string = cwd(), opts: { json?: boolean } = {}): void {
+  const plan = getDeprecationPlan(dir, id)
+  if (!plan) { console.error(`Deprecation Plan "${id}" not found.`); process.exit(1) }
+  const candidates = proposeWorkItemCandidates(plan!)
+  if (opts.json) { console.log(JSON.stringify(candidates, null, 2)); return }
+  console.log(`\n${plan!.id} — proposed Work Item candidates (one WI per wave/module; references targets, not copies)`)
+  if (candidates.length === 0) { console.log('  (no targets yet)\n'); return }
+  for (const c of candidates) {
+    console.log(`  Wave ${c.wave}${c.module ? ` · ${c.module}` : ''}: ${c.deprecationTargets.join(', ')}`)
+    if (c.resources.length > 0) console.log(`      resources: ${c.resources.join(', ')}`)
+  }
+  console.log('\n  Materialize each as a Work Item with deprecation_targets referencing these ids.\n')
 }
 
 type CreateOpts = { title?: string; purpose?: string; status?: string; json?: boolean }
