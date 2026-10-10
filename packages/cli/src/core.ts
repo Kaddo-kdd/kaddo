@@ -292,6 +292,7 @@ export {
   parseTarget,
   parseTargets,
   parseUsageEvidence,
+  parseSoftDeprecation,
   parseWorkItemDeprecationTargets,
   validateTarget,
   validatePlan,
@@ -309,6 +310,7 @@ export {
   EVIDENCE_SIGNALS,
   USAGE_STATUSES,
   EVIDENCE_QUALITIES,
+  SOFT_DEPRECATION_STRATEGIES,
   type DeprecationPlanSummary,
   type DeprecationPlanDetail,
   type DeprecationTarget,
@@ -324,7 +326,16 @@ export {
   type UsageStatus,
   type EvidenceQuality,
   type EvidenceSignalName,
+  type SoftDeprecation,
+  type ExitCriterion,
 } from './core/deprecation.js'
+export {
+  observationStatus,
+  targetsPastObservation,
+  isRetainedOutcome,
+  environmentSummary,
+  type ObservationStatus,
+} from './core/deprecation-observation.js'
 export {
   deriveUnusedConfidence,
   deriveRemovalWaves,

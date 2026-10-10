@@ -102,6 +102,10 @@ export function runDeprecationAnalyze(id: string, dir: string = cwd(), opts: { j
     console.log(`  ${t.id}: unused=${t.unused.confidence}${t.unused.requiresHumanConfirmation ? ' (human confirmation required)' : ''}`)
     for (const r of t.unused.rationale) console.log(`      · ${r}`)
     if (t.blockedBy.length > 0) console.log(`      blocked by: ${t.blockedBy.join(', ')}`)
+    if (t.observation.declared) {
+      const o = t.observation
+      console.log(`      observation: ${o.eligibleForRemovalReview ? 'eligible for removal REVIEW' : 'pending'} — criteria ${o.criteriaMet}/${o.criteriaTotal}${o.windowEndsAt ? `, window ends ${o.windowEndsAt}` : ''}`)
+    }
   }
   console.log('')
 }

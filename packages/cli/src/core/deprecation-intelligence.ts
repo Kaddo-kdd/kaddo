@@ -13,6 +13,7 @@ import {
   type DeprecationLifecycleState,
   EVIDENCE_SIGNALS,
 } from './deprecation.js'
+import { observationStatus, type ObservationStatus } from './deprecation-observation.js'
 
 // --- Usage → unused confidence ----------------------------------------------
 
@@ -172,8 +173,11 @@ export function targetsEligibleForRemoval(plan: DeprecationPlanDetail): string[]
 export type TargetIntelligence = {
   id: string
   unused: UnusedAssessment
+  /** Dependency eligibility: all dependents already retired (slice B). */
   eligibleForRemovalReview: boolean
   blockedBy: string[]
+  /** Soft-deprecation observation status (slice E). */
+  observation: ObservationStatus
 }
 
 export function planIntelligence(plan: DeprecationPlanDetail): {
@@ -192,6 +196,7 @@ export function planIntelligence(plan: DeprecationPlanDetail): {
       const dep = byId.get(d)
       return !dep || !isRetiredLifecycle(String(dep.lifecycle))
     }),
+    observation: observationStatus(t),
   }))
   return { waves, eligible: [...eligible], targets }
 }

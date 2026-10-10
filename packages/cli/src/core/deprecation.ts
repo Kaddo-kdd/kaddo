@@ -105,6 +105,30 @@ export type UsageSignal = {
 /** Per-signal usage evidence for a target. Absent signals are treated as `not-evaluated`. */
 export type UsageEvidence = Partial<Record<EvidenceSignalName, UsageSignal>>
 
+// --- Soft deprecation + observation (WI-051) -------------------------------------------------------
+// Soft deprecation precedes physical removal. A target declares HOW it is being softly deprecated,
+// for how long to observe, and the criteria that must be met before it is even eligible for removal
+// REVIEW (never auto-removal). No mechanism is mandatory — not every system supports feature flags.
+
+/** Common soft-deprecation strategies. Advisory (unknown values pass through). */
+export const SOFT_DEPRECATION_STRATEGIES = [
+  'feature-flag', 'hide-ui', 'disable-route', 'deprecation-warning', 'stop-scheduler',
+  'remove-caller', 'stop-writes', 'read-only', 'telemetry', 'manual',
+] as const
+
+/** A criterion that must hold before the observation window can be considered satisfied. */
+export type ExitCriterion = { description: string; met: boolean }
+
+export type SoftDeprecation = {
+  strategy: string | null
+  /** Free-text detail of how the strategy is applied (e.g. flag name, warning text). */
+  mechanism: string | null
+  /** ISO date (YYYY-MM-DD) the soft deprecation / observation began. */
+  startedAt: string | null
+  observationWindowDays: number | null
+  exitCriteria: ExitCriterion[]
+}
+
 export type DeprecationTarget = {
   id: string
   type: DeprecationTargetType | string
@@ -123,6 +147,8 @@ export type DeprecationTarget = {
   resource: string | null
   /** Module id (validated against .kaddo/modules.yml in slice D). Null otherwise. */
   module: string | null
+  /** Soft-deprecation strategy + observation window (WI-051). Null when not declared. */
+  softDeprecation: SoftDeprecation | null
 }
 
 export type DeprecationPlanSummary = {
@@ -243,6 +269,37 @@ export function parseUsageEvidence(v: unknown): UsageEvidence {
   return out
 }
 
+/** Parse `soft_deprecation: { strategy, mechanism, started_at, observation_window_days, exit_criteria }`. */
+export function parseSoftDeprecation(v: unknown): SoftDeprecation | null {
+  if (!v || typeof v !== 'object' || Array.isArray(v)) return null
+  const o = v as Record<string, unknown>
+  const windowRaw = o.observation_window_days
+  const window = typeof windowRaw === 'number' && Number.isFinite(windowRaw) && windowRaw >= 0
+    ? Math.floor(windowRaw)
+    : null
+  const exitCriteria: ExitCriterion[] = Array.isArray(o.exit_criteria)
+    ? o.exit_criteria
+        .map((c) => {
+          if (typeof c === 'string') return c.trim() ? { description: c.trim(), met: false } : null
+          if (c && typeof c === 'object' && !Array.isArray(c)) {
+            const co = c as Record<string, unknown>
+            const description = str(co.description) ?? str(co.criterion)
+            if (!description) return null
+            return { description, met: co.met === true }
+          }
+          return null
+        })
+        .filter((c): c is ExitCriterion => Boolean(c))
+    : []
+  return {
+    strategy: str(o.strategy),
+    mechanism: str(o.mechanism),
+    startedAt: str(o.started_at),
+    observationWindowDays: window,
+    exitCriteria,
+  }
+}
+
 function parseEnvironments(v: unknown): DeprecationTarget['environments'] {
   if (!v || typeof v !== 'object' || Array.isArray(v)) return {}
   const out: DeprecationTarget['environments'] = {}
@@ -271,6 +328,7 @@ export function parseTarget(raw: unknown): DeprecationTarget | null {
     dependsOnRemoval: strArray(o.depends_on_removal),
     resource: str(o.resource),
     module: str(o.module),
+    softDeprecation: parseSoftDeprecation(o.soft_deprecation),
   }
 }
 
