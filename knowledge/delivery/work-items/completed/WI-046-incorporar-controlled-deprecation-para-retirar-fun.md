@@ -4,7 +4,7 @@ id: WI-046
 title: >-
   Incorporar Controlled Deprecation para retirar funcionalidades legacy de forma
   segura y trazable
-status: draft
+status: completed
 work_type: feature
 created_at: '2026-10-10'
 source:
@@ -16,20 +16,81 @@ source:
 generated_by: kaddo-admin
 knowledge_level: K3
 is_epic: true
-domains: [Tech, Delivery]
-affected_modules: [cli, mcp, admin, admin-server, docs]
+domains:
+  - Tech
+  - Delivery
+affected_modules:
+  - cli
+  - mcp
+  - admin
+  - admin-server
+  - docs
 scope_confidence:
   level: high
   reasons:
-    - Reutiliza capabilities ya implementadas (Legacy Knowledge, System Graph, Project Resources, Multirepo, Work Items, Implementation Handoff, Evidence/Verification, Admin) en lugar de crear subsistemas paralelos.
-    - El spec define principios, scope, out-of-scope, 15 ACs, validación y DoD de forma explícita.
-    - Es una épica: el riesgo de scope se mitiga dividiéndola en 8 hijos (A-H) antes de implementar.
+    - >-
+      Reutiliza capabilities ya implementadas (Legacy Knowledge, System Graph,
+      Project Resources, Multirepo, Work Items, Implementation Handoff,
+      Evidence/Verification, Admin) en lugar de crear subsistemas paralelos.
+    - >-
+      El spec define principios, scope, out-of-scope, 15 ACs, validación y DoD
+      de forma explícita.
+    - Es una épica: >-
+        el riesgo de scope se mitiga dividiéndola en 8 hijos (A-H) antes de
+        implementar.
 summary: >-
   Workflow Controlled Deprecation para retirar funcionalidades legacy de forma
   segura y trazable: discover candidates, validar uso real, mapear dependencias,
   soft deprecation, retiro en Dev/Test, runbooks de producción con aprobación
   humana y observación post-cambio. Épica — dividir en 8 hijos antes de
   implementar.
+implementation_evidence:
+  repositories:
+    cli:
+      role: module
+      status: completed
+      changed_paths:
+        - packages/cli/src/core/deprecation.ts
+        - packages/cli/src/core/deprecation-intelligence.ts
+        - packages/cli/src/core/deprecation-runbook.ts
+        - packages/cli/src/core/graph.ts
+      validations:
+        - command: >-
+            pnpm --filter @kaddo/cli exec vitest run tests/deprecation.test.ts
+            tests/deprecation-write.test.ts
+            tests/deprecation-observation.test.ts
+            tests/deprecation-intelligence.test.ts
+            tests/deprecation-integration.test.ts
+            tests/deprecation-runbook.test.ts tests/deprecation-graph.test.ts
+          status: passed
+          reason: >-
+            Controlled Deprecation Core, graph, lifecycle, integration, and
+            runbook tests pass.
+    admin:
+      role: module
+      status: completed
+      changed_paths:
+        - packages/admin/src/routes/Deprecations.tsx
+        - packages/admin-server/src/core-adapter.ts
+      validations:
+        - command: >-
+            pnpm --filter @kaddo/admin build && pnpm --filter
+            @kaddo/admin-server build
+          status: passed
+          reason: Admin deprecation views and read-only projections compile.
+    docs:
+      role: module
+      status: completed
+      changed_paths:
+        - apps/docs/src/content/docs/deprecation.md
+        - apps/docs/src/content/docs/es/deprecation.md
+      validations:
+        - command: pnpm --filter @kaddo/docs build
+          status: passed
+          reason: Bilingual documentation builds successfully.
+implementation_status: completed
+validation_status: passed
+verified_at: '2026-10-10'
 original_snapshot:
   title: >-
     Incorporar Controlled Deprecation para retirar funcionalidades legacy de
@@ -41,6 +102,8 @@ original_snapshot:
     workflow explícito para un escenario legacy frecuente: iden…
   type: feature
   status: draft
+ready_at: '2026-10-10'
+completed_at: '2026-10-10'
 ---
 
 # Incorporar Controlled Deprecation para retirar funcionalidades legacy de forma segura y trazable
@@ -161,21 +224,21 @@ drag-and-drop del lifecycle; reemplazar Work Items o Project Resources.
 
 ## Acceptance criteria
 
-- [ ] AC-01 — Deprecation Plan: Core soporta artifacts `DEP-xxx` bajo `knowledge/legacy/deprecations/`.
-- [ ] AC-02 — Targets: tipados (module/route/function/ui/job/database-object/integration/config/other) con locators apropiados.
-- [ ] AC-03 — Multirepo: targets apuntan a módulos de `.kaddo/modules.yml`; un plan abarca múltiples repos.
-- [ ] AC-04 — Resources: targets database/external se relacionan con Project Resources y respetan sus boundaries.
-- [ ] AC-05 — Evidence & Assessment: usage evidence + unused_confidence/blast_radius/reversibility sin convertir unknown en no-usage.
-- [ ] AC-06 — Dependency Planning: Core representa dependencias de retiro y deriva waves/blocked targets de forma explicable.
-- [ ] AC-07 — Soft Deprecation: lifecycle con soft-deprecated/disabled/dev-test removal/prod readiness-change/observation/completion antes de decommission.
-- [ ] AC-08 — Environments: estado Dev/Test/Production separado del estado general.
-- [ ] AC-09 — Observation: observation window + exit criteria; cumplirlos deja al target eligible (no auto-removido).
-- [ ] AC-10 — Work Items: targets → WI candidates/materializados con trazabilidad WI → DEP → target.
-- [ ] AC-11 — Runbook: cambios sensibles de prod generan un Production Runbook (preconditions/backup/execution/validation/rollback/abort/evidence).
-- [ ] AC-12 — Production Safety: ninguna operación destructiva de prod se ejecuta en silencio o por inferencia autónoma.
-- [ ] AC-13 — Retention: un target puede terminar `deprecated-retained`.
-- [ ] AC-14 — Admin: seguir planes con resumen, pipeline, dependency view, environment view y target detail.
-- [ ] AC-15 — Documentation: docs EN/ES del lifecycle completo, multirepo, Resources, soft deprecation, runbooks y fronteras de seguridad.
+- [x] AC-01 — Deprecation Plan: Core soporta artifacts `DEP-xxx` bajo `knowledge/legacy/deprecations/`.
+- [x] AC-02 — Targets: tipados (module/route/function/ui/job/database-object/integration/config/other) con locators apropiados.
+- [x] AC-03 — Multirepo: targets apuntan a módulos de `.kaddo/modules.yml`; un plan abarca múltiples repos.
+- [x] AC-04 — Resources: targets database/external se relacionan con Project Resources y respetan sus boundaries.
+- [x] AC-05 — Evidence & Assessment: usage evidence + unused_confidence/blast_radius/reversibility sin convertir unknown en no-usage.
+- [x] AC-06 — Dependency Planning: Core representa dependencias de retiro y deriva waves/blocked targets de forma explicable.
+- [x] AC-07 — Soft Deprecation: lifecycle con soft-deprecated/disabled/dev-test removal/prod readiness-change/observation/completion antes de decommission.
+- [x] AC-08 — Environments: estado Dev/Test/Production separado del estado general.
+- [x] AC-09 — Observation: observation window + exit criteria; cumplirlos deja al target eligible (no auto-removido).
+- [x] AC-10 — Work Items: targets → WI candidates/materializados con trazabilidad WI → DEP → target.
+- [x] AC-11 — Runbook: cambios sensibles de prod generan un Production Runbook (preconditions/backup/execution/validation/rollback/abort/evidence).
+- [x] AC-12 — Production Safety: ninguna operación destructiva de prod se ejecuta en silencio o por inferencia autónoma.
+- [x] AC-13 — Retention: un target puede terminar `deprecated-retained`.
+- [x] AC-14 — Admin: seguir planes con resumen, pipeline, dependency view, environment view y target detail.
+- [x] AC-15 — Documentation: docs EN/ES del lifecycle completo, multirepo, Resources, soft deprecation, runbooks y fronteras de seguridad.
 
 ## Validation
 
@@ -270,3 +333,7 @@ telemetry, feature flags o acceso automatizable a su BD: degradar seguro (eviden
 unknown → human investigation required), nunca (evidence unavailable → unused). **Soft deprecation
 primero; decommission físico solo tras evidencia suficiente, comprensión de dependencias, evaluación
 de reversibilidad y decisión humana explícita.**
+
+## Learning
+
+El workflow de deprecacion debe construirse como una capacidad transversal: Core establece hechos y limites, mientras CLI, MCP, Admin, grafo, docs y runbooks proyectan el mismo conocimiento sin automatizar decisiones destructivas.
