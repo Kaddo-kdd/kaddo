@@ -76,6 +76,35 @@ export type TargetAssessment = {
   reversibility: string | null
 }
 
+// --- Usage evidence (WI-048) -------------------------------------------------
+// Evidence is collected per signal and never collapsed: "no reference found" (absence) is NOT
+// "no usage". Each signal records what was observed (its usage reading) AND the quality of that
+// reading, keeping `unknown` and `not-evaluated` first-class so they can never silently become
+// `no-usage`.
+
+/** The sources a usage reading can come from. */
+export const EVIDENCE_SIGNALS = [
+  'static', 'runtime', 'database', 'external_consumers', 'human_review',
+] as const
+export type EvidenceSignalName = (typeof EVIDENCE_SIGNALS)[number]
+
+/** What a signal observed about usage. `not-evaluated` ≠ `unknown` ≠ `no-usage`. */
+export const USAGE_STATUSES = ['no-usage', 'usage-found', 'unknown', 'not-evaluated'] as const
+export type UsageStatus = (typeof USAGE_STATUSES)[number]
+
+/** How trustworthy the reading is. `inferred` is weaker than an observed fact. */
+export const EVIDENCE_QUALITIES = ['observed-fact', 'human-confirmed', 'inferred', 'unknown'] as const
+export type EvidenceQuality = (typeof EVIDENCE_QUALITIES)[number]
+
+export type UsageSignal = {
+  status: UsageStatus | string
+  quality: EvidenceQuality | string
+  detail: string | null
+}
+
+/** Per-signal usage evidence for a target. Absent signals are treated as `not-evaluated`. */
+export type UsageEvidence = Partial<Record<EvidenceSignalName, UsageSignal>>
+
 export type DeprecationTarget = {
   id: string
   type: DeprecationTargetType | string
@@ -86,6 +115,8 @@ export type DeprecationTarget = {
   /** Independent state per environment. Absent environments default (conceptually) to active. */
   environments: Partial<Record<DeprecationEnvironment, EnvironmentState | string>>
   assessment: TargetAssessment
+  /** Per-signal usage evidence. Absence of a signal is `not-evaluated`, never `no-usage`. */
+  usageEvidence: UsageEvidence
   /** Target ids that must be physically retired (or stop depending) BEFORE this one. */
   dependsOnRemoval: string[]
   /** Project Resource id (RES-…) for database/external targets. Null otherwise. */
@@ -161,6 +192,24 @@ function parseAssessment(v: unknown): TargetAssessment {
   }
 }
 
+/** Parse `usage_evidence: { static: {status, quality, detail}, ... }`. Unknown signals are ignored. */
+export function parseUsageEvidence(v: unknown): UsageEvidence {
+  if (!v || typeof v !== 'object' || Array.isArray(v)) return {}
+  const out: UsageEvidence = {}
+  for (const signal of EVIDENCE_SIGNALS) {
+    const raw = (v as Record<string, unknown>)[signal]
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) continue
+    const o = raw as Record<string, unknown>
+    // Default a declared-but-partial signal to the safest readings, never to no-usage.
+    out[signal] = {
+      status: str(o.status) ?? 'unknown',
+      quality: str(o.quality) ?? 'unknown',
+      detail: str(o.detail),
+    }
+  }
+  return out
+}
+
 function parseEnvironments(v: unknown): DeprecationTarget['environments'] {
   if (!v || typeof v !== 'object' || Array.isArray(v)) return {}
   const out: DeprecationTarget['environments'] = {}
@@ -185,6 +234,7 @@ export function parseTarget(raw: unknown): DeprecationTarget | null {
     lifecycle: str(o.lifecycle) ?? 'candidate',
     environments: parseEnvironments(o.environments),
     assessment: parseAssessment(o.assessment),
+    usageEvidence: parseUsageEvidence(o.usage_evidence),
     dependsOnRemoval: strArray(o.depends_on_removal),
     resource: str(o.resource),
     module: str(o.module),
