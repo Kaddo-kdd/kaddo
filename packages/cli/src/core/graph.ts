@@ -13,6 +13,7 @@ import { loadExternalRegistry } from './capsule.js'
 import { isActiveState } from './lifecycle.js'
 import { discoverInitiatives } from './initiative.js'
 import { getResources, parseWorkItemResources } from './resources.js'
+import { getDeprecationPlan, getDeprecationPlans, parseWorkItemDeprecationTargets } from './deprecation.js'
 import type { KaddoConfig } from './config.js'
 
 const KNOWLEDGE = 'knowledge'
@@ -43,6 +44,8 @@ export type GraphNodeType =
   | 'external-item'
   | 'project'
   | 'project-resource'
+  | 'deprecation-plan'
+  | 'deprecation-target'
 
 export type GraphEdgeType =
   | 'informs'
@@ -61,6 +64,7 @@ export type GraphEdgeType =
   | 'uses'
   | 'validates_with'
   | 'delivers_through'
+  | 'depends_on_removal'
 
 export type GraphNode = {
   id: string
@@ -215,6 +219,37 @@ export function buildGraph(
     }
   }
 
+  // --- Controlled Deprecation (WI-054): plans and targets are graph-native knowledge. ---
+  // Targets are connected only through declared module/resource/WI references; no code usage or
+  // runtime relationship is inferred here.
+  for (const summary of getDeprecationPlans(dir)) {
+    const plan = getDeprecationPlan(dir, summary.id)
+    if (!plan) continue
+    const planId = `deprecation-plan:${plan.id}`
+    addNode({ id: planId, type: 'deprecation-plan', label: `${plan.id} ${plan.title}`.trim(), path: plan.path, status: plan.status ?? undefined })
+    for (const target of plan.targets) {
+      const targetId = `deprecation-target:${target.id}`
+      addNode({ id: targetId, type: 'deprecation-target', label: target.title ? `${target.id} ${target.title}` : target.id, path: plan.path, status: target.lifecycle })
+      addEdge(planId, targetId, 'targets')
+      if (target.module) {
+        const moduleId = `module:${target.module}`
+        addNode({ id: moduleId, type: 'module', label: target.module })
+        addEdge(targetId, moduleId, 'targets')
+      }
+      if (target.resource) {
+        const resourceId = `resource:${target.resource}`
+        const title = resourceTitleById.get(target.resource)
+        addNode({ id: resourceId, type: 'project-resource', label: title ? `${target.resource} ${title}` : target.resource })
+        addEdge(targetId, resourceId, 'targets')
+      }
+      for (const dependency of target.dependsOnRemoval) {
+        const dependencyId = `deprecation-target:${dependency}`
+        addNode({ id: dependencyId, type: 'deprecation-target', label: dependency })
+        addEdge(targetId, dependencyId, 'depends_on_removal')
+      }
+    }
+  }
+
   for (const wi of selectedWIs) {
     const id = wi.id || wi.title
     if (!id || !id.trim()) continue
@@ -246,6 +281,11 @@ export function buildGraph(
       const title = resourceTitleById.get(rel.id)
       addNode({ id: resId, type: 'project-resource', label: title ? `${rel.id} ${title}`.trim() : rel.id })
       addEdge(wiNodeId, resId, RESOURCE_ROLE_EDGE[rel.role] ?? 'uses')
+    }
+    for (const ref of parseWorkItemDeprecationTargets(wi.rawFrontmatter)) {
+      const targetId = `deprecation-target:${ref.target}`
+      addNode({ id: targetId, type: 'deprecation-target', label: ref.target })
+      addEdge(wiNodeId, targetId, 'targets')
     }
     for (const dec of wi.decisions) {
       if (!dec || !dec.trim()) continue
@@ -341,6 +381,7 @@ const RELATIONSHIP_EDGES = new Set<GraphEdgeType>([
   'uses_external_knowledge',
   'targets',
   'references_external',
+  'depends_on_removal',
 ])
 
 /** True when the graph has nodes but no real relationship edges (only the layer chain / isolated). */

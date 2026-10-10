@@ -178,6 +178,7 @@ export default defineConfig({
           items: [
             { label: 'Diagrams in Knowledge (Mermaid)', translations: { es: 'Diagramas en el conocimiento (Mermaid)' }, slug: 'mermaid-knowledge' },
             { label: 'Project Resources', translations: { es: 'Project Resources' }, slug: 'project-resources' },
+              { label: 'Controlled Deprecation', translations: { es: 'Deprecación controlada' }, slug: 'deprecation' },
             { label: 'Knowledge Graph Export', translations: { es: 'Exportar el grafo de conocimiento' }, slug: 'knowledge-graph-export' },
             { label: 'Knowledge Capsules', translations: { es: 'Knowledge Capsules' }, slug: 'knowledge-capsules' },
             { label: 'Initiatives', translations: { es: 'Iniciativas' }, slug: 'initiatives' },
