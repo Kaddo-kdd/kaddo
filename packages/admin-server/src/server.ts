@@ -54,6 +54,9 @@ import {
   createResourceAdmin,
   updateResourceAdmin,
   deleteResourceAdmin,
+  getDeprecationsAdmin,
+  getDeprecationPlanAdmin,
+  getDeprecationTargetAdmin,
   CoreError,
 } from './core-adapter.js'
 import {
@@ -83,9 +86,12 @@ function statusForCode(code: string): number {
     case 'INVALID_INITIATIVE_ID':
     case 'INITIATIVE_WRITE':
     case 'INVALID_TRANSITION':
-    case 'VALIDATION_FAILED': return 400
+    case 'VALIDATION_FAILED':
+    case 'INVALID_DEPRECATION_ID': return 400
     case 'INITIATIVE_NOT_FOUND':
     case 'RESOURCE_NOT_FOUND':
+    case 'DEPRECATION_NOT_FOUND':
+    case 'DEPRECATION_TARGET_NOT_FOUND':
     case 'NOT_FOUND': return 404
     case 'DUPLICATE': return 409
     default: return 500
@@ -303,6 +309,14 @@ export async function createAdminServer(opts: AdminServerOptions) {
     const confirm = request.query.confirm === 'true'
     return writeHandler(reply, () => deleteResourceAdmin(projectDir, request.params.resourceId, confirm))
   })
+
+  app.get('/api/v1/admin/deprecations', coreRoute(getDeprecationsAdmin))
+  app.get<{ Params: { planId: string } }>('/api/v1/admin/deprecations/:planId', async (request, reply) =>
+    writeHandler(reply, () => getDeprecationPlanAdmin(projectDir, request.params.planId)),
+  )
+  app.get<{ Params: { planId: string; targetId: string } }>('/api/v1/admin/deprecations/:planId/targets/:targetId', async (request, reply) =>
+    writeHandler(reply, () => getDeprecationTargetAdmin(projectDir, request.params.planId, request.params.targetId)),
+  )
 
   app.get('/api/v1/admin/modules', coreRoute(getModules))
   app.get('/api/v1/admin/readiness', coreRoute(getProjectReadiness))

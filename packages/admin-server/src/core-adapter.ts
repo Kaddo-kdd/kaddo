@@ -60,6 +60,14 @@ import {
   deleteResource as coreDeleteResource,
   getResourceReferences as coreGetResourceReferences,
   ResourceWriteError,
+  getDeprecationPlans as coreGetDeprecationPlans,
+  getDeprecationPlan as coreGetDeprecationPlan,
+  deriveRemovalWaves,
+  planIntelligence,
+  environmentSummary,
+  observationStatus,
+  parseWorkItemDeprecationTargets,
+  getProductionRunbook as coreGetProductionRunbook,
   buildPocReportContext,
   redactSecrets,
   type ResourceInput,
@@ -756,4 +764,78 @@ export function deleteResourceAdmin(dir: string, id: string, confirm: boolean) {
   } catch (err) {
     mapResourceError(err)
   }
+}
+
+// --- Controlled Deprecation (WI-053) ----------------------------------------
+// The adapter projects Core facts for Admin; lifecycle and dependency rules are never recreated in
+// the browser.
+function assertDeprecationId(value: string): void {
+  if (!value || value.includes('..') || value.includes('/') || value.includes('\\')) {
+    throw new CoreError('INVALID_DEPRECATION_ID', 'Invalid Deprecation identifier.')
+  }
+}
+
+function deprecationPlanProjection(dir: string, planId: string) {
+  const plan = coreGetDeprecationPlan(dir, planId)
+  if (!plan) throw new CoreError('DEPRECATION_NOT_FOUND', 'This Deprecation Plan does not exist in the current project.')
+  const intelligence = planIntelligence(plan)
+  const { waves, blocked } = deriveRemovalWaves(plan)
+  const waveByTarget = new Map(waves.flatMap((wave, index) => wave.map((id) => [id, index + 1] as const)))
+  const targets = plan.targets.map((target) => {
+    const environment = environmentSummary(target)
+    const relatedWorkItems = discoverKnowledge(dir)
+      .filter((artifact) => artifact.isWorkItem)
+      .filter((artifact) => parseWorkItemDeprecationTargets(artifact.rawFrontmatter)
+        .some((ref) => ref.target === target.id && (!ref.plan || ref.plan === plan.id)))
+      .map((artifact) => ({ id: artifact.id, title: artifact.title, lifecycle: artifact.lifecycle ?? 'ready' }))
+    const runbooks = discoverKnowledge(dir)
+      .filter((artifact) => artifact.type === 'production-runbook')
+      .filter((artifact) => artifact.rawFrontmatter.deprecation_plan === plan.id && artifact.rawFrontmatter.deprecation_target === target.id)
+      .map((artifact) => coreGetProductionRunbook(dir, artifact.id))
+      .filter((runbook): runbook is NonNullable<typeof runbook> => Boolean(runbook))
+      .map((runbook) => ({ id: runbook.id, path: runbook.path, approval: runbook.approval }))
+    return {
+      ...target,
+      environment,
+      observation: observationStatus(target),
+      wave: waveByTarget.get(target.id) ?? null,
+      dependents: plan.targets.filter((candidate) => candidate.dependsOnRemoval.includes(target.id)).map((candidate) => candidate.id),
+      resource: target.resource ? coreGetResource(dir, target.resource) : null,
+      relatedWorkItems,
+      runbooks,
+    }
+  })
+  const lifecycleCounts = plan.lifecycleCounts
+  return {
+    ...plan,
+    summary: {
+      targets: plan.targetCount,
+      softDeprecated: lifecycleCounts['soft-deprecated'] ?? 0,
+      devTestRemoved: plan.targets.filter((target) => environmentSummary(target).removedInDevTest).length,
+      productionPending: plan.targets.filter((target) => ['production-ready', 'production-changed', 'observing'].includes(String(target.lifecycle))).length,
+      completed: lifecycleCounts.completed ?? 0,
+    },
+    pipeline: lifecycleCounts,
+    board: Object.entries(lifecycleCounts).map(([state, count]) => ({ state, count, targets: targets.filter((target) => target.lifecycle === state).map((target) => target.id) })),
+    dependency: { waves, blocked },
+    targets,
+    intelligence,
+  }
+}
+
+export function getDeprecationsAdmin(dir: string) {
+  return { plans: coreGetDeprecationPlans(dir).map((plan) => deprecationPlanProjection(dir, plan.id)) }
+}
+
+export function getDeprecationPlanAdmin(dir: string, planId: string) {
+  assertDeprecationId(planId)
+  return deprecationPlanProjection(dir, planId)
+}
+
+export function getDeprecationTargetAdmin(dir: string, planId: string, targetId: string) {
+  assertDeprecationId(planId); assertDeprecationId(targetId)
+  const plan = deprecationPlanProjection(dir, planId)
+  const target = plan.targets.find((item) => item.id === targetId)
+  if (!target) throw new CoreError('DEPRECATION_TARGET_NOT_FOUND', 'This Deprecation Target does not exist in the selected plan.')
+  return { plan: { id: plan.id, title: plan.title }, target, dependency: plan.dependency }
 }

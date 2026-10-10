@@ -444,6 +444,26 @@ export type ResourceInput = {
   authentication?: { mode?: string; refs?: string[] }
 }
 
+export type DeprecationTarget = {
+  id: string; type: string; title: string | null; locator: string | null; lifecycle: string
+  environments: Record<string, string>; dependsOnRemoval: string[]; module: string | null
+  assessment: { unusedConfidence: string | null; blastRadius: string | null; reversibility: string | null }
+  usageEvidence: Record<string, { status: string; quality: string; detail: string | null }>
+  softDeprecation: { strategy: string | null; mechanism: string | null; startedAt: string | null; observationWindowDays: number | null; exitCriteria: { description: string; met: boolean }[] } | null
+  environment: { perEnvironment: Record<string, string>; removedInDevTest: boolean; productionActive: boolean }
+  observation: { declared: boolean; windowElapsed: boolean; windowEndsAt: string | null; criteriaTotal: number; criteriaMet: number; allCriteriaMet: boolean; eligibleForRemovalReview: boolean; reasons: string[] }
+  wave: number | null; dependents: string[]; resource: { id: string; title: string } | null
+  relatedWorkItems: { id: string; title: string; lifecycle: string }[]
+  runbooks: { id: string; path: string; approval: { status: string } }[]
+}
+export type DeprecationPlan = {
+  id: string; title: string; status: string | null; purpose: string | null; targetCount: number
+  summary: { targets: number; softDeprecated: number; devTestRemoved: number; productionPending: number; completed: number }
+  pipeline: Record<string, number>; board: { state: string; count: number; targets: string[] }[]
+  dependency: { waves: string[][]; blocked: { target: string; reason: string }[] }
+  targets: DeprecationTarget[]
+}
+
 export const api = {
   initSession: () => fetchApi<{ status: string }>('/session'),
   getOverview: () => fetchApi<ProjectOverview>('/overview'),
@@ -473,6 +493,9 @@ export const api = {
   createResource: (body: ResourceInput) => mutateApi<{ id: string; path: string }>('/resources', 'POST', body),
   updateResource: (id: string, body: ResourceInput) => mutateApi<{ id: string; path: string }>(`/resources/${encodeURIComponent(id)}`, 'PUT', body),
   deleteResource: (id: string, confirm: boolean) => mutateApi<{ deleted: boolean; path?: string; preview?: { id: string; references: ResourceReference[] } }>(`/resources/${encodeURIComponent(id)}?confirm=${confirm}`, 'DELETE'),
+  getDeprecations: () => fetchApi<{ plans: DeprecationPlan[] }>('/deprecations'),
+  getDeprecation: (id: string) => fetchApi<DeprecationPlan>(`/deprecations/${encodeURIComponent(id)}`),
+  getDeprecationTarget: (planId: string, targetId: string) => fetchApi<{ plan: { id: string; title: string }; target: DeprecationTarget }>(`/deprecations/${encodeURIComponent(planId)}/targets/${encodeURIComponent(targetId)}`),
   // Writes (VS-099)
   getCaptureDefinition: () => fetchApi<WorkItemCaptureDefinition>('/work-items-capture'),
   createWorkItem: (intent: string, type: string, answers?: Record<string, string>) => mutateApi<WorkItemWriteResult>('/work-items', 'POST', { intent, type, ...(answers ? { answers } : {}) }),

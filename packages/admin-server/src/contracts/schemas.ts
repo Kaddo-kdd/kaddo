@@ -432,6 +432,47 @@ export const ErrorResponseSchema = z.object({
   }),
 })
 
+// --- Deprecations (WI-053) ---------------------------------------------------
+
+const DeprecationEnvironmentSchema = z.object({
+  perEnvironment: z.record(z.string(), z.string()),
+}).passthrough()
+
+export const DeprecationTargetSchema = z.object({
+  id: z.string(),
+  type: z.string(),
+  lifecycle: z.string(),
+  environment: DeprecationEnvironmentSchema,
+  dependsOnRemoval: z.array(z.string()),
+  dependents: z.array(z.string()),
+  wave: z.number().nullable(),
+  relatedWorkItems: z.array(z.object({ id: z.string(), role: z.string() })),
+  runbooks: z.array(z.object({ id: z.string(), approval: z.object({ status: z.string() }) }).passthrough()),
+}).passthrough()
+
+export const DeprecationPlanSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  summary: z.object({
+    targets: z.number(),
+    softDeprecated: z.number(),
+    devTestRemoved: z.number(),
+    productionPending: z.number(),
+    completed: z.number(),
+  }),
+  pipeline: z.record(z.string(), z.number()),
+  board: z.array(z.object({ state: z.string(), count: z.number(), targets: z.array(z.string()) })),
+  dependency: z.object({
+    waves: z.array(z.array(z.string())),
+    blocked: z.array(z.object({ target: z.string(), reason: z.string() })),
+  }),
+  targets: z.array(DeprecationTargetSchema),
+}).passthrough()
+
+export const DeprecationsListSchema = z.object({ plans: z.array(DeprecationPlanSchema) })
+export const DeprecationPlanResponseSchema = z.object({ plan: DeprecationPlanSchema })
+export const DeprecationTargetResponseSchema = z.object({ target: DeprecationTargetSchema })
+
 export type ProjectOverview = z.infer<typeof ProjectOverviewSchema>
 export type ProjectSummary = z.infer<typeof ProjectSummarySchema>
 export type KnowledgeSummary = z.infer<typeof KnowledgeSummarySchema>
@@ -452,6 +493,8 @@ export type ValidationResult = z.infer<typeof ValidationResultSchema>
 export type WorkItemWriteResult = z.infer<typeof WorkItemWriteResultSchema>
 export type SystemMapProjection = z.infer<typeof SystemMapProjectionSchema>
 export type ErrorResponse = z.infer<typeof ErrorResponseSchema>
+export type DeprecationPlan = z.infer<typeof DeprecationPlanSchema>
+export type DeprecationTarget = z.infer<typeof DeprecationTargetSchema>
 
 // --- Project Resource mutations (WI-039). Body shape mirrors the Core ResourceInput. --------------
 const ResourceScopeInputSchema = z.object({ type: z.string(), module: z.string().nullish() })
