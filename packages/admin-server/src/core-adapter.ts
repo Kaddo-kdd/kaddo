@@ -62,6 +62,8 @@ import {
   ResourceWriteError,
   getDeprecationPlans as coreGetDeprecationPlans,
   getDeprecationPlan as coreGetDeprecationPlan,
+  createPlan as coreCreatePlan,
+  DeprecationWriteError,
   deriveRemovalWaves,
   planIntelligence,
   environmentSummary,
@@ -830,6 +832,21 @@ export function getDeprecationsAdmin(dir: string) {
 export function getDeprecationPlanAdmin(dir: string, planId: string) {
   assertDeprecationId(planId)
   return deprecationPlanProjection(dir, planId)
+}
+
+/**
+ * Create a single Deprecation Plan from Admin (WI-056). Captures a draft INTENT — title + purpose —
+ * through the existing Core contract. Admin Server never writes Markdown and never creates targets,
+ * runs discovery, or authorizes any removal; the plan starts as a draft with zero targets.
+ */
+export function createDeprecationAdmin(dir: string, body: { title: string; purpose?: string }) {
+  try {
+    const result = coreCreatePlan(dir, { title: body.title, purpose: body.purpose })
+    return deprecationPlanProjection(dir, result.id)
+  } catch (err) {
+    if (err instanceof DeprecationWriteError) throw new CoreError(err.code, err.message)
+    throw err
+  }
 }
 
 export function getDeprecationTargetAdmin(dir: string, planId: string, targetId: string) {

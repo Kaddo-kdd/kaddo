@@ -494,6 +494,8 @@ export const api = {
   updateResource: (id: string, body: ResourceInput) => mutateApi<{ id: string; path: string }>(`/resources/${encodeURIComponent(id)}`, 'PUT', body),
   deleteResource: (id: string, confirm: boolean) => mutateApi<{ deleted: boolean; path?: string; preview?: { id: string; references: ResourceReference[] } }>(`/resources/${encodeURIComponent(id)}?confirm=${confirm}`, 'DELETE'),
   getDeprecations: () => fetchApi<{ plans: DeprecationPlan[] }>('/deprecations'),
+  // Capture a single deprecation intent (WI-056): records a draft, never authorizes removal.
+  createDeprecation: (body: { title: string; purpose?: string }) => mutateApi<DeprecationPlan>('/deprecations', 'POST', body),
   getDeprecation: (id: string) => fetchApi<DeprecationPlan>(`/deprecations/${encodeURIComponent(id)}`),
   getDeprecationTarget: (planId: string, targetId: string) => fetchApi<{ plan: { id: string; title: string }; target: DeprecationTarget }>(`/deprecations/${encodeURIComponent(planId)}/targets/${encodeURIComponent(targetId)}`),
   // Writes (VS-099)

@@ -39,4 +39,28 @@ describe('WI-053 — Deprecation Admin endpoints', () => {
     expect((await get('/api/v1/admin/deprecations/DEP-404')).statusCode).toBe(404)
     expect((await get('/api/v1/admin/deprecations/DEP%5Cinvalid')).statusCode).toBe(400)
   })
+
+  it('captures a single deprecation intent as a draft plan with zero targets (WI-056)', async () => {
+    const origin = 'http://127.0.0.1:4173'
+    const created = await app.inject({
+      method: 'POST', url: '/api/v1/admin/deprecations', headers: { cookie, origin },
+      payload: { title: 'Retiro del flujo legacy de créditos', purpose: 'Retirar la funcionalidad anterior de créditos.' },
+    })
+    expect(created.statusCode).toBe(200)
+    const plan = JSON.parse(created.body)
+    expect(plan.id).toMatch(/^DEP-\d+$/)
+    expect(plan.status).toBe('draft')
+    expect(plan.targets).toHaveLength(0)
+    // It appears immediately in the list (Core is the source of truth).
+    const list = DeprecationsListSchema.parse(JSON.parse((await get('/api/v1/admin/deprecations')).body))
+    expect(list.plans.some((p) => p.id === plan.id)).toBe(true)
+    // The artifact lives under knowledge/legacy/deprecations/ (Admin Server wrote no Markdown itself).
+    expect(fs.existsSync(path.join(dir, 'knowledge/legacy/deprecations'))).toBe(true)
+  })
+
+  it('rejects an empty title (400) and a cross-origin write (403)', async () => {
+    const origin = 'http://127.0.0.1:4173'
+    expect((await app.inject({ method: 'POST', url: '/api/v1/admin/deprecations', headers: { cookie, origin }, payload: { title: '' } })).statusCode).toBe(400)
+    expect((await app.inject({ method: 'POST', url: '/api/v1/admin/deprecations', headers: { cookie, origin: 'http://evil.example' }, payload: { title: 'X' } })).statusCode).toBe(403)
+  })
 })

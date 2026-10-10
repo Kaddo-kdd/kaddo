@@ -4,7 +4,6 @@ id: WI-056
 title: >-
   Permitir capturar una deprecación individual desde Admin y orientar la
   creación múltiple al flujo LLM/MCP
-status: draft
 work_type: feature
 created_at: '2026-10-10'
 source:
@@ -14,15 +13,76 @@ source:
   source_hash: 3f35d30506304e4ec5d2dedad9ee7b8a332f9a13e18eb3bacd061e3b23dd93d9
   inferred: false
 generated_by: kaddo-admin
+status: completed
+completed_at: '2026-10-10'
+code:
+  - packages/admin/src/routes/Deprecations.tsx
+  - packages/admin-server/src/core-adapter.ts
+implementation_evidence:
+  repositories:
+    admin-server:
+      role: core
+      status: completed
+      changed_paths:
+        - packages/admin-server/src/core-adapter.ts
+        - packages/admin-server/src/server.ts
+        - packages/admin-server/src/contracts/schemas.ts
+        - packages/admin-server/tests/deprecations.test.ts
+      validations:
+        - command: npx vitest run packages/admin-server/tests/deprecations.test.ts
+          status: passed
+          reason: >-
+            POST /api/v1/admin/deprecations crea un draft vía Core createPlan (0
+            targets, aparece en el listado, Admin Server no escribe Markdown);
+            400 con título vacío; 403 cross-origin. 4 casos.
+    admin:
+      role: delivery
+      status: completed
+      changed_paths:
+        - packages/admin/src/routes/Deprecations.tsx
+        - packages/admin/src/routes/DeprecationDetail.tsx
+        - packages/admin/src/lib/api.ts
+      validations:
+        - command: pnpm --filter @kaddo/admin build
+          status: passed
+          reason: >-
+            tsc -b + vite build limpios; botón "New Deprecation" + formulario
+            (title/purpose) + mensaje de seguridad + guidance de refinamiento en
+            el detalle (0 targets).
+    cli:
+      role: core
+      status: completed
+      changed_paths:
+        - packages/cli/src/core/deprecation-intelligence.ts
+        - apps/docs/src/content/docs/deprecation.md
+        - apps/docs/src/content/docs/es/deprecation.md
+      validations:
+        - command: pnpm --filter @kaddo/cli test
+          status: passed
+          reason: >-
+            1547 verdes; agent guidance (NL entry + plan vs targets grouping) y
+            docs EN/ES de Admin vs LLM/MCP.
+implementation_status: completed
+validation_status: passed
 knowledge_level: K2
-domains: [Tech, Delivery]
-affected_modules: [admin, admin-server, cli]
+domains:
+  - Tech
+  - Delivery
+affected_modules:
+  - admin
+  - admin-server
+  - cli
 scope_confidence:
   level: high
   reasons:
-    - Reutiliza createPlan (WI-049) y la superficie Admin Deprecations (WI-053) ya completadas; solo añade captura individual.
+    - >-
+      Reutiliza createPlan (WI-049) y la superficie Admin Deprecations (WI-053)
+      ya completadas; solo añade captura individual.
     - Alcance acotado por UX (un plan por flujo; sin bulk) y ACs explícitos.
-relates_to: [WI-053, WI-049, WI-046]
+relates_to:
+  - WI-053
+  - WI-049
+  - WI-046
 summary: >-
   Controlled Deprecation ya está completo (Plan → Targets → Usage Evidence →
   Dependency Analysis → Removal Waves → Soft Deprecation → Work Items → Dev/Test
@@ -39,6 +99,8 @@ original_snapshot:
     crean/modifican planes (MCP con `proposal → preview → con…
   type: feature
   status: draft
+ready_at: '2026-10-10'
+verified_at: '2026-10-10'
 ---
 
 # Permitir capturar una deprecación individual desde Admin y orientar la creación múltiple al flujo LLM/MCP
@@ -128,19 +190,19 @@ Production Runbooks; crear un nuevo Core model; ejecutar código o infraestructu
 
 ## Acceptance criteria
 
-- [ ] AC-01 — Admin Create: la vista Deprecations permite iniciar la creación de un único plan.
-- [ ] AC-02 — Minimum Input: el formulario requiere solo title y purpose/intent.
-- [ ] AC-03 — Core-owned Mutation: Admin Server usa el contrato Core existente; no genera Markdown.
-- [ ] AC-04 — Draft Plan: una deprecación creada desde Admin existe válidamente con status draft y 0 targets.
-- [ ] AC-05 — No Approval Semantics: crear el plan no cambia targets/código/Resources/ambientes ni autoriza removal.
-- [ ] AC-06 — Refinement Guidance: tras crear, Admin muestra que requiere análisis/refinamiento vía LLM/MCP.
-- [ ] AC-07 — No Bulk Admin: no se introduce creación masiva, CSV import ni editor tabular.
-- [ ] AC-08 — Multiple Intent Guidance: agent/docs explican plan único con varios targets vs varios planes.
-- [ ] AC-09 — Natural Language: guidance reconoce solicitudes naturales de retiro como intención (no autorización de borrado).
-- [ ] AC-10 — Existing MCP Safety: creación/refinamiento múltiple vía MCP conserva proposal → preview → confirm.
-- [ ] AC-11 — Existing Views: planes creados desde Admin aparecen en listado y detalle existentes.
-- [ ] AC-12 — Backward Compatibility: planes existentes y superficies CLI/MCP siguen funcionando sin migración.
-- [ ] AC-13 — Documentation: docs EN/ES explican cuándo usar Admin vs LLM/MCP para iniciar deprecaciones.
+- [x] AC-01 — Admin Create: la vista Deprecations permite iniciar la creación de un único plan.
+- [x] AC-02 — Minimum Input: el formulario requiere solo title y purpose/intent.
+- [x] AC-03 — Core-owned Mutation: Admin Server usa el contrato Core existente; no genera Markdown.
+- [x] AC-04 — Draft Plan: una deprecación creada desde Admin existe válidamente con status draft y 0 targets.
+- [x] AC-05 — No Approval Semantics: crear el plan no cambia targets/código/Resources/ambientes ni autoriza removal.
+- [x] AC-06 — Refinement Guidance: tras crear, Admin muestra que requiere análisis/refinamiento vía LLM/MCP.
+- [x] AC-07 — No Bulk Admin: no se introduce creación masiva, CSV import ni editor tabular.
+- [x] AC-08 — Multiple Intent Guidance: agent/docs explican plan único con varios targets vs varios planes.
+- [x] AC-09 — Natural Language: guidance reconoce solicitudes naturales de retiro como intención (no autorización de borrado).
+- [x] AC-10 — Existing MCP Safety: creación/refinamiento múltiple vía MCP conserva proposal → preview → confirm.
+- [x] AC-11 — Existing Views: planes creados desde Admin aparecen en listado y detalle existentes.
+- [x] AC-12 — Backward Compatibility: planes existentes y superficies CLI/MCP siguen funcionando sin migración.
+- [x] AC-13 — Documentation: docs EN/ES explican cuándo usar Admin vs LLM/MCP para iniciar deprecaciones.
 
 ## Validation
 
@@ -186,3 +248,26 @@ Principio rector: Admin hace fácil **capturar** una intención de deprecación;
 
 Depende de WI-053 (Admin Deprecations, slice G de la épica WI-046) ya completado: extiende esa
 superficie con captura individual. Reutiliza el contrato de WI-049 (CLI+MCP, createPlan) sin duplicarlo.
+
+## Learning
+
+El WI se resolvió sin tocar el dominio: Admin Server solo añade `POST /api/v1/admin/deprecations` que
+delega en `createPlan` (Core, WI-049) y proyecta el resultado con el mismo `deprecationPlanProjection`
+que ya usa la lectura. Cero Markdown escrito desde Admin, cero modelo nuevo — exactamente el boundary
+que el spec pedía. El guard de escritura (same-origin + cookie SameSite) y el `writeHandler`/
+`statusForCode` existentes dieron 400 (título vacío) y 403 (cross-origin) gratis; el test lo fija.
+
+Minimum Sufficient Knowledge se cumplió en la UI: el formulario pide solo title + purpose, con un
+mensaje de seguridad explícito ("records an intent to investigate retirement. It does not authorize
+removal") para que "Create Deprecation" no se lea como "Approve deletion". El detalle muestra guidance de
+refinamiento solo cuando `targets.length === 0`, sin marcar warnings estructurales por ser un draft sin
+targets.
+
+La separación de responsabilidades (Admin = una intención; LLM/MCP = descubrir/agrupar/refinar muchas)
+se materializó en tres superficies coherentes: la UI orienta explícitamente a MCP cuando hay varias
+cosas; la guía del agente (`CANDIDATE_DISCOVERY_GUIDANCE`) añade entrada en lenguaje natural ("vamos a
+deprecar X" = investigar retiro, nunca borrar ya) y la decisión plan-único-con-varios-targets vs
+planes-separados por outcome (no por repo); y los docs EN/ES explican cuándo usar cada vía. No se añadió
+bulk-create, CSV ni editor tabular (out of scope). Dado el presupuesto de la sesión, la verificación se
+apoyó en los tests de integración del admin-server (endpoint→Core→draft→list) y el build limpio del UI
+(tsc + vite) en lugar de un arranque completo del browser.

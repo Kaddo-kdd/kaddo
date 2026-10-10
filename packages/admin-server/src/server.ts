@@ -57,6 +57,7 @@ import {
   getDeprecationsAdmin,
   getDeprecationPlanAdmin,
   getDeprecationTargetAdmin,
+  createDeprecationAdmin,
   CoreError,
 } from './core-adapter.js'
 import {
@@ -67,6 +68,7 @@ import {
   InitiativeUpdateSchema,
   ResourceCreateSchema,
   ResourceUpdateSchema,
+  DeprecationCreateSchema,
   ProjectModeUpdateSchema,
 } from './contracts/schemas.js'
 import type { AdminStorage } from './storage/admin-storage.js'
@@ -311,6 +313,12 @@ export async function createAdminServer(opts: AdminServerOptions) {
   })
 
   app.get('/api/v1/admin/deprecations', coreRoute(getDeprecationsAdmin))
+  // Capture a single deprecation INTENT (WI-056): title + purpose -> draft plan, zero targets.
+  app.post('/api/v1/admin/deprecations', async (request, reply) => {
+    const parsed = DeprecationCreateSchema.safeParse(request.body)
+    if (!parsed.success) return reply.code(400).send({ error: { code: 'INVALID_INPUT', message: 'A deprecation title is required.' } })
+    return writeHandler(reply, () => createDeprecationAdmin(projectDir, parsed.data))
+  })
   app.get<{ Params: { planId: string } }>('/api/v1/admin/deprecations/:planId', async (request, reply) =>
     writeHandler(reply, () => getDeprecationPlanAdmin(projectDir, request.params.planId)),
   )

@@ -43,3 +43,33 @@ kaddo graph export --scope all --format json
 
 La sección **Deprecations** de Admin ofrece la misma vista de solo lectura: summary, pipeline de
 lifecycle, matriz de ambientes, waves de retiro y runbooks relacionados.
+
+## Iniciar una deprecación: Admin vs LLM/MCP
+
+Hay dos formas de empezar, para dos situaciones distintas.
+
+**Admin — capturar una intención conocida.** Cuando ya sabes una cosa que quieres retirar, abre
+Admin → Deprecations → **New Deprecation** y da solo un título y una breve descripción de qué quieres
+retirar. Kaddo crea un plan en **draft** con cero targets. Crear un plan registra la intención de
+*investigar* el retiro — no autoriza la eliminación, no cambia targets ni toca código, recursos o
+ambientes. Admin muestra entonces que el plan requiere refinamiento (sin targets, análisis no realizado,
+dependencias desconocidas, waves no calculadas).
+
+**LLM/MCP — descubrir, agrupar y refinar varias.** Cuando tienes varias cosas potencialmente obsoletas,
+o no estás seguro de si van juntas, usa un agente conectado por MCP. El agente analiza las relaciones y
+propone cómo agruparlas antes de crear nada:
+
+- **Mismo outcome de retiro → un plan con varios targets.** Por ejemplo, retirar el flujo legacy de
+  créditos puede abarcar la pantalla vieja, `CalculateOldCredit()`, `/legacy/credit`, `sp_OldCredit` y
+  `OLD_CREDIT_RULES` — un `DEP` con varios targets.
+- **Outcomes independientes → planes separados.** Créditos legacy, reportes legacy y el sincronizador
+  viejo de clientes son tres `DEP` distintos. La agrupación es por el outcome de retiro, no por
+  compartir un repositorio.
+
+Frases en lenguaje natural como "vamos a deprecar X", "esta pantalla ya no debería existir" o "apaguemos
+ese job viejo" se interpretan como intención de *investigar un retiro seguro* — nunca como autorización
+para eliminar de inmediato. Cuando una solicitud menciona varios elementos, el agente primero decide si
+son targets de un mismo outcome o planes separados, y muestra la propuesta de agrupación para revisión
+humana. Admin crea un plan a la vez (sin creación masiva); orquestar múltiples propuestas es trabajo del
+agente. En ambos casos, materializar targets sigue siendo `proposal → preview → confirmación humana →
+Core`, y Admin sigue siendo la superficie para seguir el lifecycle después.

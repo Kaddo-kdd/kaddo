@@ -43,3 +43,32 @@ kaddo graph export --scope all --format json
 
 The Admin **Deprecations** section provides the same read-only view: summary, lifecycle pipeline,
 environment matrix, retirement waves, and related runbooks.
+
+## Starting a deprecation: Admin vs LLM/MCP
+
+There are two ways to begin, for two different situations.
+
+**Admin — capture one known intent.** When you already know a single thing you want to retire, open
+Admin → Deprecations → **New Deprecation** and provide only a title and a short description of what you
+want to retire. Kaddo creates a **draft** plan with zero targets. Creating a plan records an intent to
+*investigate* retirement — it does not authorize removal, change any target, or touch code, resources,
+or environments. Admin then shows the plan needs refinement (no targets, analysis not performed,
+dependencies unknown, removal waves not calculated).
+
+**LLM/MCP — discover, group and refine many.** When you have several possibly-obsolete things, or you
+are not sure whether they belong together, use an MCP-connected agent. The agent analyses
+relationships and proposes how to group them before creating anything:
+
+- **Same retirement outcome → one plan with multiple targets.** For example, retiring the legacy credit
+  flow may cover the old screen, `CalculateOldCredit()`, `/legacy/credit`, `sp_OldCredit`, and
+  `OLD_CREDIT_RULES` — one `DEP` with several targets.
+- **Independent outcomes → separate plans.** Legacy credit, legacy reporting, and the old customer sync
+  are three different `DEP` plans. Grouping is about the retirement outcome, not merely sharing a repo.
+
+Natural-language requests such as "let's deprecate X", "this screen should no longer exist", or "turn
+off that old job" are read as an intent to *investigate safe retirement* — never as authorization to
+delete immediately. When a request mentions several items, the agent first decides whether they are
+targets of one outcome or separate plans, and shows the proposed grouping for human review. Admin
+creates one plan at a time (no bulk creation); orchestrating multiple plan proposals belongs to the
+agent. Either way, materializing targets stays `proposal → preview → human confirmation → Core`, and
+Admin remains the surface to follow the lifecycle afterwards.

@@ -519,3 +519,9 @@ export const ResourceCreateSchema = z.object({
   authentication: z.object({ mode: z.string().optional(), refs: z.array(z.string()).optional() }).optional(),
 })
 export const ResourceUpdateSchema = ResourceCreateSchema.partial()
+
+// Single Deprecation capture from Admin (WI-056): minimum sufficient knowledge — title + purpose.
+export const DeprecationCreateSchema = z.object({
+  title: z.string().min(1),
+  purpose: z.string().optional(),
+})

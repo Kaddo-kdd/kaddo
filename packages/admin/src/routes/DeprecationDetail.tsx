@@ -12,6 +12,16 @@ export function DeprecationDetail() {
     <button onClick={() => router.navigate({ to: '/deprecations' })} style={back}>← Deprecations</button>
     <h2 style={{ fontSize: 22, margin: '10px 0 2px' }}><span className="font-mono">{plan.id}</span> {plan.title}</h2>
     {plan.purpose && <p style={{ color: 'var(--foreground-muted)' }}>{plan.purpose}</p>}
+    {plan.targets.length === 0 && <div style={guidance}>
+      <strong>This deprecation intent has been captured.</strong>
+      <div style={{ marginTop: 6, color: 'var(--foreground-muted)' }}>
+        Next: refine it with an MCP-connected agent to discover targets, usage evidence and dependencies
+        before any removal work begins. Creating this plan did not authorize removal.
+      </div>
+      <div style={{ marginTop: 8, display: 'flex', gap: 18, flexWrap: 'wrap', fontSize: 12.5, color: 'var(--foreground-muted)' }}>
+        <span>Targets <b>0</b></span><span>Analysis <b>Not performed</b></span><span>Dependencies <b>Unknown</b></span><span>Removal waves <b>Not calculated</b></span>
+      </div>
+    </div>}
     <Section title="Pipeline"><div style={chips}>{Object.entries(plan.pipeline).map(([state, count]) => <span key={state} style={chip}><b>{count}</b> {state}</span>)}</div></Section>
     <Section title="Retirement waves">{plan.dependency.waves.map((wave, index) => <div key={index} style={{ marginBottom: 6 }}>Wave {index + 1}: <span className="font-mono">{wave.join(', ')}</span></div>)}{plan.dependency.blocked.map((item) => <div key={item.target} style={{ color: 'var(--danger)' }}>{item.target}: {item.reason}</div>)}</Section>
     <Section title="Environment matrix"><table style={table}><thead><tr><th>Target</th><th>Dev</th><th>Test</th><th>Prod</th><th>Lifecycle</th><th>Wave</th></tr></thead><tbody>{plan.targets.map((target) => <tr key={target.id} onClick={() => router.navigate({ to: '/deprecations/$planId', params: { planId } })}><td className="font-mono">{target.id}</td><td>{target.environment.perEnvironment.development}</td><td>{target.environment.perEnvironment.test}</td><td>{target.environment.perEnvironment.production}</td><td>{target.lifecycle}</td><td>{target.wave ?? '—'}</td></tr>)}</tbody></table></Section>
@@ -30,3 +40,4 @@ const columnStyle: React.CSSProperties = { display: 'flex', flexDirection: 'colu
 const ticket: React.CSSProperties = { padding: 6, background: 'var(--surface-muted)', fontSize: 12 }
 const targetCard: React.CSSProperties = { padding: 14, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', marginBottom: 10 }
 const details: React.CSSProperties = { color: 'var(--foreground-muted)', fontSize: 12, marginTop: 7 }
+const guidance: React.CSSProperties = { marginTop: 14, padding: 14, border: '1px dashed var(--border)', background: 'var(--surface)', borderRadius: 'var(--radius)' }
