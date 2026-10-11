@@ -2,7 +2,7 @@
 type: feature
 id: WI-058
 title: 'Kaddo Visual Explorer: galería de conceptos y aprendizaje visual'
-status: in-progress
+status: completed
 work_type: feature
 created_at: '2026-10-11'
 source:
@@ -104,18 +104,18 @@ contenido editorial sustentado en documentación verificable.
 
 ## Acceptance criteria
 
-- [ ] AC-01 — Punto de entrada: `/visual-guide/` y `/es/visual-guide/` muestran la nueva galería; la navegación y enlaces previos a la Guía visual siguen funcionando.
-- [ ] AC-02 — Catálogo inicial: ≥15 conceptos publicados, cada uno con imagen, título, descripción, categoría y ficha individual funcional.
-- [ ] AC-03 — Exploración: filtrar por categoría, buscar de forma sencilla y volver al catálogo sin perder contexto.
-- [ ] AC-04 — Ficha individual: explicación accesible, ejemplo concreto, imagen correspondiente y enlaces válidos para continuar.
-- [ ] AC-05 — Navegación relacionada: fichas enlazan conceptos relacionados y documentación/artículos existentes; sin enlaces vacíos o ficticios.
-- [ ] AC-06 — Contenido verificable: descripciones/ejemplos/imágenes contrastados con lo implementado; representaciones conceptuales diferenciadas de interfaces/métricas reales.
-- [ ] AC-07 — Compatibilidad: no elimina los diagramas Mermaid ni rompe rutas de Guía visual, Getting Started o referencias internas.
-- [ ] AC-08 — Localización: catálogo, fichas y navegación en EN y ES, sin mezclar traducciones en una misma página.
-- [ ] AC-09 — Accesibilidad y responsive: tarjetas/filtros/imágenes/enlaces por teclado y en móvil; alt text adecuado.
-- [ ] AC-10 — Mantenibilidad: un concepto nuevo se incorpora con contenido declarativo + assets, sin copiar toda la implementación visual.
-- [ ] AC-11 — Integración: acceso visible desde la página principal y Getting Started; la navegación refleja el nuevo espacio.
-- [ ] AC-12 — Validación técnica: `pnpm --filter @kaddo/docs build` termina OK; rutas/imágenes/enlaces verificados; sin regresiones en páginas existentes.
+- [x] AC-01 — Punto de entrada: `/visual-guide/` y `/es/visual-guide/` muestran la nueva galería; la navegación y enlaces previos a la Guía visual siguen funcionando.
+- [x] AC-02 — Catálogo inicial: ≥15 conceptos publicados, cada uno con imagen, título, descripción, categoría y ficha individual funcional.
+- [x] AC-03 — Exploración: filtrar por categoría, buscar de forma sencilla y volver al catálogo sin perder contexto.
+- [x] AC-04 — Ficha individual: explicación accesible, ejemplo concreto, imagen correspondiente y enlaces válidos para continuar.
+- [x] AC-05 — Navegación relacionada: fichas enlazan conceptos relacionados y documentación/artículos existentes; sin enlaces vacíos o ficticios.
+- [x] AC-06 — Contenido verificable: descripciones/ejemplos/imágenes contrastados con lo implementado; representaciones conceptuales diferenciadas de interfaces/métricas reales.
+- [x] AC-07 — Compatibilidad: no elimina los diagramas Mermaid ni rompe rutas de Guía visual, Getting Started o referencias internas.
+- [x] AC-08 — Localización: catálogo, fichas y navegación en EN y ES, sin mezclar traducciones en una misma página.
+- [x] AC-09 — Accesibilidad y responsive: tarjetas/filtros/imágenes/enlaces por teclado y en móvil; alt text adecuado.
+- [x] AC-10 — Mantenibilidad: un concepto nuevo se incorpora con contenido declarativo + assets, sin copiar toda la implementación visual.
+- [x] AC-11 — Integración: acceso visible desde la página principal y Getting Started; la navegación refleja el nuevo espacio.
+- [x] AC-12 — Validación técnica: `pnpm --filter @kaddo/docs build` termina OK; rutas/imágenes/enlaces verificados; sin regresiones en páginas existentes.
 
 ## Definition of Done
 
@@ -218,3 +218,10 @@ Integradas: completan el trío de estados de proyecto (New / Pre-IA / Legacy) en
 Único remanente de imagen: `knowledge-layers` y `mcp` siguen con placeholder de marca (no se aportó
 imagen específica para ellos); el fallback es intencional y accesible. `performance-report` sigue
 retenido por falta de feature/doc verificable.
+
+## Cierre
+
+El usuario aprobó explícitamente el cierre el 2026-10-11. Los placeholders accesibles de
+`knowledge-layers` y `mcp` se aceptan como representación final de estos conceptos; no bloquean la
+entrega. `performance-report` permanece correctamente fuera del catálogo hasta que exista una
+capacidad y documentación verificables.
