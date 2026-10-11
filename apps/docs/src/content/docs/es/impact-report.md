@@ -9,6 +9,10 @@ líderes técnicos, arquitectos, sponsors, equipos de producto y quien evalúe a
 listo está el proyecto para ser entendido por humanos e IA? ¿qué tan activo está Guard como
 mecanismo de prevención de drift?
 
+## Evidencia y aplicabilidad
+
+Los hallazgos se clasifican como `observed`, `derived`, `estimated`, `projected`, `unknown` o `not_applicable`. Un artefacto presente no prueba delivery verificado. Las Initiatives son opcionales y un proyecto POC usa un baseline reducido de Tech/Delivery.
+
 ```bash
 kaddo report impact                  # Markdown a stdout (no escribe nada) — scope: all
 kaddo impact                         # alias

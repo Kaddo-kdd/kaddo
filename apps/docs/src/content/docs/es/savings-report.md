@@ -7,6 +7,10 @@ description: Traduce las métricas de impacto de Kaddo en estimaciones aproximad
 **aproximadas** de tiempo/esfuerzo/valor, para que puedas comunicar el impacto de Kaddo en términos
 que stakeholders no técnicos entienden.
 
+## Evidencia y períodos
+
+Las estimaciones históricas y las proyecciones mensuales están separadas y no se suman. Los supuestos por defecto son estimaciones no calibradas y no pueden justificar confianza High.
+
 ```bash
 kaddo savings                  # Markdown a stdout (no escribe nada) — scope: all
 kaddo report savings           # alias

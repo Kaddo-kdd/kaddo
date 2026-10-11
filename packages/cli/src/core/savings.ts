@@ -10,9 +10,12 @@ import { parse as parseYaml } from 'yaml'
 import { buildImpactReport } from './impact-report.js'
 import { buildGuardHistory } from './guard-history.js'
 import type { GraphScope } from './graph.js'
+import { reportingProjectContext, type EvidenceItem, type ReportingProjectContext } from './reporting-evidence.js'
 
 export type SavingsAssumptions = {
   currency: string
+  /** ISO date of a human calibration against observed project data; absent means uncalibrated. */
+  calibrated_at?: string
   hourly_cost: number
   context_preparation_minutes_saved_per_work_item: number
   rework_hours_avoided_per_resolved_drift: number
@@ -46,6 +49,7 @@ export function loadAssumptions(dir: string): { assumptions: SavingsAssumptions;
   try {
     const raw = parseYaml(readFile(p)) as {
       currency?: string
+      calibrated_at?: string
       hourly_cost?: number
       assumptions?: Record<string, number>
       team?: Record<string, number>
@@ -57,6 +61,7 @@ export function loadAssumptions(dir: string): { assumptions: SavingsAssumptions;
       source: 'file',
       assumptions: {
         currency: raw?.currency ?? DEFAULT_ASSUMPTIONS.currency,
+        ...(typeof raw?.calibrated_at === 'string' && raw.calibrated_at.trim() ? { calibrated_at: raw.calibrated_at.trim() } : {}),
         hourly_cost: num(raw?.hourly_cost, DEFAULT_ASSUMPTIONS.hourly_cost),
         context_preparation_minutes_saved_per_work_item: num(a.context_preparation_minutes_saved_per_work_item, DEFAULT_ASSUMPTIONS.context_preparation_minutes_saved_per_work_item),
         rework_hours_avoided_per_resolved_drift: num(a.rework_hours_avoided_per_resolved_drift, DEFAULT_ASSUMPTIONS.rework_hours_avoided_per_resolved_drift),
@@ -79,6 +84,8 @@ export function savingsTemplate(): string {
     '# Kaddo savings assumptions (VS-062). Estimates are evidence-based, not exact ROI.',
     '# Edit these to match your team, then run `kaddo savings`.',
     'currency: USD',
+    '# Set calibrated_at only after comparing assumptions with observed project data (YYYY-MM-DD).',
+    '# calibrated_at: 2026-10-11',
     '',
     'hourly_cost: 40',
     '',
@@ -105,7 +112,10 @@ export type DriftSavings =
 export type SavingsReport = {
   generated_at: string
   project: string
+  project_context: ReportingProjectContext
   scope: string
+  reporting_period: { observed: 'all recorded project history'; projected: 'per month'; note: string }
+  evidence_classification: EvidenceItem[]
   currency: string
   disclaimer: string
   assumptions_source: 'default' | 'file'
@@ -131,6 +141,12 @@ export type SavingsReport = {
     architecture_discovery: SavingsLine
     drift_prevention: DriftSavings
   }
+  /** Do not combine historical estimates with monthly projections. */
+  totals: {
+    observed_history_estimate: { estimated_hours: number; estimated_value: number; currency: string }
+    monthly_projection: { estimated_hours: number; estimated_value: number; currency: string }
+  }
+  /** @deprecated Compatibility total; contains observed-history estimate only. */
   total: { estimated_hours_saved: number; estimated_value: number; currency: string }
   confidence: { level: 'Low' | 'Medium' | 'High'; reasons: string[] }
   suggested_actions: string[]
@@ -156,6 +172,7 @@ export function buildSavingsReport(
 ): SavingsReport {
   const { assumptions: a, source } = loadAssumptions(dir)
   const impact = buildImpactReport(dir, { scope: opts.scope, scopeSource: opts.scopeSource }, now)
+  const projectContext = reportingProjectContext(dir)
 
   const completed = impact.traceability.completed_work_items
   const wiWithOwnership = parseRatioNumerator(impact.traceability.work_items_connected_to_code)
@@ -193,27 +210,36 @@ export function buildSavingsReport(
     }
   }
 
-  const totalHours = round2(ctxPrepH + reviewH + clarH + onboardH + archH + driftSavings.hours)
-  const totalValue = Math.round(totalHours * a.hourly_cost)
+  // Completed Work Items and resolved drift are historical observations. Onboarding and graph
+  // discovery use team expectations and are monthly projections. Keep their periods separate.
+  const observedHours = round2(ctxPrepH + reviewH + clarH + driftSavings.hours)
+  const projectedHours = round2(onboardH + archH)
+  const observedValue = Math.round(observedHours * a.hourly_cost)
+  const projectedValue = Math.round(projectedHours * a.hourly_cost)
 
   // Confidence — High needs guard history with resolved drift + custom assumptions; else Medium/Low.
   const reasons: string[] = []
   let level: 'Low' | 'Medium' | 'High'
-  if (impact.score === null || impact.score < 60 || graphQuality === 'empty') {
+  const verifiedDelivery = impact.evidence.some((item) => item.id === 'delivery.verification' && item.classification === 'observed')
+  const evidenceStrong = graphQuality === 'good' && impact.ownership_coverage.coverage_percent >= 70 && verifiedDelivery
+  if (!evidenceStrong || graphQuality === 'empty') {
     level = 'Low'
-    reasons.push('Impact score is low or the knowledge graph is empty.')
+    reasons.push('Delivery, ownership or graph evidence is insufficient for a reliable estimate.')
   } else if (
-    impact.score >= 85 &&
-    graphQuality === 'good' &&
-    source === 'file' &&
+    evidenceStrong &&
+    source === 'file' && Boolean(a.calibrated_at) &&
     guard.available &&
     guard.resolved > 0
   ) {
     level = 'High'
-    reasons.push('Strong evidence, custom assumptions and recorded drift resolution.')
+    reasons.push('Strong evidence, calibrated assumptions and recorded drift resolution.')
   } else {
     level = 'Medium'
     reasons.push('Strong knowledge and graph evidence.')
+  }
+  if (!a.calibrated_at && level === 'High') {
+    level = 'Medium'
+    reasons.push('Uncalibrated assumptions cannot support High confidence.')
   }
   if (!guard.available) {
     reasons.push('Guard history is not persisted yet — avoided rework is not estimated.')
@@ -242,7 +268,15 @@ export function buildSavingsReport(
   return {
     generated_at: now.toISOString(),
     project: impact.project,
+    project_context: projectContext,
     scope: impact.scope,
+    reporting_period: { observed: 'all recorded project history', projected: 'per month', note: 'Historical estimates and future monthly projections are intentionally not added together.' },
+    evidence_classification: [
+      { id: 'completed-work-items', label: 'Completed Work Items', classification: completed > 0 ? 'observed' : 'unknown', reason: completed > 0 ? 'Lifecycle state is recorded in Work Items.' : 'No completed Work Items were recorded.' },
+      { id: 'guard-resolution', label: 'Resolved drift warnings', classification: guard.available ? 'observed' : 'unknown', reason: guard.available ? 'Derived from recorded Guard history.' : 'No Guard history was recorded.' },
+      { id: 'assumptions', label: 'Savings assumptions', classification: 'estimated', reason: a.calibrated_at ? `Project assumptions were calibrated on ${a.calibrated_at}.` : source === 'file' ? 'Project-provided assumptions are not marked as calibrated.' : 'Defaults are uncalibrated estimates.' },
+      { id: 'team-expectations', label: 'Future team activity', classification: 'projected', reason: 'Monthly contributor and Work Item expectations model a future scenario.' },
+    ],
     currency: a.currency,
     disclaimer: SAVINGS_DISCLAIMER,
     assumptions_source: source,
@@ -276,7 +310,11 @@ export function buildSavingsReport(
       architecture_discovery: { hours: archH, formula: `${a.architecture_discovery_hours_saved_when_graph_good} h × ${graphMult.toFixed(2)} graph multiplier` },
       drift_prevention: driftSavings,
     },
-    total: { estimated_hours_saved: totalHours, estimated_value: totalValue, currency: a.currency },
+    totals: {
+      observed_history_estimate: { estimated_hours: observedHours, estimated_value: observedValue, currency: a.currency },
+      monthly_projection: { estimated_hours: projectedHours, estimated_value: projectedValue, currency: a.currency },
+    },
+    total: { estimated_hours_saved: observedHours, estimated_value: observedValue, currency: a.currency },
     confidence: { level, reasons },
     suggested_actions: actions,
   }
@@ -288,6 +326,7 @@ export function renderSavingsMarkdown(r: SavingsReport): string {
   L.push('# Kaddo Estimated Savings Report', '')
   L.push(`Generated at: ${r.generated_at}`)
   L.push(`Project: ${r.project}`)
+  L.push(`Project context: state=${r.project_context.state}; mode=${r.project_context.mode}; repositories=${r.project_context.repository_structure}`)
   L.push(`Scope: ${r.scope}`)
   L.push(`Currency: ${r.currency}`)
   L.push('')
@@ -295,9 +334,13 @@ export function renderSavingsMarkdown(r: SavingsReport): string {
   L.push('## Disclaimer', '')
   L.push(r.disclaimer, '')
 
+  L.push('## Evidence Classification', '')
+  for (const item of r.evidence_classification) L.push(`- ${item.label}: ${item.classification} — ${item.reason}`)
+  L.push('')
+
   L.push('## Executive Summary', '')
-  L.push(`- Estimated time saved: ${r.total.estimated_hours_saved} hours`)
-  L.push(`- Estimated value: ${r.total.estimated_value} ${r.currency}`)
+  L.push(`- Historical estimate: ${r.totals.observed_history_estimate.estimated_hours} hours`)
+  L.push(`- Monthly projection: ${r.totals.monthly_projection.estimated_hours} hours`)
   L.push(`- Confidence: ${r.confidence.level}`)
   if (r.assumptions_source === 'default') L.push('- Using default assumptions. Run `kaddo savings init` to customize them.')
   L.push('')
@@ -354,9 +397,10 @@ export function renderSavingsMarkdown(r: SavingsReport): string {
     L.push(`- Reason: ${s.drift_prevention.reason}`, '')
   }
 
-  L.push('## Total', '')
-  L.push(`- Estimated time saved: ${r.total.estimated_hours_saved} h`)
-  L.push(`- Estimated value: ${r.total.estimated_value} ${r.currency}`)
+  L.push('## Total (Period-separated)', '')
+  L.push(`- Historical estimate (all recorded project history): ${r.totals.observed_history_estimate.estimated_hours} h / ${r.totals.observed_history_estimate.estimated_value} ${r.currency}`)
+  L.push(`- Monthly projection: ${r.totals.monthly_projection.estimated_hours} h / ${r.totals.monthly_projection.estimated_value} ${r.currency}`)
+  L.push(`- Note: ${r.reporting_period.note}`)
   L.push('')
 
   L.push('## Confidence', '')

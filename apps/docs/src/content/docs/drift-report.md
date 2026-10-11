@@ -7,6 +7,10 @@ description: Persist a deterministic history of guard runs and report whether co
 each run is persisted so Kaddo can answer questions over time: how many drift warnings appeared, how
 many were resolved, which areas are hotspots, and whether the project is improving.
 
+## Evidence boundaries
+
+The report separates Guard-backed current consistency from lifecycle and deprecation consistency that Kaddo cannot yet evaluate. `unknown` means insufficient evidence, never a clean result.
+
 ```bash
 kaddo guard --record           # run guard AND record it to .kaddo/history/
 kaddo drift                    # Markdown trend report (writes nothing)

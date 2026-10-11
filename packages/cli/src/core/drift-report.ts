@@ -3,10 +3,17 @@
 
 import { loadConfig } from './config.js'
 import { buildGuardHistory, type GuardHistory } from './guard-history.js'
+import { reportingProjectContext, type EvidenceItem, type ReportingProjectContext } from './reporting-evidence.js'
+import { getDeprecationPlan, getDeprecationPlans, validateTarget } from './deprecation.js'
+import { discoverWorkItems } from '../services/knowledge-artifacts.js'
+import { buildGraph } from './graph.js'
+import { buildGraphHints } from './graph-hints.js'
 
 export type DriftReport = {
   generated_at: string
   project: string
+  project_context: ReportingProjectContext
+  consistency_evidence: EvidenceItem[]
   guard_history: {
     available: boolean
     total_runs: number
@@ -25,6 +32,14 @@ export type DriftReport = {
 export function buildDriftReport(dir: string, now: Date = new Date()): DriftReport {
   const h = buildGuardHistory(dir)
   const project = loadConfig(dir)?.project.name ?? 'unknown'
+  const projectContext = reportingProjectContext(dir)
+  const workItems = discoverWorkItems(dir)
+  const verificationEvidence = workItems.filter((wi) => wi.validationStatus && wi.validationStatus !== 'not-started')
+  const plans = getDeprecationPlans(dir)
+  const deprecationFindings = plans.flatMap((plan) => getDeprecationPlan(dir, plan.id)?.targets.flatMap(validateTarget) ?? [])
+  const config = loadConfig(dir)
+  const topology = config ? buildGraph(dir, config, { scope: 'all' }, now) : null
+  const topologyHints = topology ? buildGraphHints(dir, topology, now).summary.hints : null
 
   const actions: string[] = []
   if (!h.available) {
@@ -38,6 +53,13 @@ export function buildDriftReport(dir: string, now: Date = new Date()): DriftRepo
   return {
     generated_at: now.toISOString(),
     project,
+    project_context: projectContext,
+    consistency_evidence: [
+      { id: 'guard-current-consistency', label: 'Current Guard consistency', classification: h.available ? 'observed' : 'unknown', reason: h.available ? `${h.total_runs} recorded Guard run(s) provide deterministic consistency evidence.` : 'No recorded Guard history is available.' },
+      { id: 'lifecycle-consistency', label: 'Lifecycle evidence consistency', classification: verificationEvidence.length > 0 ? 'observed' : 'unknown', reason: verificationEvidence.length > 0 ? `${verificationEvidence.length} Work Item(s) persist an implementation validation status.` : 'No persisted Work Item validation status is available.' },
+      { id: 'deprecation-consistency', label: 'Deprecation consistency', classification: plans.length === 0 ? 'not_applicable' : deprecationFindings.length === 0 ? 'derived' : 'observed', reason: plans.length === 0 ? 'No deprecation plans exist in this project.' : deprecationFindings.length === 0 ? `${plans.length} plan(s) passed deterministic target consistency checks.` : `${deprecationFindings.length} deterministic deprecation consistency finding(s) were detected.` },
+      { id: 'topology-consistency', label: 'Knowledge topology consistency', classification: topology === null ? 'unknown' : topologyHints === 0 ? 'derived' : 'observed', reason: topology === null ? 'No project configuration is available to construct the topology.' : topologyHints === 0 ? `The in-memory topology has ${topology.nodes.length} node(s) and no open deterministic hints.` : `The in-memory topology has ${topologyHints} open deterministic hint(s).` },
+    ],
     guard_history: {
       available: h.available,
       total_runs: h.total_runs,
@@ -59,6 +81,11 @@ export function renderDriftMarkdown(r: DriftReport): string {
   L.push('# Kaddo Drift Trend Report', '')
   L.push(`Generated at: ${r.generated_at}`)
   L.push(`Project: ${r.project}`)
+  L.push(`Project context: state=${r.project_context.state}; mode=${r.project_context.mode}; repositories=${r.project_context.repository_structure}`)
+  L.push('')
+
+  L.push('## Consistency Evidence', '')
+  for (const item of r.consistency_evidence) L.push(`- ${item.label}: ${item.classification} — ${item.reason}`)
   L.push('')
 
   if (!r.guard_history.available) {
@@ -136,6 +163,8 @@ export function serializeDriftJson(r: DriftReport): string {
   const out = {
     generated_at: r.generated_at,
     project: r.project,
+    project_context: r.project_context,
+    consistency_evidence: r.consistency_evidence,
     guard_history: r.guard_history,
     drift_warnings: r.drift_warnings,
     hotspots: r.hotspots,

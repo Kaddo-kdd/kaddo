@@ -8,6 +8,10 @@ tech leads, architects, sponsors, product teams and anyone evaluating Kaddo. It 
 complete is the knowledge? how connected is the roadmap to the code? how ready is the project to be
 understood by humans and AI? how active is Guard as a drift-prevention mechanism?
 
+## Evidence and applicability
+
+Primary findings are labelled `observed`, `derived`, `estimated`, `projected`, `unknown`, or `not_applicable`. Artifact presence does not prove verified delivery. Initiatives are optional, and POC projects use a reduced Tech/Delivery knowledge baseline.
+
 ```bash
 kaddo report impact                  # Markdown to stdout (writes nothing) — scope: all
 kaddo impact                         # alias

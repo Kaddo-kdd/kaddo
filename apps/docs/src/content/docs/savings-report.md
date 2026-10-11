@@ -6,6 +6,10 @@ description: Translate Kaddo's impact metrics into approximate time, effort and 
 `kaddo savings` turns the [impact metrics](/impact-report/) into **approximate** time/effort/value
 estimates, so you can talk about Kaddo's impact in terms non-technical stakeholders understand.
 
+## Evidence and periods
+
+Historical estimates (all recorded project history) and monthly projections are deliberately separate and are not added together. Default assumptions are uncalibrated estimates and cannot justify High confidence.
+
 ```bash
 kaddo savings                  # Markdown to stdout (writes nothing) — scope: all
 kaddo report savings           # alias
