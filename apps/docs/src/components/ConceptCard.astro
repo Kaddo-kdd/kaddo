@@ -1,6 +1,8 @@
 ---
 // A single Visual Explorer concept card (WI-058). The image falls back to a branded placeholder
 // when the asset is not present yet, so the gallery is coherent before real images are added.
+// Styles live here (not in the parent gallery) because Astro scopes a component's <style> to its own
+// template — the parent's scoped CSS would not reach these elements.
 import type { Concept, Locale } from '../data/visual-explorer'
 import { categoryLabel } from '../data/visual-explorer'
 
@@ -11,24 +13,39 @@ const href = `${base}/visual-guide/${concept.id}/`
 const title = concept.title[lang]
 const search = `${title} ${concept.description[lang]} ${categoryLabel(concept.category, lang)}`.toLowerCase()
 ---
-<a
-  class="ve-card"
-  href={href}
-  data-category={concept.category}
-  data-search={search}
->
+<a class="ve-card" href={href} data-category={concept.category} data-search={search}>
   <div class="ve-thumb">
-    <img
-      src={concept.image}
-      alt={concept.alt[lang]}
-      loading="lazy"
-      onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"
-    />
+    <img src={concept.image} alt={concept.alt[lang]} loading="lazy"
+      onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" />
     <div class="ve-thumb-ph" style="display:none" aria-hidden="true"><span>{title}</span></div>
   </div>
   <div class="ve-card-body">
     <span class="ve-cat">{categoryLabel(concept.category, lang)}</span>
-    <h3 class="ve-card-title">{title}</h3>
-    <p class="ve-card-desc">{concept.description[lang]}</p>
+    <span class="ve-card-title">{title}</span>
+    <span class="ve-card-desc">{concept.description[lang]}</span>
   </div>
 </a>
+
+<style>
+  .ve-card {
+    display: flex; flex-direction: column; overflow: hidden;
+    text-decoration: none; color: var(--sl-color-white);
+    border: 1px solid var(--sl-color-gray-5); border-radius: 0.75rem;
+    background: var(--sl-color-black); box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+    transition: border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .ve-card:hover { border-color: #F4B942; transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,0.18); }
+  .ve-card[hidden] { display: none; }
+  .ve-thumb { aspect-ratio: 16 / 10; background: #141B2D; overflow: hidden; }
+  .ve-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .ve-thumb-ph { width: 100%; height: 100%; align-items: center; justify-content: center; text-align: center;
+    padding: 1rem; background: linear-gradient(135deg, #141B2D, #232122); }
+  .ve-thumb-ph span { color: #F8F6F0; font-weight: 600; font-size: 0.95rem; }
+  .ve-card-body { padding: 0.85rem 0.95rem 1rem; display: flex; flex-direction: column; gap: 0.3rem; }
+  .ve-cat { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.05em; color: #F4B942;
+    font-weight: 700; }
+  .ve-card-title { font-size: 1.05rem; font-weight: 700; line-height: 1.25; color: var(--sl-color-white);
+    text-decoration: none; }
+  .ve-card-desc { font-size: 0.85rem; line-height: 1.4; color: var(--sl-color-gray-2); font-weight: 400;
+    text-decoration: none; }
+</style>
