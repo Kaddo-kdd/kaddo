@@ -276,7 +276,7 @@ export function ExternalWorkItems() {
                 const cur = filters.types ?? []
                 handleFilterChange({ ...filters, types: cur.includes(t!) ? cur.filter((x) => x !== t) : [...cur, t!] })
               }}
-              style={{ ...chipStyle, cursor: 'pointer', border: '1px solid var(--border)', background: filters.types?.includes(t!) ? 'var(--primary)' : 'var(--surface)', color: filters.types?.includes(t!) ? 'var(--primary-foreground, #fff)' : 'var(--foreground-muted)' }}
+              style={{ ...chipStyle, cursor: 'pointer', border: '1px solid var(--border)', background: filters.types?.includes(t!) ? 'var(--primary)' : 'var(--surface)', color: filters.types?.includes(t!) ? 'var(--primary-foreground)' : 'var(--foreground-muted)' }}
             >
               {t}
             </button>
@@ -293,7 +293,7 @@ export function ExternalWorkItems() {
                 const cur = filters.statuses ?? []
                 handleFilterChange({ ...filters, statuses: cur.includes(s!) ? cur.filter((x) => x !== s) : [...cur, s!] })
               }}
-              style={{ ...chipStyle, cursor: 'pointer', border: '1px solid var(--border)', background: filters.statuses?.includes(s!) ? 'var(--primary)' : 'var(--surface)', color: filters.statuses?.includes(s!) ? 'var(--primary-foreground, #fff)' : 'var(--foreground-muted)' }}
+              style={{ ...chipStyle, cursor: 'pointer', border: '1px solid var(--border)', background: filters.statuses?.includes(s!) ? 'var(--primary)' : 'var(--surface)', color: filters.statuses?.includes(s!) ? 'var(--primary-foreground)' : 'var(--foreground-muted)' }}
             >
               {s}
             </button>

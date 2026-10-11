@@ -70,7 +70,7 @@ function DynamicField({ name, schema, value, onChange }: { name: string; schema:
                 key={o.value}
                 type="button"
                 onClick={() => onChange(on ? selected.filter((v) => v !== o.value) : [...selected, o.value])}
-                style={{ ...btnStyle, background: on ? 'var(--primary)' : 'var(--surface)', color: on ? 'var(--primary-foreground, #fff)' : 'var(--foreground)', fontWeight: on ? 600 : 400 }}
+                style={{ ...btnStyle, background: on ? 'var(--primary)' : 'var(--surface)', color: on ? 'var(--primary-foreground)' : 'var(--foreground)', fontWeight: on ? 600 : 400 }}
               >
                 {o.label}
               </button>

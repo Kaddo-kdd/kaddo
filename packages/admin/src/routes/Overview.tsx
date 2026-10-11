@@ -42,6 +42,7 @@ function SectionCard({ title, children }: { title: string; children: React.React
       border: '1px solid var(--border)',
       borderRadius: 'var(--radius)',
       padding: 20,
+      boxShadow: 'var(--shadow-sm)',
     }}>
       <h3 style={{ fontSize: 12, fontWeight: 600, color: 'var(--foreground-muted)', margin: '0 0 12px', textTransform: 'uppercase', letterSpacing: 0.3 }}>
         {title}
@@ -80,11 +81,11 @@ export function Overview() {
   const findingsPresentation = presentFindingsSummary(findings.blocking, findings.warning, findings.fyi)
 
   return (
-    <div style={{ padding: '24px 32px', maxWidth: 1200, margin: '0 auto' }}>
+    <div style={{ padding: '32px', maxWidth: 1200, margin: '0 auto' }}>
       {/* Project header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
         <div>
-          <h2 style={{ fontSize: 22, fontWeight: 700, margin: '0 0 4px' }}>{project.name}</h2>
+          <h2 style={{ fontSize: 26, fontWeight: 800, letterSpacing: -0.5, margin: '0 0 4px' }}>{project.name}</h2>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
             <span className="font-mono" style={{ fontSize: 13, color: 'var(--foreground-muted)' }}>
               {presentStructure(project.structure)}

@@ -76,6 +76,10 @@ export default defineConfig({
         Head: './src/components/Head.astro',
         Footer: './src/components/Footer.astro',
         SocialIcons: './src/components/SocialIcons.astro',
+        // The brand direction is warm and light by default. Visitors can still
+        // explicitly select the dark theme from Starlight's theme picker.
+        ThemeProvider: './src/components/ThemeProvider.astro',
+        ThemeSelect: './src/components/ThemeSelect.astro',
       },
       social: {
         github: 'https://github.com/Kaddo-kdd/kaddo',

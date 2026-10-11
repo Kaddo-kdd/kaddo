@@ -10,6 +10,36 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+button, input, select, textarea { font: inherit; }
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--primary) 42%, transparent);
+  outline-offset: 2px;
+}
+
+@media (max-width: 760px) {
+  .kaddo-app-shell { flex-direction: column; }
+  .kaddo-sidebar { width: 100% !important; min-height: auto !important; }
+  .kaddo-sidebar__project { padding: 14px 16px !important; }
+  .kaddo-sidebar__nav {
+    display: flex;
+    gap: 4px;
+    overflow-x: auto;
+    padding: 8px !important;
+    scrollbar-width: thin;
+  }
+  .kaddo-sidebar__item { width: auto !important; flex: 0 0 auto; }
+  .kaddo-app-main > * > div[style*="padding"] { padding: 20px !important; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
 code, .font-mono {
   font-family: var(--font-mono);
 }

@@ -64,7 +64,7 @@ const jsonLd = type === 'article'
 ---
 
 <!doctype html>
-<html lang={locale} data-theme="dark">
+<html lang={locale} data-theme="light">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -107,6 +107,10 @@ const jsonLd = type === 'article'
 
     {/* Website analytics (WI-028) — same component Starlight pages use, so the blog is covered too. */}
     <Analytics />
+    <script is:inline>
+      const savedTheme = localStorage.getItem('kaddo-blog-theme')
+      if (savedTheme === 'dark' || savedTheme === 'light') document.documentElement.dataset.theme = savedTheme
+    </script>
   </head>
   <body>
     <header class="blog-header">
@@ -115,6 +119,13 @@ const jsonLd = type === 'article'
         <a href={homeHref}>{docsLabel}</a>
         <a href={locale === 'es' ? '/es/blog/' : '/blog/'} aria-current="page">Blog</a>
         <a href="https://github.com/Kaddo-kdd/kaddo" rel="noopener">GitHub</a>
+        <label class="blog-theme" aria-label={locale === 'es' ? 'Tema visual' : 'Color theme'}>
+          <span aria-hidden="true">Theme</span>
+          <select id="kaddo-blog-theme">
+            <option value="light">Light</option>
+            <option value="dark">Dark</option>
+          </select>
+        </label>
         <span class="lang-switch" aria-label={locale === 'es' ? 'Cambiar idioma' : 'Switch language'}>
           {locale === 'en' ? <span class="current" aria-current="true">EN</span> : <a href={switchHref}>EN</a>}
           <span class="sep">/</span>
@@ -136,19 +147,19 @@ const jsonLd = type === 'article'
     </footer>
 
     <style is:global>
-      :root { color-scheme: dark; }
+      :root { color-scheme: light; }
       html { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
       body {
         margin: 0;
-        background: var(--kaddo-navy);
-        color: var(--kaddo-warm-white);
+        background: var(--sl-color-bg);
+        color: var(--sl-color-white);
         line-height: 1.65;
         -webkit-font-smoothing: antialiased;
         display: flex;
         flex-direction: column;
         min-height: 100vh;
       }
-      a { color: var(--kaddo-amber); text-decoration: none; }
+      a { color: var(--sl-color-accent); text-decoration: none; }
       a:hover { text-decoration: underline; }
       h1, h2, h3 { font-family: 'Poppins', 'Inter', sans-serif; letter-spacing: -0.01em; line-height: 1.2; }
 
@@ -156,31 +167,49 @@ const jsonLd = type === 'article'
         display: flex; align-items: center; justify-content: space-between;
         max-width: 1100px; margin: 0 auto; width: 100%;
         padding: 18px 24px; box-sizing: border-box;
-        border-bottom: 1px solid rgba(255,255,255,0.08);
+        border-bottom: 1px solid var(--kaddo-border);
       }
-      .brand { font-family: 'Poppins', sans-serif; font-weight: 800; font-size: 20px; color: var(--kaddo-warm-white); }
+      .brand { font-family: 'Poppins', sans-serif; font-weight: 800; font-size: 20px; color: var(--sl-color-white); letter-spacing: -0.04em; }
       .blog-nav { display: flex; align-items: center; gap: 22px; font-size: 15px; }
-      .blog-nav > a { color: #c0c4cf; }
+      .blog-nav > a { color: var(--kaddo-tech-gray); }
       .blog-nav > a[aria-current='page'] { color: var(--kaddo-amber); }
       .lang-switch { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; }
-      .lang-switch a { color: #8a90a0; }
+      .lang-switch a { color: var(--kaddo-tech-gray); }
       .lang-switch a:hover { color: var(--kaddo-amber); }
-      .lang-switch .current { color: var(--kaddo-warm-white); }
-      .lang-switch .sep { color: #565d70; font-weight: 400; }
+      .lang-switch .current { color: var(--kaddo-navy); }
+      .lang-switch .sep { color: var(--kaddo-border); font-weight: 400; }
 
-      .blog-main { flex: 1; max-width: 760px; width: 100%; margin: 0 auto; padding: 40px 24px 64px; box-sizing: border-box; }
+      .blog-main { flex: 1; max-width: 860px; width: 100%; margin: 0 auto; padding: 56px 24px 72px; box-sizing: border-box; }
 
       .blog-footer {
         display: flex; gap: 10px; align-items: center; justify-content: center;
-        padding: 24px; font-size: 14px; color: #8a90a0;
-        border-top: 1px solid rgba(255,255,255,0.08);
+        padding: 24px; font-size: 14px; color: var(--kaddo-tech-gray);
+        border-top: 1px solid var(--kaddo-border);
       }
-      .blog-footer a { color: #8a90a0; }
+      .blog-footer a { color: var(--kaddo-tech-gray); }
+      .blog-theme { display: inline-flex; align-items: center; gap: 5px; color: var(--kaddo-tech-gray); font-size: 12px; }
+      .blog-theme select { appearance: none; border: 1px solid var(--kaddo-border); border-radius: 999px; background: var(--kaddo-surface); color: var(--sl-color-white); padding: 4px 23px 4px 9px; font: inherit; cursor: pointer; }
 
       @media (max-width: 600px) {
         .blog-nav { gap: 16px; font-size: 14px; }
+        .blog-theme > span { display: none; }
         .blog-main { padding: 28px 18px 48px; }
       }
     </style>
   </body>
 </html>
+
+<script>
+  const selector = document.querySelector<HTMLSelectElement>('#kaddo-blog-theme')
+  const savedTheme = localStorage.getItem('kaddo-blog-theme')
+  const initialTheme = savedTheme === 'dark' ? 'dark' : 'light'
+  document.documentElement.dataset.theme = initialTheme
+  if (selector) {
+    selector.value = initialTheme
+    selector.addEventListener('change', () => {
+      const theme = selector.value === 'dark' ? 'dark' : 'light'
+      document.documentElement.dataset.theme = theme
+      localStorage.setItem('kaddo-blog-theme', theme)
+    })
+  }
+</script>

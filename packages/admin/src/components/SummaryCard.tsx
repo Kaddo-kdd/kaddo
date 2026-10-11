@@ -14,6 +14,7 @@ export function SummaryCard({ title, value, subtitle, icon }: Props) {
       border: '1px solid var(--border)',
       borderRadius: 'var(--radius)',
       padding: '16px 18px',
+      boxShadow: 'var(--shadow-sm)',
       display: 'flex',
       alignItems: 'center',
       gap: 14,

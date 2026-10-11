@@ -125,12 +125,12 @@ export function WorkItems() {
 
   return (
     <div style={{ padding: '24px 32px', maxWidth: 1000, margin: '0 auto' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap', marginBottom: 4 }}>
         <div>
           <h2 style={{ fontSize: 22, fontWeight: 700, margin: '0 0 4px' }}>Work Items</h2>
           <p style={{ fontSize: 14, color: 'var(--foreground-muted)', margin: 0 }}>Explore the work defined and delivered through Kaddo.</p>
         </div>
-        <div style={{ display: 'flex', gap: 10 }}>
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
           <button
             onClick={() => queryClient.invalidateQueries({ queryKey: ['work-items'] })}
             aria-label="Refresh work items"

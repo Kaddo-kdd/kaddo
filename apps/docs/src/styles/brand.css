@@ -5,9 +5,24 @@
   --kaddo-warm-white: #f8f6f0;
   --kaddo-soft-black: #232122;
   --kaddo-tech-gray: #6b7280;
+  --kaddo-surface: #fffdfa;
+  --kaddo-surface-muted: #f3f1ea;
+  --kaddo-border: #e2dfd5;
+  --kaddo-ink: #141b2d;
 
   --sl-font: 'Inter', system-ui, -apple-system, sans-serif;
   --sl-font-mono: ui-monospace, SFMono-Regular, 'Cascadia Code', monospace;
+
+  /* Design Foundation (WI-059): semantic tokens shared across website surfaces.
+     Palette above is the single source; these add radii, elevation and rhythm. */
+  --kaddo-radius-sm: 0.5rem;
+  --kaddo-radius: 0.9rem;
+  --kaddo-radius-lg: 1.25rem;
+  --kaddo-shadow-sm: 0 1px 2px rgba(20, 27, 45, 0.08);
+  --kaddo-shadow: 0 14px 40px rgba(20, 27, 45, 0.18);
+  --kaddo-shadow-lg: 0 24px 70px rgba(20, 27, 45, 0.28);
+  --kaddo-amber-glow: 0 8px 24px rgba(244, 185, 66, 0.3);
+  --kaddo-space-section: clamp(3rem, 7vw, 5rem);
 }
 
 /* Display/headings use Poppins */
@@ -24,6 +39,10 @@ h1, h2, h3,
 
 /* Dark theme — navy surfaces, amber accent */
 :root[data-theme='dark'] {
+  --kaddo-surface: #1c2335;
+  --kaddo-surface-muted: #161e31;
+  --kaddo-border: #2b3245;
+  --kaddo-ink: #f8f6f0;
   --sl-color-accent-low: #3a2f12;
   --sl-color-accent: var(--kaddo-amber);
   --sl-color-accent-high: #f9d488;
@@ -61,6 +80,32 @@ h1, h2, h3,
   --sl-color-bg-nav: #f8f6f0cc;
   --sl-color-bg-sidebar: #f3f1ea;
   --sl-color-hairline-shade: #e2dfd5;
+}
+
+/* The reference direction uses a quiet warm canvas with white surfaces and navy
+   hierarchy. These rules apply that system beyond the splash page as well. */
+:root[data-theme='light'] body {
+  background: var(--kaddo-warm-white);
+}
+:root[data-theme='light'] .header {
+  background: color-mix(in srgb, var(--kaddo-warm-white) 92%, transparent);
+  border-bottom: 1px solid var(--kaddo-border);
+  backdrop-filter: blur(16px);
+}
+:root[data-theme='light'] .site-title img {
+  filter: brightness(0) saturate(100%) invert(10%) sepia(22%) saturate(1603%) hue-rotate(181deg) brightness(92%) contrast(95%);
+}
+:root[data-theme='dark'] .site-title img {
+  filter: none;
+}
+:root[data-theme='light'] .sidebar-pane {
+  background: var(--kaddo-surface-muted);
+}
+:root[data-theme='light'] .content-panel {
+  background: var(--kaddo-surface);
+  border: 1px solid var(--kaddo-border);
+  border-radius: var(--kaddo-radius-lg);
+  box-shadow: var(--kaddo-shadow-sm);
 }
 
 /* Hero call-to-action buttons in amber */

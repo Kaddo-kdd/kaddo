@@ -53,8 +53,9 @@ const t = (en: string, es: string) => (locale === 'es' ? es : en)
   ) : (
     <div class="post-list">
       {latest.map((p) => (
-        <article class="post-card">
+        <article class:list={['post-card', { 'has-cover': Boolean(p.data.cover) }]}>
           <a href={postPath(p)} class="card-link">
+            {p.data.cover && <img class="cover" src={p.data.cover} alt="" loading="lazy" />}
             <div class="card-body">
               <h3>{p.data.title}</h3>
               <p class="desc">{p.data.description}</p>
@@ -71,25 +72,27 @@ const t = (en: string, es: string) => (locale === 'es' ? es : en)
 </section>
 
 <style>
-  .index-head { margin-bottom: 28px; }
-  h1 { font-size: 2.2rem; margin: 0 0 10px; }
-  .lead { font-size: 1.1rem; color: #c0c4cf; margin: 0; max-width: 60ch; }
-  .section-title { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em; color: #8a90a0; margin: 34px 0 14px; }
+  .index-head { margin-bottom: 32px; padding: clamp(1.75rem, 5vw, 3.25rem); border: 1px solid var(--kaddo-border); border-radius: var(--kaddo-radius-lg); background: linear-gradient(135deg, #fffdfa 0%, #f8f6f0 65%, #f5e6b7 145%); box-shadow: var(--kaddo-shadow-sm); }
+  h1 { font-size: clamp(2.25rem, 7vw, 3.75rem); margin: 0 0 12px; color: var(--sl-color-white); letter-spacing: -0.045em; }
+  .lead { font-size: 1.1rem; color: var(--kaddo-tech-gray); margin: 0; max-width: 60ch; }
+  .section-title { font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--sl-color-accent); margin: 42px 0 14px; }
   .tag-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 18px 0 6px; }
-  .tag { font-size: 13px; padding: 4px 10px; border: 1px solid rgba(255,255,255,0.14); border-radius: 999px; color: #c0c4cf; }
-  .tag span { color: #8a90a0; }
-  .post-list { display: flex; flex-direction: column; gap: 14px; }
-  .post-card { border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; background: #161e31; overflow: hidden; }
-  .post-card:hover { border-color: rgba(244,185,66,0.4); }
+  .tag { font-size: 13px; padding: 5px 11px; border: 1px solid var(--kaddo-border); border-radius: 999px; color: var(--kaddo-tech-gray); background: var(--kaddo-surface); }
+  .tag:hover { border-color: var(--kaddo-amber); color: var(--kaddo-navy); text-decoration: none; }
+  .tag span { color: var(--sl-color-accent); }
+  .post-list { display: flex; flex-direction: column; gap: 16px; }
+  .post-card { border: 1px solid var(--kaddo-border); border-radius: var(--kaddo-radius-lg); background: var(--kaddo-surface); overflow: hidden; box-shadow: var(--kaddo-shadow-sm); transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease; }
+  .post-card:hover { transform: translateY(-3px); border-color: var(--kaddo-amber); box-shadow: var(--kaddo-shadow); }
   .card-link { display: block; color: inherit; text-decoration: none; }
   .card-link:hover { text-decoration: none; }
-  .post-card.featured .card-link { display: grid; grid-template-columns: 200px 1fr; }
+  .post-card.featured .card-link, .post-card.has-cover .card-link { display: grid; grid-template-columns: 200px 1fr; }
   .cover { width: 100%; height: 100%; object-fit: cover; min-height: 120px; }
   .card-body { padding: 16px 18px; }
-  .post-card h3 { margin: 0 0 6px; font-size: 1.15rem; color: var(--kaddo-warm-white); }
-  .desc { margin: 0 0 10px; color: #c0c4cf; font-size: 0.95rem; }
-  .meta { font-size: 0.82rem; color: #8a90a0; }
-  .meta-tags { color: #8a90a0; }
-  .empty { color: #8a90a0; }
-  @media (max-width: 600px) { .post-card.featured .card-link { grid-template-columns: 1fr; } .cover { max-height: 180px; } }
+  .post-card h3 { margin: 0 0 6px; font-size: 1.15rem; color: var(--sl-color-white); }
+  .desc { margin: 0 0 10px; color: var(--kaddo-tech-gray); font-size: 0.95rem; }
+  .meta { font-size: 0.82rem; color: var(--kaddo-tech-gray); }
+  .meta-tags { color: var(--kaddo-tech-gray); }
+  .empty { color: var(--kaddo-tech-gray); }
+  :global([data-theme='dark']) .index-head { background: linear-gradient(135deg, #1c2335, #161e31 65%, #302712 145%); border-color: var(--kaddo-border); }
+  @media (max-width: 600px) { .post-card.featured .card-link, .post-card.has-cover .card-link { grid-template-columns: 1fr; } .cover { max-height: 180px; } }
 </style>

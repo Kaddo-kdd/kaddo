@@ -1,0 +1,48 @@
+---
+import Select from '@astrojs/starlight/components/Select.astro';
+---
+
+<starlight-theme-select>
+	<Select
+		icon="sun"
+		label={Astro.locals.t('themeSelect.accessibleLabel')}
+		value="light"
+		options={[
+			{ label: Astro.locals.t('themeSelect.light'), selected: true, value: 'light' },
+			{ label: Astro.locals.t('themeSelect.dark'), selected: false, value: 'dark' },
+		]}
+		width="5.75em"
+	/>
+</starlight-theme-select>
+
+<script is:inline>
+	StarlightThemeProvider.updatePickers('light');
+</script>
+
+<script>
+	type Theme = 'dark' | 'light';
+	const storageKey = 'starlight-theme';
+	const parseTheme = (theme: unknown): Theme => (theme === 'dark' ? 'dark' : 'light');
+	const loadTheme = (): Theme =>
+		parseTheme(typeof localStorage !== 'undefined' && localStorage.getItem(storageKey));
+
+	function onThemeChange(theme: Theme): void {
+		StarlightThemeProvider.updatePickers(theme);
+		document.documentElement.dataset.theme = theme;
+		localStorage?.setItem(storageKey, theme);
+	}
+
+	class KaddoThemeSelect extends HTMLElement {
+		constructor() {
+			super();
+			onThemeChange(loadTheme());
+			this.querySelector('select')?.addEventListener('change', (event) => {
+				if (event.currentTarget instanceof HTMLSelectElement) {
+					onThemeChange(parseTheme(event.currentTarget.value));
+				}
+			});
+		}
+	}
+
+	customElements.define('starlight-theme-select', KaddoThemeSelect);
+</script>

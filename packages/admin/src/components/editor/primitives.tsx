@@ -55,7 +55,7 @@ export function SelectField({ id, label, hint, value, onChange, options }: {
 }
 
 export const btnStyle: React.CSSProperties = { padding: '6px 12px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', background: 'var(--surface)', color: 'var(--foreground)', cursor: 'pointer', fontSize: 13, fontFamily: 'inherit' }
-export const primaryBtnStyle: React.CSSProperties = { ...btnStyle, background: 'var(--primary)', color: 'var(--primary-foreground, #fff)', fontWeight: 600 }
+export const primaryBtnStyle: React.CSSProperties = { ...btnStyle, background: 'var(--primary)', color: 'var(--primary-foreground)', fontWeight: 600 }
 export const dangerBtnStyle: React.CSSProperties = { ...btnStyle, color: 'var(--danger)', borderColor: 'var(--danger)' }
 
 export function SecondaryButton({ children, onClick, disabled }: { children: ReactNode; onClick: () => void; disabled?: boolean }) {

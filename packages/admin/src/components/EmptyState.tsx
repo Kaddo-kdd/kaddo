@@ -15,6 +15,9 @@ export function EmptyState({ title, description, icon, action }: Props) {
       padding: '48px 24px',
       color: 'var(--foreground-muted)',
       textAlign: 'center',
+      background: 'var(--surface)',
+      border: '1px dashed var(--border)',
+      borderRadius: 'var(--radius-lg)',
     }}>
       {icon && <div style={{ fontSize: 28, marginBottom: 8 }}>{icon}</div>}
       <p style={{ fontSize: 16, fontWeight: 600, margin: '0 0 4px' }}>{title}</p>
@@ -28,6 +31,7 @@ export function EmptyState({ title, description, icon, action }: Props) {
             border: '1px solid var(--border)',
             borderRadius: 'var(--radius)',
             background: 'var(--surface)',
+            boxShadow: 'var(--shadow-sm)',
             cursor: 'pointer',
             fontSize: 13,
             fontFamily: 'inherit',

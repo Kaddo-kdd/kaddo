@@ -42,7 +42,7 @@ export function ConfirmDialog({ title, children, confirmLabel, cancelLabel = 'Ca
       onClick={(e) => { if (e.target === e.currentTarget) onCancel() }}
       style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 16 }}
     >
-      <div ref={dialogRef} style={{ background: 'var(--background)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: 24, maxWidth: 440, width: '100%' }}>
+      <div ref={dialogRef} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow)', padding: 24, maxWidth: 440, width: '100%' }}>
         <h3 style={{ fontSize: 17, fontWeight: 700, margin: '0 0 10px', color: 'var(--foreground)' }}>{title}</h3>
         <div style={{ fontSize: 14, color: 'var(--foreground-muted)', lineHeight: 1.5, marginBottom: 20 }}>{children}</div>
         <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>

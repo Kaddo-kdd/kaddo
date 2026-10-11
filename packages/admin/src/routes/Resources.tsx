@@ -70,7 +70,7 @@ export function Resources() {
 
       {showForm && (
         <div style={card}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12 }}>
             <Field label="Name"><input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Supabase Main" style={input} /></Field>
             <Field label="Type">
               <select value={type} onChange={(e) => setType(e.target.value)} style={input}>
@@ -131,7 +131,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   )
 }
 
-const card: React.CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: 16, marginBottom: 16 }
+const card: React.CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-sm)', padding: 16, marginBottom: 16 }
 const row: React.CSSProperties = { display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, textAlign: 'left', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '12px 16px', cursor: 'pointer', color: 'var(--foreground)', fontFamily: 'inherit' }
 const input: React.CSSProperties = { padding: '8px 10px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', background: 'var(--surface-muted)', color: 'var(--foreground)', fontFamily: 'inherit', fontSize: 14 }
-const btnPrimary: React.CSSProperties = { padding: '8px 14px', border: 'none', borderRadius: 'var(--radius)', background: 'var(--primary)', color: 'var(--primary-foreground, #141b2d)', cursor: 'pointer', fontSize: 13, fontWeight: 600, fontFamily: 'inherit' }
+const btnPrimary: React.CSSProperties = { padding: '8px 14px', border: 'none', borderRadius: 'var(--radius)', background: 'var(--primary)', color: 'var(--primary-foreground)', cursor: 'pointer', fontSize: 13, fontWeight: 600, fontFamily: 'inherit' }

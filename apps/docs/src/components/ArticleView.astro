@@ -47,15 +47,15 @@ const t = (en: string, es: string) => (locale === 'es' ? es : en)
 </article>
 
 <style>
-  .back { display: inline-block; margin-bottom: 18px; color: #8a90a0; font-size: 14px; }
+  .back { display: inline-block; margin-bottom: 18px; color: var(--kaddo-tech-gray); font-size: 14px; }
   .article h1 { font-size: 2.3rem; margin: 0 0 12px; }
-  .lead { font-size: 1.15rem; color: #c0c4cf; margin: 0 0 14px; }
-  .byline { font-size: 0.9rem; color: #8a90a0; display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px; }
-  .cover { width: 100%; border-radius: 12px; margin: 0 0 28px; border: 1px solid rgba(255,255,255,0.08); }
+  .lead { font-size: 1.15rem; color: var(--kaddo-tech-gray); margin: 0 0 14px; }
+  .byline { font-size: 0.9rem; color: var(--kaddo-tech-gray); display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px; }
+  .cover { width: 100%; border-radius: var(--kaddo-radius-lg); margin: 0 0 28px; border: 1px solid var(--kaddo-border); box-shadow: var(--kaddo-shadow-sm); }
   .tags { display: flex; flex-wrap: wrap; gap: 8px; margin: 36px 0 0; }
-  .tag { font-size: 13px; padding: 4px 10px; border: 1px solid rgba(255,255,255,0.14); border-radius: 999px; color: #c0c4cf; }
-  .related { margin-top: 44px; padding-top: 22px; border-top: 1px solid rgba(255,255,255,0.1); }
-  .related h2 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em; color: #8a90a0; margin: 0 0 12px; }
+  .tag { font-size: 13px; padding: 4px 10px; border: 1px solid var(--kaddo-border); border-radius: 999px; color: var(--kaddo-tech-gray); }
+  .related { margin-top: 44px; padding-top: 22px; border-top: 1px solid var(--kaddo-border); }
+  .related h2 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--sl-color-accent); margin: 0 0 12px; }
   .related ul { margin: 0; padding-left: 18px; }
   .related li { margin-bottom: 6px; }
 </style>
@@ -69,9 +69,9 @@ const t = (en: string, es: string) => (locale === 'es' ? es : en)
   .prose a { color: var(--kaddo-amber); }
   .prose ul, .prose ol { margin: 0 0 1.1em; padding-left: 1.4em; }
   .prose li { margin-bottom: 0.4em; }
-  .prose code { background: rgba(255,255,255,0.08); padding: 0.15em 0.4em; border-radius: 4px; font-size: 0.9em; }
-  .prose pre { background: #0e1424; border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 16px; overflow-x: auto; }
+  .prose code { background: var(--kaddo-surface-muted); padding: 0.15em 0.4em; border-radius: 4px; font-size: 0.9em; }
+  .prose pre { background: #0e1424; border: 1px solid #232c42; border-radius: 10px; padding: 16px; overflow-x: auto; }
   .prose pre code { background: none; padding: 0; }
-  .prose blockquote { margin: 0 0 1.1em; padding: 0.4em 1em; border-left: 3px solid var(--kaddo-amber); color: #c0c4cf; }
+  .prose blockquote { margin: 0 0 1.1em; padding: 0.4em 1em; border-left: 3px solid var(--kaddo-amber); color: var(--kaddo-tech-gray); }
   .prose img { max-width: 100%; border-radius: 8px; }
 </style>

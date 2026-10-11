@@ -1,0 +1,24 @@
+{/* Keep the website aligned with Kaddo's light, warm visual system unless a visitor
+    deliberately chose a theme. This is intentionally inlined to prevent a dark flash. */}
+<script is:inline>
+	window.StarlightThemeProvider = (() => {
+		const storedTheme =
+			typeof localStorage !== 'undefined' && localStorage.getItem('starlight-theme');
+		const theme = storedTheme || 'light';
+		document.documentElement.dataset.theme = theme === 'dark' ? 'dark' : 'light';
+		return {
+			updatePickers(theme = storedTheme || 'light') {
+				document.querySelectorAll('starlight-theme-select').forEach((picker) => {
+					const select = picker.querySelector('select');
+					if (select) select.value = theme;
+					const tmpl = document.querySelector('#theme-icons');
+					const newIcon = tmpl && tmpl.content.querySelector('.' + theme);
+					if (newIcon) {
+						const oldIcon = picker.querySelector('svg.label-icon');
+						if (oldIcon) oldIcon.replaceChildren(...newIcon.cloneNode(true).childNodes);
+					}
+				});
+			},
+		};
+	})();
+</script>
