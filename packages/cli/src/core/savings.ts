@@ -220,12 +220,13 @@ export function buildSavingsReport(
   // Confidence — High needs guard history with resolved drift + custom assumptions; else Medium/Low.
   const reasons: string[] = []
   let level: 'Low' | 'Medium' | 'High'
-  if (impact.score === null || impact.score < 60 || graphQuality === 'empty') {
+  const verifiedDelivery = impact.evidence.some((item) => item.id === 'delivery.verification' && item.classification === 'observed')
+  const evidenceStrong = graphQuality === 'good' && impact.ownership_coverage.coverage_percent >= 70 && verifiedDelivery
+  if (!evidenceStrong || graphQuality === 'empty') {
     level = 'Low'
-    reasons.push('Impact score is low or the knowledge graph is empty.')
+    reasons.push('Delivery, ownership or graph evidence is insufficient for a reliable estimate.')
   } else if (
-    impact.score !== null && impact.score >= 85 &&
-    graphQuality === 'good' &&
+    evidenceStrong &&
     source === 'file' && Boolean(a.calibrated_at) &&
     guard.available &&
     guard.resolved > 0

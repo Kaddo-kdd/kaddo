@@ -75,6 +75,16 @@ describe('Knowledge Impact Report (VS-061)', () => {
     expect(md).toContain('## Graph Quality')
   })
 
+  it('WI-060: POC mode marks non-baseline knowledge as not applicable instead of missing', () => {
+    config()
+    const cfg = path.join(tmp, '.kaddo/config.yml')
+    fs.writeFileSync(cfg, fs.readFileSync(cfg, 'utf-8').replace('state: pre-ai', 'state: pre-ai\n  mode: poc'))
+    baseKnowledge()
+    const r = buildImpactReport(tmp)
+    expect(r.evidence.find((item) => item.id === 'knowledge.business')?.classification).toBe('not_applicable')
+    expect(r.evidence.find((item) => item.id === 'knowledge.tech')?.classification).toBe('unknown')
+  })
+
   it('AC28: active scope with no active Work Items reports empty graph quality', () => {
     config()
     baseKnowledge() // only a completed Work Item

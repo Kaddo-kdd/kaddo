@@ -2,7 +2,7 @@
 id: WI-060
 title: Evolve Impact, Drift and Savings Reports for the current Kaddo lifecycle
 type: feature
-status: in-progress
+status: completed
 knowledge_level: K3
 affected_modules: [cli, mcp, docs]
 domains: [Product, Tech, Delivery]
@@ -57,14 +57,14 @@ baseline must not be treated as missing delivery evidence.
 
 ## Acceptance Criteria
 
-- [ ] AC-01: Each report exposes project context and an evidence classification for its principal findings.
-- [ ] AC-02: Impact distinguishes artifact presence from verified lifecycle evidence and does not penalize optional capabilities.
-- [ ] AC-03: POC mode uses an applicable baseline and marks inapplicable layers/capabilities as not applicable.
-- [ ] AC-04: Drift reports current Guard-backed consistency separately from unavailable lifecycle consistency checks.
-- [ ] AC-05: Savings separates one-time estimates from monthly projections and exposes the reporting period and assumptions source.
-- [ ] AC-06: Default assumptions cannot produce High confidence.
-- [ ] AC-07: CLI, MCP resources/generators, JSON and Markdown output remain functional and documented bilingually.
-- [ ] AC-08: Targeted unit tests cover project-aware applicability and period separation.
+- [x] AC-01: Each report exposes project context and an evidence classification for its principal findings.
+- [x] AC-02: Impact distinguishes artifact presence from verified lifecycle evidence and does not penalize optional capabilities.
+- [x] AC-03: POC mode uses an applicable baseline and marks inapplicable layers/capabilities as not applicable.
+- [x] AC-04: Drift reports current Guard-backed consistency separately from unavailable lifecycle consistency checks.
+- [x] AC-05: Savings separates one-time estimates from monthly projections and exposes the reporting period and assumptions source.
+- [x] AC-06: Default assumptions cannot produce High confidence.
+- [x] AC-07: CLI, MCP resources/generators, JSON and Markdown output remain functional and documented bilingually.
+- [x] AC-08: Targeted unit tests cover project-aware applicability and period separation.
 
 ## Validation
 
@@ -73,5 +73,13 @@ Markdown/JSON output from a fixture in standard and POC modes.
 
 ## Definition of Done
 
-The evidence model is shared by all reports, tests pass, documentation describes the
-limits of evidence and estimates, and implementation evidence is recorded before review.
+The evidence model is shared by all reports, 30 targeted tests and both package builds pass,
+documentation describes the limits of evidence and estimates, and implementation evidence is
+recorded before review.
+
+## Implementation Evidence
+
+- `pnpm exec vitest run packages/cli/tests/impact-report.test.ts packages/cli/tests/savings.test.ts packages/cli/tests/guard-history.test.ts` — passed (30 tests).
+- `pnpm --filter @kaddo/cli build` — passed.
+- `pnpm --filter @kaddo/mcp build` — passed.
+- `git diff --check` — passed.

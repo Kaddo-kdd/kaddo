@@ -2,6 +2,9 @@
 // It deliberately separates what Kaddo has observed from what it derives or estimates.
 
 import { loadConfig, projectMode } from './config.js'
+import { getResources } from './resources.js'
+import { discoverInitiatives } from './initiative.js'
+import { loadMappedModules } from '../services/mapped-modules.js'
 
 export type EvidenceKind = 'observed' | 'derived' | 'estimated' | 'projected' | 'unknown' | 'not_applicable'
 
@@ -40,4 +43,16 @@ export function knowledgeLayerEvidence(context: ReportingProjectContext, layer: 
     classification: present ? 'observed' : 'unknown',
     reason: present ? 'A structured knowledge artifact is present.' : 'No structured artifact was found; absence is not proof that knowledge does not exist.',
   }
+}
+
+/** Optional delivery capabilities are reported when present, never scored as missing. */
+export function deliveryCapabilityEvidence(dir: string, context: ReportingProjectContext): EvidenceItem[] {
+  const initiatives = discoverInitiatives(dir)
+  const resources = getResources(dir)
+  const modules = loadMappedModules(dir)
+  return [
+    { id: 'initiatives', label: 'Initiatives', classification: initiatives.length ? 'observed' : 'not_applicable', reason: initiatives.length ? `${initiatives.length} optional Initiative artifact(s) were discovered.` : 'Initiatives are optional and no Initiative artifacts were discovered.' },
+    { id: 'resources', label: 'Project Resources', classification: resources.length ? 'observed' : 'not_applicable', reason: resources.length ? `${resources.length} Project Resource artifact(s) were discovered.` : 'Resources are optional and no Resource artifacts were discovered.' },
+    { id: 'multirepo', label: 'Multirepo mapping', classification: context.repository_structure === 'multirepo' ? (modules.length ? 'observed' : 'unknown') : 'not_applicable', reason: context.repository_structure === 'multirepo' ? (modules.length ? `${modules.length} module mapping(s) were discovered.` : 'Project is multirepo but no module mappings were found.') : 'The project is configured as a monorepo.' },
+  ]
 }

@@ -136,6 +136,14 @@ describe('Estimated Savings Model (VS-062)', () => {
     expect(json).toHaveProperty('total.estimated_value')
     expect(json).toHaveProperty('confidence.level')
   })
+
+  it('WI-060: reports historical estimates and monthly projections separately', () => {
+    setup()
+    const r = buildSavingsReport(tmp)
+    expect(r.reporting_period.observed).toBe('all recorded project history')
+    expect(r.reporting_period.projected).toBe('per month')
+    expect(renderSavingsMarkdown(r)).toContain('Historical estimates and future monthly projections are intentionally not added together.')
+  })
 })
 
 describe('kaddo savings command (VS-062)', () => {

@@ -72,6 +72,12 @@ describe('kaddo drift report (VS-063)', () => {
     expect(renderDriftMarkdown(r)).toContain('No guard history recorded yet.')
   })
 
+  it('WI-060: reports unavailable lifecycle evidence and topology evidence explicitly', () => {
+    const r = buildDriftReport(tmp)
+    expect(r.consistency_evidence.find((item) => item.id === 'lifecycle-consistency')?.classification).toBe('unknown')
+    expect(r.consistency_evidence.find((item) => item.id === 'topology-consistency')?.classification).not.toBe('unknown')
+  })
+
   it('AC17-AC23/AC42/AC43: full report + JSON with history', () => {
     recordGuardRun(tmp, {
       project: 'todoApp', scope: 's', touched_files: ['src/cli/program.ts'],

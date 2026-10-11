@@ -14,7 +14,7 @@ import { discoverInstalledSkills } from '../services/installed-skills.js'
 import { buildGraph, type GraphScope } from './graph.js'
 import { buildGraphHints } from './graph-hints.js'
 import { buildGuardHistory } from './guard-history.js'
-import { knowledgeLayerEvidence, reportingProjectContext, type EvidenceItem, type ReportingProjectContext } from './reporting-evidence.js'
+import { deliveryCapabilityEvidence, knowledgeLayerEvidence, reportingProjectContext, type EvidenceItem, type ReportingProjectContext } from './reporting-evidence.js'
 
 export type Level = 'Low' | 'Medium' | 'High' | 'Very High'
 
@@ -108,6 +108,7 @@ export type ImpactReport = {
     maintenance_readiness: Level
   }
   actionable_gaps: ActionableGaps
+  /** @deprecated Legacy heuristic retained for JSON compatibility; it must not drive decisions. */
   score: number | null
   score_breakdown: ScoreBreakdown | null
   suggested_actions: string[]
@@ -370,7 +371,7 @@ export function buildImpactReport(
       ...['Business', 'Product', 'Tech', 'Delivery'].map((layer) => knowledgeLayerEvidence(projectContext, layer, layerStatus(layer) !== 'Missing')),
       { id: 'work-items.lifecycle', label: 'Work Item lifecycle', classification: total > 0 ? 'observed' : 'unknown', reason: total > 0 ? `${total} Work Item artifact(s) were discovered.` : 'No Work Item artifacts were discovered.' },
       { id: 'delivery.verification', label: 'Verified delivery outcomes', classification: verifiedWorkItems > 0 ? 'observed' : 'unknown', reason: verifiedWorkItems > 0 ? `${verifiedWorkItems} Work Item(s) have persisted validation_status: passed.` : 'Acceptance Criteria and Definition of Done sections show declared intent, not completed verification evidence.' },
-      { id: 'initiatives', label: 'Initiatives', classification: withInitiative > 0 ? 'observed' : 'not_applicable', reason: withInitiative > 0 ? `${withInitiative} Work Item(s) use the optional capability.` : 'Initiatives are optional and are not required for delivery traceability.' },
+      ...deliveryCapabilityEvidence(dir, projectContext),
       { id: 'guard-history', label: 'Guard consistency history', classification: buildGuardHistory(dir).available ? 'observed' : 'unknown', reason: buildGuardHistory(dir).available ? 'Recorded Guard runs provide current consistency evidence.' : 'No recorded Guard history is available.' },
     ],
     scope: g.scope,
@@ -436,8 +437,8 @@ export function renderImpactMarkdown(r: ImpactReport): string {
   L.push(`Project: ${r.project}`)
   L.push(`Project context: state=${r.project_context.state}; mode=${r.project_context.mode}; repositories=${r.project_context.repository_structure}`)
   L.push(`Scope: ${r.scope}`)
-  if (r.score !== null) L.push(`Knowledge Impact Score: ${r.score}/100`)
-  else L.push('Knowledge Impact Score: not available')
+  if (r.score !== null) L.push(`Legacy Knowledge Impact Score: ${r.score}/100 (deprecated; use Evidence and Applicability)`)
+  else L.push('Legacy Knowledge Impact Score: not available')
   if (r.scope_source === 'default') {
     L.push('Scope note: Impact reports use `all` by default to measure accumulated knowledge impact.')
   } else if (r.scope === 'active' && r.graph_quality.available === false) {

@@ -6,6 +6,8 @@ import { buildGuardHistory, type GuardHistory } from './guard-history.js'
 import { reportingProjectContext, type EvidenceItem, type ReportingProjectContext } from './reporting-evidence.js'
 import { getDeprecationPlan, getDeprecationPlans, validateTarget } from './deprecation.js'
 import { discoverWorkItems } from '../services/knowledge-artifacts.js'
+import { buildGraph } from './graph.js'
+import { buildGraphHints } from './graph-hints.js'
 
 export type DriftReport = {
   generated_at: string
@@ -35,6 +37,9 @@ export function buildDriftReport(dir: string, now: Date = new Date()): DriftRepo
   const verificationEvidence = workItems.filter((wi) => wi.validationStatus && wi.validationStatus !== 'not-started')
   const plans = getDeprecationPlans(dir)
   const deprecationFindings = plans.flatMap((plan) => getDeprecationPlan(dir, plan.id)?.targets.flatMap(validateTarget) ?? [])
+  const config = loadConfig(dir)
+  const topology = config ? buildGraph(dir, config, { scope: 'all' }, now) : null
+  const topologyHints = topology ? buildGraphHints(dir, topology, now).summary.hints : null
 
   const actions: string[] = []
   if (!h.available) {
@@ -53,6 +58,7 @@ export function buildDriftReport(dir: string, now: Date = new Date()): DriftRepo
       { id: 'guard-current-consistency', label: 'Current Guard consistency', classification: h.available ? 'observed' : 'unknown', reason: h.available ? `${h.total_runs} recorded Guard run(s) provide deterministic consistency evidence.` : 'No recorded Guard history is available.' },
       { id: 'lifecycle-consistency', label: 'Lifecycle evidence consistency', classification: verificationEvidence.length > 0 ? 'observed' : 'unknown', reason: verificationEvidence.length > 0 ? `${verificationEvidence.length} Work Item(s) persist an implementation validation status.` : 'No persisted Work Item validation status is available.' },
       { id: 'deprecation-consistency', label: 'Deprecation consistency', classification: plans.length === 0 ? 'not_applicable' : deprecationFindings.length === 0 ? 'derived' : 'observed', reason: plans.length === 0 ? 'No deprecation plans exist in this project.' : deprecationFindings.length === 0 ? `${plans.length} plan(s) passed deterministic target consistency checks.` : `${deprecationFindings.length} deterministic deprecation consistency finding(s) were detected.` },
+      { id: 'topology-consistency', label: 'Knowledge topology consistency', classification: topology === null ? 'unknown' : topologyHints === 0 ? 'derived' : 'observed', reason: topology === null ? 'No project configuration is available to construct the topology.' : topologyHints === 0 ? `The in-memory topology has ${topology.nodes.length} node(s) and no open deterministic hints.` : `The in-memory topology has ${topologyHints} open deterministic hint(s).` },
     ],
     guard_history: {
       available: h.available,
