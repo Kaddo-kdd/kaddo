@@ -6,9 +6,10 @@ import Select from '@astrojs/starlight/components/Select.astro';
 	<Select
 		icon="sun"
 		label={Astro.locals.t('themeSelect.accessibleLabel')}
-		value="light"
+		value="system"
 		options={[
-			{ label: Astro.locals.t('themeSelect.light'), selected: true, value: 'light' },
+			{ label: 'System', selected: true, value: 'system' },
+			{ label: Astro.locals.t('themeSelect.light'), selected: false, value: 'light' },
 			{ label: Astro.locals.t('themeSelect.dark'), selected: false, value: 'dark' },
 		]}
 		width="5.75em"
@@ -16,19 +17,19 @@ import Select from '@astrojs/starlight/components/Select.astro';
 </starlight-theme-select>
 
 <script is:inline>
-	StarlightThemeProvider.updatePickers('light');
+	StarlightThemeProvider.updatePickers('system');
 </script>
 
 <script>
-	type Theme = 'dark' | 'light';
+	type Theme = 'dark' | 'light' | 'system';
 	const storageKey = 'starlight-theme';
-	const parseTheme = (theme: unknown): Theme => (theme === 'dark' ? 'dark' : 'light');
+	const parseTheme = (theme: unknown): Theme =>
+		theme === 'dark' || theme === 'light' || theme === 'system' ? theme : 'system';
 	const loadTheme = (): Theme =>
 		parseTheme(typeof localStorage !== 'undefined' && localStorage.getItem(storageKey));
 
 	function onThemeChange(theme: Theme): void {
 		StarlightThemeProvider.updatePickers(theme);
-		document.documentElement.dataset.theme = theme;
 		localStorage?.setItem(storageKey, theme);
 	}
 
@@ -45,4 +46,8 @@ import Select from '@astrojs/starlight/components/Select.astro';
 	}
 
 	customElements.define('starlight-theme-select', KaddoThemeSelect);
+
+	window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+		if (loadTheme() === 'system') onThemeChange('system');
+	});
 </script>

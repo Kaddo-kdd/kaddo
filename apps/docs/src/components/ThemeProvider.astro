@@ -1,16 +1,30 @@
-{/* Keep the website aligned with Kaddo's light, warm visual system unless a visitor
-    deliberately chose a theme. This is intentionally inlined to prevent a dark flash. */}
+{/* Resolve the system preference before first paint; an explicit visitor choice still wins. */}
 <script is:inline>
 	window.StarlightThemeProvider = (() => {
+		const storageKey = 'starlight-theme';
+		const parsePreference = (theme) =>
+			theme === 'dark' || theme === 'light' || theme === 'system' ? theme : 'system';
+		const resolveTheme = (preference) =>
+			preference === 'dark' ||
+			(preference === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+				? 'dark'
+				: 'light';
 		const storedTheme =
-			typeof localStorage !== 'undefined' && localStorage.getItem('starlight-theme');
-		const theme = storedTheme || 'light';
-		document.documentElement.dataset.theme = theme === 'dark' ? 'dark' : 'light';
+			typeof localStorage !== 'undefined' && localStorage.getItem(storageKey);
+		const preference = parsePreference(storedTheme);
+		const applyTheme = (nextPreference) => {
+			const theme = resolveTheme(parsePreference(nextPreference));
+			document.documentElement.dataset.theme = theme;
+			return theme;
+		};
+		applyTheme(preference);
 		return {
-			updatePickers(theme = storedTheme || 'light') {
+			applyTheme,
+			updatePickers(preference = parsePreference(storedTheme)) {
+				const theme = applyTheme(preference);
 				document.querySelectorAll('starlight-theme-select').forEach((picker) => {
 					const select = picker.querySelector('select');
-					if (select) select.value = theme;
+					if (select) select.value = preference;
 					const tmpl = document.querySelector('#theme-icons');
 					const newIcon = tmpl && tmpl.content.querySelector('.' + theme);
 					if (newIcon) {

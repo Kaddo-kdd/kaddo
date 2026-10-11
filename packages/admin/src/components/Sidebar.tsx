@@ -15,6 +15,18 @@ import { useEffect, useState } from 'react'
 import { isNavItemActive } from '../lib/presentation'
 
 type NavItem = { label: string; path: string; icon: LucideIcon; disabled?: boolean }
+type ThemePreference = 'light' | 'dark' | 'system'
+
+function parseThemePreference(value: string | null): ThemePreference {
+  return value === 'light' || value === 'dark' || value === 'system' ? value : 'system'
+}
+
+function resolveTheme(preference: ThemePreference): 'light' | 'dark' {
+  return preference === 'dark' ||
+    (preference === 'system' && window.matchMedia?.('(prefers-color-scheme: dark)').matches)
+    ? 'dark'
+    : 'light'
+}
 
 const navItems: NavItem[] = [
   { label: 'Overview', path: '/overview', icon: LayoutDashboard },
@@ -30,18 +42,22 @@ const navItems: NavItem[] = [
 
 export function Sidebar({ projectName }: { projectName: string }) {
   const router = useRouter()
-  const [theme, setTheme] = useState<'light' | 'dark'>('light')
+  const [theme, setTheme] = useState<ThemePreference>(() =>
+    parseThemePreference(window.localStorage.getItem('kaddo-admin-theme')),
+  )
   // Subscribe to the location so the active item updates on SPA navigation (not just full loads).
   const currentPath = useRouterState({ select: (s) => s.location.pathname })
 
   useEffect(() => {
-    const stored = window.localStorage.getItem('kaddo-admin-theme')
-    if (stored === 'dark' || stored === 'light') setTheme(stored)
-  }, [])
-
-  useEffect(() => {
-    document.documentElement.dataset.theme = theme
+    const applyTheme = () => {
+      document.documentElement.dataset.theme = resolveTheme(theme)
+    }
+    applyTheme()
     window.localStorage.setItem('kaddo-admin-theme', theme)
+    const media = window.matchMedia?.('(prefers-color-scheme: dark)')
+    if (theme !== 'system' || !media) return
+    media.addEventListener('change', applyTheme)
+    return () => media.removeEventListener('change', applyTheme)
   }, [theme])
 
   return (
@@ -111,9 +127,10 @@ export function Sidebar({ projectName }: { projectName: string }) {
         <select
           id="kaddo-admin-theme"
           value={theme}
-          onChange={(event) => setTheme(event.target.value as 'light' | 'dark')}
+          onChange={(event) => setTheme(event.target.value as ThemePreference)}
           style={{ width: '100%', padding: '7px 8px', border: '1px solid var(--sidebar-border)', borderRadius: 7, background: '#1c2740', color: '#f8f6f0', fontSize: 12, cursor: 'pointer' }}
         >
+          <option value="system">System</option>
           <option value="light">Light</option>
           <option value="dark">Dark</option>
         </select>

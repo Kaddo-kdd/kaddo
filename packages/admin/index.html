@@ -5,6 +5,16 @@
     <link rel="icon" type="image/png" href="/favicon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Kaddo Admin</title>
+    <script>
+      (() => {
+        const stored = localStorage.getItem('kaddo-admin-theme')
+        const preference = stored === 'dark' || stored === 'light' || stored === 'system' ? stored : 'system'
+        document.documentElement.dataset.theme = preference === 'dark' ||
+          (preference === 'system' && matchMedia('(prefers-color-scheme: dark)').matches)
+          ? 'dark'
+          : 'light'
+      })()
+    </script>
   </head>
   <body>
     <div id="root"></div>

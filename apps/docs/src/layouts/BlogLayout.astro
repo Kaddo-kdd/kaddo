@@ -109,7 +109,13 @@ const jsonLd = type === 'article'
     <Analytics />
     <script is:inline>
       const savedTheme = localStorage.getItem('kaddo-blog-theme')
-      if (savedTheme === 'dark' || savedTheme === 'light') document.documentElement.dataset.theme = savedTheme
+      const preference = savedTheme === 'dark' || savedTheme === 'light' || savedTheme === 'system'
+        ? savedTheme
+        : 'system'
+      document.documentElement.dataset.theme = preference === 'dark' ||
+        (preference === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+        ? 'dark'
+        : 'light'
     </script>
   </head>
   <body>
@@ -122,6 +128,7 @@ const jsonLd = type === 'article'
         <label class="blog-theme" aria-label={locale === 'es' ? 'Tema visual' : 'Color theme'}>
           <span aria-hidden="true">Theme</span>
           <select id="kaddo-blog-theme">
+            <option value="system">System</option>
             <option value="light">Light</option>
             <option value="dark">Dark</option>
           </select>
@@ -148,6 +155,7 @@ const jsonLd = type === 'article'
 
     <style is:global>
       :root { color-scheme: light; }
+      :root[data-theme='dark'] { color-scheme: dark; }
       html { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
       body {
         margin: 0;
@@ -201,15 +209,28 @@ const jsonLd = type === 'article'
 
 <script>
   const selector = document.querySelector<HTMLSelectElement>('#kaddo-blog-theme')
-  const savedTheme = localStorage.getItem('kaddo-blog-theme')
-  const initialTheme = savedTheme === 'dark' ? 'dark' : 'light'
-  document.documentElement.dataset.theme = initialTheme
+  type ThemePreference = 'dark' | 'light' | 'system'
+  const parsePreference = (value: string | null): ThemePreference =>
+    value === 'dark' || value === 'light' || value === 'system' ? value : 'system'
+  const resolveTheme = (preference: ThemePreference) =>
+    preference === 'dark' ||
+    (preference === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+      ? 'dark'
+      : 'light'
+  const applyTheme = (preference: ThemePreference) => {
+    document.documentElement.dataset.theme = resolveTheme(preference)
+  }
+  const initialTheme = parsePreference(localStorage.getItem('kaddo-blog-theme'))
+  applyTheme(initialTheme)
   if (selector) {
     selector.value = initialTheme
     selector.addEventListener('change', () => {
-      const theme = selector.value === 'dark' ? 'dark' : 'light'
-      document.documentElement.dataset.theme = theme
+      const theme = parsePreference(selector.value)
+      applyTheme(theme)
       localStorage.setItem('kaddo-blog-theme', theme)
     })
   }
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+    if (parsePreference(localStorage.getItem('kaddo-blog-theme')) === 'system') applyTheme('system')
+  })
 </script>
