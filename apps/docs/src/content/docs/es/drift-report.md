@@ -7,6 +7,10 @@ description: Persiste un historial determinista de ejecuciones de guard y report
 cada ejecución se persiste para que Kaddo pueda responder con el tiempo: cuántas alertas de drift
 aparecieron, cuántas se resolvieron, qué áreas son hotspots y si el proyecto está mejorando.
 
+## Límites de evidencia
+
+El reporte separa la consistencia actual respaldada por Guard de la consistencia de lifecycle y deprecations que Kaddo todavía no puede evaluar. `unknown` es evidencia insuficiente, nunca limpio.
+
 ```bash
 kaddo guard --record           # corre guard Y lo registra en .kaddo/history/
 kaddo drift                    # reporte de tendencias en Markdown (no escribe nada)

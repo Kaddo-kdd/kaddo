@@ -14,6 +14,7 @@ import { discoverInstalledSkills } from '../services/installed-skills.js'
 import { buildGraph, type GraphScope } from './graph.js'
 import { buildGraphHints } from './graph-hints.js'
 import { buildGuardHistory } from './guard-history.js'
+import { knowledgeLayerEvidence, reportingProjectContext, type EvidenceItem, type ReportingProjectContext } from './reporting-evidence.js'
 
 export type Level = 'Low' | 'Medium' | 'High' | 'Very High'
 
@@ -53,6 +54,10 @@ export type ScoreBreakdown = {
 export type ImpactReport = {
   generated_at: string
   project: string
+  /** Shared context makes applicability explicit instead of treating all projects alike. */
+  project_context: ReportingProjectContext
+  /** Classifies the report's principal findings; presence is not verification. */
+  evidence: EvidenceItem[]
   scope: string
   /** Impact reports default to `all` to measure accumulated knowledge impact (VS-061.2). */
   default_scope: 'all'
@@ -140,8 +145,10 @@ export function buildImpactReport(
   const resolvedScope: GraphScope = opts.scope ?? 'all'
   const scopeSource: 'default' | 'explicit' = opts.scopeSource ?? (opts.scope ? 'explicit' : 'default')
   const exp = buildProjectExplanation(dir)
+  const projectContext = reportingProjectContext(dir)
   const wis = discoverWorkItems(dir)
   const total = wis.length
+  const verifiedWorkItems = wis.filter((wi) => wi.validationStatus === 'passed').length
 
   // --- Per-Work-Item coverage + actionable gaps (front matter + body sections) ---
   let withOwnership = 0
@@ -252,7 +259,8 @@ export function buildImpactReport(
   const knowledge_coverage = [
     { label: 'Work Items with ownership', have: withOwnership, total },
     { label: 'Work Items with source', have: withSource, total },
-    { label: 'Work Items with initiative', have: withInitiative, total },
+    // Initiatives are optional: report their observed use, but do not use absence as a gap or score input.
+    { label: 'Work Items using optional initiatives', have: withInitiative, total },
     { label: 'Work Items with acceptance criteria', have: withAcceptance, total },
     { label: 'Work Items with Definition of Done', have: withDoD, total },
     { label: 'Work Items with knowledge level', have: withLevel, total },
@@ -300,7 +308,8 @@ export function buildImpactReport(
   let score_breakdown: ScoreBreakdown | null = null
   if (total > 0) {
     const healthPts = ([layerStatus('Business'), layerStatus('Product'), layerStatus('Tech'), layerStatus('Delivery')].filter((s) => s !== 'Missing').length / 4) * 20
-    const covAvg = knowledge_coverage.reduce((a, c) => a + coverageRatio(c.have), 0) / knowledge_coverage.length
+    const applicableCoverage = knowledge_coverage.filter((c) => c.label !== 'Work Items using optional initiatives')
+    const covAvg = applicableCoverage.reduce((a, c) => a + coverageRatio(c.have), 0) / applicableCoverage.length
     const coveragePts = covAvg * 20
     const ownPts = coverageRatio(withOwnership) * 15
     const traceBlend = ((exp.roadmap.candidates > 0 ? exp.roadmap.materialized / exp.roadmap.candidates : 1) * 0.5) + (coverageRatio(withOwnership) * 0.5)
@@ -335,7 +344,6 @@ export function buildImpactReport(
   for (const a of [
     groupedAction(gaps.missing_code_ownership, 'Add `code:` ownership to'),
     groupedAction(gaps.missing_source, 'Add `source`/`source_id` to'),
-    groupedAction(gaps.missing_initiative, 'Add an `initiative` to'),
     groupedAction(gaps.missing_acceptance_criteria, 'Add Acceptance Criteria to'),
     groupedAction(gaps.missing_definition_of_done, 'Add a Definition of Done to'),
     groupedAction(gaps.missing_validation, 'Add a validation (How to test it) section to'),
@@ -357,6 +365,14 @@ export function buildImpactReport(
   return {
     generated_at: now.toISOString(),
     project: exp.project.name,
+    project_context: projectContext,
+    evidence: [
+      ...['Business', 'Product', 'Tech', 'Delivery'].map((layer) => knowledgeLayerEvidence(projectContext, layer, layerStatus(layer) !== 'Missing')),
+      { id: 'work-items.lifecycle', label: 'Work Item lifecycle', classification: total > 0 ? 'observed' : 'unknown', reason: total > 0 ? `${total} Work Item artifact(s) were discovered.` : 'No Work Item artifacts were discovered.' },
+      { id: 'delivery.verification', label: 'Verified delivery outcomes', classification: verifiedWorkItems > 0 ? 'observed' : 'unknown', reason: verifiedWorkItems > 0 ? `${verifiedWorkItems} Work Item(s) have persisted validation_status: passed.` : 'Acceptance Criteria and Definition of Done sections show declared intent, not completed verification evidence.' },
+      { id: 'initiatives', label: 'Initiatives', classification: withInitiative > 0 ? 'observed' : 'not_applicable', reason: withInitiative > 0 ? `${withInitiative} Work Item(s) use the optional capability.` : 'Initiatives are optional and are not required for delivery traceability.' },
+      { id: 'guard-history', label: 'Guard consistency history', classification: buildGuardHistory(dir).available ? 'observed' : 'unknown', reason: buildGuardHistory(dir).available ? 'Recorded Guard runs provide current consistency evidence.' : 'No recorded Guard history is available.' },
+    ],
     scope: g.scope,
     default_scope: 'all',
     scope_source: scopeSource,
@@ -418,6 +434,7 @@ export function renderImpactMarkdown(r: ImpactReport): string {
   L.push('# Kaddo Knowledge Impact Report', '')
   L.push(`Generated at: ${r.generated_at}`)
   L.push(`Project: ${r.project}`)
+  L.push(`Project context: state=${r.project_context.state}; mode=${r.project_context.mode}; repositories=${r.project_context.repository_structure}`)
   L.push(`Scope: ${r.scope}`)
   if (r.score !== null) L.push(`Knowledge Impact Score: ${r.score}/100`)
   else L.push('Knowledge Impact Score: not available')
@@ -430,6 +447,10 @@ export function renderImpactMarkdown(r: ImpactReport): string {
 
   L.push('## Executive Summary', '')
   for (const s of r.executive_summary) L.push(`- ${s}`)
+  L.push('')
+
+  L.push('## Evidence and Applicability', '')
+  for (const item of r.evidence) L.push(`- ${item.label}: ${item.classification} — ${item.reason}`)
   L.push('')
 
   L.push('## Knowledge Health', '')
