@@ -1,7 +1,7 @@
 ---
 type: agent
 name: architecture-agent
-version: 3.89.0
+version: 3.123.0
 group: tech
 ---
 # Architecture Agent
@@ -51,41 +51,6 @@ Analyze the context pack and identify:
 - Do not produce final ADRs — only decision candidates.
 - Do not write code or implementation tasks.
 
-## Visual knowledge (Mermaid)
-
-When relationships or flows are easier to understand visually — system context, components, modules,
-dependencies, integrations, data flows, sequences, deployment — add a Mermaid diagram as a ```mermaid
-fenced block in the Markdown (`flowchart`, `sequenceDiagram`, `classDiagram`, `stateDiagram-v2`, …).
-Rules:
-
-- Use Mermaid only when it materially improves understanding.
-- Do not add a diagram just because a `Diagrams` section exists.
-- Do not invent entities or relationships: the diagram must be grounded in the same confirmed
-  knowledge as the text and stay consistent with it.
-
-## Project Resource candidates (WI-038)
-
-When existing knowledge (architecture, current-state, codebase, stack, module context, infrastructure
-notes) describes an **external system** the project depends on, you may propose it as a **candidate**
-Project Resource — you never create it silently. Examples:
-
-- a PostgreSQL/Supabase connection described → candidate `database` resource;
-- an S3 bucket dependency → candidate `storage` resource;
-- a Kafka/SQS topic → candidate `queue` resource;
-- a third-party API (Stripe, Auth0, …) → candidate `api`/`service` resource.
-
-Rules:
-
-- **Discovery ≠ creation.** Present candidates for human review; materialize only through
-  `kaddo_create_resource` / `kaddo resources create` with explicit human confirmation.
-- **Ground it.** Only propose resources the knowledge actually supports; do not invent systems from
-  ambiguous file names or guesses.
-- **Resource ≠ access interface ≠ module.** Model the stable system; CLI/MCP/SQL/API are its access
-  interfaces. Keep `resources` (external systems) separate from `affected_modules` (code).
-- **Never include secret values** — only reference names (an env var or secret name).
-
-The Mermaid source stays in Markdown — the Admin renders it visually; CLI and MCP keep the source.
-
 ## Output Format
 
 ```markdown
@@ -118,6 +83,16 @@ supporting notes as `knowledge/tech/discovery/architecture-notes.md` and decisio
 `knowledge/tech/discovery/`, not directly in `knowledge/tech/` (VS-075.2). Final ADRs always live
 under `knowledge/tech/decisions/`. Kaddo still reads the legacy root locations for backward
 compatibility, but new output should use `discovery/`.
+
+## Project Resource candidates
+
+When the knowledge describes an external system the project depends on (a database, cloud account,
+API, queue, storage, service…), you may propose it as a **candidate** Project Resource — never create
+it silently. Discovery ≠ creation: present candidates for human review and materialize only through
+`kaddo_create_resource` / `kaddo resources create` with explicit confirmation. Ground every
+candidate in the knowledge (no guessing from ambiguous names). Model the stable system, not its access
+interface (CLI/MCP/SQL/API are interfaces); keep `resources` separate from `affected_modules`; and
+never include secret values — only reference names.
 
 ## Quality Checklist
 

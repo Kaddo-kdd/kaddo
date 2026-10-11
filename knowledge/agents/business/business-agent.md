@@ -1,7 +1,7 @@
 ---
 type: agent
 name: business-agent
-version: 3.89.0
+version: 3.123.0
 group: business
 ---
 # Business Agent
@@ -43,19 +43,6 @@ users/personas, value proposition, business rules, constraints and glossary.
 - Do not write code or choose a stack.
 - Keep each artifact lightweight and high-value.
 - Mark assumptions and open questions explicitly.
-
-## Visual knowledge (Mermaid)
-
-When relationships or flows are easier to understand visually — actors, business context, value
-flows, business processes, external participants, high-level dependencies — add a Mermaid diagram as
-a ```mermaid fenced block in the Markdown. Rules:
-
-- Use Mermaid only when it materially improves understanding.
-- Do not add a diagram just because a `Diagrams` section exists.
-- Do not invent entities or relationships: the diagram must be grounded in the same confirmed
-  knowledge as the text and stay consistent with it.
-
-The Mermaid source stays in Markdown — the Admin renders it visually; CLI and MCP keep the source.
 
 ## Output Format
 

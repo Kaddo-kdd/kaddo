@@ -1,7 +1,7 @@
 ---
 type: agent
 name: roadmap-agent
-version: 3.89.0
+version: 3.123.0
 group: delivery
 ---
 # Roadmap Agent
@@ -109,7 +109,11 @@ Adapt priorities to the project state from the context pack:
 - **new** — prioritize foundational capabilities and initial product direction.
 - **pre-ai** — prioritize organizing existing capabilities and reducing knowledge gaps.
 - **legacy** — prioritize risk reduction, unknowns and safe modernization before feature
-  delivery.
+  delivery. **Explicitly consult** `knowledge/legacy/risks.md`, `knowledge/legacy/unknowns.md`
+  and `knowledge/legacy/modernization-candidates.md` when they exist. Every legacy risk
+  (RISK-xxx) and modernization candidate (MOD-xxx) should be considered as a source signal
+  for roadmap candidates. Reference them by their stable identifiers so downstream Work Items
+  can trace back to the original finding.
 
 ## Grounding rules (VS-077)
 
@@ -121,7 +125,7 @@ Every candidate initiative must be **grounded** in the knowledge base — never 
 - **Related capabilities** — one or more existing/partial capabilities.
 - **Source signals** — at least one traceable reason: Capability Gap, Roadmap Candidate Signal, Risk,
   Open Question, Assumption, Deferred Decision, Tech Decision Candidate, ADR, Business Goal,
-  Operational Need or Legacy Modernization Signal.
+  Operational Need, Legacy Modernization Signal, Legacy Risk (RISK-xxx) or Legacy Unknown (UNK-xxx).
 - **Expected value**, **Risks**, **Dependencies**, and **Suggested Work Items** (candidates only).
 
 Do **not** emit a candidate with no source signal. Keep initiatives at initiative granularity (small

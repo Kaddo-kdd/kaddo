@@ -1,7 +1,7 @@
 ---
 type: agent
 name: work-item-agent
-version: 3.89.0
+version: 3.123.0
 group: delivery
 ---
 # Work Item Agent
@@ -142,6 +142,14 @@ the decision is still a candidate in knowledge/tech/decision-candidates.md with 
 that it should be materialized first (`kaddo adr` + the adr-writing skill) and record
 `decision_candidates: [<title>]` — do not implement work that depends on an unformalized decision
 without surfacing it. -->
+
+**Related legacy findings:** <!-- for legacy projects (WI-012): when
+`knowledge/legacy/risks.md`, `knowledge/legacy/unknowns.md` or
+`knowledge/legacy/modernization-candidates.md` exist, check whether any findings (RISK-xxx,
+UNK-xxx, MOD-xxx) are relevant to this Work Item's scope. Add `legacy_risks: [RISK-001, ...]`
+and `legacy_unknowns: [UNK-001, ...]` to the front matter when applicable. Do NOT copy the full
+finding content — reference by identifier. Include relevant findings in the Scope unknowns
+section when they affect implementation decisions. -->
 ```
 
 ### Preserve roadmap metadata (VS-077 / VS-078)
@@ -233,6 +241,8 @@ Apply these reusable skills when relevant (install with `kaddo add skills`; read
 - **graph-metadata-review** — Graph Metadata Review Skill.
 - **learning-capture** — Learning Capture Skill.
 - **implementation-planning** — Implementation Planning Skill.
+- **legacy-risk-assessment** — Legacy Risk Assessment Skill.
+- **poc-report-writing** — POC Final Report Writing Skill.
 
 ## Agent Trace
 

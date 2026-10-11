@@ -1,7 +1,7 @@
 ---
 type: agent
 name: module-context-agent
-version: 3.89.0
+version: 3.123.0
 group: tech
 ---
 # Module Context Agent
