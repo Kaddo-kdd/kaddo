@@ -205,3 +205,16 @@ categoría compare, imágenes `.webp` servidas y referenciadas en las fichas.
 Pendiente: 2 imágenes restantes (probablemente knowledge-layers y mcp, hoy con placeholder) + evaluar
 agents-skills / project-new / project-legacy / performance-report cuando haya imagen/doc. Al cerrar,
 revisión editorial final y `kaddo learn`.
+
+## Progreso — Slice 3 (2 imágenes finales)
+
+Las 2 imágenes restantes correspondían a **project-new** y **project-legacy** (no a knowledge-layers/mcp).
+Integradas: completan el trío de estados de proyecto (New / Pre-IA / Legacy) en la categoría "Empieza".
+
+- 2 imágenes en `public/visual-explorer/{project-new,project-legacy}.webp`.
+- 2 conceptos añadidos (start) + 4 fichas EN/ES; refs a /use-cases/new-project y /use-cases/legacy-project.
+- Catálogo: **23 conceptos** en 5 categorías. Build OK (255 páginas), 23 tarjetas EN, 22 imágenes servidas.
+
+Único remanente de imagen: `knowledge-layers` y `mcp` siguen con placeholder de marca (no se aportó
+imagen específica para ellos); el fallback es intencional y accesible. `performance-report` sigue
+retenido por falta de feature/doc verificable.
