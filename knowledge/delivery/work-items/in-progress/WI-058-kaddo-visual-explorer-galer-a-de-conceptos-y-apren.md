@@ -182,3 +182,26 @@ presupuesto de sesión (mismo criterio que WI-056/057).
   reports, comparaciones).
 - Imágenes reales (las aporta el usuario) y revisión editorial/accesibilidad final en ambos idiomas.
 - Enlaces desde páginas técnicas hacia su ficha visual (opcional, AC-05/06 refuerzo).
+
+## Progreso — Slice 2 (imágenes reales + catálogo ampliado)
+
+El usuario aportó 20 imágenes conceptuales (faltan 2). Integradas:
+
+- **20 imágenes** colocadas en `apps/docs/public/visual-explorer/<id>.webp`.
+- **Catálogo ampliado a 21 conceptos** en 5 categorías (se añadió "Compare Kaddo"/"Compara Kaddo"):
+  knowledge-layers, knowledge-levels, pre-ai-project · work-items, work-item-types, lifecycle-v2,
+  poc-mode, deprecation · knowledge-graph, knowledge-capsules, project-resources, system-topology,
+  knowledge-drift · mcp, kaddo-admin, guard, savings-report, drift-report · compare-bmad,
+  compare-gentle-ai, compare-graphify.
+- **42 fichas** (EN/ES) generadas.
+- Exactitud (AC-06): `performance-report` **retenido** (sin feature/doc verificable; su imagen queda
+  guardada para después). Reports con cifras ilustrativas se marcan explícitamente como "illustrative
+  figures, not measured results" en el alt. Comparaciones con encuadre neutro + enlace a tool-examples.
+- Referencias validadas contra docs existentes (solo system-topology y performance-report sin doc).
+
+Verificado con `pnpm --filter @kaddo/docs build`: 251 páginas, sin errores; 21 tarjetas EN+ES, 6 filtros,
+categoría compare, imágenes `.webp` servidas y referenciadas en las fichas.
+
+Pendiente: 2 imágenes restantes (probablemente knowledge-layers y mcp, hoy con placeholder) + evaluar
+agents-skills / project-new / project-legacy / performance-report cuando haya imagen/doc. Al cerrar,
+revisión editorial final y `kaddo learn`.
