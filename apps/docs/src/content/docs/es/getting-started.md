@@ -8,6 +8,9 @@ Ejecución**. Esta página cubre los primeros pasos; ver
 [Momentos de operación](/es/operating-moments/) para el flujo completo (comandos, agentes y
 resultado esperado por momento).
 
+¿Nuevo en Kaddo? [Explora Kaddo](/es/visual-guide/) es una galería visual que presenta los conceptos
+principales con imágenes, explicaciones sencillas y ejemplos.
+
 ## Instalación
 
 ```bash

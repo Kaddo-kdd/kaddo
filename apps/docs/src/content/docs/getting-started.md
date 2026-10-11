@@ -7,6 +7,9 @@ Kaddo matures a project's knowledge through four moments — **Base → Definiti
 Execution**. This page covers the first steps; see [Operating Moments](/operating-moments/) for the
 full flow (commands, agents and expected result per moment).
 
+New to Kaddo? [Explore Kaddo](/visual-guide/) is a visual gallery that introduces the main concepts
+with pictures, plain explanations and examples.
+
 ## Install
 
 ```bash

@@ -1,7 +1,10 @@
 ---
-title: Visual Guide
+title: Technical diagrams
 description: Understand Kaddo at a glance — the knowledge loop, CLI vs LLM split, artifact flow, Guard, multirepo and governance, as Mermaid diagrams.
 ---
+
+> Looking for the visual concept gallery? See [Explore Kaddo](/visual-guide/). This page keeps the
+> technical Mermaid diagrams.
 
 This page is the visual map of Kaddo. It shows the **implemented v2.6+ knowledge loop**:
 what the deterministic CLI does, what your LLM agents do, how artifacts connect, and how

@@ -1,0 +1,34 @@
+---
+// A single Visual Explorer concept card (WI-058). The image falls back to a branded placeholder
+// when the asset is not present yet, so the gallery is coherent before real images are added.
+import type { Concept, Locale } from '../data/visual-explorer'
+import { categoryLabel } from '../data/visual-explorer'
+
+interface Props { concept: Concept; lang: Locale }
+const { concept, lang } = Astro.props
+const base = lang === 'es' ? '/es' : ''
+const href = `${base}/visual-guide/${concept.id}/`
+const title = concept.title[lang]
+const search = `${title} ${concept.description[lang]} ${categoryLabel(concept.category, lang)}`.toLowerCase()
+---
+<a
+  class="ve-card"
+  href={href}
+  data-category={concept.category}
+  data-search={search}
+>
+  <div class="ve-thumb">
+    <img
+      src={concept.image}
+      alt={concept.alt[lang]}
+      loading="lazy"
+      onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"
+    />
+    <div class="ve-thumb-ph" style="display:none" aria-hidden="true"><span>{title}</span></div>
+  </div>
+  <div class="ve-card-body">
+    <span class="ve-cat">{categoryLabel(concept.category, lang)}</span>
+    <h3 class="ve-card-title">{title}</h3>
+    <p class="ve-card-desc">{concept.description[lang]}</p>
+  </div>
+</a>

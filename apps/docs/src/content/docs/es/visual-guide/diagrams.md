@@ -1,7 +1,10 @@
 ---
-title: Guía visual
+title: Diagramas técnicos
 description: Entiende Kaddo de un vistazo — el knowledge loop, el reparto CLI vs LLM, el flujo de artefactos, Guard, multirepo y gobernanza, como diagramas Mermaid.
 ---
+
+> ¿Buscas la galería visual de conceptos? Ve a [Explora Kaddo](/es/visual-guide/). Esta página conserva
+> los diagramas técnicos Mermaid.
 
 Esta página es el mapa visual de Kaddo. Muestra el **knowledge loop implementado (v2.6+)**:
 qué hace el CLI determinístico, qué hacen tus agentes LLM, cómo se conectan los artefactos

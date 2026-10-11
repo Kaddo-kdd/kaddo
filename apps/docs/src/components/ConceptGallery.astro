@@ -1,0 +1,109 @@
+---
+// Visual Explorer gallery (WI-058): category filters + simple search over a declarative catalog.
+// Filtering is client-side vanilla JS — no heavy dependencies, no network requests.
+import type { Locale } from '../data/visual-explorer'
+import { CONCEPTS, CATEGORIES } from '../data/visual-explorer'
+import ConceptCard from './ConceptCard.astro'
+
+interface Props { lang: Locale }
+const { lang } = Astro.props
+const t = {
+  all: lang === 'es' ? 'Todos' : 'All',
+  searchPh: lang === 'es' ? 'Buscar un concepto…' : 'Search a concept…',
+  searchLabel: lang === 'es' ? 'Buscar conceptos' : 'Search concepts',
+  empty: lang === 'es'
+    ? 'Ningún concepto coincide con tu búsqueda. Prueba otra categoría o término.'
+    : 'No concept matches your search. Try another category or term.',
+}
+const concepts = [...CONCEPTS].sort((a, b) => a.title[lang].localeCompare(b.title[lang]))
+---
+<section class="ve" aria-label="Kaddo Visual Explorer">
+  <div class="ve-controls">
+    <div class="ve-filters" role="group" aria-label={lang === 'es' ? 'Filtrar por categoría' : 'Filter by category'}>
+      <button type="button" class="ve-chip is-active" data-filter="all" aria-pressed="true">{t.all}</button>
+      {CATEGORIES.map((c) => (
+        <button type="button" class="ve-chip" data-filter={c.id} aria-pressed="false">{c.label[lang]}</button>
+      ))}
+    </div>
+    <label class="ve-search">
+      <span class="sr-only">{t.searchLabel}</span>
+      <input type="search" placeholder={t.searchPh} data-ve-search autocomplete="off" />
+    </label>
+  </div>
+
+  <div class="ve-grid" data-ve-grid>
+    {concepts.map((concept) => <ConceptCard concept={concept} lang={lang} />)}
+  </div>
+
+  <p class="ve-empty" data-ve-empty hidden>{t.empty}</p>
+</section>
+
+<script is:inline>
+  (() => {
+    const root = document.currentScript.closest('.ve') || document.querySelector('.ve')
+    if (!root) return
+    const chips = root.querySelectorAll('.ve-chip')
+    const search = root.querySelector('[data-ve-search]')
+    const cards = Array.from(root.querySelectorAll('.ve-card'))
+    const empty = root.querySelector('[data-ve-empty]')
+    let category = 'all'
+    const apply = () => {
+      const q = (search && search.value || '').trim().toLowerCase()
+      let visible = 0
+      cards.forEach((card) => {
+        const matchCat = category === 'all' || card.dataset.category === category
+        const matchText = !q || (card.dataset.search || '').includes(q)
+        const show = matchCat && matchText
+        card.hidden = !show
+        if (show) visible++
+      })
+      if (empty) empty.hidden = visible !== 0
+    }
+    chips.forEach((chip) => chip.addEventListener('click', () => {
+      category = chip.dataset.filter
+      chips.forEach((c) => { c.classList.toggle('is-active', c === chip); c.setAttribute('aria-pressed', String(c === chip)) })
+      apply()
+    }))
+    if (search) search.addEventListener('input', apply)
+  })()
+</script>
+
+<style>
+  .ve { margin-top: 1rem; }
+  .ve-controls { display: flex; flex-wrap: wrap; gap: 0.75rem 1rem; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; }
+  .ve-filters { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+  .ve-chip {
+    font: inherit; font-size: 0.82rem; cursor: pointer;
+    padding: 0.32rem 0.72rem; border-radius: 999px;
+    border: 1px solid var(--sl-color-gray-5); background: transparent; color: var(--sl-color-white);
+  }
+  .ve-chip:hover { border-color: #F4B942; }
+  .ve-chip.is-active { background: #F4B942; border-color: #F4B942; color: #141B2D; font-weight: 600; }
+  .ve-search input {
+    font: inherit; font-size: 0.9rem; padding: 0.4rem 0.7rem; min-width: 14rem;
+    border: 1px solid var(--sl-color-gray-5); border-radius: 0.5rem;
+    background: var(--sl-color-black); color: var(--sl-color-white);
+  }
+  .ve-search input:focus-visible { outline: 2px solid #F4B942; outline-offset: 1px; }
+  .ve-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 1rem; }
+  .ve-card {
+    display: flex; flex-direction: column; overflow: hidden; text-decoration: none; color: inherit;
+    border: 1px solid var(--sl-color-gray-5); border-radius: 0.75rem; background: var(--sl-color-black);
+    transition: border-color 0.15s ease, transform 0.15s ease;
+  }
+  .ve-card:hover { border-color: #F4B942; transform: translateY(-2px); }
+  .ve-card[hidden] { display: none; }
+  .ve-thumb { aspect-ratio: 16 / 10; background: #141B2D; overflow: hidden; }
+  .ve-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .ve-thumb-ph { width: 100%; height: 100%; align-items: center; justify-content: center; text-align: center;
+    padding: 1rem; background: linear-gradient(135deg, #141B2D, #232122); }
+  .ve-thumb-ph span { color: #F8F6F0; font-weight: 600; font-size: 0.95rem; }
+  .ve-card-body { padding: 0.8rem 0.9rem 1rem; display: flex; flex-direction: column; gap: 0.35rem; }
+  .ve-cat { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.04em; color: #F4B942; font-weight: 600; }
+  .ve-card-title { font-size: 1rem; margin: 0; line-height: 1.3; }
+  .ve-card-desc { font-size: 0.85rem; margin: 0; color: var(--sl-color-gray-2); }
+  .ve-empty { margin-top: 1.5rem; padding: 1rem; text-align: center; color: var(--sl-color-gray-2);
+    border: 1px dashed var(--sl-color-gray-5); border-radius: 0.5rem; }
+  .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+  @media (max-width: 30rem) { .ve-grid { grid-template-columns: 1fr 1fr; } .ve-search input { min-width: 0; width: 100%; } .ve-search { flex: 1; } }
+</style>

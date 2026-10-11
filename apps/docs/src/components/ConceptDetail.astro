@@ -1,0 +1,80 @@
+---
+// Visual Explorer concept fiche body (WI-058). Renders from the declarative catalog by id + locale.
+// It never duplicates the full technical docs — it links to them. Image falls back to a branded
+// placeholder until the real asset is added.
+import type { Locale } from '../data/visual-explorer'
+import { getConcept, categoryLabel } from '../data/visual-explorer'
+
+interface Props { id: string; lang: Locale }
+const { id, lang } = Astro.props
+const concept = getConcept(id)
+if (!concept) throw new Error(`Visual Explorer concept not found: ${id}`)
+const base = lang === 'es' ? '/es' : ''
+const t = {
+  back: lang === 'es' ? '← Explora Kaddo' : '← Explore Kaddo',
+  purpose: lang === 'es' ? '¿Para qué sirve?' : 'What is it for?',
+  example: lang === 'es' ? 'Ejemplo de uso' : 'Example of use',
+  howTo: lang === 'es' ? '¿Cómo empezar?' : 'How to start',
+  refs: lang === 'es' ? 'Referencias' : 'References',
+  related: lang === 'es' ? 'Conceptos relacionados' : 'Related concepts',
+  zoom: lang === 'es' ? 'Abrir imagen en tamaño completo' : 'Open image full size',
+}
+const related = concept.related.map(getConcept).filter((c): c is NonNullable<typeof c> => Boolean(c))
+---
+<p><a href={`${base}/visual-guide/`}>{t.back}</a> · <span class="vd-cat">{categoryLabel(concept.category, lang)}</span></p>
+
+<p class="vd-lede">{concept.explanation[lang]}</p>
+
+<figure class="vd-figure">
+  <a href={concept.image} target="_blank" rel="noopener" aria-label={t.zoom}>
+    <img
+      src={concept.image}
+      alt={concept.alt[lang]}
+      loading="lazy"
+      onerror="this.style.display='none';this.closest('.vd-figure').querySelector('.vd-ph').style.display='flex'"
+    />
+  </a>
+  <div class="vd-ph" style="display:none" aria-hidden="true"><span>{concept.title[lang]}</span></div>
+</figure>
+
+<h2>{t.purpose}</h2>
+<p>{concept.purpose[lang]}</p>
+
+<h2>{t.example}</h2>
+<p>{concept.example[lang]}</p>
+
+{concept.howToStart && (
+  <>
+    <h2>{t.howTo}</h2>
+    <pre class="vd-code"><code>{concept.howToStart[lang]}</code></pre>
+  </>
+)}
+
+{concept.references.length > 0 && (
+  <>
+    <h2>{t.refs}</h2>
+    <ul>
+      {concept.references.map((r) => <li><a href={r.href[lang]}>{r.label[lang]}</a></li>)}
+    </ul>
+  </>
+)}
+
+{related.length > 0 && (
+  <>
+    <h2>{t.related}</h2>
+    <ul>
+      {related.map((r) => <li><a href={`${base}/visual-guide/${r.id}/`}>{r.title[lang]}</a></li>)}
+    </ul>
+  </>
+)}
+
+<style>
+  .vd-cat { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em; color: #F4B942; font-weight: 600; }
+  .vd-lede { font-size: 1.05rem; }
+  .vd-figure { margin: 1.25rem 0; border: 1px solid var(--sl-color-gray-5); border-radius: 0.75rem; overflow: hidden; background: #141B2D; }
+  .vd-figure img { width: 100%; height: auto; display: block; }
+  .vd-ph { min-height: 220px; align-items: center; justify-content: center; text-align: center; padding: 2rem;
+    background: linear-gradient(135deg, #141B2D, #232122); }
+  .vd-ph span { color: #F8F6F0; font-weight: 600; font-size: 1.1rem; }
+  .vd-code { background: var(--sl-color-black); border: 1px solid var(--sl-color-gray-5); }
+</style>
