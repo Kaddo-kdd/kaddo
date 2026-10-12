@@ -11,6 +11,10 @@ que stakeholders no técnicos entienden.
 
 Las estimaciones históricas y las proyecciones mensuales están separadas y no se suman. Los supuestos por defecto son estimaciones no calibradas y no pueden justificar confianza High.
 
+En JSON, `totals.observed_history_estimate` y `totals.monthly_projection` son los totales
+autoritativos separados por período. El campo de compatibilidad deprecated `total` contiene solo la
+estimación histórica; nunca es un total combinado.
+
 ```bash
 kaddo savings                  # Markdown a stdout (no escribe nada) — scope: all
 kaddo report savings           # alias
@@ -82,10 +86,11 @@ dashboard. Nunca modifica código ni conocimiento, y no escribe nada salvo con `
 
 ## Confianza
 
-Cada reporte incluye un nivel de confianza: **Low** (impact score &lt; 60 o grafo vacío), **Medium**
-(buena evidencia pero supuestos default y/o sin historial de drift resuelto), **High** (evidencia
-fuerte + supuestos calibrados en `.kaddo/savings.yml` + warnings de drift resueltos registrados).
-Llegar a **High** requiere evidencia real de resolución de drift vía `kaddo guard --record`.
+Cada reporte incluye un nivel de confianza: **Low** (evidencia insuficiente de delivery, ownership o
+grafo), **Medium** (buena evidencia pero supuestos default y/o sin historial de drift resuelto),
+**High** (evidencia fuerte + supuestos calibrados en `.kaddo/savings.yml` + warnings de drift
+resueltos registrados). Llegar a **High** requiere evidencia real de resolución de drift vía
+`kaddo guard --record`. El Impact score deprecated no es una entrada de confianza.
 
 ## Por MCP
 

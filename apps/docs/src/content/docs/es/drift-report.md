@@ -9,7 +9,10 @@ aparecieron, cuántas se resolvieron, qué áreas son hotspots y si el proyecto 
 
 ## Límites de evidencia
 
-El reporte separa la consistencia actual respaldada por Guard de la consistencia de lifecycle y deprecations que Kaddo todavía no puede evaluar. `unknown` es evidencia insuficiente, nunca limpio.
+El reporte siempre muestra la evidencia determinista de consistencia que puede evaluar: historial
+Guard registrado, validación de lifecycle persistida en Work Items, verificaciones de planes de
+deprecation y topología de conocimiento. Cada una se clasifica de forma independiente como
+`observed`, `derived`, `unknown` o `not_applicable`. `unknown` es evidencia insuficiente, nunca limpio.
 
 ```bash
 kaddo guard --record           # corre guard Y lo registra en .kaddo/history/
@@ -56,8 +59,9 @@ Si no, queda **open**.
 
 `kaddo drift` lee el historial y reporta: ejecuciones registradas, warnings detectados / abiertos /
 resueltos, **resolution rate**, **hotspots** por ruta, threads de warnings abiertos/resueltos, y una
-**tendencia** (`improving` / `stable` / `worsening` / `unknown`). Sin historial imprime un mensaje
-claro de "no hay historial aún". No escribe nada salvo con `--output` (los reportes viven en
+**tendencia** (`improving` / `stable` / `worsening` / `unknown`). Sin historial igual imprime la
+Consistency Evidence actual y luego una sección **Historical Drift Trend** marcada como no
+disponible: no significa cero drift ni proyecto limpio. No escribe nada salvo con `--output` (los reportes viven en
 `.kaddo/reports/`).
 
 ## Alimenta impact y savings

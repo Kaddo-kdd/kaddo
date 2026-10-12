@@ -37,6 +37,15 @@ describe('MCP drift report + guard history (VS-063)', () => {
     expect(res.read(root)[0].text).toContain('possible-knowledge-drift')
   })
 
+  it('WI-061: without history, MCP preserves current evidence and marks the historical trend unavailable', () => {
+    project()
+    const res = RESOURCES.find((r) => r.uri === 'kaddo://drift-report')!
+    const out = res.read(root)[0].text
+    expect(out).toContain('## Consistency Evidence')
+    expect(out).toContain('## Historical Drift Trend')
+    expect(out).toContain('Not available — no recorded Guard runs.')
+  })
+
   it('AC32/AC33/AC44: kaddo_generate_drift_report writes only under .kaddo/reports/', () => {
     project()
     record()

@@ -39,6 +39,9 @@ describe('MCP savings report (VS-062)', () => {
     const json = JSON.parse(fs.readFileSync(path.join(root, '.kaddo/reports/savings-report.json'), 'utf-8'))
     expect(json.scope).toBe('all')
     expect(json).toHaveProperty('total.estimated_value')
+    expect(json).toHaveProperty('totals.observed_history_estimate')
+    expect(json).toHaveProperty('totals.monthly_projection')
+    expect(json.total.estimated_hours_saved).toBe(json.totals.observed_history_estimate.estimated_hours)
   })
 
   it('a saved savings report is returned as-is by the resource', () => {

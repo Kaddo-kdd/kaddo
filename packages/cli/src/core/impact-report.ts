@@ -101,7 +101,8 @@ export type ImpactReport = {
     | { available: true; runs_recorded: number; detected: number; open: number; resolved: number; resolution_rate: number }
   impact_signals: {
     ambiguity_reduction: Level
-    drift_prevention: 'Active' | 'Limited'
+    /** Evidence of prevented drift, not merely the availability of ownership metadata. */
+    drift_prevention: 'Observed' | 'Unknown'
     onboarding_support: Level
     delivery_traceability: Level
     ai_context_readiness: Level
@@ -159,7 +160,9 @@ export function buildImpactReport(
   let withAcceptance = 0
   let withDoD = 0
   let withValidation = 0
-  let connectedRoadmap = 0
+  // Count unique roadmap candidates, rather than Work Items. Multiple Work Items can legitimately
+  // cite the same candidate and must not inflate the candidate-coverage numerator.
+  const connectedRoadmapCandidates = new Set<string>()
   const globCounts = new Map<string, number>()
   const globOwners = new Map<string, string[]>()
   const gaps: ActionableGaps = {
@@ -184,15 +187,23 @@ export function buildImpactReport(
   for (const wi of wis) {
     const id = wi.id || wi.title
     if (wi.codeGlobs.length > 0) withOwnership++
-    else gaps.missing_code_ownership.push(gapItem(wi, 'Add `code:` globs to connect this Work Item to source paths (`kaddo owners suggest`).'))
+    // Documentation, strategy and knowledge-only work does not imply code ownership. Only
+    // code-oriented corrective work has a deterministic ownership expectation here.
+    else if (wi.type === 'bugfix' || wi.type === 'hotfix') {
+      gaps.missing_code_ownership.push(gapItem(wi, 'Add `code:` globs to connect this corrective Work Item to source paths (`kaddo owners suggest`).'))
+    }
 
-    const hasSource = Boolean(wi.sourceId) || wi.source === 'roadmap'
+    const roadmapOrigin = wi.source === 'roadmap'
+    const hasSource = Boolean(wi.source) || Boolean(wi.sourceId)
     if (hasSource) withSource++
-    else gaps.missing_source.push(gapItem(wi, 'Add `source` or `source_id` if this Work Item came from the roadmap.'))
-    if (hasSource || wi.initiative) connectedRoadmap++
+    // A source_id is required only for an explicitly roadmap-originated Work Item. Chat,
+    // CLI, Admin and external imports have valid provenance without a roadmap candidate.
+    if (roadmapOrigin && !wi.sourceId) {
+      gaps.missing_source.push(gapItem(wi, 'Add `source_id` for this roadmap-originated Work Item.'))
+    }
+    if (roadmapOrigin && wi.sourceId) connectedRoadmapCandidates.add(wi.sourceId)
 
     if (wi.initiative) withInitiative++
-    else gaps.missing_initiative.push(gapItem(wi, 'Add `initiative` to connect this Work Item to a delivery initiative.'))
 
     if (wi.knowledgeLevel) withLevel++
     else gaps.missing_knowledge_level.push(gapItem(wi, 'Add `knowledge_level` (K0–K4) to the front matter.'))
@@ -218,11 +229,12 @@ export function buildImpactReport(
     }
   }
   const ownedCodePaths = [...globCounts.values()].reduce((a, b) => a + b, 0)
+  const connectedRoadmap = connectedRoadmapCandidates.size
   const broadGlobs = [...globCounts.keys()].filter((g) => isBroadGlob(g)).length
   // Overlaps: a declared glob owned by more than one Work Item.
   for (const [glob, owners] of globOwners) {
     if (owners.length > 1) {
-      gaps.ownership_overlaps.push({ code_path: glob, work_items: [...new Set(owners)], suggested_action: 'Review whether the overlap is expected or should be narrowed.' })
+      gaps.ownership_overlaps.push({ code_path: glob, work_items: [...new Set(owners)], suggested_action: 'Shared historical modification path; it is not a conflict unless incompatible ownership is documented.' })
     }
   }
   const ownershipOverlaps = gaps.ownership_overlaps.length
@@ -295,9 +307,10 @@ export function buildImpactReport(
   const deliveryTrace = levelFromRatio(
     (coverageRatio(withOwnership) * 0.5) + ((g.available && g.edges > 0 ? 1 : 0) * 0.25) + ((exp.roadmap.present ? 1 : 0) * 0.25)
   )
+  const guardHistory = buildGuardHistory(dir)
   const impact_signals = {
     ambiguity_reduction: levelFromRatio(ambiguityRatio),
-    drift_prevention: (withOwnership > 0 ? 'Active' : 'Limited') as 'Active' | 'Limited',
+    drift_prevention: (guardHistory.available && guardHistory.resolved > 0 ? 'Observed' : 'Unknown') as 'Observed' | 'Unknown',
     onboarding_support: onboarding,
     delivery_traceability: deliveryTrace,
     ai_context_readiness: aiReady,
@@ -308,17 +321,24 @@ export function buildImpactReport(
   let score: number | null = null
   let score_breakdown: ScoreBreakdown | null = null
   if (total > 0) {
-    const healthPts = ([layerStatus('Business'), layerStatus('Product'), layerStatus('Tech'), layerStatus('Delivery')].filter((s) => s !== 'Missing').length / 4) * 20
+    const layerMaturity: Record<string, number> = { Consolidated: 1, Structured: 0.8, Traceable: 0.75, Weak: 0.4, Missing: 0 }
+    const healthPts = ([layerStatus('Business'), layerStatus('Product'), layerStatus('Tech'), layerStatus('Delivery')]
+      .reduce((sum, status) => sum + (layerMaturity[status] ?? 0), 0) / 4) * 20
     const applicableCoverage = knowledge_coverage.filter((c) => c.label !== 'Work Items using optional initiatives')
     const covAvg = applicableCoverage.reduce((a, c) => a + coverageRatio(c.have), 0) / applicableCoverage.length
     const coveragePts = covAvg * 20
     const ownPts = coverageRatio(withOwnership) * 15
-    const traceBlend = ((exp.roadmap.candidates > 0 ? exp.roadmap.materialized / exp.roadmap.candidates : 1) * 0.5) + (coverageRatio(withOwnership) * 0.5)
+    // Compare roadmap candidates only with Work Items that explicitly identify a roadmap
+    // candidate. All materialized Work Items are a different population and must not inflate it.
+    const roadmapTraceRatio = exp.roadmap.candidates > 0
+      ? Math.min(connectedRoadmap, exp.roadmap.candidates) / exp.roadmap.candidates
+      : null
+    const traceSignals = [coverageRatio(withOwnership), ...(roadmapTraceRatio === null ? [] : [roadmapTraceRatio])]
+    const traceBlend = traceSignals.reduce((sum, value) => sum + value, 0) / traceSignals.length
     const tracePts = traceBlend * 20
     const qualityMap: Record<string, number> = { good: 1, partial: 0.6, sparse: 0.3, empty: 0, unknown: 0 }
     const graphPts = (g.available ? (qualityMap[g.quality] ?? 0) : 0) * 15
     const ctxPts = ({ Low: 0.25, Medium: 0.5, High: 0.8, 'Very High': 1 }[ctxLevel]) * 10
-    score = Math.round(healthPts + coveragePts + ownPts + tracePts + graphPts + ctxPts)
     score_breakdown = {
       knowledge_health: { points: Math.round(healthPts), max: 20 },
       knowledge_coverage: { points: Math.round(coveragePts), max: 20 },
@@ -327,6 +347,7 @@ export function buildImpactReport(
       graph_quality: { points: Math.round(graphPts), max: 15 },
       context_readiness: { points: Math.round(ctxPts), max: 10 },
     }
+    score = Object.values(score_breakdown).reduce((sum, component) => sum + component.points, 0)
   }
 
   // --- Suggested actions (derived from real gaps — name specific Work Items) ---
@@ -372,7 +393,7 @@ export function buildImpactReport(
       { id: 'work-items.lifecycle', label: 'Work Item lifecycle', classification: total > 0 ? 'observed' : 'unknown', reason: total > 0 ? `${total} Work Item artifact(s) were discovered.` : 'No Work Item artifacts were discovered.' },
       { id: 'delivery.verification', label: 'Verified delivery outcomes', classification: verifiedWorkItems > 0 ? 'observed' : 'unknown', reason: verifiedWorkItems > 0 ? `${verifiedWorkItems} Work Item(s) have persisted validation_status: passed.` : 'Acceptance Criteria and Definition of Done sections show declared intent, not completed verification evidence.' },
       ...deliveryCapabilityEvidence(dir, projectContext),
-      { id: 'guard-history', label: 'Guard consistency history', classification: buildGuardHistory(dir).available ? 'observed' : 'unknown', reason: buildGuardHistory(dir).available ? 'Recorded Guard runs provide current consistency evidence.' : 'No recorded Guard history is available.' },
+      { id: 'guard-history', label: 'Guard consistency history', classification: guardHistory.available ? 'observed' : 'unknown', reason: guardHistory.available ? 'Recorded Guard runs provide current consistency evidence.' : 'No recorded Guard history is available.' },
     ],
     scope: g.scope,
     default_scope: 'all',
@@ -412,7 +433,7 @@ export function buildImpactReport(
       ? { available: true, scope: g.scope, quality: g.quality, nodes: g.nodes, edges: g.edges, hints: g.hints, reason: g.scopeReason, last_exported: g.generatedAt }
       : { available: false, suggestion: 'Run `kaddo graph export --scope all`.' },
     guard_activity: (() => {
-      const gh = buildGuardHistory(dir)
+      const gh = guardHistory
       return gh.available
         ? { available: true as const, runs_recorded: gh.total_runs, detected: gh.detected, open: gh.open, resolved: gh.resolved, resolution_rate: gh.resolution_rate }
         : { available: false as const, note: 'Guard history is not persisted. Run `kaddo guard --record` to record runs for trend analysis.' }
@@ -539,7 +560,7 @@ export function renderImpactMarkdown(r: ImpactReport): string {
   L.push('## Impact Signals', '')
   const s = r.impact_signals
   L.push(`- Ambiguity reduction: ${s.ambiguity_reduction}`)
-  L.push(`- Drift prevention: ${s.drift_prevention}`)
+  L.push(`- Drift prevention evidence: ${s.drift_prevention}`)
   L.push(`- Onboarding support: ${s.onboarding_support}`)
   L.push(`- Delivery traceability: ${s.delivery_traceability}`)
   L.push(`- AI context readiness: ${s.ai_context_readiness}`)
@@ -576,7 +597,7 @@ export function renderImpactMarkdown(r: ImpactReport): string {
     L.push('')
   }
   if (gp.ownership_overlaps.length > 0) {
-    L.push('### Ownership overlaps', '')
+    L.push('### Shared code-path history (review only)', '')
     for (const o of gp.ownership_overlaps) {
       L.push(`- \`${o.code_path}\``)
       L.push(`  - Owned by: ${o.work_items.join(', ')}`)
@@ -588,7 +609,7 @@ export function renderImpactMarkdown(r: ImpactReport): string {
     gp.missing_source.length + gp.missing_initiative.length + gp.missing_code_ownership.length +
     gp.missing_knowledge_level.length + gp.missing_acceptance_criteria.length +
     gp.missing_definition_of_done.length + gp.missing_validation.length +
-    gp.broad_ownership_globs.length + gp.ownership_overlaps.length
+    gp.broad_ownership_globs.length
   if (anyGaps === 0) {
     L.push('No actionable knowledge gaps detected. 🎉', '')
   }

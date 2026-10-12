@@ -142,6 +142,8 @@ describe('Estimated Savings Model (VS-062)', () => {
     const r = buildSavingsReport(tmp)
     expect(r.reporting_period.observed).toBe('all recorded project history')
     expect(r.reporting_period.projected).toBe('per month')
+    expect(r.total.estimated_hours_saved).toBe(r.totals.observed_history_estimate.estimated_hours)
+    expect(r.total.estimated_hours_saved).not.toBe(r.totals.observed_history_estimate.estimated_hours + r.totals.monthly_projection.estimated_hours)
     expect(renderSavingsMarkdown(r)).toContain('Historical estimates and future monthly projections are intentionally not added together.')
   })
 })

@@ -149,13 +149,15 @@ describe('Knowledge Impact Report (VS-061)', () => {
     )
     const r = buildImpactReport(tmp)
     const g = r.actionable_gaps
-    expect(g.missing_source.map((x) => x.id)).toEqual(['WI-001'])
-    expect(g.missing_initiative.map((x) => x.id)).toEqual(['WI-001'])
+    // Missing provenance is unknown for legacy/chat work; only an explicit roadmap origin
+    // without source_id is actionable. Initiatives remain optional.
+    expect(g.missing_source).toEqual([])
+    expect(g.missing_initiative).toEqual([])
     expect(g.missing_knowledge_level.map((x) => x.id)).toEqual(['WI-001'])
     expect(g.missing_acceptance_criteria.map((x) => x.id)).toEqual(['WI-001'])
     expect(g.missing_definition_of_done.map((x) => x.id)).toEqual(['WI-001'])
     expect(g.missing_validation.map((x) => x.id)).toEqual(['WI-001'])
-    expect(g.missing_code_ownership).toHaveLength(0) // both have code
+    expect(g.missing_code_ownership).toHaveLength(0) // feature scope alone does not prove code is required
     // AC10: src/cli/** is broad; AC11: it's owned by both WIs (overlap).
     expect(g.broad_ownership_globs.some((b) => b.glob === 'src/cli/**')).toBe(true)
     const overlap = g.ownership_overlaps.find((o) => o.code_path === 'src/cli/**')!
@@ -163,8 +165,8 @@ describe('Knowledge Impact Report (VS-061)', () => {
     // AC12: suggested actions name specific Work Items.
     expect(r.suggested_actions.some((a) => a.includes('WI-001'))).toBe(true)
     // gap items carry id/title/status/path/suggested_action (AC14).
-    expect(g.missing_source[0]).toMatchObject({ id: 'WI-001', title: 'Init CLI', status: 'completed' })
-    expect(g.missing_source[0].path).toContain('WI-001.md')
+    expect(g.missing_acceptance_criteria[0]).toMatchObject({ id: 'WI-001', title: 'Init CLI', status: 'completed' })
+    expect(g.missing_acceptance_criteria[0].path).toContain('WI-001.md')
   })
 
   it('AC2: no gaps → markdown says so, and score_breakdown is present', () => {
@@ -178,6 +180,23 @@ describe('Knowledge Impact Report (VS-061)', () => {
     expect(md).toContain('No actionable knowledge gaps detected.')
     expect(md).toContain('## Score Breakdown')
     expect(r.score_breakdown).not.toBeNull()
+  })
+
+  it('WI-061: the 51-Work-Item / 10-candidate regression stays bounded and does not turn optional links into debt', () => {
+    config()
+    write('knowledge/product/product.md', '---\ntype: product\n---\n# Product\n\nWeak baseline.')
+    write('knowledge/delivery/roadmap.md', `# Roadmap\n\n${Array.from({ length: 10 }, (_, index) => `- WI-${index + 1} Candidate ${index + 1}`).join('\n')}\n`)
+    for (let index = 1; index <= 51; index++) {
+      write(`knowledge/delivery/work-items/completed/WI-${index}.md`, `---\nid: WI-${index}\ntype: feature\ntitle: Chat work ${index}\nstatus: completed\nsource:\n  type: chat\n---\n# WI\n\n## Acceptance Criteria\n- a`)
+    }
+    const r = buildImpactReport(tmp)
+    expect(r.traceability.materialized_work_items).toBe(51)
+    expect(r.traceability.roadmap_candidates).toBe(10)
+    expect(r.score).toBeLessThanOrEqual(100)
+    expect(r.score_breakdown!.traceability.points).toBeLessThanOrEqual(r.score_breakdown!.traceability.max)
+    expect(r.actionable_gaps.missing_source).toHaveLength(0)
+    expect(r.actionable_gaps.missing_initiative).toHaveLength(0)
+    expect(r.impact_signals.drift_prevention).toBe('Unknown')
   })
 
   it('VS-063 AC24/AC25/AC45: guard_activity reflects recorded history', () => {

@@ -6,8 +6,8 @@ description: Un reporte determinista y basado en evidencia que hace tangible el 
 `kaddo report impact` consolida el valor que Kaddo ya produce en un solo reporte legible — para
 líderes técnicos, arquitectos, sponsors, equipos de producto y quien evalúe adoptar Kaddo. Responde:
 ¿qué tan completo está el conocimiento? ¿qué tan conectado está el roadmap con el código? ¿qué tan
-listo está el proyecto para ser entendido por humanos e IA? ¿qué tan activo está Guard como
-mecanismo de prevención de drift?
+listo está el proyecto para ser entendido por humanos e IA? ¿qué evidencia existe de prevención de
+drift de conocimiento?
 
 ## Evidencia y aplicabilidad
 
@@ -47,14 +47,14 @@ El JSON incluye `scope`, `default_scope` (`all`) y `scope_source` (`default` | `
 | Sección | Muestra |
 |---|---|
 | **Knowledge Health** | madurez de las capas Business / Product / Tech / Delivery + inventory, context pack, agents, skills |
-| **Knowledge Coverage** | Work Items con ownership / source / initiative / criterios de aceptación / Definition of Done / knowledge level |
+| **Knowledge Coverage** | Work Items con ownership declarado / provenance / initiative opcional / criterios de aceptación / Definition of Done / knowledge level |
 | **Ownership Coverage** | % de cobertura, paths de código con dueño, globs amplios, superposiciones |
 | **Traceability** | candidatos de roadmap → materializados → completados; Work Items conectados a roadmap y código; nodos/edges/calidad/hints del grafo |
 | **Context Readiness** | Low / Medium / High / Very High, con las razones detrás |
 | **Work Item Readiness** | conteos por estado del ciclo de vida (draft / ready / in-progress / blocked / completed) |
 | **Graph Quality** | scope, calidad, nodos, edges, hints, razón |
-| **Guard Activity** | señales de drift recientes (por ahora `not available` — Guard aún no persiste historial) |
-| **Impact Signals** | niveles cualitativos: reducción de ambigüedad, prevención de drift, onboarding, trazabilidad de delivery, readiness de contexto para IA, readiness de mantenimiento |
+| **Guard Activity** | ejecuciones Guard registradas, warnings y tasa de resolución; no disponible sin historial registrado |
+| **Impact Signals** | niveles cualitativos y **evidencia de prevención de drift** (`Observed` solo después de warnings resueltos registrados; si no, `Unknown`) |
 | **Suggested Actions** | próximos pasos concretos derivados de las métricas |
 
 Es totalmente **determinista**: se arma a partir de los artefactos existentes, **sin LLM**. Lee
@@ -69,22 +69,24 @@ resolverla:
 ```md
 ## Actionable Gaps
 
-### Work Items missing initiative
+### Work Items missing Acceptance Criteria
 
 - WI-001 — Inicializar proyecto TypeScript CLI
   - Path: knowledge/delivery/work-items/completed/WI-001-...md
-  - Suggested action: add `initiative` to connect this Work Item to a delivery initiative.
+  - Suggested action: add an `## Acceptance Criteria` section.
 ```
 
-Detecta, por Work Item: `source`/`source_id` faltante, `initiative`, ownership `code:`,
+Detecta, por Work Item: `source_id` faltante solo en un item originado explícitamente desde el
+roadmap, ownership `code:` faltante cuando aplica a trabajo correctivo de código,
 `knowledge_level`, una sección `## Acceptance Criteria`, una `## Definition of Done` y una de
 validación (`## How to test it`) — más **globs de ownership amplios** (p. ej. `src/**`,
-`src/cli/**`) y **superposiciones de ownership** (un glob con más de un Work Item, mostrado con los
-Work Items involucrados). Reconoce variantes de sección en inglés y español. Cuando no hay brechas
-imprime *"No actionable knowledge gaps detected."*
+`src/cli/**`) e historial compartido de paths. Una initiative es opcional: se informa su adopción,
+pero su ausencia nunca es una brecha. Los items de chat, CLI, Admin y fuentes externas pueden tener
+provenance válido sin un ID de roadmap. Reconoce variantes de sección en inglés y español. Cuando
+no hay brechas imprime *"No actionable knowledge gaps detected."*
 
 Las **Suggested Actions** nombran Work Items específicos (agrupando cuando son muchos), p. ej.
-*"Add an `initiative` to WI-001, WI-005, WI-006."* — y un **Score Breakdown** muestra cuánto aportó
+*"Add Acceptance Criteria to WI-001, WI-005, WI-006."* — y un **Score Breakdown** muestra cuánto aportó
 cada bucket al score. En `--json`, todo esto va bajo un objeto estable `actionable_gaps` (un arreglo
 por tipo de brecha) más `score_breakdown`.
 
@@ -99,10 +101,19 @@ con LLM, sin dashboard web. Nunca envía nada a ningún lado.
 
 ## Scores y señales
 
-Un **Knowledge Impact Score** opcional (0–100) combina seis buckets — Knowledge Health (20),
+El **legacy Knowledge Impact Score** opcional (0–100) está deprecated y no debe guiar decisiones de
+delivery, savings ni productividad. Combina seis buckets acotados — Knowledge Health (20),
 Knowledge Coverage (20), Ownership (15), Traceability (20), Graph Quality (15), Context Readiness
-(10) — con reglas simples y transparentes. Cuando aún no hay Work Items, el score muestra
-`not available`.
+(10) — con reglas simples y transparentes. Cada componente redondeado respeta su máximo y el score
+es su suma. Traceability compara solo candidatos de roadmap conectados explícitamente con los
+candidatos de roadmap; nunca divide todos los Work Items por candidatos. Knowledge Health usa la
+madurez de las capas (por eso `Weak` no se trata como presencia perfecta). Cuando aún no hay Work
+Items, el score muestra `not available`.
+
+Ownership coverage cuenta paths `code:` declarados; un path histórico compartido es información para
+revisión, no un conflicto sin evidencia de ownership incompatible. Capacidad de Guard, historial
+registrado, hallazgos resueltos y efectividad de prevención son conceptos distintos: sin hallazgos
+resueltos registrados, la evidencia de prevención de drift es `Unknown`.
 
 Las **Impact Signals** son basadas en reglas, p. ej. *AI context readiness = High* cuando existe el
 context pack, la calidad del grafo no es `empty`, hay skills instaladas y el delivery es trazable.

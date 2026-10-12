@@ -41,6 +41,8 @@ describe('MCP impact report (VS-061)', () => {
     const json = JSON.parse(fs.readFileSync(path.join(root, '.kaddo/reports/impact-report.json'), 'utf-8'))
     expect(json).toHaveProperty('knowledge_health')
     expect(json).toHaveProperty('actionable_gaps.missing_initiative')
+    expect(json.score).toBeLessThanOrEqual(100)
+    expect(json.actionable_gaps.missing_source).toEqual([])
   })
 
   it('VS-061.2 AC12/AC13/AC14: tool defaults to scope all and accepts active', () => {

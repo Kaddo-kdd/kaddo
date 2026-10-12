@@ -69,7 +69,11 @@ describe('kaddo drift report (VS-063)', () => {
   it('AC16/AC41: clear report when no history', () => {
     const r = buildDriftReport(tmp)
     expect(r.guard_history.available).toBe(false)
-    expect(renderDriftMarkdown(r)).toContain('No guard history recorded yet.')
+    const md = renderDriftMarkdown(r)
+    expect(md).toContain('## Consistency Evidence')
+    expect(md).toContain('No guard history recorded yet.')
+    expect(md).toContain('## Historical Drift Trend')
+    expect(md).toContain('Not available — no recorded Guard runs.')
   })
 
   it('WI-060: reports unavailable lifecycle evidence and topology evidence explicitly', () => {

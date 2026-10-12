@@ -9,7 +9,10 @@ many were resolved, which areas are hotspots, and whether the project is improvi
 
 ## Evidence boundaries
 
-The report separates Guard-backed current consistency from lifecycle and deprecation consistency that Kaddo cannot yet evaluate. `unknown` means insufficient evidence, never a clean result.
+The report always shows the deterministic consistency evidence it can evaluate: recorded Guard
+history, persisted Work-Item lifecycle validation, deprecation-plan checks and knowledge topology.
+Each is classified independently as `observed`, `derived`, `unknown` or `not_applicable`.
+`unknown` means insufficient evidence, never a clean result.
 
 ```bash
 kaddo guard --record           # run guard AND record it to .kaddo/history/
@@ -56,8 +59,9 @@ Otherwise it stays **open**.
 
 `kaddo drift` reads the history and reports: guard runs recorded, warnings detected / open /
 resolved, **resolution rate**, **hotspots** by path, open/resolved warning threads, and a **trend**
-(`improving` / `stable` / `worsening` / `unknown`). Without history it prints a clear "no guard
-history recorded yet" message. It writes nothing unless `--output` is given (reports live in
+(`improving` / `stable` / `worsening` / `unknown`). Without history it still prints the current
+Consistency Evidence, then a **Historical Drift Trend** section marked unavailable — it does not
+mean zero drift or a clean project. It writes nothing unless `--output` is given (reports live in
 `.kaddo/reports/`).
 
 ## Feeds impact and savings

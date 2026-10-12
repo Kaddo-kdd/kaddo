@@ -10,6 +10,10 @@ estimates, so you can talk about Kaddo's impact in terms non-technical stakehold
 
 Historical estimates (all recorded project history) and monthly projections are deliberately separate and are not added together. Default assumptions are uncalibrated estimates and cannot justify High confidence.
 
+In JSON, `totals.observed_history_estimate` and `totals.monthly_projection` are the authoritative
+period-separated totals. The deprecated compatibility field `total` contains only the historical
+estimate; it is never a combined total.
+
 ```bash
 kaddo savings                  # Markdown to stdout (writes nothing) — scope: all
 kaddo report savings           # alias
@@ -81,10 +85,11 @@ knowledge, and writes nothing unless you pass `--output`.
 
 ## Confidence
 
-Each report carries a confidence level: **Low** (impact score &lt; 60 or empty graph), **Medium**
-(solid evidence but default assumptions and/or no resolved drift history), **High** (strong evidence
-+ calibrated assumptions in `.kaddo/savings.yml` + recorded resolved drift warnings). Reaching
-**High** requires real drift-resolution evidence from `kaddo guard --record`.
+Each report carries a confidence level: **Low** (insufficient delivery, ownership or graph evidence),
+**Medium** (strong evidence but default assumptions and/or no resolved drift history), **High**
+(strong evidence + calibrated assumptions in `.kaddo/savings.yml` + recorded resolved drift
+warnings). Reaching **High** requires real drift-resolution evidence from `kaddo guard --record`.
+The deprecated Impact score is not a confidence input.
 
 ## Over MCP
 
