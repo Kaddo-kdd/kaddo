@@ -3,7 +3,7 @@ type: skill
 id: graph-metadata-review
 name: graph-metadata-review
 title: Graph Metadata Review Skill
-version: 3.124.5
+version: 3.125.0
 group: tech
 applies_to:
   - graph-agent
