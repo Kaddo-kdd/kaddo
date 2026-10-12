@@ -1,5 +1,12 @@
 const BASE = '/api/v1/admin'
 
+export type ReportKind = 'impact' | 'drift' | 'savings'
+export type ReportData = Record<string, unknown> & {
+  generated_at: string
+  project: string
+  project_context: { state: string; mode: string; repository_structure: string }
+}
+
 export class ApiError extends Error {
   code: string
   status: number
@@ -18,6 +25,20 @@ async function fetchApi<T>(path: string): Promise<T> {
     throw new ApiError(body?.error?.code ?? 'ERROR', body?.error?.message ?? `Request failed: ${res.status}`, res.status)
   }
   return res.json()
+}
+
+export async function downloadReport(kind: ReportKind, format: 'markdown' | 'json', scope?: 'all' | 'active'): Promise<void> {
+  const params = new URLSearchParams({ format })
+  if (scope) params.set('scope', scope)
+  const response = await fetch(`${BASE}/reports/${kind}/export?${params}`, { credentials: 'include' })
+  if (!response.ok) throw new ApiError('EXPORT_FAILED', `Could not export ${kind} report.`, response.status)
+  const blob = await response.blob()
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = `${kind}-report.${format === 'markdown' ? 'md' : 'json'}`
+  link.click()
+  URL.revokeObjectURL(url)
 }
 
 async function mutateApi<T>(path: string, method: 'POST' | 'PUT' | 'DELETE', body?: unknown): Promise<T> {
@@ -474,6 +495,8 @@ export const api = {
   getReadiness: () => fetchApi<ProjectOverview['readiness']>('/readiness'),
   getRoute: () => fetchApi<ProjectOverview['route']>('/route'),
   getFindings: () => fetchApi<ProjectOverview['findings']>('/findings'),
+  getReport: (kind: ReportKind, scope?: 'all' | 'active') =>
+    fetchApi<ReportData>(`/reports/${kind}${scope ? `?scope=${scope}` : ''}`),
   getSystemMap: () => fetchApi<SystemMapProjection>('/system'),
   getTopologyHandoff: () => fetchApi<TopologyEnrichmentHandoff>('/system/topology-handoff'),
   getKnowledgeInventory: () => fetchApi<KnowledgeInventory>('/knowledge/inventory'),

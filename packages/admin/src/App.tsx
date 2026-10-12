@@ -19,6 +19,7 @@ import { Resources } from './routes/Resources'
 import { ResourceDetail } from './routes/ResourceDetail'
 import { Deprecations } from './routes/Deprecations'
 import { DeprecationDetail } from './routes/DeprecationDetail'
+import { Reports } from './routes/Reports'
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 30_000, retry: 1 } },
@@ -56,8 +57,12 @@ const resourcesRoute = createRoute({ getParentRoute: () => rootRoute, path: '/re
 const resourceDetailRoute = createRoute({ getParentRoute: () => rootRoute, path: '/resources/$resourceId', component: ResourceDetail, errorComponent: RouteErrorFallback })
 const deprecationsRoute = createRoute({ getParentRoute: () => rootRoute, path: '/deprecations', component: Deprecations, errorComponent: RouteErrorFallback })
 const deprecationDetailRoute = createRoute({ getParentRoute: () => rootRoute, path: '/deprecations/$planId', component: DeprecationDetail, errorComponent: RouteErrorFallback })
+const reportsRoute = createRoute({ getParentRoute: () => rootRoute, path: '/reports', component: Reports, errorComponent: RouteErrorFallback })
+const impactReportRoute = createRoute({ getParentRoute: () => rootRoute, path: '/reports/impact', component: () => <Reports kind="impact" />, errorComponent: RouteErrorFallback })
+const driftReportRoute = createRoute({ getParentRoute: () => rootRoute, path: '/reports/drift', component: () => <Reports kind="drift" />, errorComponent: RouteErrorFallback })
+const savingsReportRoute = createRoute({ getParentRoute: () => rootRoute, path: '/reports/savings', component: () => <Reports kind="savings" />, errorComponent: RouteErrorFallback })
 
-const routeTree = rootRoute.addChildren([indexRoute, overviewRoute, knowledgeRoute, knowledgeLayerRoute, knowledgeArtifactRoute, workItemsRoute, workItemNewRoute, workItemDetailRoute, workItemEditRoute, systemRoute, integrationsRoute, externalWorkItemsRoute, initiativesRoute, initiativeDetailRoute, resourcesRoute, resourceDetailRoute, deprecationsRoute, deprecationDetailRoute])
+const routeTree = rootRoute.addChildren([indexRoute, overviewRoute, knowledgeRoute, knowledgeLayerRoute, knowledgeArtifactRoute, workItemsRoute, workItemNewRoute, workItemDetailRoute, workItemEditRoute, systemRoute, integrationsRoute, externalWorkItemsRoute, initiativesRoute, initiativeDetailRoute, resourcesRoute, resourceDetailRoute, deprecationsRoute, deprecationDetailRoute, reportsRoute, impactReportRoute, driftReportRoute, savingsReportRoute])
 const router = createRouter({ routeTree })
 
 declare module '@tanstack/react-router' {

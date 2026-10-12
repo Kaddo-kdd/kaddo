@@ -57,6 +57,10 @@ import {
   getDeprecationsAdmin,
   getDeprecationPlanAdmin,
   getDeprecationTargetAdmin,
+  getImpactReportAdmin,
+  getDriftReportAdmin,
+  getSavingsReportAdmin,
+  exportReportAdmin,
   createDeprecationAdmin,
   CoreError,
 } from './core-adapter.js'
@@ -119,14 +123,6 @@ export async function createAdminServer(opts: AdminServerOptions) {
     origin: `http://${host}:${port}`,
     credentials: true,
   })
-
-  if (staticDir) {
-    await app.register(fastifyStatic, {
-      root: path.resolve(staticDir),
-      prefix: '/',
-      wildcard: false,
-    })
-  }
 
   // Create session on server start
   const sessionId = sessionManager.createSession()
@@ -191,6 +187,28 @@ export async function createAdminServer(opts: AdminServerOptions) {
     return writeHandler(reply, () => updateProjectMode(projectDir, parsed.data.mode))
   })
   app.get('/api/v1/admin/knowledge', coreRoute(getKnowledgeSummary))
+  app.get<{ Querystring: { scope?: 'all' | 'active' } }>('/api/v1/admin/reports/impact', async (request, reply) => {
+    const scope = request.query.scope
+    if (scope && scope !== 'all' && scope !== 'active') return reply.code(400).send({ error: { code: 'INVALID_INPUT', message: 'scope must be all or active.' } })
+    return coreRoute((dir) => getImpactReportAdmin(dir, scope))()
+  })
+  app.get('/api/v1/admin/reports/drift', coreRoute(getDriftReportAdmin))
+  app.get<{ Querystring: { scope?: 'all' | 'active' } }>('/api/v1/admin/reports/savings', async (request, reply) => {
+    const scope = request.query.scope
+    if (scope && scope !== 'all' && scope !== 'active') return reply.code(400).send({ error: { code: 'INVALID_INPUT', message: 'scope must be all or active.' } })
+    return coreRoute((dir) => getSavingsReportAdmin(dir, scope))()
+  })
+  app.get<{ Params: { report: 'impact' | 'drift' | 'savings' }; Querystring: { format?: 'markdown' | 'json'; scope?: 'all' | 'active' } }>('/api/v1/admin/reports/:report/export', async (request, reply) => {
+    const { report } = request.params
+    const format = request.query.format ?? 'markdown'
+    const scope = request.query.scope
+    if (!['impact', 'drift', 'savings'].includes(report) || !['markdown', 'json'].includes(format) || (scope && !['all', 'active'].includes(scope))) {
+      return reply.code(400).send({ error: { code: 'INVALID_INPUT', message: 'Invalid report export request.' } })
+    }
+    const content = exportReportAdmin(projectDir, report, format, scope)
+    reply.header('content-type', format === 'json' ? 'application/json; charset=utf-8' : 'text/markdown; charset=utf-8')
+    return reply.send(content)
+  })
   app.get<{ Querystring: { status?: string; module?: string; query?: string } }>(
     '/api/v1/admin/work-items',
     async (request) => {
@@ -477,6 +495,16 @@ export async function createAdminServer(opts: AdminServerOptions) {
       throw err
     }
   })
+
+  // Register static routes after API routes. This prevents the SPA fallback from
+  // treating nested API resources (such as /reports/:kind) as frontend paths.
+  if (staticDir) {
+    await app.register(fastifyStatic, {
+      root: path.resolve(staticDir),
+      prefix: '/',
+      wildcard: false,
+    })
+  }
 
   // SPA fallback: serve index.html for non-API, non-static routes
   if (staticDir) {

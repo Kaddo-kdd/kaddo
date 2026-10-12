@@ -4,6 +4,7 @@ import {
   BookOpen,
   ClipboardList,
   Database,
+  FileBarChart,
   LayoutDashboard,
   Plug,
   Search,
@@ -36,6 +37,7 @@ const navItems: NavItem[] = [
   { label: 'Resources', path: '/resources', icon: Database },
   { label: 'Deprecations', path: '/deprecations', icon: ArchiveX },
   { label: 'System', path: '/system', icon: Settings },
+  { label: 'Reports', path: '/reports', icon: FileBarChart },
   { label: 'Integrations', path: '/integrations', icon: Plug },
   { label: 'External Items', path: '/external-items', icon: Search },
 ]

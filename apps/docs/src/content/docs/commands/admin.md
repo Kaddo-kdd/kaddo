@@ -5,7 +5,7 @@ description: Launch the local web admin interface for a Kaddo project.
 
 `kaddo admin` starts a local web server that provides an interactive admin dashboard over
 the current Kaddo project. It brings together project observability, Work Item management,
-Integration management, and System exploration in a browser UI.
+Integration management, System exploration, and on-demand reports in a browser UI.
 
 ## Usage
 
@@ -43,6 +43,14 @@ Full Work Item lifecycle management — create draft Work Items, view details, e
 ### System Explorer
 
 Interactive semantic system topology graph. Toggle Knowledge, Delivery, and Implementation overlays. Deep-link to nodes. For refined Work Items, view system impact classification (affected, reviewed, unknown) projected onto the graph.
+
+### Reports
+
+Explore Impact, Drift, and Savings reports without creating report files. Each report is built
+on demand from Kaddo Core; select an applicable scope, refresh the current view, or export the
+same result as Markdown or JSON. Findings link to known Work Items, resources, and deprecation
+plans when an artifact identifier is available. Savings remain estimates until calibration evidence
+is recorded.
 
 ### Integrations
 

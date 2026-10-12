@@ -3,6 +3,9 @@
 // without shelling out to CLI commands.
 
 export { buildProjectExplanation, type ProjectExplanation } from './core/project-explain.js'
+export { buildImpactReport, renderImpactMarkdown, serializeImpactJson, type ImpactReport } from './core/impact-report.js'
+export { buildDriftReport, renderDriftMarkdown, serializeDriftJson, type DriftReport } from './core/drift-report.js'
+export { buildSavingsReport, renderSavingsMarkdown, serializeSavingsJson, type SavingsReport } from './core/savings.js'
 export { buildReadinessReport, type ReadinessReport, type ReadinessStatus } from './core/readiness.js'
 export { buildProjectRoute, type ProjectRoute, type RouteStep, type RouteStepStatus } from './core/project-route.js'
 export { knowledgeLayers, type LayerStatus, type LayerName, type LayerMaturity } from './core/layers.js'

@@ -1,5 +1,14 @@
 import {
   buildProjectExplanation,
+  buildImpactReport,
+  renderImpactMarkdown,
+  serializeImpactJson,
+  buildDriftReport,
+  renderDriftMarkdown,
+  serializeDriftJson,
+  buildSavingsReport,
+  renderSavingsMarkdown,
+  serializeSavingsJson,
   buildReadinessReport,
   buildProjectRoute,
   knowledgeLayers,
@@ -134,6 +143,32 @@ export function getKnowledgeSummary(dir: string): KnowledgeSummary {
     layers: exp.layers.map((l) => ({ layer: l.layer, status: l.status })),
     missing: exp.missingKnowledge,
   }
+}
+
+/** Reports are calculated by the public Core builders; Admin never reinterprets their evidence. */
+export function getImpactReportAdmin(dir: string, scope?: 'all' | 'active') {
+  return buildImpactReport(dir, scope ? { scope } : {})
+}
+
+export function getDriftReportAdmin(dir: string) {
+  return buildDriftReport(dir)
+}
+
+export function getSavingsReportAdmin(dir: string, scope?: 'all' | 'active') {
+  return buildSavingsReport(dir, scope ? { scope } : {})
+}
+
+export function exportReportAdmin(dir: string, report: 'impact' | 'drift' | 'savings', format: 'markdown' | 'json', scope?: 'all' | 'active'): string {
+  if (report === 'impact') {
+    const value = getImpactReportAdmin(dir, scope)
+    return format === 'json' ? serializeImpactJson(value) : renderImpactMarkdown(value)
+  }
+  if (report === 'drift') {
+    const value = getDriftReportAdmin(dir)
+    return format === 'json' ? serializeDriftJson(value) : renderDriftMarkdown(value)
+  }
+  const value = getSavingsReportAdmin(dir, scope)
+  return format === 'json' ? serializeSavingsJson(value) : renderSavingsMarkdown(value)
 }
 
 export function getWorkItemSummary(dir: string): WorkItemSummary {
