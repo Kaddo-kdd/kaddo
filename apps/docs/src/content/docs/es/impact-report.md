@@ -18,6 +18,7 @@ kaddo report impact                  # Markdown a stdout (no escribe nada) — s
 kaddo impact                         # alias
 kaddo report impact --json           # JSON estructurado
 kaddo report impact --scope active   # medir solo el contexto activo
+kaddo report impact --details        # incluir el inventario completo en Markdown
 kaddo report impact --output .kaddo/reports/impact-report.md
 kaddo report impact --json --output .kaddo/reports/impact-report.json
 ```
@@ -96,17 +97,20 @@ corriges.
 ## Hallazgos priorizados y evidencia de delivery
 
 `findings` es un contrato JSON aditivo compartido por los reportes. Cada hallazgo determinista
-identifica fuente, artifacts afectados, evidencia, explicación, prioridad y una acción razonable de
-revisión. `high` se reserva para una condición explícita (por ejemplo, una capa de conocimiento
-aplicable ausente); los Graph Hints son hallazgos para revisión, no errores. El Markdown presenta
-**Key Findings** antes del inventario detallado y muestra cada Graph Hint subyacente, no solo el
-conteo.
+identifica fuente, artifacts afectados, evidencia, explicación, prioridad, clasificación semántica y
+una acción razonable de revisión. Las clasificaciones son `consistency_violation`, `coverage_gap`,
+`review_hint` e `historical_drift`; son independientes de la prioridad. `high` queda reservado para
+una inconsistencia requerida y verificada; los vínculos opcionales de capabilities y capsules sin
+referencia son señales low de cobertura o revisión, no drift. El Markdown por defecto presenta
+**Key Findings** y un inventario compacto; usa `--details` para el detalle completo de brechas e
+historial de paths compartidos.
 
 **Delivery Evidence** separa Work Items completados de los estados de validación persistidos:
 passed, failed, pending y not recorded. “Not recorded” significa que no hay evidencia persistida en
 el reporte; no demuestra que nunca se ejecutó una prueba. Los DoD, secciones de validación y
 knowledge level históricos faltantes se agrupan en **Historical Documentation Completeness**, sin
-recomendaciones masivas de remediación.
+recomendaciones masivas de remediación. Un Work Item completado con validación persistida pendiente
+o fallida genera un `review_hint` contextual; no invalida automáticamente su lifecycle completed.
 
 ## Qué **no** mide
 

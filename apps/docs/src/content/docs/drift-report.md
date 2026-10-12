@@ -68,13 +68,19 @@ mean zero drift or a clean project. It writes nothing unless `--output` is given
 
 The additive `current_consistency_findings` contract reuses executed deterministic checks, including
 the concrete Graph Hints and deprecation-target findings when present. Each entry keeps source,
-affected artifacts, evidence, priority and a review action. No entries means only that the executed
-checks produced no findings; it does **not** declare the project drift-free.
+affected artifacts, evidence, priority, resolution status and a review action. Findings are grouped
+as `consistency_violation`, `coverage_gap`, `review_hint` and `historical_drift`: optional capability
+links are coverage gaps, unreferenced capsules are review hints, and historical drift is unavailable
+until comparable Guard history exists. No entries means only that the executed checks produced no
+findings; it does **not** declare the project drift-free.
 
 **Structural Consistency Boundaries** makes deprecation evidence explicit: target checks validate
 declared structural state, not operational removal from production, infrastructure or external
 consumers. With no Guard history, the report recommends `kaddo guard --record`: one recorded run
 creates an observation, while multiple comparable runs are needed to assess a historical trend.
+Plans with `targets: []` are reported as **not evaluated**, never as passed; the report separately
+counts discovered plans, plans without targets, evaluated plans, structural findings and plans with
+no structural findings.
 
 ## Feeds impact and savings
 

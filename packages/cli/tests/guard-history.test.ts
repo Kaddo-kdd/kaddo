@@ -93,6 +93,24 @@ describe('kaddo drift report (VS-063)', () => {
     expect(md).toContain('multiple comparable runs are needed for a historical trend')
   })
 
+  it('WI-063: leaves empty deprecation plans not evaluated and groups findings by semantic classification', () => {
+    fs.mkdirSync(path.join(tmp, 'knowledge/legacy/deprecations'), { recursive: true })
+    fs.writeFileSync(path.join(tmp, 'knowledge/legacy/deprecations/DEP-001.md'), '---\nid: DEP-001\ntype: deprecation-plan\ntitle: Empty plan\ntargets: []\n---\n')
+    const r = buildDriftReport(tmp)
+    expect(r.structural_consistency).toMatchObject({
+      deprecation_target_checks: 'not_evaluated',
+      plans_discovered: 1,
+      plans_without_targets: 1,
+      plans_with_targets_evaluated: 0,
+      structural_findings: 0,
+      plans_without_structural_findings: 0,
+    })
+    const md = renderDriftMarkdown(r)
+    expect(md).toContain('## Current Findings Summary')
+    expect(md).toContain('Historical Drift: not available — no recorded Guard runs')
+    expect(md).toContain('Target consistency for plans without targets: not evaluated')
+  })
+
   it('AC17-AC23/AC42/AC43: full report + JSON with history', () => {
     recordGuardRun(tmp, {
       project: 'todoApp', scope: 's', touched_files: ['src/cli/program.ts'],

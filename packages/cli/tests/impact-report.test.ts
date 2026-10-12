@@ -7,6 +7,7 @@ import { buildGraph, serializeGraphJson } from '../src/core/graph.js'
 import { buildGraphHints, serializeGraphHintsJson } from '../src/core/graph-hints.js'
 import { buildImpactReport, renderImpactMarkdown, serializeImpactJson } from '../src/core/impact-report.js'
 import { recordGuardRun } from '../src/core/guard-history.js'
+import { graphHintFinding } from '../src/core/reporting-evidence.js'
 
 let tmp: string
 function write(rel: string, content: string) {
@@ -212,6 +213,28 @@ describe('Knowledge Impact Report (VS-061)', () => {
     expect(md).toContain('## Historical Documentation Completeness')
     expect(md).toContain('does not prove validation never happened')
     expect(r.suggested_actions.some((action) => action.includes('Definition of Done'))).toBe(false)
+  })
+
+  it('WI-063: classifies optional topology links and completed validation follow-up without declaring a violation', () => {
+    config()
+    baseKnowledge()
+    const wi = path.join(tmp, 'knowledge/delivery/work-items/completed/WI-004.md')
+    fs.writeFileSync(wi, fs.readFileSync(wi, 'utf-8').replace('status: completed', 'status: completed\nvalidation_status: in-progress'))
+    const r = buildImpactReport(tmp)
+    const lifecycleFinding = r.findings.find((finding) => finding.source === 'work-item-lifecycle')
+    expect(lifecycleFinding).toMatchObject({ classification: 'review_hint', priority: 'medium', resolution_status: 'open' })
+    const capabilityHint = graphHintFinding({ artifact_id: 'capability:Export', artifact_type: 'capability', severity: 'info', missing: ['related_work_items'], reason: 'No relationship', message: 'Optional link' })
+    expect(capabilityHint).toMatchObject({ classification: 'coverage_gap', priority: 'low' })
+    expect(capabilityHint.suggested_action).toContain('optional')
+  })
+
+  it('WI-063: keeps the Markdown impact view compact unless --details is requested', () => {
+    config()
+    baseKnowledge()
+    const r = buildImpactReport(tmp)
+    expect(renderImpactMarkdown(r)).toContain('Run `kaddo impact --details`')
+    expect(renderImpactMarkdown(r)).not.toContain('### Broad ownership globs')
+    expect(renderImpactMarkdown(r, { details: true })).toContain('### Broad ownership globs')
   })
 
   it('VS-063 AC24/AC25/AC45: guard_activity reflects recorded history', () => {

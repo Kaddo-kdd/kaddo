@@ -22,10 +22,16 @@ export type EvidenceItem = {
   reason: string
 }
 
+export type FindingClassification = 'consistency_violation' | 'coverage_gap' | 'review_hint' | 'historical_drift'
+export type FindingResolutionStatus = 'open' | 'resolved' | 'unknown' | 'not_applicable'
+
 /** A deterministic, traceable report finding. Findings never execute their suggested action. */
 export type ReportFinding = {
   id: string
   category: 'knowledge' | 'delivery' | 'topology' | 'consistency'
+  /** Semantic meaning is separate from urgency: an optional gap is not a violation or drift. */
+  classification: FindingClassification
+  resolution_status: FindingResolutionStatus
   source: string
   affected_artifacts: string[]
   priority: 'high' | 'medium' | 'low' | 'unknown'
@@ -37,16 +43,25 @@ export type ReportFinding = {
 /** Reuse Graph Hints as report findings instead of creating another topology validator. */
 export function graphHintFinding(hint: GraphHint): ReportFinding {
   const affected = [hint.artifact_id, ...(hint.path ? [hint.path] : [])]
+  const semantics: Record<GraphHint['artifact_type'], { classification: FindingClassification; priority: ReportFinding['priority']; action: string }> = {
+    'work-item': { classification: 'coverage_gap', priority: 'medium', action: 'Review whether the active Work Item needs the missing declared relationship.' },
+    decision: { classification: 'coverage_gap', priority: 'low', action: 'Review whether this decision should declare governed code paths.' },
+    capability: { classification: 'coverage_gap', priority: 'low', action: 'Review whether this capability should connect to existing Work Items; the relationship is optional.' },
+    'knowledge-capsule': { classification: 'review_hint', priority: 'low', action: 'Confirm whether this capsule is intended for direct contextual use or Work Item relationships.' },
+  }
+  const semantic = semantics[hint.artifact_type]
   return {
     id: `graph-hint:${hint.artifact_id}:${hint.missing.join(',')}`,
     category: 'topology',
+    classification: semantic.classification,
+    resolution_status: 'open',
     source: 'graph-hints',
     affected_artifacts: affected,
-    // Graph Hints are intentionally informational; review is useful but not a blocking error.
-    priority: 'medium',
+    // Graph Hints are intentionally non-blocking; their type determines priority and meaning.
+    priority: semantic.priority,
     evidence: hint.reason,
     explanation: hint.message,
-    suggested_action: `Review the declared relationships for ${hint.artifact_id}${hint.path ? ` at ${hint.path}` : ''}.`,
+    suggested_action: semantic.action,
   }
 }
 

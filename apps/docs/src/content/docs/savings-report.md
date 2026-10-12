@@ -89,7 +89,8 @@ Each report carries a confidence level: **Low** (insufficient delivery, ownershi
 **Medium** (strong evidence but default assumptions and/or no resolved drift history), **High**
 (strong evidence + calibrated assumptions in `.kaddo/savings.yml` + recorded resolved drift
 warnings). Reaching **High** requires real drift-resolution evidence from `kaddo guard --record`.
-The deprecated Impact score is not a confidence input.
+The deprecated Impact score is not a confidence input. When shown in Markdown, it is explicitly
+labelled **Legacy Knowledge Impact Score** and is informational only.
 
 ## Calibration opportunities
 

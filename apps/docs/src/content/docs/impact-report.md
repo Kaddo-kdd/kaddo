@@ -17,6 +17,7 @@ kaddo report impact                  # Markdown to stdout (writes nothing) — s
 kaddo impact                         # alias
 kaddo report impact --json           # structured JSON
 kaddo report impact --scope active   # measure only the active context
+kaddo report impact --details        # include the complete Markdown inventory
 kaddo report impact --output .kaddo/reports/impact-report.md
 kaddo report impact --json --output .kaddo/reports/impact-report.json
 ```
@@ -93,16 +94,20 @@ you fix.
 ## Prioritized findings and delivery evidence
 
 `findings` is an additive JSON contract shared by the reports. Each deterministic finding identifies
-its source, affected artifacts, evidence, explanation, priority and a suggested review action.
-`high` is reserved for an explicit condition (for example a missing applicable knowledge layer);
-Graph Hints are review findings, not errors. The Markdown presents **Key Findings** before detailed
-inventory and shows each underlying Graph Hint instead of only a count.
+its source, affected artifacts, evidence, explanation, priority, semantic classification and a
+suggested review action. Classifications are `consistency_violation`, `coverage_gap`,
+`review_hint` and `historical_drift`; they are deliberately independent from priority. `high` is
+reserved for a verified required inconsistency, while optional capability links and unreferenced
+capsules are low-priority review or coverage signals, not drift. The default Markdown presents
+**Key Findings** before a compact inventory; use `--details` for the complete gap and shared-path
+history.
 
 **Delivery Evidence** separates completed Work Items from persisted validation states: passed,
 failed, pending and not recorded. “Not recorded” means the report has no persisted evidence; it
 does not prove a test was never run. Historical missing DoD, validation-section and knowledge-level
 metadata is grouped under **Historical Documentation Completeness**, without bulk remediation
-recommendations.
+recommendations. A completed Work Item with a persisted pending or failed validation state emits a
+contextual `review_hint`; it does not automatically invalidate the completed lifecycle state.
 
 ## What it does NOT measure
 

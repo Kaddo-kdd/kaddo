@@ -16,7 +16,15 @@ export type DriftReport = {
   consistency_evidence: EvidenceItem[]
   /** Findings from executed deterministic checks; absence does not mean the project is drift-free. */
   current_consistency_findings: ReportFinding[]
-  structural_consistency: { deprecation_target_checks: 'not_applicable' | 'passed' | 'findings_detected'; note: string }
+  structural_consistency: {
+    deprecation_target_checks: 'not_applicable' | 'not_evaluated' | 'passed' | 'findings_detected'
+    plans_discovered: number
+    plans_without_targets: number
+    plans_with_targets_evaluated: number
+    structural_findings: number
+    plans_without_structural_findings: number
+    note: string
+  }
   guard_history: {
     available: boolean
     total_runs: number
@@ -39,7 +47,15 @@ export function buildDriftReport(dir: string, now: Date = new Date()): DriftRepo
   const workItems = discoverWorkItems(dir)
   const verificationEvidence = workItems.filter((wi) => wi.validationStatus && wi.validationStatus !== 'not-started')
   const plans = getDeprecationPlans(dir)
-  const deprecationFindings = plans.flatMap((plan) => getDeprecationPlan(dir, plan.id)?.targets.flatMap(validateTarget) ?? [])
+  const planDetails = plans.map((plan) => getDeprecationPlan(dir, plan.id)).filter((plan): plan is NonNullable<typeof plan> => plan !== null)
+  const plansWithoutTargets = planDetails.filter((plan) => plan.targets.length === 0)
+  const plansWithTargets = planDetails.filter((plan) => plan.targets.length > 0)
+  const targetFindingsByPlan = new Map(plansWithTargets.map((plan) => [
+    plan.id,
+    plan.targets.flatMap(validateTarget),
+  ]))
+  const deprecationFindings = [...targetFindingsByPlan.values()].flat()
+  const plansWithoutStructuralFindings = plansWithTargets.filter((plan) => (targetFindingsByPlan.get(plan.id) ?? []).length === 0)
   const config = loadConfig(dir)
   const topology = config ? buildGraph(dir, config, { scope: 'all' }, now) : null
   const graphHints = topology ? buildGraphHints(dir, topology, now) : null
@@ -49,13 +65,29 @@ export function buildDriftReport(dir: string, now: Date = new Date()): DriftRepo
     ...deprecationFindings.map((finding, index) => ({
       id: `deprecation-target:${index + 1}`,
       category: 'consistency' as const,
+      classification: 'consistency_violation' as const,
+      resolution_status: 'open' as const,
       source: 'deprecation-target-validation',
-      affected_artifacts: [],
-      priority: 'medium' as const,
-      evidence: String(finding),
+      affected_artifacts: finding.target ? [finding.target] : [],
+      priority: finding.severity === 'error' ? 'high' as const : 'medium' as const,
+      evidence: finding.message,
       explanation: 'A deterministic deprecation target consistency check reported a finding.',
       suggested_action: 'Review the affected deprecation target and its declared lifecycle evidence.',
     })),
+    ...(h.available && h.total_runs >= 2
+      ? h.threads.filter((thread) => thread.status === 'open').map((thread) => ({
+          id: `guard-history:${thread.code_path}`,
+          category: 'consistency' as const,
+          classification: 'historical_drift' as const,
+          resolution_status: 'open' as const,
+          source: 'guard-history',
+          affected_artifacts: [thread.code_path, ...thread.related_artifacts],
+          priority: 'medium' as const,
+          evidence: `Recorded Guard observations from ${thread.first_detected} through ${thread.last_seen} remain unresolved.`,
+          explanation: 'Comparable Guard runs observed a possible code/knowledge drift thread over time.',
+          suggested_action: 'Review the recorded drift thread and update the relevant knowledge or ownership evidence.',
+        }))
+      : []),
   ]
 
   const actions: string[] = []
@@ -74,12 +106,17 @@ export function buildDriftReport(dir: string, now: Date = new Date()): DriftRepo
     consistency_evidence: [
       { id: 'guard-current-consistency', label: 'Current Guard consistency', classification: h.available ? 'observed' : 'unknown', reason: h.available ? `${h.total_runs} recorded Guard run(s) provide deterministic consistency evidence.` : 'No recorded Guard history is available.' },
       { id: 'lifecycle-consistency', label: 'Lifecycle evidence consistency', classification: verificationEvidence.length > 0 ? 'observed' : 'unknown', reason: verificationEvidence.length > 0 ? `${verificationEvidence.length} Work Item(s) persist an implementation validation status.` : 'No persisted Work Item validation status is available.' },
-      { id: 'deprecation-consistency', label: 'Deprecation consistency', classification: plans.length === 0 ? 'not_applicable' : deprecationFindings.length === 0 ? 'derived' : 'observed', reason: plans.length === 0 ? 'No deprecation plans exist in this project.' : deprecationFindings.length === 0 ? `${plans.length} plan(s) passed deterministic target consistency checks.` : `${deprecationFindings.length} deterministic deprecation consistency finding(s) were detected.` },
+      { id: 'deprecation-consistency', label: 'Deprecation consistency', classification: plans.length === 0 ? 'not_applicable' : plansWithTargets.length === 0 ? 'unknown' : deprecationFindings.length === 0 ? 'derived' : 'observed', reason: plans.length === 0 ? 'No deprecation plans exist in this project.' : plansWithTargets.length === 0 ? `${plansWithoutTargets.length} plan(s) have no targets, so target consistency was not evaluated.` : deprecationFindings.length === 0 ? `${plansWithTargets.length} plan(s) with targets passed deterministic target consistency checks; ${plansWithoutTargets.length} plan(s) remain unevaluated because they have no targets.` : `${deprecationFindings.length} deterministic deprecation consistency finding(s) were detected.` },
       { id: 'topology-consistency', label: 'Knowledge topology consistency', classification: topology === null ? 'unknown' : topologyHints === 0 ? 'derived' : 'observed', reason: topology === null ? 'No project configuration is available to construct the topology.' : topologyHints === 0 ? `The in-memory topology has ${topology.nodes.length} node(s) and no open deterministic hints.` : `The in-memory topology has ${topologyHints} open deterministic hint(s).` },
     ],
     current_consistency_findings: currentConsistencyFindings,
     structural_consistency: {
-      deprecation_target_checks: plans.length === 0 ? 'not_applicable' : deprecationFindings.length === 0 ? 'passed' : 'findings_detected',
+      deprecation_target_checks: plans.length === 0 ? 'not_applicable' : plansWithTargets.length === 0 ? 'not_evaluated' : deprecationFindings.length === 0 ? 'passed' : 'findings_detected',
+      plans_discovered: plans.length,
+      plans_without_targets: plansWithoutTargets.length,
+      plans_with_targets_evaluated: plansWithTargets.length,
+      structural_findings: deprecationFindings.length,
+      plans_without_structural_findings: plansWithoutStructuralFindings.length,
       note: plans.length === 0
         ? 'No deprecation plans exist in this project.'
         : 'Target consistency checks validate declared structural state only; they do not verify operational removal from infrastructure, production or external consumers.',
@@ -112,23 +149,43 @@ export function renderDriftMarkdown(r: DriftReport): string {
   for (const item of r.consistency_evidence) L.push(`- ${item.label}: ${item.classification} — ${item.reason}`)
   L.push('')
 
-  L.push('## Current Consistency Findings', '')
-  if (r.current_consistency_findings.length === 0) {
-    L.push('No findings detected by the executed consistency checks.')
-    L.push('')
+  const findingGroups: { classification: ReportFinding['classification']; title: string }[] = [
+    { classification: 'consistency_violation', title: 'Consistency Violations' },
+    { classification: 'coverage_gap', title: 'Coverage Gaps' },
+    { classification: 'review_hint', title: 'Review Hints' },
+    { classification: 'historical_drift', title: 'Historical Drift' },
+  ]
+  L.push('## Current Findings Summary', '')
+  for (const group of findingGroups) {
+    const count = r.current_consistency_findings.filter((finding) => finding.classification === group.classification).length
+    const unavailable = group.classification === 'historical_drift' && !r.guard_history.available
+    L.push(`- ${group.title}: ${unavailable ? 'not available — no recorded Guard runs' : count}`)
   }
-  if (r.current_consistency_findings.length > 0) {
-    const cell = (value: string) => value.replace(/\|/g, '\\|').replace(/\r?\n/g, ' ')
-    L.push('| Priority | Source | Affected | Finding | Suggested action |')
-    L.push('|---|---|---|---|---|')
-    for (const finding of r.current_consistency_findings) {
-      L.push(`| ${finding.priority} | ${cell(finding.source)} | ${cell(finding.affected_artifacts.join(', ') || 'not available')} | ${cell(finding.explanation)} Evidence: ${cell(finding.evidence)} | ${cell(finding.suggested_action)} |`)
+  L.push('')
+
+  L.push('## Current Consistency Findings', '')
+  if (r.current_consistency_findings.length === 0) L.push('No findings detected by the executed consistency checks.', '')
+  const cell = (value: string) => value.replace(/\|/g, '\\|').replace(/\r?\n/g, ' ')
+  for (const group of findingGroups) {
+    const findings = r.current_consistency_findings.filter((finding) => finding.classification === group.classification)
+    if (findings.length === 0) continue
+    L.push(`### ${group.title}`, '')
+    L.push('| Classification | Priority | Status | Source | Affected | Finding | Suggested action |')
+    L.push('|---|---|---|---|---|---|---|')
+    for (const finding of findings) {
+      L.push(`| ${finding.classification} | ${finding.priority} | ${finding.resolution_status} | ${cell(finding.source)} | ${cell(finding.affected_artifacts.join(', ') || 'not available')} | ${cell(finding.explanation)} Evidence: ${cell(finding.evidence)} | ${cell(finding.suggested_action)} |`)
     }
     L.push('')
   }
 
   L.push('## Structural Consistency Boundaries', '')
   L.push(`- Deprecation target checks: ${r.structural_consistency.deprecation_target_checks}`)
+  L.push(`- Plans discovered: ${r.structural_consistency.plans_discovered}`)
+  L.push(`- Plans without targets: ${r.structural_consistency.plans_without_targets}`)
+  L.push(`- Plans with targets evaluated: ${r.structural_consistency.plans_with_targets_evaluated}`)
+  L.push(`- Structural findings: ${r.structural_consistency.structural_findings}`)
+  L.push(`- Plans without structural findings: ${r.structural_consistency.plans_without_structural_findings}`)
+  if (r.structural_consistency.plans_without_targets > 0) L.push('- Target consistency for plans without targets: not evaluated — no targets defined.')
   L.push(`- Note: ${r.structural_consistency.note}`)
   L.push('')
 

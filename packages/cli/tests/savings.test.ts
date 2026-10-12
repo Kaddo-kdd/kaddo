@@ -67,6 +67,8 @@ describe('Estimated Savings Model (VS-062)', () => {
       expect(md).toContain(sec)
     }
     expect(md).toContain('Not available yet.') // drift
+    expect(md).toContain('Legacy Knowledge Impact Score:')
+    expect(md).toContain('deprecated; informational only and not used for confidence')
   })
 
   it('AC22/AC27: confidence stays at most Medium and drift not-available without Guard history', () => {

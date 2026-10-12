@@ -90,7 +90,8 @@ Cada reporte incluye un nivel de confianza: **Low** (evidencia insuficiente de d
 grafo), **Medium** (buena evidencia pero supuestos default y/o sin historial de drift resuelto),
 **High** (evidencia fuerte + supuestos calibrados en `.kaddo/savings.yml` + warnings de drift
 resueltos registrados). Llegar a **High** requiere evidencia real de resolución de drift vía
-`kaddo guard --record`. El Impact score deprecated no es una entrada de confianza.
+`kaddo guard --record`. El Impact score deprecated no es una entrada de confianza. Cuando aparece
+en Markdown se etiqueta explícitamente como **Legacy Knowledge Impact Score** y es solo informativo.
 
 ## Oportunidades de calibración
 

@@ -68,15 +68,21 @@ disponible: no significa cero drift ni proyecto limpio. No escribe nada salvo co
 
 El contrato aditivo `current_consistency_findings` reutiliza verificaciones deterministas ya
 ejecutadas, incluyendo los Graph Hints concretos y hallazgos de targets de deprecation cuando
-existan. Cada entrada conserva fuente, artifacts afectados, evidencia, prioridad y acción de
-revisión. Que no haya entradas solo significa que las verificaciones ejecutadas no generaron
-hallazgos; **no** declara que el proyecto esté libre de drift.
+existan. Cada entrada conserva fuente, artifacts afectados, evidencia, prioridad, estado de
+resolución y acción de revisión. Se agrupan como `consistency_violation`, `coverage_gap`,
+`review_hint` e `historical_drift`: vínculos opcionales de capabilities son brechas de cobertura,
+capsules sin referencia son hints de revisión y el drift histórico no está disponible hasta contar
+con historial Guard comparable. Que no haya entradas solo significa que las verificaciones ejecutadas
+no generaron hallazgos; **no** declara que el proyecto esté libre de drift.
 
 **Structural Consistency Boundaries** hace explícita la evidencia de deprecation: las verificaciones
 de targets validan estado estructural declarado, no remoción operativa de producción,
 infraestructura o consumidores externos. Sin historial Guard, el reporte recomienda
 `kaddo guard --record`: una ejecución crea una observación, y se necesitan varias ejecuciones
 comparables para evaluar una tendencia histórica.
+Los planes con `targets: []` se informan como **not evaluated**, nunca como passed; el reporte
+separa planes descubiertos, planes sin targets, planes evaluados, hallazgos estructurales y planes
+sin hallazgos estructurales.
 
 ## Alimenta impact y savings
 

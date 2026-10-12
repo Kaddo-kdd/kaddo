@@ -337,9 +337,11 @@ export function buildImpactReport(
     findings.push({
       id: `knowledge-health:${layer.toLowerCase()}`,
       category: 'knowledge',
+      classification: 'coverage_gap',
+      resolution_status: 'open',
       source: 'knowledge-health',
       affected_artifacts: [layer],
-      priority: status === 'Missing' ? 'high' : 'medium',
+      priority: status === 'Missing' ? 'medium' : 'low',
       evidence: `${layer} knowledge maturity is ${status}.`,
       explanation: `This assesses documented ${layer} knowledge, not the quality of the product or implementation.`,
       suggested_action: `Review ${layer} knowledge coverage and the artifacts or relationships available for it.`,
@@ -349,12 +351,29 @@ export function buildImpactReport(
     findings.push({
       id: `ownership:${gap.id}`,
       category: 'delivery',
+      classification: 'coverage_gap',
+      resolution_status: 'open',
       source: 'work-item-ownership',
       affected_artifacts: [gap.id, gap.path],
       priority: 'medium',
       evidence: 'A corrective Work Item has no declared code ownership.',
       explanation: gap.title,
-      suggested_action: gap.suggested_action,
+      suggested_action: 'Review and add relevant code ownership declarations.',
+    })
+  }
+  for (const wi of completedWis) {
+    if (!wi.validationStatus || !['not-started', 'in-progress', 'partial', 'failed', 'blocked'].includes(wi.validationStatus)) continue
+    findings.push({
+      id: `completion-validation:${wi.id || wi.title}`,
+      category: 'delivery',
+      classification: 'review_hint',
+      resolution_status: 'open',
+      source: 'work-item-lifecycle',
+      affected_artifacts: [wi.id || wi.title, wi.relPath],
+      priority: 'medium',
+      evidence: `Lifecycle is completed while persisted validation is ${wi.validationStatus}.`,
+      explanation: 'This requires review against the Work Item completion contract; it is not automatically a failed or invalid completion.',
+      suggested_action: 'Review the validation evidence and confirm whether the completed lifecycle state is consistent with the Work Item completion contract.',
     })
   }
   findings.push(...graphHintEntries.map(graphHintFinding))
@@ -408,7 +427,6 @@ export function buildImpactReport(
   else if (g.scope === 'active' && g.quality === 'empty') actions.push('Run `kaddo impact --scope all` to measure accumulated knowledge impact.')
   if (exp.roadmap.remaining > 0) actions.push(`Materialize the ${exp.roadmap.remaining} remaining roadmap candidate(s) with \`kaddo create --from roadmap\`.`)
   for (const a of [
-    groupedAction(gaps.missing_code_ownership, 'Add `code:` ownership to'),
     groupedAction(gaps.missing_source, 'Add `source`/`source_id` to'),
   ]) if (a) actions.push(a)
   if (gaps.broad_ownership_globs.length > 0) actions.push(`Narrow ${gaps.broad_ownership_globs.length} broad ownership glob(s) into specific paths.`)
@@ -505,8 +523,8 @@ function ratio(have: number, total: number): string {
   return `${have}/${total}`
 }
 
-/** Render the report as a human-readable Markdown document. */
-export function renderImpactMarkdown(r: ImpactReport): string {
+/** Render a compact report by default; `details` retains the complete Markdown inventory. */
+export function renderImpactMarkdown(r: ImpactReport, opts: { details?: boolean } = {}): string {
   const L: string[] = []
   L.push('# Kaddo Knowledge Impact Report', '')
   L.push(`Generated at: ${r.generated_at}`)
@@ -530,10 +548,10 @@ export function renderImpactMarkdown(r: ImpactReport): string {
   if (r.findings.length === 0) L.push('No current findings detected by the executed deterministic checks.')
   if (r.findings.length > 0) {
     const cell = (value: string) => value.replace(/\|/g, '\\|').replace(/\r?\n/g, ' ')
-    L.push('| Priority | Source | Affected | Finding | Suggested action |')
-    L.push('|---|---|---|---|---|')
+    L.push('| Classification | Priority | Status | Source | Affected | Finding | Suggested action |')
+    L.push('|---|---|---|---|---|---|---|')
     for (const finding of r.findings) {
-      L.push(`| ${finding.priority} | ${cell(finding.source)} | ${cell(finding.affected_artifacts.join(', ') || 'not available')} | ${cell(finding.explanation)} Evidence: ${cell(finding.evidence)} | ${cell(finding.suggested_action)} |`)
+      L.push(`| ${finding.classification} | ${finding.priority} | ${finding.resolution_status} | ${cell(finding.source)} | ${cell(finding.affected_artifacts.join(', ') || 'not available')} | ${cell(finding.explanation)} Evidence: ${cell(finding.evidence)} | ${cell(finding.suggested_action)} |`)
     }
   }
   L.push('')
@@ -658,9 +676,9 @@ export function renderImpactMarkdown(r: ImpactReport): string {
     }
     L.push('')
   }
-  gapSection('Work Items missing source', gp.missing_source)
-  gapSection('Work Items missing code ownership', gp.missing_code_ownership)
-  if (gp.broad_ownership_globs.length > 0) {
+  if (opts.details) gapSection('Work Items missing source', gp.missing_source)
+  if (opts.details) gapSection('Work Items missing code ownership', gp.missing_code_ownership)
+  if (opts.details && gp.broad_ownership_globs.length > 0) {
     L.push('### Broad ownership globs', '')
     for (const b of gp.broad_ownership_globs) {
       L.push(`- ${b.id} — ${b.title}`)
@@ -671,10 +689,17 @@ export function renderImpactMarkdown(r: ImpactReport): string {
   }
   if (gp.ownership_overlaps.length > 0) {
     L.push('### Shared code-path history (review only)', '')
-    for (const o of gp.ownership_overlaps) {
-      L.push(`- \`${o.code_path}\``)
-      L.push(`  - Owned by: ${o.work_items.join(', ')}`)
-      L.push(`  - Suggested action: ${o.suggested_action}`)
+    if (opts.details) {
+      for (const o of gp.ownership_overlaps) {
+        L.push(`- \`${o.code_path}\``)
+        L.push(`  - Owned by: ${o.work_items.join(', ')}`)
+        L.push(`  - Suggested action: ${o.suggested_action}`)
+      }
+    } else {
+      L.push(`- ${gp.ownership_overlaps.length} shared path declaration(s) detected. These are historical relationships, not necessarily ownership conflicts.`)
+      const areas = gp.ownership_overlaps.slice(0, 3).map((o) => `\`${o.code_path}\``)
+      if (areas.length > 0) L.push(`- Most involved paths: ${areas.join(', ')}.`)
+      L.push('- Run `kaddo impact --details` for the complete shared-path inventory.')
     }
     L.push('')
   }
@@ -683,6 +708,9 @@ export function renderImpactMarkdown(r: ImpactReport): string {
     gp.broad_ownership_globs.length
   if (anyGaps === 0) {
     L.push('No actionable knowledge gaps detected. 🎉', '')
+  } else if (!opts.details) {
+    L.push('- Current actionable items are listed in Key Findings. Run `kaddo impact --details` for the full artifact inventory.')
+    L.push('')
   }
 
   const historical = [

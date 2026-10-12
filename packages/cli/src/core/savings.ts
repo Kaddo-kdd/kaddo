@@ -371,7 +371,7 @@ export function renderSavingsMarkdown(r: SavingsReport): string {
 
   L.push('## Evidence Used', '')
   const e = r.evidence
-  L.push(`- Knowledge Impact Score: ${e.knowledge_impact_score ?? 'not available'}${e.knowledge_impact_score !== null ? '/100' : ''}`)
+  L.push(`- Legacy Knowledge Impact Score: ${e.knowledge_impact_score ?? 'not available'}${e.knowledge_impact_score !== null ? '/100' : ''} (deprecated; informational only and not used for confidence)`)
   L.push(`- Completed Work Items: ${e.completed_work_items}`)
   L.push(`- Ownership coverage: ${e.ownership_coverage_percent}%`)
   L.push(`- Work Items with Acceptance Criteria: ${e.work_items_with_acceptance_criteria}`)
