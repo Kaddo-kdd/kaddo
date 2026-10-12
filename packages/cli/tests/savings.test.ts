@@ -146,6 +146,16 @@ describe('Estimated Savings Model (VS-062)', () => {
     expect(r.total.estimated_hours_saved).not.toBe(r.totals.observed_history_estimate.estimated_hours + r.totals.monthly_projection.estimated_hours)
     expect(renderSavingsMarkdown(r)).toContain('Historical estimates and future monthly projections are intentionally not added together.')
   })
+
+  it('WI-062: gives calibration opportunities for uncalibrated assumptions without changing estimates', () => {
+    setup()
+    const r = buildSavingsReport(tmp)
+    expect(r.calibration_opportunities.available).toBe(true)
+    expect(r.calibration_opportunities.opportunities.map((item) => item.area)).toContain('Review effort')
+    const md = renderSavingsMarkdown(r)
+    expect(md).toContain('## Calibration Opportunities')
+    expect(md).toContain('do not collect or store personal data')
+  })
 })
 
 describe('kaddo savings command (VS-062)', () => {

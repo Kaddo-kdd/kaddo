@@ -5,6 +5,7 @@ import { loadConfig, projectMode } from './config.js'
 import { getResources } from './resources.js'
 import { discoverInitiatives } from './initiative.js'
 import { loadMappedModules } from '../services/mapped-modules.js'
+import type { GraphHint } from './graph-hints.js'
 
 export type EvidenceKind = 'observed' | 'derived' | 'estimated' | 'projected' | 'unknown' | 'not_applicable'
 
@@ -19,6 +20,34 @@ export type EvidenceItem = {
   label: string
   classification: EvidenceKind
   reason: string
+}
+
+/** A deterministic, traceable report finding. Findings never execute their suggested action. */
+export type ReportFinding = {
+  id: string
+  category: 'knowledge' | 'delivery' | 'topology' | 'consistency'
+  source: string
+  affected_artifacts: string[]
+  priority: 'high' | 'medium' | 'low' | 'unknown'
+  evidence: string
+  explanation: string
+  suggested_action: string
+}
+
+/** Reuse Graph Hints as report findings instead of creating another topology validator. */
+export function graphHintFinding(hint: GraphHint): ReportFinding {
+  const affected = [hint.artifact_id, ...(hint.path ? [hint.path] : [])]
+  return {
+    id: `graph-hint:${hint.artifact_id}:${hint.missing.join(',')}`,
+    category: 'topology',
+    source: 'graph-hints',
+    affected_artifacts: affected,
+    // Graph Hints are intentionally informational; review is useful but not a blocking error.
+    priority: 'medium',
+    evidence: hint.reason,
+    explanation: hint.message,
+    suggested_action: `Review the declared relationships for ${hint.artifact_id}${hint.path ? ` at ${hint.path}` : ''}.`,
+  }
 }
 
 export function reportingProjectContext(dir: string): ReportingProjectContext {

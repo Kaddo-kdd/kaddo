@@ -91,6 +91,13 @@ Each report carries a confidence level: **Low** (insufficient delivery, ownershi
 warnings). Reaching **High** requires real drift-resolution evidence from `kaddo guard --record`.
 The deprecated Impact score is not a confidence input.
 
+## Calibration opportunities
+
+When assumptions are default or not marked with `calibrated_at`, the additive
+`calibration_opportunities` field explains what aggregate project evidence could calibrate context
+preparation, review effort, clarification reduction and architecture discovery. It never collects
+or stores personal data, changes formulas or turns an estimate into a measured saving.
+
 ## Over MCP
 
 The [MCP server](/mcp-server/) exposes it read-only: `kaddo://savings-report` (saved or in-memory)

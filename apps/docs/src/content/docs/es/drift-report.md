@@ -64,6 +64,20 @@ Consistency Evidence actual y luego una sección **Historical Drift Trend** marc
 disponible: no significa cero drift ni proyecto limpio. No escribe nada salvo con `--output` (los reportes viven en
 `.kaddo/reports/`).
 
+## Hallazgos actuales de consistencia
+
+El contrato aditivo `current_consistency_findings` reutiliza verificaciones deterministas ya
+ejecutadas, incluyendo los Graph Hints concretos y hallazgos de targets de deprecation cuando
+existan. Cada entrada conserva fuente, artifacts afectados, evidencia, prioridad y acción de
+revisión. Que no haya entradas solo significa que las verificaciones ejecutadas no generaron
+hallazgos; **no** declara que el proyecto esté libre de drift.
+
+**Structural Consistency Boundaries** hace explícita la evidencia de deprecation: las verificaciones
+de targets validan estado estructural declarado, no remoción operativa de producción,
+infraestructura o consumidores externos. Sin historial Guard, el reporte recomienda
+`kaddo guard --record`: una ejecución crea una observación, y se necesitan varias ejecuciones
+comparables para evaluar una tendencia histórica.
+
 ## Alimenta impact y savings
 
 - [`kaddo impact`](/es/impact-report/) — la sección **Guard Activity** pasa a *disponible* con conteo

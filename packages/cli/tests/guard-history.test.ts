@@ -82,6 +82,17 @@ describe('kaddo drift report (VS-063)', () => {
     expect(r.consistency_evidence.find((item) => item.id === 'topology-consistency')?.classification).not.toBe('unknown')
   })
 
+  it('WI-062: exposes deterministic current findings and structural evidence boundaries without Guard history', () => {
+    const r = buildDriftReport(tmp)
+    expect(r.current_consistency_findings).toEqual([])
+    expect(r.structural_consistency.deprecation_target_checks).toBe('not_applicable')
+    const md = renderDriftMarkdown(r)
+    expect(md).toContain('## Current Consistency Findings')
+    expect(md).toContain('No findings detected by the executed consistency checks.')
+    expect(md).toContain('## Structural Consistency Boundaries')
+    expect(md).toContain('multiple comparable runs are needed for a historical trend')
+  })
+
   it('AC17-AC23/AC42/AC43: full report + JSON with history', () => {
     recordGuardRun(tmp, {
       project: 'todoApp', scope: 's', touched_files: ['src/cli/program.ts'],

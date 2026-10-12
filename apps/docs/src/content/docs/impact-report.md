@@ -90,6 +90,20 @@ array per gap type) plus `score_breakdown`.
 The report still **never edits Work Items, never runs agents and never calls an LLM** — it points,
 you fix.
 
+## Prioritized findings and delivery evidence
+
+`findings` is an additive JSON contract shared by the reports. Each deterministic finding identifies
+its source, affected artifacts, evidence, explanation, priority and a suggested review action.
+`high` is reserved for an explicit condition (for example a missing applicable knowledge layer);
+Graph Hints are review findings, not errors. The Markdown presents **Key Findings** before detailed
+inventory and shows each underlying Graph Hint instead of only a count.
+
+**Delivery Evidence** separates completed Work Items from persisted validation states: passed,
+failed, pending and not recorded. “Not recorded” means the report has no persisted evidence; it
+does not prove a test was never run. Historical missing DoD, validation-section and knowledge-level
+metadata is grouped under **Historical Documentation Completeness**, without bulk remediation
+recommendations.
+
 ## What it does NOT measure
 
 No money, no ROI, no individual productivity, no commits-per-person, no benchmarking against other

@@ -3,7 +3,7 @@
 
 import { loadConfig } from './config.js'
 import { buildGuardHistory, type GuardHistory } from './guard-history.js'
-import { reportingProjectContext, type EvidenceItem, type ReportingProjectContext } from './reporting-evidence.js'
+import { graphHintFinding, reportingProjectContext, type EvidenceItem, type ReportFinding, type ReportingProjectContext } from './reporting-evidence.js'
 import { getDeprecationPlan, getDeprecationPlans, validateTarget } from './deprecation.js'
 import { discoverWorkItems } from '../services/knowledge-artifacts.js'
 import { buildGraph } from './graph.js'
@@ -14,6 +14,9 @@ export type DriftReport = {
   project: string
   project_context: ReportingProjectContext
   consistency_evidence: EvidenceItem[]
+  /** Findings from executed deterministic checks; absence does not mean the project is drift-free. */
+  current_consistency_findings: ReportFinding[]
+  structural_consistency: { deprecation_target_checks: 'not_applicable' | 'passed' | 'findings_detected'; note: string }
   guard_history: {
     available: boolean
     total_runs: number
@@ -39,11 +42,25 @@ export function buildDriftReport(dir: string, now: Date = new Date()): DriftRepo
   const deprecationFindings = plans.flatMap((plan) => getDeprecationPlan(dir, plan.id)?.targets.flatMap(validateTarget) ?? [])
   const config = loadConfig(dir)
   const topology = config ? buildGraph(dir, config, { scope: 'all' }, now) : null
-  const topologyHints = topology ? buildGraphHints(dir, topology, now).summary.hints : null
+  const graphHints = topology ? buildGraphHints(dir, topology, now) : null
+  const topologyHints = graphHints?.summary.hints ?? null
+  const currentConsistencyFindings: ReportFinding[] = [
+    ...(graphHints?.hints.map(graphHintFinding) ?? []),
+    ...deprecationFindings.map((finding, index) => ({
+      id: `deprecation-target:${index + 1}`,
+      category: 'consistency' as const,
+      source: 'deprecation-target-validation',
+      affected_artifacts: [],
+      priority: 'medium' as const,
+      evidence: String(finding),
+      explanation: 'A deterministic deprecation target consistency check reported a finding.',
+      suggested_action: 'Review the affected deprecation target and its declared lifecycle evidence.',
+    })),
+  ]
 
   const actions: string[] = []
   if (!h.available) {
-    actions.push('Run `kaddo guard --record` to start recording guard history.')
+    actions.push('Start recording Guard runs at relevant delivery checkpoints with `kaddo guard --record`; one run creates an observation, while multiple comparable runs are needed for a historical trend.')
   } else {
     if (h.open > 0) actions.push('Review open drift warnings and update related Work Items or ownership.')
     actions.push('Run `kaddo guard --record` before important commits.')
@@ -60,6 +77,13 @@ export function buildDriftReport(dir: string, now: Date = new Date()): DriftRepo
       { id: 'deprecation-consistency', label: 'Deprecation consistency', classification: plans.length === 0 ? 'not_applicable' : deprecationFindings.length === 0 ? 'derived' : 'observed', reason: plans.length === 0 ? 'No deprecation plans exist in this project.' : deprecationFindings.length === 0 ? `${plans.length} plan(s) passed deterministic target consistency checks.` : `${deprecationFindings.length} deterministic deprecation consistency finding(s) were detected.` },
       { id: 'topology-consistency', label: 'Knowledge topology consistency', classification: topology === null ? 'unknown' : topologyHints === 0 ? 'derived' : 'observed', reason: topology === null ? 'No project configuration is available to construct the topology.' : topologyHints === 0 ? `The in-memory topology has ${topology.nodes.length} node(s) and no open deterministic hints.` : `The in-memory topology has ${topologyHints} open deterministic hint(s).` },
     ],
+    current_consistency_findings: currentConsistencyFindings,
+    structural_consistency: {
+      deprecation_target_checks: plans.length === 0 ? 'not_applicable' : deprecationFindings.length === 0 ? 'passed' : 'findings_detected',
+      note: plans.length === 0
+        ? 'No deprecation plans exist in this project.'
+        : 'Target consistency checks validate declared structural state only; they do not verify operational removal from infrastructure, production or external consumers.',
+    },
     guard_history: {
       available: h.available,
       total_runs: h.total_runs,
@@ -86,6 +110,26 @@ export function renderDriftMarkdown(r: DriftReport): string {
 
   L.push('## Consistency Evidence', '')
   for (const item of r.consistency_evidence) L.push(`- ${item.label}: ${item.classification} — ${item.reason}`)
+  L.push('')
+
+  L.push('## Current Consistency Findings', '')
+  if (r.current_consistency_findings.length === 0) {
+    L.push('No findings detected by the executed consistency checks.')
+    L.push('')
+  }
+  if (r.current_consistency_findings.length > 0) {
+    const cell = (value: string) => value.replace(/\|/g, '\\|').replace(/\r?\n/g, ' ')
+    L.push('| Priority | Source | Affected | Finding | Suggested action |')
+    L.push('|---|---|---|---|---|')
+    for (const finding of r.current_consistency_findings) {
+      L.push(`| ${finding.priority} | ${cell(finding.source)} | ${cell(finding.affected_artifacts.join(', ') || 'not available')} | ${cell(finding.explanation)} Evidence: ${cell(finding.evidence)} | ${cell(finding.suggested_action)} |`)
+    }
+    L.push('')
+  }
+
+  L.push('## Structural Consistency Boundaries', '')
+  L.push(`- Deprecation target checks: ${r.structural_consistency.deprecation_target_checks}`)
+  L.push(`- Note: ${r.structural_consistency.note}`)
   L.push('')
 
   if (!r.guard_history.available) {
@@ -168,6 +212,8 @@ export function serializeDriftJson(r: DriftReport): string {
     project: r.project,
     project_context: r.project_context,
     consistency_evidence: r.consistency_evidence,
+    current_consistency_findings: r.current_consistency_findings,
+    structural_consistency: r.structural_consistency,
     guard_history: r.guard_history,
     drift_warnings: r.drift_warnings,
     hotspots: r.hotspots,

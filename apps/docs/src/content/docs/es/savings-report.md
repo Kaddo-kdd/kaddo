@@ -92,6 +92,14 @@ grafo), **Medium** (buena evidencia pero supuestos default y/o sin historial de 
 resueltos registrados). Llegar a **High** requiere evidencia real de resolución de drift vía
 `kaddo guard --record`. El Impact score deprecated no es una entrada de confianza.
 
+## Oportunidades de calibración
+
+Cuando los supuestos son default o no tienen `calibrated_at`, el campo aditivo
+`calibration_opportunities` explica qué evidencia agregada del proyecto puede calibrar preparación
+de contexto, esfuerzo de revisión, reducción de aclaraciones y descubrimiento de arquitectura. No
+recopila ni almacena datos personales, no cambia fórmulas ni convierte una estimación en ahorro
+medido.
+
 ## Por MCP
 
 El [servidor MCP](/es/mcp-server/) lo expone de solo lectura: `kaddo://savings-report` (guardado o

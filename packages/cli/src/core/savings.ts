@@ -149,6 +149,7 @@ export type SavingsReport = {
   /** @deprecated Compatibility total; contains observed-history estimate only. */
   total: { estimated_hours_saved: number; estimated_value: number; currency: string }
   confidence: { level: 'Low' | 'Medium' | 'High'; reasons: string[] }
+  calibration_opportunities: { available: boolean; reason: string; opportunities: { area: string; suggested_evidence: string }[] }
   suggested_actions: string[]
 }
 
@@ -264,6 +265,18 @@ export function buildSavingsReport(
   } else {
     actions.push('Use drift history to calibrate `rework_hours_avoided_per_resolved_drift`.')
   }
+  const calibrationOpportunities = !a.calibrated_at
+    ? {
+        available: true,
+        reason: source === 'default' ? 'Default assumptions are uncalibrated estimates.' : 'Project assumptions are not marked as calibrated.',
+        opportunities: [
+          { area: 'Context preparation', suggested_evidence: 'Compare preparation effort on comparable tasks before and after using the knowledge artifacts.' },
+          { area: 'Review effort', suggested_evidence: 'Record a baseline for comparable reviews with similar ownership coverage.' },
+          { area: 'Clarification reduction', suggested_evidence: 'Estimate effort spent resolving repeated scope or context questions.' },
+          { area: 'Architecture discovery', suggested_evidence: 'Compare discovery time for similar dependency or relationship analyses.' },
+        ],
+      }
+    : { available: false, reason: `Assumptions are marked as calibrated on ${a.calibrated_at}.`, opportunities: [] }
 
   return {
     generated_at: now.toISOString(),
@@ -316,6 +329,7 @@ export function buildSavingsReport(
     },
     total: { estimated_hours_saved: observedHours, estimated_value: observedValue, currency: a.currency },
     confidence: { level, reasons },
+    calibration_opportunities: calibrationOpportunities,
     suggested_actions: actions,
   }
 }
@@ -406,6 +420,18 @@ export function renderSavingsMarkdown(r: SavingsReport): string {
   L.push('## Confidence', '')
   L.push(`Confidence: ${r.confidence.level}`, '', 'Reason:')
   for (const reason of r.confidence.reasons) L.push(`- ${reason}`)
+  L.push('')
+
+  L.push('## Calibration Opportunities', '')
+  if (!r.calibration_opportunities.available) {
+    L.push(`- ${r.calibration_opportunities.reason}`)
+  } else {
+    L.push(`- ${r.calibration_opportunities.reason}`)
+    L.push('- Use external, aggregate project observations; do not collect or store personal data.')
+    for (const opportunity of r.calibration_opportunities.opportunities) {
+      L.push(`- ${opportunity.area}: ${opportunity.suggested_evidence}`)
+    }
+  }
   L.push('')
 
   L.push('## Suggested Actions', '')

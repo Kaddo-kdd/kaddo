@@ -93,6 +93,21 @@ por tipo de brecha) más `score_breakdown`.
 El reporte sigue **sin editar Work Items, sin ejecutar agentes y sin llamar a un LLM** — señala, tú
 corriges.
 
+## Hallazgos priorizados y evidencia de delivery
+
+`findings` es un contrato JSON aditivo compartido por los reportes. Cada hallazgo determinista
+identifica fuente, artifacts afectados, evidencia, explicación, prioridad y una acción razonable de
+revisión. `high` se reserva para una condición explícita (por ejemplo, una capa de conocimiento
+aplicable ausente); los Graph Hints son hallazgos para revisión, no errores. El Markdown presenta
+**Key Findings** antes del inventario detallado y muestra cada Graph Hint subyacente, no solo el
+conteo.
+
+**Delivery Evidence** separa Work Items completados de los estados de validación persistidos:
+passed, failed, pending y not recorded. “Not recorded” significa que no hay evidencia persistida en
+el reporte; no demuestra que nunca se ejecutó una prueba. Los DoD, secciones de validación y
+knowledge level históricos faltantes se agrupan en **Historical Documentation Completeness**, sin
+recomendaciones masivas de remediación.
+
 ## Qué **no** mide
 
 Sin dinero, sin ROI, sin productividad individual, sin commits por persona, sin benchmarking contra

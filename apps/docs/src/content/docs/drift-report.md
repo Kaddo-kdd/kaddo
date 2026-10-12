@@ -64,6 +64,18 @@ Consistency Evidence, then a **Historical Drift Trend** section marked unavailab
 mean zero drift or a clean project. It writes nothing unless `--output` is given (reports live in
 `.kaddo/reports/`).
 
+## Current consistency findings
+
+The additive `current_consistency_findings` contract reuses executed deterministic checks, including
+the concrete Graph Hints and deprecation-target findings when present. Each entry keeps source,
+affected artifacts, evidence, priority and a review action. No entries means only that the executed
+checks produced no findings; it does **not** declare the project drift-free.
+
+**Structural Consistency Boundaries** makes deprecation evidence explicit: target checks validate
+declared structural state, not operational removal from production, infrastructure or external
+consumers. With no Guard history, the report recommends `kaddo guard --record`: one recorded run
+creates an observation, while multiple comparable runs are needed to assess a historical trend.
+
 ## Feeds impact and savings
 
 - [`kaddo impact`](/impact-report/) — the **Guard Activity** section becomes *available* with run

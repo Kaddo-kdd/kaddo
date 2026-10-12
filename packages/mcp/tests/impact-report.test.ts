@@ -27,6 +27,8 @@ describe('MCP impact report (VS-061)', () => {
     const out = res.read(root)[0].text
     expect(out).toContain('# Kaddo Knowledge Impact Report')
     expect(out).toContain('## Impact Signals')
+    expect(out).toContain('## Key Findings')
+    expect(out).toContain('## Delivery Evidence')
   })
 
   it('AC15/AC24/AC25: kaddo_generate_impact_report writes only under .kaddo/reports/ and includes actionable gaps', () => {
@@ -41,6 +43,8 @@ describe('MCP impact report (VS-061)', () => {
     const json = JSON.parse(fs.readFileSync(path.join(root, '.kaddo/reports/impact-report.json'), 'utf-8'))
     expect(json).toHaveProperty('knowledge_health')
     expect(json).toHaveProperty('actionable_gaps.missing_initiative')
+    expect(json).toHaveProperty('findings')
+    expect(json).toHaveProperty('delivery_evidence.validation_not_recorded')
     expect(json.score).toBeLessThanOrEqual(100)
     expect(json.actionable_gaps.missing_source).toEqual([])
   })

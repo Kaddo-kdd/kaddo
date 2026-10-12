@@ -162,8 +162,9 @@ describe('Knowledge Impact Report (VS-061)', () => {
     expect(g.broad_ownership_globs.some((b) => b.glob === 'src/cli/**')).toBe(true)
     const overlap = g.ownership_overlaps.find((o) => o.code_path === 'src/cli/**')!
     expect(overlap.work_items.sort()).toEqual(['WI-001', 'WI-004'])
-    // AC12: suggested actions name specific Work Items.
-    expect(r.suggested_actions.some((a) => a.includes('WI-001'))).toBe(true)
+    // WI-062: historical documentation remains traceable but does not become a primary action.
+    expect(r.suggested_actions.some((a) => a.includes('WI-001'))).toBe(false)
+    expect(renderImpactMarkdown(r)).toContain('## Historical Documentation Completeness')
     // gap items carry id/title/status/path/suggested_action (AC14).
     expect(g.missing_acceptance_criteria[0]).toMatchObject({ id: 'WI-001', title: 'Init CLI', status: 'completed' })
     expect(g.missing_acceptance_criteria[0].path).toContain('WI-001.md')
@@ -197,6 +198,20 @@ describe('Knowledge Impact Report (VS-061)', () => {
     expect(r.actionable_gaps.missing_source).toHaveLength(0)
     expect(r.actionable_gaps.missing_initiative).toHaveLength(0)
     expect(r.impact_signals.drift_prevention).toBe('Unknown')
+  })
+
+  it('WI-062: promotes delivery evidence and current findings without turning historical documentation into primary actions', () => {
+    config()
+    baseKnowledge() // completed WI without persisted validation
+    const r = buildImpactReport(tmp)
+    expect(r.delivery_evidence).toMatchObject({ completed: 1, validation_passed: 0, validation_failed: 0, validation_not_recorded: 1 })
+    expect(r.findings.some((finding) => finding.category === 'knowledge')).toBe(true)
+    const md = renderImpactMarkdown(r)
+    expect(md).toContain('## Key Findings')
+    expect(md).toContain('## Delivery Evidence')
+    expect(md).toContain('## Historical Documentation Completeness')
+    expect(md).toContain('does not prove validation never happened')
+    expect(r.suggested_actions.some((action) => action.includes('Definition of Done'))).toBe(false)
   })
 
   it('VS-063 AC24/AC25/AC45: guard_activity reflects recorded history', () => {

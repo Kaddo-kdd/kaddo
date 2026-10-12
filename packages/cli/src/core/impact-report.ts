@@ -14,7 +14,7 @@ import { discoverInstalledSkills } from '../services/installed-skills.js'
 import { buildGraph, type GraphScope } from './graph.js'
 import { buildGraphHints } from './graph-hints.js'
 import { buildGuardHistory } from './guard-history.js'
-import { deliveryCapabilityEvidence, knowledgeLayerEvidence, reportingProjectContext, type EvidenceItem, type ReportingProjectContext } from './reporting-evidence.js'
+import { deliveryCapabilityEvidence, graphHintFinding, knowledgeLayerEvidence, reportingProjectContext, type EvidenceItem, type ReportFinding, type ReportingProjectContext } from './reporting-evidence.js'
 
 export type Level = 'Low' | 'Medium' | 'High' | 'Very High'
 
@@ -63,6 +63,10 @@ export type ImpactReport = {
   default_scope: 'all'
   scope_source: 'default' | 'explicit'
   executive_summary: string[]
+  /** Completion and persisted validation are independent delivery evidence dimensions. */
+  delivery_evidence: { completed: number; validation_passed: number; validation_failed: number; validation_pending: number; validation_not_recorded: number; completion_with_passed_validation_percent: number | null }
+  /** Current, deterministic findings only; historical documentation inventory remains separate. */
+  findings: ReportFinding[]
   knowledge_health: Record<string, string>
   knowledge_coverage: { label: string; have: number; total: number }[]
   ownership_coverage: {
@@ -150,7 +154,11 @@ export function buildImpactReport(
   const projectContext = reportingProjectContext(dir)
   const wis = discoverWorkItems(dir)
   const total = wis.length
-  const verifiedWorkItems = wis.filter((wi) => wi.validationStatus === 'passed').length
+  const completedWis = wis.filter((wi) => wi.lifecycle === 'completed')
+  const verifiedWorkItems = completedWis.filter((wi) => wi.validationStatus === 'passed').length
+  const failedValidationWorkItems = completedWis.filter((wi) => wi.validationStatus === 'failed').length
+  const pendingValidationWorkItems = completedWis.filter((wi) => Boolean(wi.validationStatus) && !['passed', 'failed'].includes(wi.validationStatus!)).length
+  const notRecordedValidationWorkItems = completedWis.length - verifiedWorkItems - failedValidationWorkItems - pendingValidationWorkItems
 
   // --- Per-Work-Item coverage + actionable gaps (front matter + body sections) ---
   let withOwnership = 0
@@ -243,10 +251,12 @@ export function buildImpactReport(
   //     report never inherits an empty `active` graph.json from a previous export. ---
   type G = { available: boolean; scope: string; scopeReason: string; nodes: number; edges: number; quality: string; hints: number; generatedAt: string }
   let g: G
+  let graphHintEntries: ReturnType<typeof buildGraphHints>['hints'] = []
   const config = loadConfig(dir)
   if (config) {
     const graph = buildGraph(dir, config, { scope: resolvedScope }, now)
     const hints = buildGraphHints(dir, graph, now)
+    graphHintEntries = hints.hints
     g = { available: true, scope: graph.scope, scopeReason: graph.scope_reason, nodes: graph.nodes.length, edges: graph.edges.length, quality: hints.quality, hints: hints.summary.hints, generatedAt: graph.generated_at }
   } else {
     g = { available: false, scope: resolvedScope, scopeReason: '', nodes: 0, edges: 0, quality: 'unknown', hints: 0, generatedAt: '' }
@@ -317,6 +327,40 @@ export function buildImpactReport(
     maintenance_readiness: levelFromRatio((coverageRatio(withOwnership) + (deliveryTraceable ? 1 : 0)) / 2),
   }
 
+  // --- Current findings: only deterministic, live review signals belong here. Historical
+  // documentation completeness stays in the detailed inventory and does not dominate actions. ---
+  const baselineLayers = projectContext.mode === 'poc' ? ['Tech', 'Delivery'] : ['Business', 'Product', 'Tech', 'Delivery']
+  const findings: ReportFinding[] = []
+  for (const layer of baselineLayers) {
+    const status = layerStatus(layer)
+    if (status !== 'Weak' && status !== 'Missing') continue
+    findings.push({
+      id: `knowledge-health:${layer.toLowerCase()}`,
+      category: 'knowledge',
+      source: 'knowledge-health',
+      affected_artifacts: [layer],
+      priority: status === 'Missing' ? 'high' : 'medium',
+      evidence: `${layer} knowledge maturity is ${status}.`,
+      explanation: `This assesses documented ${layer} knowledge, not the quality of the product or implementation.`,
+      suggested_action: `Review ${layer} knowledge coverage and the artifacts or relationships available for it.`,
+    })
+  }
+  for (const gap of gaps.missing_code_ownership) {
+    findings.push({
+      id: `ownership:${gap.id}`,
+      category: 'delivery',
+      source: 'work-item-ownership',
+      affected_artifacts: [gap.id, gap.path],
+      priority: 'medium',
+      evidence: 'A corrective Work Item has no declared code ownership.',
+      explanation: gap.title,
+      suggested_action: gap.suggested_action,
+    })
+  }
+  findings.push(...graphHintEntries.map(graphHintFinding))
+  const priorityOrder = { high: 0, medium: 1, low: 2, unknown: 3 }
+  findings.sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority] || a.id.localeCompare(b.id))
+
   // --- Score (transparent, optional) + breakdown ---
   let score: number | null = null
   let score_breakdown: ScoreBreakdown | null = null
@@ -366,17 +410,19 @@ export function buildImpactReport(
   for (const a of [
     groupedAction(gaps.missing_code_ownership, 'Add `code:` ownership to'),
     groupedAction(gaps.missing_source, 'Add `source`/`source_id` to'),
-    groupedAction(gaps.missing_acceptance_criteria, 'Add Acceptance Criteria to'),
-    groupedAction(gaps.missing_definition_of_done, 'Add a Definition of Done to'),
-    groupedAction(gaps.missing_validation, 'Add a validation (How to test it) section to'),
   ]) if (a) actions.push(a)
   if (gaps.broad_ownership_globs.length > 0) actions.push(`Narrow ${gaps.broad_ownership_globs.length} broad ownership glob(s) into specific paths.`)
-  if (g.available && g.hints > 0) actions.push('Review graph hints (`kaddo://graph-hints` or `.kaddo/graph-hints.md`).')
+  for (const finding of findings) {
+    if (!actions.includes(finding.suggested_action)) actions.push(finding.suggested_action)
+  }
   if (skills.length === 0) actions.push('Install reusable skills with `kaddo add skills`.')
   actions.push('Run `kaddo guard` before committing to catch knowledge drift.')
 
   // --- Executive summary ---
   const summary: string[] = []
+  if (completedWis.length > 0) {
+    summary.push(`Delivery evidence: ${completedWis.length} completed; ${verifiedWorkItems} validation passed; ${notRecordedValidationWorkItems} not confirmed by persisted validation.`)
+  }
   if (total > 0) summary.push(`${withOwnership}/${total} Work Items include code ownership.`)
   if (g.available) summary.push(`The knowledge graph is ${g.quality} with ${g.nodes} nodes and ${g.edges} edges (${g.scope} scope).`)
   else summary.push('The knowledge graph has not been exported yet.')
@@ -399,6 +445,15 @@ export function buildImpactReport(
     default_scope: 'all',
     scope_source: scopeSource,
     executive_summary: summary,
+    delivery_evidence: {
+      completed: completedWis.length,
+      validation_passed: verifiedWorkItems,
+      validation_failed: failedValidationWorkItems,
+      validation_pending: pendingValidationWorkItems,
+      validation_not_recorded: notRecordedValidationWorkItems,
+      completion_with_passed_validation_percent: completedWis.length > 0 ? Math.round((verifiedWorkItems / completedWis.length) * 1000) / 10 : null,
+    },
+    findings,
     knowledge_health,
     knowledge_coverage,
     ownership_coverage: {
@@ -469,6 +524,29 @@ export function renderImpactMarkdown(r: ImpactReport): string {
 
   L.push('## Executive Summary', '')
   for (const s of r.executive_summary) L.push(`- ${s}`)
+  L.push('')
+
+  L.push('## Key Findings', '')
+  if (r.findings.length === 0) L.push('No current findings detected by the executed deterministic checks.')
+  if (r.findings.length > 0) {
+    const cell = (value: string) => value.replace(/\|/g, '\\|').replace(/\r?\n/g, ' ')
+    L.push('| Priority | Source | Affected | Finding | Suggested action |')
+    L.push('|---|---|---|---|---|')
+    for (const finding of r.findings) {
+      L.push(`| ${finding.priority} | ${cell(finding.source)} | ${cell(finding.affected_artifacts.join(', ') || 'not available')} | ${cell(finding.explanation)} Evidence: ${cell(finding.evidence)} | ${cell(finding.suggested_action)} |`)
+    }
+  }
+  L.push('')
+
+  L.push('## Delivery Evidence', '')
+  const de = r.delivery_evidence
+  L.push(`- Completed Work Items: ${de.completed}`)
+  L.push(`- Validation passed: ${de.validation_passed}`)
+  L.push(`- Validation failed: ${de.validation_failed}`)
+  L.push(`- Validation pending: ${de.validation_pending}`)
+  L.push(`- Validation not recorded: ${de.validation_not_recorded}`)
+  L.push(`- Completion with passed validation: ${de.completion_with_passed_validation_percent === null ? 'not available' : `${de.completion_with_passed_validation_percent}%`}`)
+  L.push('- “Not recorded” means persisted evidence is absent; it does not prove validation never happened.')
   L.push('')
 
   L.push('## Evidence and Applicability', '')
@@ -567,7 +645,7 @@ export function renderImpactMarkdown(r: ImpactReport): string {
   L.push(`- Maintenance readiness: ${s.maintenance_readiness}`)
   L.push('')
 
-  // --- Actionable Gaps ---
+  // --- Current actionable inventory + historical documentation completeness ---
   L.push('## Actionable Gaps', '')
   const gp = r.actionable_gaps
   const gapSection = (title: string, items: GapItem[]) => {
@@ -581,12 +659,7 @@ export function renderImpactMarkdown(r: ImpactReport): string {
     L.push('')
   }
   gapSection('Work Items missing source', gp.missing_source)
-  gapSection('Work Items missing initiative', gp.missing_initiative)
   gapSection('Work Items missing code ownership', gp.missing_code_ownership)
-  gapSection('Work Items missing knowledge level', gp.missing_knowledge_level)
-  gapSection('Work Items missing acceptance criteria', gp.missing_acceptance_criteria)
-  gapSection('Work Items missing Definition of Done', gp.missing_definition_of_done)
-  gapSection('Work Items missing validation', gp.missing_validation)
   if (gp.broad_ownership_globs.length > 0) {
     L.push('### Broad ownership globs', '')
     for (const b of gp.broad_ownership_globs) {
@@ -606,13 +679,28 @@ export function renderImpactMarkdown(r: ImpactReport): string {
     L.push('')
   }
   const anyGaps =
-    gp.missing_source.length + gp.missing_initiative.length + gp.missing_code_ownership.length +
-    gp.missing_knowledge_level.length + gp.missing_acceptance_criteria.length +
-    gp.missing_definition_of_done.length + gp.missing_validation.length +
+    gp.missing_source.length + gp.missing_code_ownership.length +
     gp.broad_ownership_globs.length
   if (anyGaps === 0) {
     L.push('No actionable knowledge gaps detected. 🎉', '')
   }
+
+  const historical = [
+    ['knowledge level', gp.missing_knowledge_level],
+    ['Acceptance Criteria', gp.missing_acceptance_criteria],
+    ['Definition of Done', gp.missing_definition_of_done],
+    ['validation section', gp.missing_validation],
+  ] as const
+  L.push('## Historical Documentation Completeness', '')
+  for (const [label, items] of historical) {
+    const completed = items.filter((item) => item.status === 'completed')
+    if (completed.length > 0) L.push(`- Completed Work Items without detected ${label}: ${completed.length}`)
+  }
+  if (!historical.some(([, items]) => items.some((item) => item.status === 'completed'))) {
+    L.push('No historical documentation completeness gaps were detected.')
+  }
+  L.push('- This is an inventory for review, not a recommendation to rewrite historical Work Items merely to increase a metric.')
+  L.push('')
 
   // --- Score Breakdown ---
   if (r.score_breakdown) {

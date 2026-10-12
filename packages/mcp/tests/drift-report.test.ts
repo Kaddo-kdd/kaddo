@@ -27,6 +27,7 @@ describe('MCP drift report + guard history (VS-063)', () => {
     record()
     const res = RESOURCES.find((r) => r.uri === 'kaddo://drift-report')!
     expect(res.read(root)[0].text).toContain('# Kaddo Drift Trend Report')
+    expect(res.read(root)[0].text).toContain('## Current Consistency Findings')
   })
 
   it('AC31: kaddo://guard-history returns recorded runs (or a clear message)', () => {
@@ -55,6 +56,7 @@ describe('MCP drift report + guard history (VS-063)', () => {
     const j = generateDriftReport(root, { format: 'json' })
     expect(j.files_written[0]).toBe('.kaddo/reports/drift-report.json')
     expect(JSON.parse(fs.readFileSync(path.join(root, '.kaddo/reports/drift-report.json'), 'utf-8'))).toHaveProperty('drift_warnings')
+    expect(JSON.parse(fs.readFileSync(path.join(root, '.kaddo/reports/drift-report.json'), 'utf-8'))).toHaveProperty('current_consistency_findings')
   })
 
   it('AC34/AC48: generating the drift report never writes guard history', () => {
