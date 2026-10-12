@@ -4,9 +4,57 @@ id: WI-065
 title: >-
   Implementar compatibilidad con Open Knowledge Format (OKF v0.2) mediante un
   adaptador portable de conocimiento
-status: ready
+status: completed
+completed_at: '2026-10-12'
 work_type: feature
 created_at: '2026-10-12'
+code:
+  - packages/cli/src/core/okf/export.ts
+  - packages/cli/src/core/okf/validate.ts
+  - packages/cli/src/core/okf/mapping.ts
+implementation_evidence:
+  repositories:
+    cli:
+      role: core
+      status: completed
+      changed_paths:
+        - packages/cli/src/core/okf/types.ts
+        - packages/cli/src/core/okf/mapping.ts
+        - packages/cli/src/core/okf/export.ts
+        - packages/cli/src/core/okf/validate.ts
+        - packages/cli/src/core/okf/extras.ts
+        - packages/cli/src/commands/okf.ts
+        - packages/cli/src/index.ts
+        - packages/cli/src/core.ts
+        - packages/cli/tests/okf.test.ts
+        - apps/docs/src/content/docs/okf-integration.md
+        - apps/docs/src/content/docs/es/okf-integration.md
+        - apps/docs/astro.config.mjs
+      validations:
+        - command: pnpm --filter @kaddo/cli test okf
+          status: passed
+          reason: >-
+            7 casos — export conformante + provenance real, relaciones como
+            enlaces internos, determinismo + sin modificar fuentes, tipos
+            desconocidos no se descartan, validate (type faltante=conformance,
+            enlace roto=info), cápsula externa→Knowledge Reference con
+            source/límite, --with-reports (generated.at, disclaimer de Savings).
+        - command: pnpm --filter @kaddo/cli test
+          status: passed
+          reason: '1564 verdes, sin regresiones.'
+        - command: >-
+            kaddo okf export --with-reports && kaddo okf validate (dogfood sobre
+            el repo Kaddo)
+          status: passed
+          reason: >-
+            101 conceptos + 9 índices, 0 conformance/warning/info — bundle OKF
+            v0.2 conformante.
+        - command: pnpm --filter @kaddo/docs build
+          status: passed
+          reason: páginas OKF EN/ES construidas y registradas en la navegación.
+implementation_status: completed
+validation_status: passed
+released_in: v3.125.0
 source:
   type: external
   imported_at: '2026-10-12'
@@ -50,6 +98,7 @@ original_snapshot:
   type: feature
   status: draft
 ready_at: '2026-10-12'
+verified_at: '2026-10-12'
 ---
 
 # Implementar compatibilidad con Open Knowledge Format (OKF v0.2)
@@ -201,24 +250,24 @@ edición OKF en Admin; convertir OKF en dependencia obligatoria.
 
 ## Acceptance criteria
 
-- [ ] AC-01: `kaddo okf export` genera un bundle compatible con OKF v0.2.
-- [ ] AC-02: los artifacts canónicos permanecen intactos.
-- [ ] AC-03: el adaptador reutiliza readers y contratos Core existentes.
-- [ ] AC-04: mapping explícito y documentado de conceptos Kaddo→OKF.
-- [ ] AC-05: los conceptos incluyen frontmatter válido y `type`.
-- [ ] AC-06: los índices permiten navegación progresiva.
-- [ ] AC-07: las relaciones exportadas conservan enlaces internos coherentes.
-- [ ] AC-08: provenance/verification/freshness solo se exportan con evidencia válida.
-- [ ] AC-09: `kaddo okf validate` distingue errores de conformidad y warnings.
-- [ ] AC-10: el validador respeta el carácter permisivo de la spec.
-- [ ] AC-11: los reportes exportados preservan sus limitaciones metodológicas.
-- [ ] AC-12: las Knowledge Capsules pueden representarse como referencias OKF.
-- [ ] AC-13: el bundle no contiene credenciales o secretos conocidos.
-- [ ] AC-14: exportaciones repetidas mantienen identidades y relaciones estables.
-- [ ] AC-15: un consumidor independiente puede leer los conceptos sin usar Kaddo.
-- [ ] AC-16: CLI y Core mantienen compatibilidad con los flujos existentes.
-- [ ] AC-17: existen tests unitarios y end-to-end con fixtures OKF.
-- [ ] AC-18: documentación EN/ES actualizada.
+- [x] AC-01: `kaddo okf export` genera un bundle compatible con OKF v0.2.
+- [x] AC-02: los artifacts canónicos permanecen intactos.
+- [x] AC-03: el adaptador reutiliza readers y contratos Core existentes.
+- [x] AC-04: mapping explícito y documentado de conceptos Kaddo→OKF.
+- [x] AC-05: los conceptos incluyen frontmatter válido y `type`.
+- [x] AC-06: los índices permiten navegación progresiva.
+- [x] AC-07: las relaciones exportadas conservan enlaces internos coherentes.
+- [x] AC-08: provenance/verification/freshness solo se exportan con evidencia válida.
+- [x] AC-09: `kaddo okf validate` distingue errores de conformidad y warnings.
+- [x] AC-10: el validador respeta el carácter permisivo de la spec.
+- [x] AC-11: los reportes exportados preservan sus limitaciones metodológicas.
+- [x] AC-12: las Knowledge Capsules pueden representarse como referencias OKF.
+- [x] AC-13: el bundle no contiene credenciales o secretos conocidos.
+- [x] AC-14: exportaciones repetidas mantienen identidades y relaciones estables.
+- [x] AC-15: un consumidor independiente puede leer los conceptos sin usar Kaddo.
+- [x] AC-16: CLI y Core mantienen compatibilidad con los flujos existentes.
+- [x] AC-17: existen tests unitarios y end-to-end con fixtures OKF.
+- [x] AC-18: documentación EN/ES actualizada.
 
 ## Validation (escenarios)
 
@@ -313,3 +362,30 @@ OKF por MCP, exportación desde Admin, inspección visual, integración con Repo
 OKF permite que Kaddo comparta su conocimiento con otros ecosistemas. Kaddo conserva la responsabilidad de
 estructurarlo, relacionarlo y gobernar su lifecycle; OKF ofrece un formato portable para consumirlo sin
 dependencia del toolkit.
+
+## Learning
+
+El adaptador OKF se construyó con **bajo acoplamiento real**: todo el bundle sale de readers Core ya
+existentes (`discoverKnowledge` como catálogo único + work-items/resources/deprecation/system-map/
+capsule/report builders), sin reimplementar discovery ni parsing. El catálogo único fue la pieza clave:
+un solo `buildConcept` sobre `discoverKnowledge` cubre casi todos los tipos, y la tabla de mapping solo
+decide el `type` OKF y la ubicación. OKF es permisivo por diseño, así que los tipos desconocidos se
+exportan como conceptos genéricos legibles en vez de descartarse — eso evita acoplar el adaptador al
+conjunto cerrado de tipos de Kaddo.
+
+Dos decisiones honran los principios del spec a nivel de datos: (1) **provenance nunca inventada** —
+`sources[].resource` es la ruta canónica real; los reports, que no tienen archivo fuente, usan
+`generated.at` y NO un `sources` falso; (2) **confianza no fabricada** — no se emite `verified` ni
+`stale_after` sin evidencia. El hallazgo durante el dogfood fue que muchos docs base (overviews de
+business/product/tech, agents) no tienen `id` en frontmatter y se omitían; el fallback de id por slug de
+título/ruta subió la cobertura de 77 a 97 conceptos sin inventar identidad (estable mientras el título
+lo sea).
+
+Determinismo vs. reports: el core del bundle es determinístico (orden por id, rutas estables), pero los
+reports llevan timestamp por naturaleza, así que se hicieron **opt-in (`--with-reports`)** para no
+contaminar el snapshot estable — y sus cuerpos se reusan verbatim del render existente, preservando
+assumptions/limitations/disclaimer sin reescribir fórmulas. El validador se diseñó **permisivo**:
+separa conformance/warning/info y trata enlaces rotos y tipos desconocidos como no-errores (OKF admite
+referencias no resolubles). Se respetó el **Commit Gate** del WI en cada incremento: implementar →
+validar → dogfood → presentar → confirmación explícita antes de commitear. Liberado en **v3.125.0**.
+Fases 2 (consumo/import) y 3 (MCP/Admin) quedan como evolución futura, fuera del DoD inicial.
