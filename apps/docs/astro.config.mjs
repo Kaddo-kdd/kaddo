@@ -211,6 +211,7 @@ export default defineConfig({
           translations: { es: 'Integraciones e interfaces' },
           items: [
             { label: 'MCP Server', translations: { es: 'Servidor MCP' }, slug: 'mcp-server' },
+            { label: 'Open Knowledge Format (OKF)', translations: { es: 'Open Knowledge Format (OKF)' }, slug: 'okf-integration' },
             { label: 'Integrations', translations: { es: 'Integraciones' }, slug: 'integrations' },
             { label: 'Telemetry', translations: { es: 'Telemetría' }, slug: 'telemetry' },
             { label: 'Kaddo Power for Kiro', translations: { es: 'Kaddo Power para Kiro' }, slug: 'kaddo-power' },

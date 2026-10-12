@@ -89,6 +89,21 @@ function atomicWrite(file: string, content: string): void {
   fs.writeFileSync(file, content, 'utf-8')
 }
 
+// High-signal secret patterns. Conservative, to warn (never block) without noise on prose that merely
+// mentions "token" or "password". The export only reads knowledge/*.md, so this is a safety backstop.
+const SENSITIVE_PATTERNS: { re: RegExp; label: string }[] = [
+  { re: /-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/, label: 'private key block' },
+  { re: /\bAKIA[0-9A-Z]{16}\b/, label: 'AWS access key id' },
+  { re: /\bgh[pousr]_[A-Za-z0-9]{20,}\b/, label: 'GitHub token' },
+  { re: /\b(?:password|secret|api[_-]?key|access[_-]?token)\b\s*[:=]\s*["']?[A-Za-z0-9+/_\-]{12,}/i, label: 'inline credential' },
+]
+
+/** Scan a rendered concept for potentially sensitive content; returns warning messages. */
+function scanSensitive(renderedPath: string, content: string): string[] {
+  const hits = SENSITIVE_PATTERNS.filter((p) => p.re.test(content)).map((p) => p.label)
+  return hits.length > 0 ? [`${renderedPath}: possible ${[...new Set(hits)].join(', ')} — review before sharing.`] : []
+}
+
 /**
  * Export the project's knowledge as an OKF v0.2 bundle. `output` is a project-relative or absolute
  * directory (default `.kaddo/okf`); it is cleared and rewritten.
@@ -121,9 +136,11 @@ export function exportOkf(dir: string, opts: { output?: string } = {}): OkfExpor
   fs.mkdirSync(outputDir, { recursive: true })
 
   const written: string[] = []
+  const warnings: string[] = []
   const write = (bundlePath: string, content: string) => {
     atomicWrite(path.join(outputDir, bundlePath), content)
     written.push(bundlePath)
+    warnings.push(...scanSensitive(bundlePath, content))
   }
 
   for (const c of concepts) write(c.path, renderConcept(c, byId))
@@ -139,7 +156,7 @@ export function exportOkf(dir: string, opts: { output?: string } = {}): OkfExpor
     conceptCount: concepts.length,
     indexCount: byLayer.size + 1,
     omitted: [...omittedCounts.entries()].map(([type, count]) => ({ type, count })).sort((a, b) => a.type.localeCompare(b.type)),
-    warnings: [],
+    warnings: warnings.sort(),
     files: written,
   }
 }

@@ -54,6 +54,11 @@ function strArray(v: unknown): string[] {
 export function conceptBundlePath(a: KnowledgeArtifact, id: string): string {
   const file = `${id}.md`
   if (a.isWorkItem) return `delivery/work-items/${file}`
+  const t = (a.type || '').toLowerCase()
+  if (t === 'deprecation-plan') return `delivery/deprecations/${file}`
+  if (t === 'production-runbook') return `delivery/runbooks/${file}`
+  if (t === 'project-resource') return `resources/${file}`
+  if (t === 'knowledge-capsule' || t === 'capsule') return `external/${file}`
   switch (a.layer) {
     case 'business': return `business/${file}`
     case 'product': return `product/${file}`

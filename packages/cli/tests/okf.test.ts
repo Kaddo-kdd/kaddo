@@ -45,7 +45,7 @@ describe('WI-065 — OKF v0.2 export + validate', () => {
     const res = core.exportOkf(dir)
     const wiBody = matter(fs.readFileSync(path.join(res.outputDir, 'delivery/work-items/WI-001.md'), 'utf-8')).content
     expect(wiBody).toContain('## Related')
-    expect(wiBody).toMatch(/\]\(\.\.\/\.\.\/tech\/RES-main-db\.md\)/) // link resolves within the bundle
+    expect(wiBody).toMatch(/\]\(\.\.\/\.\.\/resources\/RES-main-db\.md\)/) // link resolves within the bundle
   })
 
   it('does not modify source artifacts and is deterministic across repeated exports (AC-02, AC-14)', async () => {
