@@ -23,6 +23,7 @@ scope_confidence:
     - Adaptador de interoperabilidad opcional sobre readers/contracts Core existentes; no modifica el modelo canónico.
     - Alcance inicial acotado (export + validate), con spec OKF v0.2 de referencia y 18 ACs explícitos.
     - Commit Gate explícito: no commitear sin validar y confirmar.
+refined_by: work-item-refinement (manual)
 summary: >-
   Kaddo usa un modelo canónico de conocimiento (Markdown + YAML frontmatter +
   relaciones semánticas + artifacts versionables). OKF es una especificación
@@ -231,6 +232,54 @@ Revisar `packages/cli/src/core.ts`, `index.ts`, `core/graph.ts`, `core/context-p
 `core/impact-report.ts`, `core/drift-report.ts`, `core/savings.ts`. Adaptador en módulo dedicado sugerido
 `packages/cli/src/core/okf/` (`mapping.ts`, `export.ts`, `validate.ts`, `types.ts`) — revisar convenciones
 actuales. Exponer vía Core público. No duplicar modelos de dominio.
+
+## Entry points (grounding técnico — verificado contra el repo)
+
+Cada preocupación OKF mapea a un reader/contract Core **ya existente** (el adaptador los consume
+read-only; no reimplementa descubrimiento, parsing ni Graph). Todos verificados presentes al refinar:
+
+- **Descubrimiento de artifacts**: `discoverKnowledge()` — `packages/cli/src/services/knowledge-artifacts.ts`
+  (fuente única del catálogo; cada artifact trae `type`, `rawFrontmatter`, `relPath`). Base para el
+  inventario explícito de tipos exportables (seguridad: no exportar por el solo hecho de estar en `knowledge/`).
+- **Work Items**: `getWorkItems` / `getWorkItemsSummary` / `getWorkItem` — `core/work-items.ts`
+  (incluye `resources:[{id,role}]`, `deprecationTargets`, relaciones parent/child, decisions → relaciones OKF).
+- **Project Resources**: `getResources` / `getResource` — `core/resources.ts` (ya **secret-safe**:
+  conserva solo nombres de referencia de auth, nunca valores; reusar para AC-13).
+- **Initiatives**: `discoverInitiatives` — `core/initiative.ts`.
+- **Controlled Deprecation**: `getDeprecationPlans` / `getDeprecationPlan` — `core/deprecation.ts`
+  (Deprecation Plan → concepto OKF; representar sin autorizar remociones).
+- **Graph / relaciones**: `getSystemMapProjection` — `core/system-map.ts` (+ `core/graph.ts` tipos) para
+  nodos/relaciones; usar relaciones canónicas, sin inventar ni exportar nodos sintéticos.
+- **Knowledge Capsules**: `buildCapsule` / `buildSystemCapsule` / `renderCapsuleMarkdown` /
+  `serializeCapsuleJson` + `loadExternalRegistry` / `ExternalCapsuleEntry` — `core/capsule.ts`
+  (cápsula → "Knowledge Reference" OKF, preservando source y límites de acceso; AC-12).
+- **Reports**: `buildImpactReport` / `renderImpactMarkdown` / `serializeImpactJson` (`core/impact-report.ts`),
+  savings (`loadAssumptions`, `DEFAULT_ASSUMPTIONS`, `core/savings.ts`) y `core/drift-report.ts`. Preservar
+  assumptions/limitations/confidence; no convertir estimaciones en valores observados (AC-11).
+- **POC evidence**: `buildPocReportContext` — `core/poc.ts` / `poc-report.ts` (escenario 2).
+- **Config/modules (multirepo)**: `loadConfig`, `loadMappedModules` (`services/mapped-modules.js`) para ids
+  de módulo estables (escenario 3).
+
+### Estructura recomendada (a confirmar con convenciones del repo)
+
+- Nuevo módulo `packages/cli/src/core/okf/`: `types.ts` (tipos OKF + mapping), `mapping.ts` (Kaddo→OKF,
+  tabla §4 documentada), `export.ts` (construye el bundle en `.kaddo/okf/` o `--output`, determinístico),
+  `validate.ts` (lectura; separa Conformance/Warning/Info; permisivo). Exponer desde `core.ts`.
+- Comando `kaddo okf export|validate` registrado en `packages/cli/src/index.ts` (patrón `program.command('okf')`
+  con subcomandos, como `resources` / `deprecation`).
+- **Secret-safety**: allow-list de artifact types exportables; reusar la sanitización de `resources.ts`;
+  warnings ante contenido potencialmente sensible; nunca `.env` / tokens / credenciales.
+- **Determinismo**: orden estable de conceptos y rutas por id; identidades estables entre exportaciones
+  (AC-14, escenario 6).
+
+### Secuenciación sugerida (dentro de un mismo WI)
+
+1. `types` + `mapping` + `export` del núcleo (Business/Product/Tech/Delivery/WIs/ADRs/Resources + índices + relaciones).
+2. `validate` (conformance / warnings / info; JSON + legible).
+3. Reports + Knowledge Capsules como conceptos/refs.
+4. Docs EN/ES + dogfooding sobre el propio repo Kaddo.
+
+Entre pasos, respetar el **Commit Gate** (generar bundle + validar + presentar antes de pedir commit).
 
 ## Definition of Done + Commit Gate
 
