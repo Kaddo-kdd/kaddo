@@ -38,6 +38,7 @@ import {
   runDeprecationRunbookCreate,
   runDeprecationRunbookValidate,
 } from './commands/deprecation.js'
+import { runOkfExport, runOkfValidate } from './commands/okf.js'
 import {
   runIntegrationsList,
   runIntegrationsStatus,
@@ -349,6 +350,23 @@ deprecationRunbookCmd
   .description('Validate required sections and the human approval boundary')
   .option('--json', 'Output JSON')
   .action((id: string, opts: { json?: boolean }) => runDeprecationRunbookValidate(id, cwd(), opts))
+
+const okfCmd = program
+  .command('okf')
+  .description('Open Knowledge Format (OKF v0.2) — export/validate a portable knowledge bundle (optional interoperability)')
+
+okfCmd
+  .command('export')
+  .description('Export canonical knowledge as an OKF v0.2 bundle (read-only; default .kaddo/okf)')
+  .option('--output <dir>', 'Output directory (default: .kaddo/okf)')
+  .option('--json', 'Output JSON')
+  .action((opts: { output?: string; json?: boolean }) => runOkfExport(opts, cwd()))
+
+okfCmd
+  .command('validate [location]')
+  .description('Validate an OKF bundle: conformance errors vs warnings vs info (read-only, permissive)')
+  .option('--json', 'Output JSON')
+  .action((location: string | undefined, opts: { json?: boolean }) => runOkfValidate(location, opts, cwd()))
 
 const integrationsCmd = program
   .command('integrations')

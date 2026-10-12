@@ -4,7 +4,7 @@ id: WI-065
 title: >-
   Implementar compatibilidad con Open Knowledge Format (OKF v0.2) mediante un
   adaptador portable de conocimiento
-status: draft
+status: ready
 work_type: feature
 created_at: '2026-10-12'
 source:
@@ -15,13 +15,22 @@ source:
   inferred: false
 generated_by: kaddo-admin
 knowledge_level: K3
-domains: [Product, Tech, Delivery]
-affected_modules: [cli, docs]
+domains:
+  - Product
+  - Tech
+  - Delivery
+affected_modules:
+  - cli
+  - docs
 scope_confidence:
   level: high
   reasons:
-    - Adaptador de interoperabilidad opcional sobre readers/contracts Core existentes; no modifica el modelo canónico.
-    - Alcance inicial acotado (export + validate), con spec OKF v0.2 de referencia y 18 ACs explícitos.
+    - >-
+      Adaptador de interoperabilidad opcional sobre readers/contracts Core
+      existentes; no modifica el modelo canónico.
+    - >-
+      Alcance inicial acotado (export + validate), con spec OKF v0.2 de
+      referencia y 18 ACs explícitos.
     - Commit Gate explícito: no commitear sin validar y confirmar.
 refined_by: work-item-refinement (manual)
 summary: >-
@@ -40,6 +49,7 @@ original_snapshot:
     Markdown con metadatos estructurados. Incorporar OKF como…
   type: feature
   status: draft
+ready_at: '2026-10-12'
 ---
 
 # Implementar compatibilidad con Open Knowledge Format (OKF v0.2)

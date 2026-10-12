@@ -383,4 +383,28 @@ export {
   type RunbookApproval,
   type RunbookFinding,
 } from './core/deprecation-runbook.js'
+export {
+  exportOkf,
+  OKF_DEFAULT_OUTPUT,
+} from './core/okf/export.js'
+export {
+  validateOkf,
+} from './core/okf/validate.js'
+export {
+  okfConceptType,
+  buildConcept,
+  conceptBundlePath,
+  OKF_TYPE_TABLE,
+} from './core/okf/mapping.js'
+export {
+  OKF_VERSION,
+  OKF_RESERVED_FILES,
+  type OkfConcept,
+  type OkfIndex,
+  type OkfBundle,
+  type OkfExportResult,
+  type OkfFinding,
+  type OkfFindingLevel,
+  type OkfValidationResult,
+} from './core/okf/types.js'
 export { exists, readFile, join, cwd } from './utils/fs.js'
