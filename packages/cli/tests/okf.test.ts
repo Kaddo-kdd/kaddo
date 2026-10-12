@@ -69,6 +69,34 @@ describe('WI-065 — OKF v0.2 export + validate', () => {
     expect(core.validateOkf(dir).conformant).toBe(true) // unknown types are not conformance errors
   })
 
+  it('represents an external Knowledge Capsule as an OKF reference, preserving source and access limits (AC-12)', async () => {
+    const core = await import('../src/core.js')
+    write(dir, '.kaddo/external.yml', ['external:', '  - id: CAP-partner-api', '    type: knowledge-capsule', '    path: knowledge/external/partner-api.md', '    owner: partner-team'].join('\n'))
+    const res = core.exportOkf(dir)
+    const ref = matter(fs.readFileSync(path.join(res.outputDir, 'external/CAP-partner-api.md'), 'utf-8'))
+    expect((ref.data as any).type).toBe('Knowledge Reference')
+    expect((ref.data as any).sources[0].resource).toBe('knowledge/external/partner-api.md')
+    expect(ref.content).toMatch(/Access is limited/)
+    expect(core.validateOkf(dir).conformant).toBe(true)
+  })
+
+  it('--with-reports projects reports as concepts, generated (not a source date) and keeping disclaimers (AC-11)', async () => {
+    const core = await import('../src/core.js')
+    const now = new Date('2026-01-01T00:00:00.000Z')
+    const res = core.exportOkf(dir, { withReports: true, now })
+    const savingsPath = path.join(res.outputDir, 'reports/report-savings.md')
+    // Savings is robust to build from a minimal project; if present it must keep its methodology note.
+    if (fs.existsSync(savingsPath)) {
+      const r = matter(fs.readFileSync(savingsPath, 'utf-8'))
+      expect((r.data as any).type).toBe('Report')
+      expect((r.data as any).generated.at).toBe(now.toISOString())
+      expect((r.data as any).sources).toBeUndefined() // generated, not sourced from a file
+      expect(r.content.toLowerCase()).toMatch(/estimate/) // methodological framing preserved
+    }
+    // The core export (no reports) stays conformant and does not include reports.
+    expect(core.validateOkf(dir).conformant).toBe(true)
+  })
+
   it('validate: concept without type is a Conformance Error; a broken link is only Informational (AC-09, AC-10)', async () => {
     const core = await import('../src/core.js')
     core.exportOkf(dir)

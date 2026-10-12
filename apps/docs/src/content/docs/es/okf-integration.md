@@ -41,6 +41,7 @@ parsing, y nunca se vuelve una segunda fuente de verdad.
 # Exportar el bundle (por defecto: .kaddo/okf)
 kaddo okf export
 kaddo okf export --output ./exports/okf
+kaddo okf export --with-reports   # incluir también reportes Impact/Drift/Savings
 
 # Validar un bundle (solo lectura)
 kaddo okf validate
@@ -127,8 +128,12 @@ de compartirlo externamente** — contiene el conocimiento de tu proyecto.
 ## Limitaciones
 
 - El alcance inicial es **export + validate**. Importar OKF hacia Kaddo es trabajo futuro.
-- Reports y cápsulas se exportan por ahora como conceptos genéricos; preservar cada campo de reporte y
-  cada límite de acceso de cápsula como metadato dedicado es un refinamiento en curso.
+- Los **reportes** son opt-in con `--with-reports` (llevan un timestamp `generated.at`, así que no son
+  parte del core estable del bundle); sus findings, assumptions, confidence, limitations y el disclaimer
+  de Savings se preservan verbatim — las estimaciones nunca se muestran como valores observados.
+- Las **Knowledge Capsules externas** (de `.kaddo/external.yml`) se representan como conceptos
+  "Knowledge Reference" preservando su source y su límite de acceso, sin traer fuentes privadas ni
+  implicar acceso al sistema de origen.
 - El adaptador apunta a OKF v0.2 y no afirma compatibilidad con versiones futuras desconocidas.
 
 ## Ver también

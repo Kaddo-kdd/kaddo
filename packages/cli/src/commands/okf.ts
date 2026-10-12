@@ -6,8 +6,8 @@ import { intro, outro, log } from '../utils/ui.js'
 // Open Knowledge Format (OKF v0.2) surfaces (WI-065). Optional interoperability: a read-only
 // projection of Kaddo's canonical knowledge into a portable bundle. Kaddo stays the source of truth.
 
-export function runOkfExport(opts: { output?: string; json?: boolean } = {}, dir: string = cwd()): void {
-  const res = exportOkf(dir, { output: opts.output })
+export function runOkfExport(opts: { output?: string; withReports?: boolean; json?: boolean } = {}, dir: string = cwd()): void {
+  const res = exportOkf(dir, { output: opts.output, withReports: opts.withReports })
   if (opts.json) { console.log(JSON.stringify(res, null, 2)); return }
   intro('kaddo okf export')
   log.success(`Exported ${res.conceptCount} concept(s) + ${res.indexCount} index(es) to ${res.outputDir}`)

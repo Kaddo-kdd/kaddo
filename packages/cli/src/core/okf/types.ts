@@ -20,11 +20,13 @@ export type OkfConcept = {
   tags: string[]
   /** Bundle-relative path this concept is written to, e.g. "delivery/work-items/WI-001.md". */
   path: string
-  /** Canonical source path inside the project (provenance; never invented). */
-  sourcePath: string
+  /** Canonical source path inside the project (provenance; never invented). Null for generated concepts. */
+  sourcePath: string | null
+  /** For generated concepts (reports): the generation time (OKF `generated.at`). Never a source date. */
+  generatedAt?: string | null
   /** Ids of related concepts, resolved to bundle links at render time. */
   related: { id: string; role: string }[]
-  /** Verbatim Kaddo markdown body, when carried through. */
+  /** A pre-rendered Markdown body to use verbatim (e.g. a report), instead of title + description. */
   body: string | null
 }
 

@@ -9,6 +9,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { discoverKnowledge } from '../../services/knowledge-artifacts.js'
 import { buildConcept } from './mapping.js'
+import { reportConcepts, externalCapsuleConcepts } from './extras.js'
 import { OKF_VERSION, type OkfConcept, type OkfExportResult } from './types.js'
 
 export const OKF_DEFAULT_OUTPUT = '.kaddo/okf'
@@ -49,12 +50,20 @@ function renderConcept(c: OkfConcept, byId: Map<string, OkfConcept>): string {
     title: c.title,
     description: c.description,
     tags: c.tags,
-    // Provenance: the real canonical source path. Never invented.
-    sources: [{ resource: c.sourcePath }],
     kaddo_id: c.id,
   }
-  const parts = [frontmatter(data), '', `# ${c.title}`]
-  if (c.description) parts.push('', c.description)
+  // Provenance: either a real source path, or `generated.at` for generated concepts (reports). Never both-faked.
+  if (c.sourcePath) data.sources = [{ resource: c.sourcePath }]
+  if (c.generatedAt) data.generated = { at: c.generatedAt }
+
+  const parts = [frontmatter(data)]
+  if (c.body) {
+    // Verbatim body (e.g. a rendered report) — preserves its own findings, assumptions and disclaimers.
+    parts.push('', c.body.trim())
+  } else {
+    parts.push('', `# ${c.title}`)
+    if (c.description) parts.push('', c.description)
+  }
   const resolved = c.related.filter((r) => byId.has(r.id))
   if (resolved.length > 0) {
     parts.push('', '## Related')
@@ -108,20 +117,32 @@ function scanSensitive(renderedPath: string, content: string): string[] {
  * Export the project's knowledge as an OKF v0.2 bundle. `output` is a project-relative or absolute
  * directory (default `.kaddo/okf`); it is cleared and rewritten.
  */
-export function exportOkf(dir: string, opts: { output?: string } = {}): OkfExportResult {
+export function exportOkf(dir: string, opts: { output?: string; withReports?: boolean; now?: Date } = {}): OkfExportResult {
   const outRel = opts.output ?? OKF_DEFAULT_OUTPUT
   const outputDir = path.isAbsolute(outRel) ? outRel : path.join(dir, outRel)
+  const extraWarnings: string[] = []
 
   const artifacts = discoverKnowledge(dir)
   const concepts: OkfConcept[] = []
   const seen = new Set<string>()
   const omittedCounts = new Map<string, number>()
+  const addConcept = (c: OkfConcept | null): void => {
+    if (!c || seen.has(c.id)) return // stable identity: first wins
+    seen.add(c.id)
+    concepts.push(c)
+  }
   for (const a of artifacts) {
     const c = buildConcept(a)
     if (!c) { omittedCounts.set(a.type || 'unknown', (omittedCounts.get(a.type || 'unknown') ?? 0) + 1); continue }
-    if (seen.has(c.id)) continue // stable identity: first wins
-    seen.add(c.id)
-    concepts.push(c)
+    addConcept(c)
+  }
+  // External Knowledge Capsules → OKF references (cheap, deterministic).
+  for (const c of externalCapsuleConcepts(dir)) addConcept(c)
+  // Reports are opt-in: they carry a generation timestamp and are therefore not part of the stable core.
+  if (opts.withReports) {
+    const { concepts: reports, warnings } = reportConcepts(dir, opts.now ?? new Date())
+    for (const c of reports) addConcept(c)
+    extraWarnings.push(...warnings)
   }
   concepts.sort((a, b) => a.id.localeCompare(b.id))
   const byId = new Map(concepts.map((c) => [c.id, c]))
@@ -156,7 +177,7 @@ export function exportOkf(dir: string, opts: { output?: string } = {}): OkfExpor
     conceptCount: concepts.length,
     indexCount: byLayer.size + 1,
     omitted: [...omittedCounts.entries()].map(([type, count]) => ({ type, count })).sort((a, b) => a.type.localeCompare(b.type)),
-    warnings: warnings.sort(),
+    warnings: [...warnings, ...extraWarnings].sort(),
     files: written,
   }
 }

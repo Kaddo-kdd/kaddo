@@ -41,6 +41,7 @@ never becomes a second source of truth.
 # Export the bundle (default: .kaddo/okf)
 kaddo okf export
 kaddo okf export --output ./exports/okf
+kaddo okf export --with-reports   # also include Impact/Drift/Savings reports
 
 # Validate a bundle (read-only)
 kaddo okf validate
@@ -126,8 +127,12 @@ contains your project's knowledge.
 ## Limitations
 
 - Initial scope is **export + validate**. Importing OKF into Kaddo is future work.
-- Reports and capsules currently export as generic concepts; preserving every report field and capsule
-  access boundary as dedicated metadata is an ongoing refinement.
+- **Reports** are opt-in via `--with-reports` (they carry a `generated.at` timestamp, so they are not
+  part of the stable core bundle); their findings, assumptions, confidence, limitations and the Savings
+  disclaimer are preserved verbatim — estimates are never shown as observed values.
+- **External Knowledge Capsules** (from `.kaddo/external.yml`) are represented as "Knowledge Reference"
+  concepts preserving their source and access limitation, without pulling private sources or implying
+  access to the origin system.
 - The adapter targets OKF v0.2 and does not claim compatibility with unknown future versions.
 
 ## See also
