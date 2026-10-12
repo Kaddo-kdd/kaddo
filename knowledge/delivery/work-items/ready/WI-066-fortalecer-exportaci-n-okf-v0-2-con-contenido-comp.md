@@ -4,7 +4,7 @@ id: WI-066
 title: >-
   Fortalecer exportación OKF v0.2 con contenido completo, conformidad y
   seguridad
-status: draft
+status: ready
 work_type: feature
 created_at: '2026-10-12'
 source:
@@ -15,14 +15,28 @@ source:
   inferred: false
 generated_by: kaddo-admin
 knowledge_level: K3
-domains: [Product, Tech, Delivery]
-affected_modules: [cli, docs]
+domains:
+  - Product
+  - Tech
+  - Delivery
+affected_modules:
+  - cli
+  - docs
 scope_confidence:
   level: high
   reasons:
-    - Endurece el adaptador OKF ya existente (core/okf/*) sobre readers Core; no cambia el modelo canónico.
-    - 20 ACs explícitos + 8 escenarios + Commit Gate; continúa WI-065 (v3.125.0).
-relates_to: [WI-065]
+    - >-
+      Endurece el adaptador OKF ya existente (core/okf/*) sobre readers Core; no
+      cambia el modelo canónico.
+    - >-
+      20 ACs explícitos + 8 escenarios + Commit Gate; continúa WI-065
+      (v3.125.0).
+    - >-
+      Los 12 frentes verificados contra el código actual con ubicaciones
+      concretas (grounding técnico).
+relates_to:
+  - WI-065
+refined_by: work-item-refinement (manual)
 summary: >-
   WI-065 incorporó la compatibilidad inicial con Open Knowledge Format (OKF
   v0.2): export + validate + reports opcionales. El dogfooding confirma que
@@ -39,6 +53,7 @@ original_snapshot:
     reportes vía `--with-reports`. Pero la revisión identificó l…
   type: feature
   status: draft
+ready_at: '2026-10-12'
 ---
 
 # Fortalecer exportación OKF v0.2 con contenido completo, conformidad y seguridad
@@ -198,6 +213,46 @@ de escribir el destino final: (1) artifact discovery; (2) export eligibility + s
 destination mapping; (4) transformación de cuerpo Markdown + metadata; (5) resolución de relaciones;
 (6) serialización OKF; (7) validación; (8) publicación segura del bundle completo (staging + swap).
 Mantener separadas las responsabilidades de mapper, serializador, validador y mecanismo de escritura.
+
+## Entry points (grounding técnico — verificado contra el código actual)
+
+Cada corrección aterriza en una ubicación concreta del adaptador existente (confirmadas al refinar):
+
+- **P1 contenido completo (AC-01/02)** — `mapping.ts` `buildConcept` fija `body: null`; hay que leer el
+  cuerpo Markdown del artifact (reutilizar `readFile` + separar frontmatter vía gray-matter, como ya
+  hace `resources.ts`/`work-items.ts`) y pasarlo a `OkfConcept.body`, que `export.ts` `renderConcept` ya
+  sabe emitir verbatim. No reconstruir desde propiedades; no modificar la fuente.
+- **P2 relaciones/enlaces (AC-03)** — `export.ts` ya construye `byId`/`relLink`; falta un mapping
+  origen→destino (relPath canónico → ruta bundle) para **reescribir enlaces internos** del cuerpo que
+  apunten a `knowledge/...`, solo con correspondencia inequívoca; refs no resueltas → info.
+- **P3 índices + generated.by (AC-04/05)** — `export.ts` `renderIndex` emite `type: 'Index'` (frontmatter
+  que OKF no pide): los índices anidados deben ir **sin frontmatter** y el raíz solo con `okf_version`.
+  `extras.ts` reports usan `generated.at` (export.ts:57) sin `generated.by`: añadir
+  `generated.by: process:kaddo-okf-export` estable.
+- **P4 destino seguro (AC-07/08/09)** — `export.ts:~156` hace `fs.rmSync(outputDir)` antes de escribir:
+  sustituir por **staging + swap** (escribir a dir temporal, validar, reemplazar atómicamente), con
+  guardas que rechacen raíz/padres/`knowledge/`/dirs de código y resuelvan symlinks; ids no deben
+  permitir traversal.
+- **P5/P7 colisiones (AC-11)** — `export.ts` `addConcept` hace `if (seen.has(c.id)) return` (omisión
+  **silenciosa**): detectar colisiones de id/ruta/slug **antes** de escribir, distinguir duplicado real
+  de colisión entre artifacts distintos, y **detener** con diagnóstico cuando sea ambiguo.
+- **P6 sensibles (AC-10)** — `export.ts` `scanSensitive` ya avisa, pero el archivo ya se escribió:
+  mover la política a **antes** de persistir (omitir/excluir el concepto o abortar), allow-list de tipos
+  exportables, y no exponer el valor detectado en logs/errores.
+- **P8 organización (AC-12)** — `mapping.ts` `conceptBundlePath` cae a `misc/` para tipos desconocidos:
+  clasificar por tipo/metadato real; separar instrucciones de agentes (type `agent`) hacia `agents/` o
+  excluirlas (configurable); evitar que prompts se lean como conocimiento del sistema.
+- **P9 índices anidados (AC-13)** — hoy solo hay índices por capa de primer nivel; añadir índices locales
+  en `delivery/work-items/`, `delivery/deprecations/`, `delivery/runbooks/`, `tech/modules/`.
+- **P11 validador (AC-15)** — `validate.ts` trata un `index.md` sin `type` como warning (`isIndex`); debe
+  **no** pedir frontmatter en índices, exigir `type` solo en conceptos, respetar `okf_version` del raíz,
+  separar identidad (semántica Kaddo) de conformidad OKF, y protegerse de traversal/symlinks al leer.
+- **P12 consumidor independiente (AC-16)** — test e2e con parser genérico Markdown/YAML (sin importar
+  `@kaddo/cli`), recorriendo índices → concepto técnico (cuerpo completo) → relaciones a WI/Resource →
+  Deprecation Plan → procedencia.
+
+Mantener separados mapper (`mapping.ts`), serializador (`export.ts` render*), validador (`validate.ts`) y
+escritura (staging/swap). No duplicar el parser de artifacts de Kaddo.
 
 ## Definition of Done
 
