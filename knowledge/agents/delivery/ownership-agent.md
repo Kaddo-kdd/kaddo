@@ -1,7 +1,7 @@
 ---
 type: agent
 name: ownership-agent
-version: 3.123.0
+version: 3.124.5
 group: delivery
 ---
 # Ownership Agent

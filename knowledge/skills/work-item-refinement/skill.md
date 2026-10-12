@@ -3,7 +3,7 @@ type: skill
 id: work-item-refinement
 name: work-item-refinement
 title: Work Item Refinement Skill
-version: 3.123.0
+version: 3.124.5
 group: delivery
 applies_to:
   - work-item-agent
