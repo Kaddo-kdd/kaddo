@@ -1,7 +1,7 @@
 ---
 type: agent
 name: roadmap-agent
-version: 3.126.0
+version: 3.126.1
 group: delivery
 ---
 # Roadmap Agent

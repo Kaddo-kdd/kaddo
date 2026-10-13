@@ -1,7 +1,7 @@
 ---
 type: agent
 name: work-item-agent
-version: 3.126.0
+version: 3.126.1
 group: delivery
 ---
 # Work Item Agent

@@ -1,7 +1,7 @@
 ---
 type: agent
 name: architecture-agent
-version: 3.126.0
+version: 3.126.1
 group: tech
 ---
 # Architecture Agent
