@@ -42,6 +42,7 @@ parsing, y nunca se vuelve una segunda fuente de verdad.
 kaddo okf export
 kaddo okf export --output ./exports/okf
 kaddo okf export --with-reports   # incluir también reportes Impact/Drift/Savings
+kaddo okf export --with-agents    # incluir también docs de instrucciones de agentes/workflows (en agents/)
 
 # Validar un bundle (solo lectura)
 kaddo okf validate
@@ -66,9 +67,14 @@ Ambos admiten `--json` para automatización.
   external/           # knowledge references (cápsulas)
 ```
 
-`index.md` y `log.md` son nombres reservados de OKF; los índices dan navegación progresiva. Cada
-concepto es un archivo Markdown con `type` obligatorio, más `title`, `description`, `tags`, `sources`
-(procedencia) y el `kaddo_id` estable.
+`index.md` y `log.md` son nombres reservados de OKF; los índices dan navegación progresiva y **no llevan
+frontmatter** (solo el índice raíz declara `okf_version`). Cada colección anidada (`delivery/work-items/`,
+`delivery/deprecations/`, `tech/modules/`…) tiene su propio índice local. Cada concepto es un archivo
+Markdown con `type` obligatorio, más `title`, `description`, `tags`, `sources` (procedencia) y el
+`kaddo_id` estable — y lleva el **cuerpo Markdown canónico completo** del artifact (secciones, tablas,
+listas y código), con los enlaces internos reescritos para resolver dentro del bundle. Los docs de
+instrucciones de agentes/workflows se **excluyen por defecto** (describen cómo trabajar *con* el sistema,
+no conocimiento verificado); se incluyen en `agents/` con `--with-agents`.
 
 ## Mapping de conceptos
 
@@ -120,10 +126,15 @@ del bundle. No se requiere instalar Kaddo, ni su CLI, MCP o base de datos.
 
 ## Seguridad
 
-La exportación es segura por defecto: solo lee artifacts `knowledge/*.md` (sin código, sin `.env`, sin
+La exportación es segura por defecto. Solo lee artifacts `knowledge/*.md` (sin código, sin `.env`, sin
 secretos), y los Project Resources solo llevan nombres de referencia, nunca valores de credenciales. Un
-escaneo conservador advierte sobre contenido potencialmente sensible. Aun así, **revisa un bundle antes
-de compartirlo externamente** — contiene el conocimiento de tu proyecto.
+concepto cuyo contenido coincida con un patrón de secreto de alta señal se **omite del bundle por
+completo** (no se marca después de escribir), y el valor detectado nunca se imprime en logs ni errores.
+El destino se valida antes de cualquier escritura — se rechazan la raíz del proyecto, directorios padres
+y rutas protegidas (`knowledge/`, directorios de código), y el bundle se publica de forma atómica vía un
+directorio de staging, así que una exportación fallida nunca destruye un bundle válido previo. Las
+colisiones de identidad detienen la exportación en vez de descartar un concepto en silencio. Aun así,
+**revisa un bundle antes de compartirlo externamente** — contiene el conocimiento de tu proyecto.
 
 ## Limitaciones
 

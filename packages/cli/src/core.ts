@@ -394,11 +394,14 @@ export {
   okfConceptType,
   buildConcept,
   conceptBundlePath,
+  isAgentInstruction,
   OKF_TYPE_TABLE,
 } from './core/okf/mapping.js'
 export {
   OKF_VERSION,
   OKF_RESERVED_FILES,
+  OKF_EXPORT_PROCESS,
+  OkfExportError,
   type OkfConcept,
   type OkfIndex,
   type OkfBundle,

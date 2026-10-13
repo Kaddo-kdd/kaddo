@@ -71,13 +71,12 @@ export function validateOkf(dir: string, opts: { location?: string } = {}): OkfV
     }
 
     const type = typeof data.type === 'string' ? data.type.trim() : ''
-    if (!type) {
-      // A concept must declare a non-empty type. An index without a type is a warning, not an error.
-      findings.push(isIndex
-        ? { level: 'warning', file: r, message: 'Index has no type.' }
-        : { level: 'conformance', file: r, message: 'Concept has no non-empty `type`.' })
+    // OKF v0.2: index.md files carry no frontmatter (root may declare okf_version). Only CONCEPTS need
+    // a non-empty `type`; an index without a type (or without any frontmatter) is conformant.
+    if (!isIndex) {
+      if (!type) findings.push({ level: 'conformance', file: r, message: 'Concept has no non-empty `type`.' })
+      conceptCount++
     }
-    if (!isIndex) conceptCount++
 
     if (r === 'index.md') {
       const v = typeof data.okf_version === 'string' ? data.okf_version : (data.okf_version != null ? String(data.okf_version) : '')

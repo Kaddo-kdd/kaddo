@@ -97,6 +97,89 @@ describe('WI-065 — OKF v0.2 export + validate', () => {
     expect(core.validateOkf(dir).conformant).toBe(true)
   })
 
+  it('preserves the full canonical Markdown body and rewrites internal links into the bundle (AC-01, AC-02, AC-03)', async () => {
+    const core = await import('../src/core.js')
+    write(dir, 'knowledge/tech/architecture.md', ['---', 'id: TK-arch', 'type: technical-knowledge', 'title: Architecture', 'summary: How it is built.', '---', '',
+      '# Architecture', '', '## Components', '', '| Name | Role |', '| --- | --- |', '| API | entry |', '',
+      '```ts', 'const x = 1', '```', '', 'See [WI-001](../delivery/work-items/completed/WI-001.md).'].join('\n'))
+    const res = core.exportOkf(dir)
+    const body = matter(fs.readFileSync(path.join(res.outputDir, 'tech/TK-arch.md'), 'utf-8')).content
+    expect(body).toContain('## Components')          // sections preserved
+    expect(body).toContain('| API | entry |')        // tables preserved
+    expect(body).toContain('const x = 1')            // code preserved
+    expect(body).toMatch(/\]\(\.\.\/delivery\/work-items\/WI-001\.md\)/) // link rewritten to bundle path
+  })
+
+  it('indexes follow OKF conventions (no frontmatter; root declares only okf_version) and reports carry generated.by (AC-04, AC-05)', async () => {
+    const core = await import('../src/core.js')
+    const res = core.exportOkf(dir, { withReports: true, now: new Date('2026-01-01T00:00:00.000Z') })
+    // Nested index: no frontmatter at all.
+    const nested = fs.readFileSync(path.join(res.outputDir, 'delivery/work-items/index.md'), 'utf-8')
+    expect(nested.startsWith('---')).toBe(false)
+    expect(matter(nested).data).toEqual({})
+    // Root index: only okf_version, no `type`.
+    const root = matter(fs.readFileSync(path.join(res.outputDir, 'index.md'), 'utf-8')).data as any
+    expect(root.okf_version).toBe('0.2')
+    expect(root.type).toBeUndefined()
+    const savings = path.join(res.outputDir, 'reports/report-savings.md')
+    if (fs.existsSync(savings)) {
+      const g = (matter(fs.readFileSync(savings, 'utf-8')).data as any).generated
+      expect(g.by).toBe('process:kaddo-okf-export')
+      expect(g.at).toBe('2026-01-01T00:00:00.000Z')
+    }
+  })
+
+  it('refuses dangerous export destinations and does not touch project files (AC-07, AC-08)', async () => {
+    const core = await import('../src/core.js')
+    const before = fs.readFileSync(path.join(dir, 'knowledge/tech/resources/main-db.md'), 'utf-8')
+    expect(() => core.exportOkf(dir, { output: 'knowledge' })).toThrow(/protected|UNSAFE|Refusing/i)
+    expect(() => core.exportOkf(dir, { output: '.' })).toThrow(/root|UNSAFE|Refusing/i)
+    expect(fs.readFileSync(path.join(dir, 'knowledge/tech/resources/main-db.md'), 'utf-8')).toBe(before)
+  })
+
+  it('omits concepts with potentially sensitive content and never writes the value (AC-10)', async () => {
+    const core = await import('../src/core.js')
+    write(dir, 'knowledge/tech/leak.md', ['---', 'id: TK-leak', 'type: technical-knowledge', 'title: Leaky', '---', '', '# Leaky', '', 'aws key AKIAIOSFODNN7EXAMPLE here.'].join('\n'))
+    const res = core.exportOkf(dir)
+    expect(res.omittedConcepts.some((o) => o.id === 'TK-leak')).toBe(true)
+    expect(fs.existsSync(path.join(res.outputDir, 'tech/TK-leak.md'))).toBe(false)
+    // The secret value appears in no exported file.
+    const all = res.files.map((f) => fs.readFileSync(path.join(res.outputDir, f), 'utf-8')).join('\n')
+    expect(all).not.toContain('AKIAIOSFODNN7EXAMPLE')
+  })
+
+  it('detects identity collisions instead of silently dropping a concept (AC-11)', async () => {
+    const core = await import('../src/core.js')
+    write(dir, 'knowledge/tech/a.md', ['---', 'id: DUP', 'type: technical-knowledge', 'title: A', '---', '', '# A'].join('\n'))
+    write(dir, 'knowledge/product/b.md', ['---', 'id: DUP', 'type: product-knowledge', 'title: B', '---', '', '# B'].join('\n'))
+    expect(() => core.exportOkf(dir)).toThrow(/collision/i)
+  })
+
+  it('separates agent instructions from system knowledge (excluded by default, under agents/ when opted in) (AC-12)', async () => {
+    const core = await import('../src/core.js')
+    write(dir, 'knowledge/agents/my-agent.md', ['---', 'id: AG-1', 'type: agent', 'title: My Agent', '---', '', '# My Agent', '', 'Instructions.'].join('\n'))
+    const off = core.exportOkf(dir)
+    expect(fs.existsSync(path.join(off.outputDir, 'agents/AG-1.md'))).toBe(false)
+    const on = core.exportOkf(dir, { withAgents: true })
+    expect(fs.existsSync(path.join(on.outputDir, 'agents/AG-1.md'))).toBe(true)
+  })
+
+  it('an independent consumer can navigate the bundle with only Markdown/YAML (AC-13, AC-16)', async () => {
+    const core = await import('../src/core.js')
+    const out = core.exportOkf(dir).outputDir
+    // No Kaddo APIs: read with fs + gray-matter only.
+    const root = fs.readFileSync(path.join(out, 'index.md'), 'utf-8')
+    expect(matter(root).data).toHaveProperty('okf_version', '0.2')
+    // Nested index exists for the work-items collection (progressive disclosure).
+    expect(fs.existsSync(path.join(out, 'delivery/work-items/index.md'))).toBe(true)
+    // Open a concept and read its content; follow its relation link to the resource.
+    const wi = fs.readFileSync(path.join(out, 'delivery/work-items/WI-001.md'), 'utf-8')
+    expect((matter(wi).data as any).type).toBe('Work Item')
+    const linkTarget = matter(wi).content.match(/\]\(([^)]*resources\/RES-main-db\.md)\)/)?.[1]
+    expect(linkTarget).toBeTruthy()
+    expect(fs.existsSync(path.resolve(out, 'delivery/work-items', linkTarget!))).toBe(true)
+  })
+
   it('validate: concept without type is a Conformance Error; a broken link is only Informational (AC-09, AC-10)', async () => {
     const core = await import('../src/core.js')
     core.exportOkf(dir)

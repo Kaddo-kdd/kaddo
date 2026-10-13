@@ -6,7 +6,7 @@ import { buildImpactReport, renderImpactMarkdown } from '../impact-report.js'
 import { buildDriftReport, renderDriftMarkdown } from '../drift-report.js'
 import { buildSavingsReport, renderSavingsMarkdown } from '../savings.js'
 import { loadExternalRegistry } from '../capsule.js'
-import type { OkfConcept } from './types.js'
+import { OKF_EXPORT_PROCESS, type OkfConcept } from './types.js'
 
 /**
  * Project Kaddo's reports (Impact / Drift / Savings) as OKF "Report" concepts. Bodies are the existing
@@ -24,7 +24,8 @@ export function reportConcepts(dir: string, now: Date = new Date()): { concepts:
       const body = build()
       concepts.push({
         id, type: 'Report', title, description, tags: ['report'],
-        path: `reports/${id}.md`, sourcePath: null, generatedAt: at, related: [], body,
+        path: `reports/${id}.md`, sourcePath: null,
+        generatedBy: OKF_EXPORT_PROCESS, generatedAt: at, related: [], body,
       })
     } catch (e) {
       warnings.push(`Report "${id}" skipped: ${e instanceof Error ? e.message : String(e)}`)

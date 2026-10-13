@@ -360,8 +360,9 @@ okfCmd
   .description('Export canonical knowledge as an OKF v0.2 bundle (read-only; default .kaddo/okf)')
   .option('--output <dir>', 'Output directory (default: .kaddo/okf)')
   .option('--with-reports', 'Also project Impact/Drift/Savings reports as concepts (adds a generation timestamp)')
+  .option('--with-agents', 'Also include agent/workflow instruction docs (under agents/); excluded by default')
   .option('--json', 'Output JSON')
-  .action((opts: { output?: string; withReports?: boolean; json?: boolean }) => runOkfExport(opts, cwd()))
+  .action((opts: { output?: string; withReports?: boolean; withAgents?: boolean; json?: boolean }) => runOkfExport(opts, cwd()))
 
 okfCmd
   .command('validate [location]')

@@ -5,6 +5,8 @@
 // translated into OKF state (e.g. a completed Work Item is not an OKF "stable" concept). Provenance
 // is the artifact's real canonical id and path — never invented.
 
+import matter from 'gray-matter'
+import { readFile } from '../../utils/fs.js'
 import type { KnowledgeArtifact } from '../../services/knowledge-artifacts.js'
 import type { OkfConcept } from './types.js'
 
@@ -27,6 +29,16 @@ export const OKF_TYPE_TABLE: Record<string, string> = {
 
 const WORK_ITEM_TYPES = new Set(['feature', 'bugfix', 'hotfix', 'spike', 'chore'])
 const REPORT_TYPES = new Set(['impact-report', 'drift-report', 'savings-report', 'poc-report'])
+/** Operational docs that instruct how to work WITH the system — not verified system knowledge. */
+const AGENT_INSTRUCTION_TYPES = new Set(['agent', 'workflow', 'prompt', 'skill'])
+
+/** Whether an artifact is an agent/workflow instruction rather than system knowledge (WI-066 P8). */
+export function isAgentInstruction(a: KnowledgeArtifact): boolean {
+  const t = (a.type || '').toLowerCase()
+  if (AGENT_INSTRUCTION_TYPES.has(t)) return true
+  const p = a.relPath.toLowerCase()
+  return p.includes('/agents/') || p.includes('/skills/') || p.includes('/workflows/')
+}
 
 /** Resolve the OKF concept type for a discovered artifact. Readable fallback for unknown types. */
 export function okfConceptType(a: KnowledgeArtifact): string {
@@ -55,6 +67,7 @@ export function conceptBundlePath(a: KnowledgeArtifact, id: string): string {
   const file = `${id}.md`
   if (a.isWorkItem) return `delivery/work-items/${file}`
   const t = (a.type || '').toLowerCase()
+  if (isAgentInstruction(a)) return `agents/${file}`
   if (t === 'deprecation-plan') return `delivery/deprecations/${file}`
   if (t === 'production-runbook') return `delivery/runbooks/${file}`
   if (t === 'project-resource') return `resources/${file}`
@@ -106,7 +119,20 @@ export function conceptId(a: KnowledgeArtifact): string {
   return slugify(base.replace(/\.md$/, '')) || slugify(a.relPath)
 }
 
-/** Build an OKF concept from a discovered artifact. Never fabricates description/provenance. */
+/**
+ * Read the canonical Markdown body of an artifact (everything after its frontmatter), verbatim.
+ * Returns null when the file cannot be read, so the concept is still exported as a reference.
+ */
+function readBody(a: KnowledgeArtifact): string | null {
+  try {
+    const body = matter(readFile(a.filePath)).content.trim()
+    return body || null
+  } catch {
+    return null
+  }
+}
+
+/** Build an OKF concept from a discovered artifact. Preserves the full canonical body; never fabricates. */
 export function buildConcept(a: KnowledgeArtifact): OkfConcept | null {
   const id = conceptId(a)
   if (!id) return null
@@ -120,6 +146,7 @@ export function buildConcept(a: KnowledgeArtifact): OkfConcept | null {
     path: conceptBundlePath(a, id),
     sourcePath: a.relPath,
     related: a.isWorkItem ? workItemRelations(rawFm) : [],
-    body: null,
+    // Preserve the canonical Markdown body so the concept is consumable, not just discoverable (WI-066 P1).
+    body: readBody(a),
   }
 }

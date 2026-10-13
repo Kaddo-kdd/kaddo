@@ -42,6 +42,7 @@ never becomes a second source of truth.
 kaddo okf export
 kaddo okf export --output ./exports/okf
 kaddo okf export --with-reports   # also include Impact/Drift/Savings reports
+kaddo okf export --with-agents    # also include agent/workflow instruction docs (under agents/)
 
 # Validate a bundle (read-only)
 kaddo okf validate
@@ -66,9 +67,14 @@ Both support `--json` for automation.
   external/           # knowledge references (capsules)
 ```
 
-`index.md` and `log.md` are reserved OKF file names; indexes provide progressive navigation. Each
-concept is one Markdown file with a required `type`, plus `title`, `description`, `tags`, `sources`
-(provenance) and the stable `kaddo_id`.
+`index.md` and `log.md` are reserved OKF file names; indexes provide progressive navigation and carry
+**no frontmatter** (only the root index declares `okf_version`). Nested collections
+(`delivery/work-items/`, `delivery/deprecations/`, `tech/modules/`…) each get their own local index.
+Each concept is one Markdown file with a required `type`, plus `title`, `description`, `tags`, `sources`
+(provenance) and the stable `kaddo_id` — and it carries the **full canonical Markdown body** of the
+artifact (sections, tables, lists and code), with internal links rewritten to resolve inside the bundle.
+Agent/workflow instruction docs are **excluded by default** (they describe how to work *with* the
+system, not verified system knowledge); include them under `agents/` with `--with-agents`.
 
 ## Concept mapping
 
@@ -119,10 +125,15 @@ resolved within the bundle. No Kaddo install, CLI, MCP or database is required.
 
 ## Security
 
-Export is safe by default: it reads only `knowledge/*.md` artifacts (no code, no `.env`, no secrets),
-and Project Resources carry only reference names, never credential values. A conservative scan warns
-about potentially sensitive content. Still, **review a bundle before sharing it externally** — it
-contains your project's knowledge.
+Export is safe by default. It reads only `knowledge/*.md` artifacts (no code, no `.env`, no secrets),
+and Project Resources carry only reference names, never credential values. A concept whose content
+matches a high-signal secret pattern is **omitted from the bundle entirely** (not merely flagged after
+writing), and the detected value is never printed in logs or errors. The destination is validated
+before any write — the project root, parent directories and protected paths (`knowledge/`, source
+directories) are refused, and the bundle is published atomically through a staging directory, so a
+failed export never destroys a previous valid bundle. Identity collisions stop the export instead of
+silently dropping a concept. Still, **review a bundle before sharing it externally** — it contains your
+project's knowledge.
 
 ## Limitations
 
