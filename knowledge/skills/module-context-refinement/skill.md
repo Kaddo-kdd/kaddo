@@ -3,7 +3,7 @@ type: skill
 id: module-context-refinement
 name: module-context-refinement
 title: Module Context Refinement Skill
-version: 3.125.0
+version: 3.126.0
 group: tech
 applies_to:
   - module-context-agent
