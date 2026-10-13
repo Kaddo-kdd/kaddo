@@ -180,6 +180,19 @@ describe('WI-065 — OKF v0.2 export + validate', () => {
     expect(fs.existsSync(path.resolve(out, 'delivery/work-items', linkTarget!))).toBe(true)
   })
 
+  it('nested index Section links resolve to the child collection index (AC-13 regression)', async () => {
+    const core = await import('../src/core.js')
+    const out = core.exportOkf(dir).outputDir
+    const deliveryIdx = fs.readFileSync(path.join(out, 'delivery/index.md'), 'utf-8')
+    // The Section link to the work-items collection must resolve from delivery/index.md.
+    const link = deliveryIdx.match(/\]\((\.[^)]*work-items\/index\.md)\)/)?.[1]
+    expect(link).toBeTruthy()
+    expect(fs.existsSync(path.resolve(out, 'delivery', link!))).toBe(true)
+    // Validate reports no unresolved-link info for the delivery index's Section links.
+    const res = core.validateOkf(dir)
+    expect(res.findings.some((f) => f.file === 'delivery/index.md' && /work-items\/index\.md/.test(f.message))).toBe(false)
+  })
+
   it('validate: concept without type is a Conformance Error; a broken link is only Informational (AC-09, AC-10)', async () => {
     const core = await import('../src/core.js')
     core.exportOkf(dir)

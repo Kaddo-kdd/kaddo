@@ -115,7 +115,8 @@ function renderIndex(title: string, concepts: OkfConcept[], childDirs: string[],
     'Kaddo remains the source of truth.', '')
   if (childDirs.length > 0) {
     parts.push('## Sections')
-    for (const d of [...childDirs].sort()) parts.push(`- [${d}/](${relLink(fromPath, `${d}/index.md`)})`)
+    // childDirs are full bundle paths (e.g. "delivery/work-items"); link to each child's own index.
+    for (const d of [...childDirs].sort()) parts.push(`- [${d.split('/').pop()}/](${relLink(fromPath, `${d}/index.md`)})`)
     parts.push('')
   }
   const byType = new Map<string, OkfConcept[]>()
@@ -253,12 +254,15 @@ export function exportOkf(dir: string, opts: { output?: string; withReports?: bo
       ;(childDirs.get(parent) ?? childDirs.set(parent, new Set()).get(parent)!).add(child)
     }
   }
+  // Every directory with concepts OR child collections gets an index — including intermediate dirs
+  // (e.g. delivery/) that only hold sub-collections, so navigation is unbroken from root to leaf.
   let indexCount = 0
-  for (const [d, cs] of dirs) {
+  const allDirs = new Set<string>([...dirs.keys(), ...childDirs.keys()])
+  for (const d of allDirs) {
     if (d === '.') continue // root handled below
     const title = d.split('/').map((s) => s.charAt(0).toUpperCase() + s.slice(1)).join(' / ')
-    const kids = [...(childDirs.get(d) ?? [])].map((c) => c.split('/').pop()!)
-    files.set(`${d}/index.md`, renderIndex(title, cs, kids, `${d}/index.md`, false))
+    const kids = [...(childDirs.get(d) ?? [])] // full bundle paths of child collections
+    files.set(`${d}/index.md`, renderIndex(title, dirs.get(d) ?? [], kids, `${d}/index.md`, false))
     indexCount++
   }
   // Root index
