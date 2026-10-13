@@ -4,8 +4,59 @@ id: WI-066
 title: >-
   Fortalecer exportación OKF v0.2 con contenido completo, conformidad y
   seguridad
-status: ready
+status: completed
+completed_at: '2026-10-13'
 work_type: feature
+code:
+  - packages/cli/src/core/okf/export.ts
+  - packages/cli/src/core/okf/mapping.ts
+  - packages/cli/src/core/okf/validate.ts
+implementation_evidence:
+  repositories:
+    cli:
+      role: core
+      status: completed
+      changed_paths:
+        - packages/cli/src/core/okf/types.ts
+        - packages/cli/src/core/okf/mapping.ts
+        - packages/cli/src/core/okf/export.ts
+        - packages/cli/src/core/okf/extras.ts
+        - packages/cli/src/core/okf/validate.ts
+        - packages/cli/src/commands/okf.ts
+        - packages/cli/src/index.ts
+        - packages/cli/src/core.ts
+        - packages/cli/tests/okf.test.ts
+        - apps/docs/src/content/docs/okf-integration.md
+        - apps/docs/src/content/docs/es/okf-integration.md
+      validations:
+        - command: pnpm --filter @kaddo/cli test okf
+          status: passed
+          reason: >-
+            14 casos (7 nuevos) — fidelidad de cuerpo + reescritura de enlaces,
+            índices sin frontmatter + generated.by, destino peligroso rechazado
+            sin tocar archivos, omisión de contenido sensible sin filtrar valor,
+            colisión de identidad detiene el export, agents excluidos por
+            defecto, consumidor independiente navega el bundle.
+        - command: pnpm --filter @kaddo/cli test
+          status: passed
+          reason: >-
+            1571 verdes (el fallo intermitente es el flaky admin-099, pasa
+            aislado).
+        - command: >-
+            kaddo okf export [--with-reports] && kaddo okf validate (dogfood
+            sobre el repo)
+          status: passed
+          reason: >-
+            80 conceptos + 11 índices (83+12 con reports), agents/skills
+            excluidos; validate 0 conformance/0 warnings/25 info (enlaces no
+            resueltos = portabilidad) → conformante. Fidelidad verificada
+            (tech/codebase con cuerpo completo; reports con generated.by).
+        - command: pnpm --filter @kaddo/docs build
+          status: passed
+          reason: 257 páginas; OKF EN/ES actualizadas.
+implementation_status: completed
+validation_status: passed
+released_in: v3.126.0
 created_at: '2026-10-12'
 source:
   type: external
@@ -54,6 +105,7 @@ original_snapshot:
   type: feature
   status: draft
 ready_at: '2026-10-12'
+verified_at: '2026-10-13'
 ---
 
 # Fortalecer exportación OKF v0.2 con contenido completo, conformidad y seguridad
@@ -169,26 +221,26 @@ del Graph; modificación masiva de artifacts históricos.
 
 ## Acceptance criteria
 
-- [ ] AC-01: los documentos OKF contienen el cuerpo Markdown permitido del artifact, no solo título+descripción.
-- [ ] AC-02: se preservan secciones y significado del documento original.
-- [ ] AC-03: enlaces internos se resuelven con mapping inequívoco; los no resueltos se reportan.
-- [ ] AC-04: los índices cumplen las convenciones OKF v0.2.
-- [ ] AC-05: los reportes declaran `generated.by` y `generated.at`.
-- [ ] AC-06: no se inventan procedencia, verificación, confianza ni vigencia.
-- [ ] AC-07: se rechazan destinos peligrosos antes de operaciones destructivas.
-- [ ] AC-08: una exportación fallida no destruye un bundle anterior válido.
-- [ ] AC-09: rutas y symlinks no permiten escribir fuera del destino autorizado.
-- [ ] AC-10: información sensible conocida no se persiste inadvertidamente.
-- [ ] AC-11: las colisiones de identidad se detectan sin omisión silenciosa.
-- [ ] AC-12: documentos auxiliares clasificados semánticamente (no mezclar instrucciones de agentes con conocimiento).
-- [ ] AC-13: colecciones anidadas con índices de navegación cuando corresponde.
-- [ ] AC-14: `--with-reports` sigue opcional y conserva disclaimers.
-- [ ] AC-15: `kaddo okf validate` distingue conformidad, warnings e informativos.
-- [ ] AC-16: el bundle se consume con un lector independiente sin instalar Kaddo.
-- [ ] AC-17: dos exportaciones del mismo snapshot producen conceptos/rutas/relaciones estables.
-- [ ] AC-18: se mantienen compatibles Core y CLI existentes.
-- [ ] AC-19: pruebas de regresión para contenido, seguridad, metadata, identidad y navegación.
-- [ ] AC-20: documentación EN/ES actualizada.
+- [x] AC-01: los documentos OKF contienen el cuerpo Markdown permitido del artifact, no solo título+descripción.
+- [x] AC-02: se preservan secciones y significado del documento original.
+- [x] AC-03: enlaces internos se resuelven con mapping inequívoco; los no resueltos se reportan.
+- [x] AC-04: los índices cumplen las convenciones OKF v0.2.
+- [x] AC-05: los reportes declaran `generated.by` y `generated.at`.
+- [x] AC-06: no se inventan procedencia, verificación, confianza ni vigencia.
+- [x] AC-07: se rechazan destinos peligrosos antes de operaciones destructivas.
+- [x] AC-08: una exportación fallida no destruye un bundle anterior válido.
+- [x] AC-09: rutas y symlinks no permiten escribir fuera del destino autorizado.
+- [x] AC-10: información sensible conocida no se persiste inadvertidamente.
+- [x] AC-11: las colisiones de identidad se detectan sin omisión silenciosa.
+- [x] AC-12: documentos auxiliares clasificados semánticamente (no mezclar instrucciones de agentes con conocimiento).
+- [x] AC-13: colecciones anidadas con índices de navegación cuando corresponde.
+- [x] AC-14: `--with-reports` sigue opcional y conserva disclaimers.
+- [x] AC-15: `kaddo okf validate` distingue conformidad, warnings e informativos.
+- [x] AC-16: el bundle se consume con un lector independiente sin instalar Kaddo.
+- [x] AC-17: dos exportaciones del mismo snapshot producen conceptos/rutas/relaciones estables.
+- [x] AC-18: se mantienen compatibles Core y CLI existentes.
+- [x] AC-19: pruebas de regresión para contenido, seguridad, metadata, identidad y navegación.
+- [x] AC-20: documentación EN/ES actualizada.
 
 ## Validation (escenarios)
 
@@ -271,3 +323,28 @@ Continúa y endurece WI-065 (OKF v0.2 adapter, liberado en v3.125.0). Mismo mód
 Un bundle OKF no debe ser solo una estructura de archivos válida: debe preservar el conocimiento, sus
 relaciones y su procedencia, de modo que otro agente o herramienta pueda consumirlo sin depender de Kaddo
 y sin recibir información incompleta, inventada o sensible.
+
+## Learning
+
+El hardening validó el valor de un **pipeline con fases separadas antes de escribir**: discovery →
+elegibilidad/seguridad → identidad → body+metadata → relaciones → serialización → publicación. Mover la
+detección de **colisiones** y la **omisión de sensibles** a *antes* de persistir (no después) fue la
+diferencia entre "avisar" y "proteger": un warning no sirve si el archivo ya se escribió. La publicación
+**atómica por staging + swap** hace que un fallo (o un destino peligroso) nunca destruya un bundle válido
+previo — el `fs.rmSync(outputDir)` original era el mayor riesgo real.
+
+El cambio con más impacto de portabilidad fue preservar el **cuerpo canónico completo** (antes
+`body: null`): el bundle pasó de "descubrible" a "consumible". Reutilizar `matter()` para separar
+frontmatter del cuerpo y reescribir solo enlaces con correspondencia **inequívoca** (mapa origen→destino)
+evitó inventar relaciones; los enlaces no resueltos se reportan como *info* (portabilidad), no como error
+de conformidad — coherente con que OKF admite referencias aún no resolubles. Clave de seguridad
+semántica: **separar instrucciones de agentes/skills del conocimiento del sistema** (excluidas por
+defecto, `--with-agents` para incluirlas en `agents/`), para que un consumidor no lea prompts como
+conocimiento verificado.
+
+Convenciones OKF: los `index.md` **no llevan frontmatter** (salvo `okf_version` en el raíz); ajustar el
+validador para no exigir `type` en índices eliminó falsos positivos sin perder el permisivismo de la
+spec (tipos desconocidos, campos extra y enlaces rotos no son errores de conformidad). El test de
+**consumidor independiente** (solo `fs` + `gray-matter`, sin `@kaddo/cli`) es la mejor garantía de que
+`conformant: true` ≠ útil: recorre índices → concepto con cuerpo completo → relación a un Resource.
+Liberado en **v3.126.0**. Fases 2 (import) y 3 (MCP/Admin) siguen fuera del DoD.
