@@ -2,7 +2,7 @@
 type: feature
 id: WI-067
 title: Mejorar la experiencia de lectura Markdown en Kaddo Admin
-status: draft
+status: ready
 work_type: feature
 created_at: '2026-10-15'
 source:
@@ -13,13 +13,22 @@ source:
   inferred: false
 generated_by: kaddo-admin
 knowledge_level: K2
-domains: [Product, Delivery]
-affected_modules: [admin]
+domains:
+  - Product
+  - Delivery
+affected_modules:
+  - admin
 scope_confidence:
   level: high
   reasons:
-    - Cambio de presentación sobre el renderer compartido (MarkdownRenderer.tsx) + capa CSS; no toca Core, parsers ni conocimiento canónico.
-    - 18 ACs explícitos, consumidores identificados y Commit Gate (revisión visual local antes de commitear).
+    - >-
+      Cambio de presentación sobre el renderer compartido (MarkdownRenderer.tsx)
+      + capa CSS; no toca Core, parsers ni conocimiento canónico.
+    - >-
+      18 ACs explícitos, consumidores identificados y Commit Gate (revisión
+      visual local antes de commitear).
+    - Estado actual verificado en el código: 'tokens, consumidores y bugs concretos localizados.'
+refined_by: work-item-refinement (manual)
 summary: >-
   Kaddo Admin permite consultar documentos Markdown de Knowledge, la definición
   completa de Work Items y reportes generados. Usuarios reportan problemas de
@@ -34,6 +43,7 @@ original_snapshot:
     jerarquía visual, y elementos Markdown sin estilos que facil…
   type: feature
   status: draft
+ready_at: '2026-10-15'
 ---
 
 # Mejorar la experiencia de lectura Markdown en Kaddo Admin
@@ -161,6 +171,46 @@ identidad de Admin; cambiar fórmulas/contratos de Reports; personalización tip
 - [ ] AC-16: sin estilos globales que afecten otras pantallas del Admin.
 - [ ] AC-17: implementación documentada y reutilizando tokens del Design System.
 - [ ] AC-18: resultado visualizado localmente y con aprobación antes del commit.
+
+## Entry points (grounding técnico — verificado contra el código actual)
+
+Estado real confirmado al refinar (`packages/admin/src/`):
+
+- **Renderer** `components/MarkdownRenderer.tsx` (102 líneas): `react-markdown` + `remark-gfm` +
+  `rehype-sanitize` + `MermaidDiagram`. El contenido se envuelve en
+  `<div style={{ lineHeight: 1.7, color: 'var(--foreground)' }}>` **sin clase raíz** → headings, `p`,
+  `ul/ol/li`, `hr` **no tienen override** y caen al reset de Tailwind v4 (de ahí la falta de jerarquía).
+  Hay overrides inline para `a`, `code`, `table/th/td`, `blockquote`. **Fix base**: añadir
+  `className="kaddo-markdown"` al wrapper y mover la tipografía a `components/markdown.css` (nuevo),
+  reutilizando tokens.
+- **Bug bloque sin lenguaje (AC-05)**: en el override de `code`, `const isBlock =
+  className?.startsWith('language-')` → un fenced block **sin** lenguaje no tiene `className` y se
+  renderiza como **inline**. Detectar bloque de forma robusta (vía `pre`/salto de línea) sin generar
+  `pre` anidados; preservar `className === 'language-mermaid'`.
+- **Tokens** `design-system/tokens.css`: existen `--font-sans`, `--font-mono`, `--foreground`,
+  `--foreground-muted`, `--surface`, `--surface-muted`, `--border`, `--primary`, `--radius` → reusar (no
+  crear paleta nueva).
+- **CSS global** `index.css`: importar ahí `markdown.css` (o junto al componente), **scoped** bajo
+  `.kaddo-markdown` para no afectar otras pantallas (AC-16).
+- **Consumidores reales** (verificados): `routes/KnowledgeArtifact.tsx` (2 usos),
+  `routes/WorkItemDetail.tsx` (vista Full definition, `wi.markdownBody`),
+  `components/PocFinalReport.tsx` (`report.reportContent`). Todos usan el mismo `MarkdownRenderer`, así
+  que un único cambio los cubre (AC-11); el Overview estructurado de WorkItemDetail no usa el renderer y
+  queda intacto.
+- **Tests** `tests/markdown-renderer.test.ts` (existe, básicos) → ampliar con fixture y asserts de
+  estructura/clases/sanitización (AC-14).
+
+## Validation
+
+- Unit (`markdown-renderer.test.ts` + fixture): HTML semántico correcto para H1–H6/párrafos/listas
+  anidadas/numeradas/checklists/links/inline/bloques con y **sin** lenguaje/tablas/blockquotes/HR/
+  Mermaid/cadenas largas; sin pérdida de contenido; GFM/Mermaid intactos; entradas inseguras
+  sanitizadas; sin `pre` anidados.
+- `pnpm --filter @kaddo/admin build` (tsc + vite) limpio; sin estilos globales que afecten otras
+  pantallas.
+- Revisión visual local (Admin): Business Knowledge extenso, Work Item Full Definition, doc con tablas/
+  código, doc con Mermaid, POC final report — en **light/dark** y **desktop/móvil**; capturas
+  antes/después. (Commit Gate.)
 
 ## Implementation guidance
 
