@@ -1,0 +1,132 @@
+/*
+ * Kaddo Admin — shared Markdown typography (WI-067).
+ *
+ * A self-contained reading system scoped under `.kaddo-markdown`, so it never leaks into the rest of
+ * Admin. It restores the element appearances Tailwind v4's reset removes (headings, lists, markers)
+ * and composes everything from Design System tokens, so light/dark follow the app theme automatically.
+ * Presentation only — the HTML semantics and content are untouched.
+ */
+
+.kaddo-markdown {
+  font-family: var(--font-sans);
+  color: var(--foreground);
+  font-size: 15.5px;
+  line-height: 1.7;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+/* Vertical rhythm: space before a block, little after, and no top gap at the very start. */
+.kaddo-markdown > :first-child { margin-top: 0; }
+.kaddo-markdown > :last-child { margin-bottom: 0; }
+
+/* --- Headings: clear hierarchy by size, weight, spacing and contrast --- */
+.kaddo-markdown h1,
+.kaddo-markdown h2,
+.kaddo-markdown h3,
+.kaddo-markdown h4,
+.kaddo-markdown h5,
+.kaddo-markdown h6 {
+  font-family: var(--font-display, var(--font-sans));
+  color: var(--foreground);
+  font-weight: 700;
+  line-height: 1.25;
+  margin: 1.8em 0 0.6em;
+}
+.kaddo-markdown h1 { font-size: 1.9rem; margin-top: 0.2em; letter-spacing: -0.01em; }
+.kaddo-markdown h2 { font-size: 1.5rem; padding-bottom: 0.3em; border-bottom: 1px solid var(--border); }
+.kaddo-markdown h3 { font-size: 1.25rem; }
+.kaddo-markdown h4 { font-size: 1.05rem; }
+.kaddo-markdown h5 { font-size: 0.95rem; }
+.kaddo-markdown h6 { font-size: 0.9rem; color: var(--foreground-muted); text-transform: uppercase; letter-spacing: 0.04em; }
+.kaddo-markdown h1 + *, .kaddo-markdown h2 + *, .kaddo-markdown h3 + * { margin-top: 0; }
+
+/* --- Paragraphs --- */
+.kaddo-markdown p { margin: 0 0 1em; }
+
+/* --- Lists --- */
+.kaddo-markdown ul,
+.kaddo-markdown ol { margin: 0 0 1em; padding-left: 1.6em; }
+.kaddo-markdown ul { list-style: disc; }
+.kaddo-markdown ol { list-style: decimal; }
+.kaddo-markdown li { margin: 0.35em 0; padding-left: 0.2em; }
+.kaddo-markdown li > ul,
+.kaddo-markdown li > ol { margin: 0.35em 0; }
+.kaddo-markdown ul ul { list-style: circle; }
+.kaddo-markdown ul ul ul { list-style: square; }
+
+/* GFM task lists: align the read-only checkbox, drop the bullet. */
+.kaddo-markdown li.task-list-item { list-style: none; margin-left: -1.4em; padding-left: 1.4em; }
+.kaddo-markdown li.task-list-item input[type='checkbox'] {
+  margin: 0 0.5em 0 0;
+  vertical-align: middle;
+  accent-color: var(--primary);
+}
+
+/* --- Inline + block code --- */
+.kaddo-markdown .kaddo-inline-code {
+  font-family: var(--font-mono);
+  font-size: 0.88em;
+  background: var(--surface-muted);
+  color: var(--foreground);
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+}
+.kaddo-markdown .kaddo-code-block {
+  margin: 0 0 1.2em;
+  background: var(--surface-muted);
+  border: 1px solid var(--border);
+  border-radius: var(--radius, 8px);
+  padding: 14px 16px;
+  overflow-x: auto;
+  line-height: 1.6;
+}
+.kaddo-markdown .kaddo-code-block code {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  background: none;
+  border: 0;
+  padding: 0;
+  color: var(--foreground);
+  white-space: pre;
+}
+
+/* --- Tables (GFM): localized horizontal scroll, never the whole page --- */
+.kaddo-markdown .kaddo-table-wrap { overflow-x: auto; margin: 0 0 1.2em; }
+.kaddo-markdown table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.kaddo-markdown th,
+.kaddo-markdown td { padding: 8px 12px; text-align: left; vertical-align: top; }
+.kaddo-markdown th { font-weight: 600; background: var(--surface-muted); border-bottom: 2px solid var(--border); }
+.kaddo-markdown td { border-bottom: 1px solid var(--border); }
+.kaddo-markdown tbody tr:hover { background: color-mix(in srgb, var(--surface-muted) 50%, transparent); }
+
+/* --- Blockquotes, rules, links, emphasis --- */
+.kaddo-markdown blockquote {
+  margin: 0 0 1.2em;
+  padding: 0.4em 1em;
+  border-left: 3px solid var(--primary);
+  background: color-mix(in srgb, var(--surface-muted) 40%, transparent);
+  color: var(--foreground-muted);
+  border-radius: 0 var(--radius, 8px) var(--radius, 8px) 0;
+}
+.kaddo-markdown blockquote > :last-child { margin-bottom: 0; }
+.kaddo-markdown hr { border: 0; border-top: 1px solid var(--border); margin: 2em 0; }
+.kaddo-markdown a { color: var(--primary); text-decoration: none; }
+.kaddo-markdown a:hover { text-decoration: underline; }
+.kaddo-markdown a:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; border-radius: 2px; }
+.kaddo-markdown strong { font-weight: 700; color: var(--foreground); }
+.kaddo-markdown del { color: var(--foreground-muted); }
+
+/* --- Images + diagrams --- */
+.kaddo-markdown img { max-width: 100%; height: auto; border-radius: var(--radius, 8px); }
+.kaddo-markdown .mermaid,
+.kaddo-markdown figure { margin: 1.2em 0; max-width: 100%; overflow-x: auto; }
+
+/* --- Responsive: gentler heading scale on small screens --- */
+@media (max-width: 640px) {
+  .kaddo-markdown { font-size: 15px; }
+  .kaddo-markdown h1 { font-size: 1.6rem; }
+  .kaddo-markdown h2 { font-size: 1.3rem; }
+  .kaddo-markdown h3 { font-size: 1.15rem; }
+}

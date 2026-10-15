@@ -4,6 +4,7 @@ import rehypeSanitize from 'rehype-sanitize'
 import type { Components } from 'react-markdown'
 import type { ReactNode } from 'react'
 import { MermaidDiagram } from './MermaidDiagram'
+import './markdown.css'
 
 function toText(children: ReactNode): string {
   if (typeof children === 'string') return children
@@ -13,83 +14,47 @@ function toText(children: ReactNode): string {
 }
 
 const components: Components = {
+  // Link security: strip dangerous schemes, open external links safely, keep internal links intact.
   a: ({ href, children, ...props }) => {
     if (href && (href.startsWith('javascript:') || href.startsWith('data:'))) {
       return <span>{children}</span>
     }
     const isExternal = href && (href.startsWith('http://') || href.startsWith('https://'))
     return (
-      <a
-        href={href}
-        {...(isExternal ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
-        style={{ color: 'var(--primary)' }}
-        {...props}
-      >
+      <a href={href} {...(isExternal ? { target: '_blank', rel: 'noopener noreferrer' } : {})} {...props}>
         {children}
       </a>
     )
   },
+  // react-markdown wraps block code in <pre><code>. We unwrap <pre> here so the `code` renderer owns
+  // the single <pre>, avoiding nested <pre> while still detecting blocks without a language.
+  pre: ({ children }) => <>{children}</>,
   code: ({ className, children, ...props }) => {
-    const isBlock = className?.startsWith('language-')
     if (className === 'language-mermaid') {
       return <MermaidDiagram code={toText(children)} />
     }
+    // A fenced block either declares a language or spans multiple lines; anything else is inline code.
+    const isBlock = /\blanguage-/.test(className ?? '') || toText(children).includes('\n')
     if (isBlock) {
       return (
-        <pre style={{
-          background: 'var(--surface-muted)',
-          borderRadius: 'var(--radius)',
-          padding: 16,
-          overflowX: 'auto',
-          fontSize: 13,
-        }}>
-          <code className={`font-mono ${className ?? ''}`} {...props}>{children}</code>
+        <pre className="kaddo-code-block">
+          <code className={(className ?? '').trim() || undefined} {...props}>{children}</code>
         </pre>
       )
     }
-    return (
-      <code className="font-mono" style={{
-        background: 'var(--surface-muted)',
-        padding: '1px 4px',
-        borderRadius: 3,
-        fontSize: '0.9em',
-      }} {...props}>
-        {children}
-      </code>
-    )
+    return <code className="kaddo-inline-code" {...props}>{children}</code>
   },
+  // Localized horizontal scroll for wide tables, so the page layout never overflows.
   table: ({ children, ...props }) => (
-    <div style={{ overflowX: 'auto' }}>
-      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }} {...props}>
-        {children}
-      </table>
+    <div className="kaddo-table-wrap">
+      <table {...props}>{children}</table>
     </div>
-  ),
-  th: ({ children, ...props }) => (
-    <th style={{ textAlign: 'left', padding: '8px 12px', borderBottom: '2px solid var(--border)', fontWeight: 600 }} {...props}>
-      {children}
-    </th>
-  ),
-  td: ({ children, ...props }) => (
-    <td style={{ padding: '8px 12px', borderBottom: '1px solid var(--border)' }} {...props}>
-      {children}
-    </td>
-  ),
-  blockquote: ({ children, ...props }) => (
-    <blockquote style={{
-      borderLeft: '3px solid var(--primary)',
-      paddingLeft: 16,
-      margin: '16px 0',
-      color: 'var(--foreground-muted)',
-    }} {...props}>
-      {children}
-    </blockquote>
   ),
 }
 
 export function MarkdownRenderer({ content }: { content: string }) {
   return (
-    <div style={{ lineHeight: 1.7, color: 'var(--foreground)' }}>
+    <div className="kaddo-markdown">
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         rehypePlugins={[rehypeSanitize]}
