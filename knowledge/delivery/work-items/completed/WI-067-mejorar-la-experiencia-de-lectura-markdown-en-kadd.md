@@ -2,8 +2,46 @@
 type: feature
 id: WI-067
 title: Mejorar la experiencia de lectura Markdown en Kaddo Admin
-status: ready
+status: completed
+completed_at: '2026-10-15'
 work_type: feature
+code:
+  - packages/admin/src/components/MarkdownRenderer.tsx
+  - packages/admin/src/components/markdown.css
+  - packages/admin/tests/markdown-renderer.test.ts
+implementation_evidence:
+  repositories:
+    admin:
+      role: core
+      status: completed
+      changed_paths:
+        - packages/admin/src/components/MarkdownRenderer.tsx
+        - packages/admin/src/components/markdown.css
+        - packages/admin/tests/markdown-renderer.test.ts
+      validations:
+        - command: pnpm --filter @kaddo/admin exec vitest run tests/
+          status: passed
+          reason: >-
+            66 verdes (9 archivos), incluido markdown-renderer.test.ts (5
+            casos): jerarquía H1–H6 bajo .kaddo-markdown, inline vs bloque (con
+            y sin lenguaje) sin pre anidados, task lists/tablas
+            envueltas/blockquotes/ HR, sanitización (sin javascript:/sin script,
+            contenido preservado), enlaces externos seguros y Mermaid sin fallo.
+        - command: pnpm --filter @kaddo/admin build
+          status: passed
+          reason: >-
+            tsc + vite limpios; capa markdown.css aislada bajo .kaddo-markdown
+            sin estilos globales sobre otras pantallas del Admin.
+        - command: 'Revisión visual local (kaddo admin 127.0.0.1:4173) — Commit Gate'
+          status: passed
+          reason: >-
+            Business Knowledge extenso, Work Item Full Definition (WI-065/024),
+            tabla GFM, bloque sin lenguaje, flowchart Mermaid (WI-045) en
+            light/dark y a 375px; headings escalables y tabla sin overflow de
+            página. Aprobado por el usuario antes del commit.
+implementation_status: completed
+validation_status: passed
+released_in: v3.127.0
 created_at: '2026-10-15'
 source:
   type: external
@@ -44,6 +82,7 @@ original_snapshot:
   type: feature
   status: draft
 ready_at: '2026-10-15'
+verified_at: '2026-10-15'
 ---
 
 # Mejorar la experiencia de lectura Markdown en Kaddo Admin
@@ -153,24 +192,24 @@ identidad de Admin; cambiar fórmulas/contratos de Reports; personalización tip
 
 ## Acceptance criteria
 
-- [ ] AC-01: sistema tipográfico reutilizable y aislado para Markdown.
-- [ ] AC-02: H1–H6 con jerarquía visual y espaciado consistente.
-- [ ] AC-03: párrafos extensos legibles, no pegados.
-- [ ] AC-04: listas/numeraciones/checklists con marcadores e indentación correctos.
-- [ ] AC-05: inline, bloques con lenguaje y sin lenguaje renderizan correctamente.
-- [ ] AC-06: tablas GFM legibles sin overflow del layout.
-- [ ] AC-07: citas, enlaces y separadores con estilos consistentes.
-- [ ] AC-08: diagramas Mermaid mantienen su funcionamiento.
-- [ ] AC-09: imágenes y contenido extenso respetan límites responsivos.
-- [ ] AC-10: funciona en light y dark mode.
-- [ ] AC-11: Knowledge Artifact, Work Item Full Definition y POC Final Report comparten la experiencia.
-- [ ] AC-12: no se alteran artifacts ni se transforma la semántica del contenido.
-- [ ] AC-13: se mantiene sanitización y seguridad de enlaces.
-- [ ] AC-14: pruebas de render Markdown + regresión GFM/Mermaid.
-- [ ] AC-15: validación visual de documentos reales en desktop y mobile.
-- [ ] AC-16: sin estilos globales que afecten otras pantallas del Admin.
-- [ ] AC-17: implementación documentada y reutilizando tokens del Design System.
-- [ ] AC-18: resultado visualizado localmente y con aprobación antes del commit.
+- [x] AC-01: sistema tipográfico reutilizable y aislado para Markdown.
+- [x] AC-02: H1–H6 con jerarquía visual y espaciado consistente.
+- [x] AC-03: párrafos extensos legibles, no pegados.
+- [x] AC-04: listas/numeraciones/checklists con marcadores e indentación correctos.
+- [x] AC-05: inline, bloques con lenguaje y sin lenguaje renderizan correctamente.
+- [x] AC-06: tablas GFM legibles sin overflow del layout.
+- [x] AC-07: citas, enlaces y separadores con estilos consistentes.
+- [x] AC-08: diagramas Mermaid mantienen su funcionamiento.
+- [x] AC-09: imágenes y contenido extenso respetan límites responsivos.
+- [x] AC-10: funciona en light y dark mode.
+- [x] AC-11: Knowledge Artifact, Work Item Full Definition y POC Final Report comparten la experiencia.
+- [x] AC-12: no se alteran artifacts ni se transforma la semántica del contenido.
+- [x] AC-13: se mantiene sanitización y seguridad de enlaces.
+- [x] AC-14: pruebas de render Markdown + regresión GFM/Mermaid.
+- [x] AC-15: validación visual de documentos reales en desktop y mobile.
+- [x] AC-16: sin estilos globales que afecten otras pantallas del Admin.
+- [x] AC-17: implementación documentada y reutilizando tokens del Design System.
+- [x] AC-18: resultado visualizado localmente y con aprobación antes del commit.
 
 ## Entry points (grounding técnico — verificado contra el código actual)
 
@@ -235,3 +274,27 @@ Implementation Evidence; revisión local del usuario. **Commit Gate** respetado.
 El conocimiento no solo debe estar disponible: debe poder leerse y comprenderse fácilmente. Admin debe
 presentar la documentación técnica con una jerarquía visual que ayude a encontrar información, entender
 decisiones y recorrer documentos extensos sin esfuerzo innecesario.
+
+## Learning
+
+La legibilidad del Markdown dependía de **dos** cosas y una sola no bastaba. La primera: el `MarkdownRenderer`
+envolvía el contenido sin una **clase raíz**, así que `h1–h6`, `p`, `ul/ol/li` y `hr` caían directo al reset
+de Tailwind v4 y se percibían como un flujo plano. La corrección de base fue mínima y de bajo riesgo —
+añadir `className="kaddo-markdown"` y mover toda la tipografía a una hoja dedicada (`markdown.css`) **scoped**
+bajo esa clase y compuesta solo con tokens (`--foreground`, `--surface-muted`, `--border`, `--primary`…) —,
+pero es la que devuelve jerarquía, ritmo vertical y contraste sin crear una paleta aparte y sin tocar otras
+pantallas del Admin (AC-16). Al apoyarse en tokens, light/dark salieron "gratis".
+
+La segunda fue un bug sutil en la detección de bloques de código: `isBlock = className?.startsWith('language-')`
+clasificaba como **inline** cualquier fenced block **sin** lenguaje (JSON/YAML/texto plano se veían como una
+línea gris). Detectar el bloque por la presencia de salto de línea (además del `language-*`) y **desenvolver**
+el `pre` de react-markdown para que el `code` sea dueño del único `<pre>` resolvió a la vez el render y los
+`<pre>` anidados, preservando `language-mermaid`. Lección transversal: en react-markdown conviene razonar sobre
+el HTML **real** que emite (pre>code, `node.properties.className` como array) antes de estilizar.
+
+Como los tres consumidores (`KnowledgeArtifact`, `WorkItemDetail` Full definition, `PocFinalReport`) comparten
+el mismo renderer, un único cambio cubrió toda la superficie de lectura (AC-11) — identificar eso antes de
+implementar evitó estilos paralelos. El **Commit Gate** demostró su valor: compilar y pasar tests no probaba la
+experiencia; solo verlo en Admin (Business Knowledge extenso, Full Definition, tabla GFM, bloque sin lenguaje,
+flowchart Mermaid) en light/dark y a 375px, con aprobación explícita, cerró el WI. La envoltura de tablas en
+`.kaddo-table-wrap` da scroll **localizado** sin forzar el ancho de la app en móvil. Liberado en **v3.127.0**.
