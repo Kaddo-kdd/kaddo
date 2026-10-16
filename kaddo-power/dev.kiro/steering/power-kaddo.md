@@ -49,6 +49,31 @@ notifications, analytics, documentation, operations and affected modules.
 After implementation, validate the result, use Guard, capture learning and propose the knowledge
 updates implied by the change.
 
+### Project Resources
+
+External systems declared under `knowledge/tech/resources/` (databases, APIs, cloud services, etc.)
+are Project Resources. Read them when planning implementation — they document access interfaces,
+boundaries and auth references without storing credentials. If new external systems appear during
+implementation, propose creating a Project Resource for each.
+
+### Integrations
+
+When `.kaddo/integrations.yml` exists, external work systems (Jira, GitHub Issues, etc.) are
+connected. External items may be listed and imported as Draft Work Items. Import always requires
+a human-selected Kaddo type. Kaddo never infers type from external metadata.
+
+### Initiatives
+
+Initiatives are an optional outcome layer over Work Items. They track which roadmap candidates have
+been materialized and how their associated Work Items are progressing. A Work Item never requires
+an initiative. Check initiative progress before planning large roadmap-driven work.
+
+### Verification
+
+When a Work Item is in-progress and implementation is complete, use `kaddo_verify_work_item` (or
+`kaddo verify <id>`) to collect evidence against acceptance criteria before proposing closure. The
+evidence is persisted in the Work Item front matter under `implementation_evidence`.
+
 ## Kiro and adapter responsibilities
 
 This Power provides portable Skills, MCP integration and Kiro activation guidance. Repository-level
