@@ -1,7 +1,7 @@
 ---
 type: agent
 name: capability-agent
-version: 3.126.1
+version: 3.127.0
 group: product
 ---
 # Capability Agent

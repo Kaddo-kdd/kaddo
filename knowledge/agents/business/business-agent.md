@@ -1,7 +1,7 @@
 ---
 type: agent
 name: business-agent
-version: 3.126.1
+version: 3.127.0
 group: business
 ---
 # Business Agent
