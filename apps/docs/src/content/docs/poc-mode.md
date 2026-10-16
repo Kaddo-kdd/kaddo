@@ -45,6 +45,58 @@ The canonical artifact is `knowledge/delivery/poc.md`. It records:
 - Evidence
 - Conclusion: `validated`, `rejected`, or `inconclusive`
 
+### POC template
+
+Create `knowledge/delivery/poc.md` from this template, then replace every placeholder with
+experiment-specific evidence. Keep the conclusion as `pending` until the evidence has been reviewed.
+
+```md
+---
+type: poc
+status: active
+generated_by: kaddo-init
+template_version: 1
+---
+
+# <Project name> — Proof of Concept
+
+## Problem
+
+_What are we trying to understand or solve?_
+
+## Hypothesis
+
+_What assumption are we testing?_
+
+## Expected Value
+
+_Why is validating this worth doing?_
+
+## Scenario
+
+_What concrete scenario will demonstrate the hypothesis?_
+
+## Success Criteria
+
+- [ ] _Observable result that would support the hypothesis._
+
+## Constraints
+
+_Technical, time, budget, compliance, or operational constraints._
+
+## Non-goals
+
+_What this experiment intentionally will not prove or deliver._
+
+## Evidence
+
+_Link experiments, Work Items, measurements, and observations here._
+
+## Conclusion
+
+Status: pending
+```
+
 POC mode is ready after initialization: define the hypothesis and success criteria in `poc.md`,
 then create a `spike` when the experiment is clear. It does not require the standard
 Business/Product baseline, a roadmap, or a complete capability map. Add technical context and

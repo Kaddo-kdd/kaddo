@@ -45,6 +45,58 @@ El artefacto canónico es `knowledge/delivery/poc.md`. Registra:
 - Evidencia
 - Conclusión: `validated`, `rejected` o `inconclusive`
 
+### Template de POC
+
+Crea `knowledge/delivery/poc.md` desde este template y reemplaza cada placeholder con la evidencia
+específica del experimento. Conserva la conclusión como `pending` hasta revisar la evidencia.
+
+```md
+---
+type: poc
+status: active
+generated_by: kaddo-init
+template_version: 1
+---
+
+# <Nombre del proyecto> — Proof of Concept
+
+## Problem
+
+_¿Qué necesitamos entender o resolver?_
+
+## Hypothesis
+
+_¿Qué supuesto estamos evaluando?_
+
+## Expected Value
+
+_¿Por qué vale la pena validar esto?_
+
+## Scenario
+
+_¿Qué escenario concreto demostrará la hipótesis?_
+
+## Success Criteria
+
+- [ ] _Resultado observable que respaldaría la hipótesis._
+
+## Constraints
+
+_Restricciones técnicas, de tiempo, presupuesto, cumplimiento u operación._
+
+## Non-goals
+
+_Lo que este experimento no pretende demostrar ni entregar._
+
+## Evidence
+
+_Enlaza aquí experimentos, Work Items, mediciones y observaciones._
+
+## Conclusion
+
+Status: pending
+```
+
 El modo POC queda listo después de inicializarse: define la hipótesis y los criterios de éxito en
 `poc.md`, y crea un `spike` cuando el experimento esté claro. No exige la línea base estándar de
 Business/Product, un roadmap ni un mapa completo de capacidades. Agrega contexto técnico y
