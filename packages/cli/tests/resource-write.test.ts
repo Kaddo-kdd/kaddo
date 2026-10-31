@@ -92,3 +92,100 @@ describe('WI-036 — Resource management Core', () => {
     expect(fs.existsSync(path.join(dir, 'knowledge/delivery/work-items/ready/WI-900.md'))).toBe(true)
   })
 })
+
+describe('WI-069 — non-secret connection profiles', () => {
+  let dir: string
+  beforeEach(() => { dir = tmpDir() })
+  afterEach(() => { fs.rmSync(dir, { recursive: true, force: true }) })
+
+  it('persists connection coordinates and reads them back by environment/interface (AC-02, AC-03)', async () => {
+    init(dir)
+    const core = await import('../src/core.js')
+    core.createResource(dir, {
+      title: 'Orders DB', resourceType: 'database',
+      connectionProfiles: [{
+        environment: 'production', interface: 'sql',
+        coordinates: [
+          { key: 'host', value: 'db.internal.example.com' },
+          { key: 'port', value: '5432' },
+          { key: 'database', value: 'orders' },
+          { key: 'username', value: 'orders_rw' },
+        ],
+      }],
+    })
+    const got = core.getResource(dir, 'RES-orders-db')!
+    expect(got.connectionProfiles).toHaveLength(1)
+    const p = got.connectionProfiles[0]
+    expect(p.environment).toBe('production')
+    expect(p.interface).toBe('sql')
+    expect(p.coordinates).toEqual([
+      { key: 'host', value: 'db.internal.example.com' },
+      { key: 'port', value: '5432' },
+      { key: 'database', value: 'orders' },
+      { key: 'username', value: 'orders_rw' },
+    ])
+  })
+
+  it('rejects a secret-looking coordinate with a clear, value-free error — and writes nothing (AC-13, AC-14)', async () => {
+    init(dir)
+    const core = await import('../src/core.js')
+    expect(() => core.createResource(dir, {
+      title: 'Leaky DB', resourceType: 'database',
+      connectionProfiles: [{ environment: 'production', coordinates: [{ key: 'password', value: 'hunter2-very-secret' }] }],
+    })).toThrow(/looks like a secret/i)
+    try {
+      core.createResource(dir, {
+        title: 'Leaky DB 2', resourceType: 'database',
+        connectionProfiles: [{ coordinates: [{ key: 'token', value: 'ghp_abcdefghijklmnopqrstuvwxyz0123456789' }] }],
+      })
+    } catch (e) {
+      // The message names the field, never the value.
+      expect((e as Error).message).toContain('token')
+      expect((e as Error).message).not.toContain('ghp_')
+    }
+    // Nothing was persisted for the rejected resources.
+    expect(fs.existsSync(path.join(dir, 'knowledge/tech/resources/leaky-db.md'))).toBe(false)
+    expect(fs.existsSync(path.join(dir, 'knowledge/tech/resources/leaky-db-2.md'))).toBe(false)
+  })
+
+  it('redacts a hand-authored secret coordinate on read, never exposing the value (AC-04)', async () => {
+    init(dir)
+    const core = await import('../src/core.js')
+    write(dir, 'knowledge/tech/resources/hand.md', [
+      '---', 'type: project-resource', 'id: RES-hand', 'title: Hand', 'resource_type: database',
+      'connection_profiles:', '  - environment: production', '    coordinates:',
+      '      host: db.example.com', '      api_key: sk-supersecretvalue0123456789',
+      '---', '', '# Purpose', '', 'x', '',
+    ].join('\n'))
+    const got = core.getResource(dir, 'RES-hand')!
+    const coords = got.connectionProfiles[0].coordinates
+    expect(coords.find((c) => c.key === 'host')!.value).toBe('db.example.com')
+    const apiKey = coords.find((c) => c.key === 'api_key')!
+    expect(apiKey.value).not.toContain('supersecret')
+    expect(apiKey.value).toBe(core.REDACTED_COORDINATE)
+  })
+
+  it('preserves existing connection profiles when another field is updated (AC-15)', async () => {
+    init(dir)
+    const core = await import('../src/core.js')
+    core.createResource(dir, {
+      title: 'Keep DB', resourceType: 'database',
+      connectionProfiles: [{ environment: 'production', coordinates: [{ key: 'host', value: 'keep.example.com' }] }],
+    })
+    // Update only the provider — no connectionProfiles passed.
+    core.updateResource(dir, 'RES-keep-db', { provider: 'acme' })
+    const got = core.getResource(dir, 'RES-keep-db')!
+    expect(got.provider).toBe('acme')
+    expect(got.connectionProfiles[0].coordinates).toEqual([{ key: 'host', value: 'keep.example.com' }])
+  })
+
+  it('looksLikeSecretCoordinate flags credentials but allows plain config', async () => {
+    const core = await import('../src/core.js')
+    expect(core.looksLikeSecretCoordinate('password', 'anything')).toBe(true)
+    expect(core.looksLikeSecretCoordinate('api_key', 'x')).toBe(true)
+    expect(core.looksLikeSecretCoordinate('token', 'ghp_abcdefghijklmnopqrstuvwxyz0123')).toBe(true)
+    expect(core.looksLikeSecretCoordinate('host', 'db.example.com')).toBe(false)
+    expect(core.looksLikeSecretCoordinate('port', '5432')).toBe(false)
+    expect(core.looksLikeSecretCoordinate('username', 'app_rw')).toBe(false)
+  })
+})

@@ -61,6 +61,47 @@ mechanism, a required role, an access boundary. Not allowed: tokens, passwords, 
 connection strings with secrets, database credentials. Kaddo defensively drops any `authentication.refs`
 entry that looks like a value (e.g. `NAME=value`), so a mistake never leaks.
 
+## Connection coordinates
+
+Beyond name and type, a resource can declare **non-secret connection coordinates** — where and how it is
+reached — as `connection_profiles`, one per environment and access interface. These are **configuration**
+(host, port, database, username/role, region, account/project, URL), never credential **values**:
+
+```yaml
+connection_profiles:
+  - environment: production
+    interface: sql
+    coordinates:
+      host: db.internal.example.com
+      port: "5432"
+      database: orders
+      username: orders_rw        # a role/username is config; its PASSWORD is not — keep it in authentication.refs
+  - environment: production
+    interface: api
+    coordinates:
+      url: https://api.example.com/v1
+      region: eu-west-1
+```
+
+Fields are **optional and depend on the resource type** (a database uses host/port/database; an API uses
+url; cloud uses region/account). Admin renders them in the resource view under *Connection coordinates*
+and lets you create, edit and consult profiles per environment. The canonical source stays the Markdown
+under `knowledge/tech/resources/` — Admin reads and writes there; it never keeps a second copy.
+
+Kaddo **validates** coordinates before persisting: a value that looks like a credential (a key named
+`password`/`token`/`api_key`/…, or a value shaped like a secret such as `ghp_…`, `sk-…`, a JWT or a long
+opaque blob) is **rejected with a clear error** — never silently dropped, and the error never echoes the
+value. On read, a secret-looking coordinate found in a hand-edited file is **redacted**, so the UI never
+shows it.
+
+:::caution[Versioning and OKF export]
+Connection coordinates are stored in Markdown, so they are **versioned with the repo** and can be
+**exported via [OKF](/okf-integration/)**. They are non-secret, but they are still **internal
+infrastructure metadata** (hostnames, database names, usernames, regions). Treat a knowledge bundle you
+export or share accordingly, and keep anything truly sensitive out of coordinates and in a secrets manager
+referenced by name only.
+:::
+
 ## Link resources to Work Items
 
 A Work Item declares the resources it relates to, by **role**, in its front matter — separate from

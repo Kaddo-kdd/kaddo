@@ -61,6 +61,48 @@ el mecanismo de auth, un rol requerido, un boundary. No permitido: tokens, passw
 connection strings con secretos, credenciales de DB. Kaddo descarta defensivamente cualquier entrada de
 `authentication.refs` que parezca un valor (p. ej. `NAME=value`), así un error no filtra nada.
 
+## Coordenadas de conexión
+
+Más allá del nombre y el tipo, un recurso puede declarar **coordenadas de conexión no secretas** —dónde y
+cómo se accede a él— como `connection_profiles`, una por entorno e interfaz de acceso. Son
+**configuración** (host, puerto, base de datos, usuario/rol, región, cuenta/proyecto, URL), nunca
+**valores** de credenciales:
+
+```yaml
+connection_profiles:
+  - environment: production
+    interface: sql
+    coordinates:
+      host: db.internal.example.com
+      port: "5432"
+      database: orders
+      username: orders_rw        # el usuario/rol es config; su PASSWORD no — va en authentication.refs
+  - environment: production
+    interface: api
+    coordinates:
+      url: https://api.example.com/v1
+      region: eu-west-1
+```
+
+Los campos son **opcionales y dependen del tipo de recurso** (una base de datos usa host/puerto/db; una
+API usa url; cloud usa región/cuenta). Admin las muestra en la vista del recurso bajo *Connection
+coordinates* y permite crear, editar y consultar perfiles por entorno. La fuente canónica sigue siendo el
+Markdown en `knowledge/tech/resources/` —Admin lee y escribe ahí; nunca guarda una segunda copia.
+
+Kaddo **valida** las coordenadas antes de persistir: un valor con pinta de credencial (una clave llamada
+`password`/`token`/`api_key`/…, o un valor con forma de secreto como `ghp_…`, `sk-…`, un JWT o un blob
+largo y opaco) se **rechaza con un error claro** —nunca se descarta en silencio, y el error no revela el
+valor—. En la lectura, una coordenada con pinta de secreto en un archivo editado a mano se **redacta**,
+de modo que la UI nunca la muestra.
+
+:::caution[Versionado y exportación OKF]
+Las coordenadas de conexión se guardan en Markdown, así que se **versionan con el repo** y pueden
+**exportarse vía [OKF](/es/okf-integration/)**. No son secretas, pero siguen siendo **metadatos internos
+de infraestructura** (hostnames, nombres de base de datos, usuarios, regiones). Trata en consecuencia un
+bundle de conocimiento que exportes o compartas, y mantén lo realmente sensible fuera de las coordenadas y
+en un gestor de secretos referenciado solo por nombre.
+:::
+
 ## Vincular resources a Work Items
 
 Un Work Item declara los resources con los que se relaciona, por **rol**, en su frontmatter — separado

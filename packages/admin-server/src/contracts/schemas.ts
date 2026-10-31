@@ -507,6 +507,12 @@ const AccessInterfaceInputSchema = z.object({
   environments: z.array(z.string()).optional(),
   constraints: z.string().optional(),
 })
+// Non-secret connection profile: coordinates are config (host/port/db/user/region/url), never values.
+const ConnectionProfileInputSchema = z.object({
+  environment: z.string().optional(),
+  interface: z.string().optional(),
+  coordinates: z.array(z.object({ key: z.string(), value: z.string() })).optional(),
+})
 export const ResourceCreateSchema = z.object({
   title: z.string().min(1),
   resourceType: z.string().min(1),
@@ -516,6 +522,7 @@ export const ResourceCreateSchema = z.object({
   modules: z.array(z.string()).optional(),
   purpose: z.string().optional(),
   accessInterfaces: z.array(AccessInterfaceInputSchema).optional(),
+  connectionProfiles: z.array(ConnectionProfileInputSchema).optional(),
   authentication: z.object({ mode: z.string().optional(), refs: z.array(z.string()).optional() }).optional(),
 })
 export const ResourceUpdateSchema = ResourceCreateSchema.partial()

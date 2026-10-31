@@ -34,6 +34,44 @@ export type AccessInterface = {
   constraints: string | null
 }
 
+/**
+ * A non-secret connection profile: where/how a resource is reached in a given environment and access
+ * interface. Coordinates are CONFIGURATION (host, port, database, username, region, url…), never
+ * credential VALUES — those stay as authentication references. Fields are optional per resource type.
+ */
+export type ConnectionProfile = {
+  environment: string | null
+  interface: string | null
+  coordinates: { key: string; value: string }[]
+}
+
+/** The marker shown instead of a coordinate value that looks like a secret (defense in depth on read). */
+export const REDACTED_COORDINATE = '•••• (hidden — store as an authentication reference)'
+
+// Coordinate keys that name a credential rather than a connection coordinate — never stored as values.
+const SECRET_KEY_RE = /(pass(word|phrase)?|secret|token|api[_-]?key|\bkey\b|credential|private|auth[_-]?token|access[_-]?key)/i
+
+// Value shapes that look like a credential/opaque token rather than a host/port/db/user/region/url.
+const SECRET_VALUE_PATTERNS: RegExp[] = [
+  /\b(AKIA|ASIA)[A-Z0-9]{8,}/,          // AWS access key id
+  /\b(ghp|gho|ghu|ghs|ghr)_[A-Za-z0-9]{20,}/, // GitHub tokens
+  /\bxox[baprs]-[A-Za-z0-9-]{10,}/,     // Slack tokens
+  /\bsk-[A-Za-z0-9]{16,}/,              // OpenAI-style secret keys
+  /\beyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\./, // JWT
+  /\w+=[^;\s]{6,}/,                       // key=value credential fragments
+  /^[A-Za-z0-9+/]{40,}={0,2}$/,          // long opaque base64 blob
+]
+
+/**
+ * Whether a coordinate (key + value) looks like a credential rather than non-secret configuration.
+ * Used to REJECT on write (with a clear error) and to REDACT on read (defense in depth).
+ */
+export function looksLikeSecretCoordinate(key: string, value: string): boolean {
+  if (SECRET_KEY_RE.test(key)) return true
+  const v = value.trim()
+  return SECRET_VALUE_PATTERNS.some((re) => re.test(v))
+}
+
 /** Ownership/scope of a resource in a multirepo system (WI-036). Distinct from module dependency. */
 export type ResourceScope = { type: string; module: string | null }
 
@@ -61,6 +99,8 @@ export type ResourceDetail = ResourceSummary & {
    */
   authRefs: string[]
   authMode: string | null
+  /** Non-secret connection profiles (host/port/db/user/region/url…) by environment and interface. */
+  connectionProfiles: ConnectionProfile[]
   /** The canonical Markdown body (verbatim), for faithful human display. */
   markdownBody: string
 }
@@ -92,6 +132,34 @@ function parseInterfaces(v: unknown): AccessInterface[] {
       environments: strArray(o.environments),
       constraints: str(o.constraints),
     })
+  }
+  return out
+}
+
+/**
+ * Parse `connection_profiles: [{ environment, interface, coordinates: { key: value } }]`. Coordinates
+ * are read as ordered key/value pairs; any value that looks like a secret is REDACTED (never shown).
+ */
+function parseConnectionProfiles(v: unknown): ConnectionProfile[] {
+  if (!Array.isArray(v)) return []
+  const out: ConnectionProfile[] = []
+  for (const raw of v) {
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) continue
+    const o = raw as Record<string, unknown>
+    const coords: { key: string; value: string }[] = []
+    const rawCoords = o.coordinates
+    if (rawCoords && typeof rawCoords === 'object' && !Array.isArray(rawCoords)) {
+      for (const [key, val] of Object.entries(rawCoords as Record<string, unknown>)) {
+        const k = key.trim()
+        const value = val == null ? '' : String(val).trim()
+        if (!k || !value) continue
+        coords.push({ key: k, value: looksLikeSecretCoordinate(k, value) ? REDACTED_COORDINATE : value })
+      }
+    }
+    const environment = str(o.environment)
+    const iface = str(o.interface)
+    if (!environment && !iface && coords.length === 0) continue
+    out.push({ environment, interface: iface, coordinates: coords })
   }
   return out
 }
@@ -154,6 +222,7 @@ function toDetail(filePath: string, relPath: string, raw: string): ResourceDetai
       const a = parseAuth(fm.authentication)
       return { authRefs: a.refs, authMode: a.mode }
     })(),
+    connectionProfiles: parseConnectionProfiles(fm.connection_profiles),
     markdownBody: body,
   }
 }

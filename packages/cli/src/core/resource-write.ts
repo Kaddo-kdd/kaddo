@@ -12,6 +12,7 @@ import { loadMappedModules } from '../services/mapped-modules.js'
 import {
   getResource,
   parseWorkItemResources,
+  looksLikeSecretCoordinate,
   RESOURCE_ARTIFACT_TYPE,
   RESOURCE_TYPES,
   INTERFACE_TYPES,
@@ -30,6 +31,13 @@ export type AccessInterfaceInput = {
   constraints?: string
 }
 
+/** A non-secret connection profile captured from a client (Admin/CLI/MCP). Coordinates are config. */
+export type ConnectionProfileInput = {
+  environment?: string
+  interface?: string
+  coordinates?: { key: string; value: string }[]
+}
+
 export type ResourceInput = {
   /** Required on create (used for the id when none is given). */
   title?: string
@@ -42,6 +50,8 @@ export type ResourceInput = {
   accessInterfaces?: AccessInterfaceInput[]
   accessBoundaries?: Record<string, string[]>
   authentication?: { mode?: string; refs?: string[] }
+  /** Non-secret connection profiles (host/port/db/user/region/url…) by environment and interface. */
+  connectionProfiles?: ConnectionProfileInput[]
   /** Optional explicit id on create (otherwise derived from the title). */
   id?: string
 }
@@ -104,6 +114,22 @@ export function validateResource(dir: string, input: ResourceInput): ResourceFin
       findings.push({ level: 'warning', message: `Unknown access interface type "${i.type}".` })
     }
   }
+  // Connection coordinates are non-secret config. A value that looks like a credential is REJECTED
+  // (an error, never silently dropped) — and the message names the field, never the value (WI-069).
+  for (const p of input.connectionProfiles ?? []) {
+    const where = p.environment ? ` in environment "${p.environment}"` : ''
+    for (const c of p.coordinates ?? []) {
+      const key = (c?.key ?? '').trim()
+      const value = (c?.value ?? '').trim()
+      if (!key || !value) continue
+      if (looksLikeSecretCoordinate(key, value)) {
+        findings.push({
+          level: 'error',
+          message: `Connection coordinate "${key}"${where} looks like a secret value. Store credentials as authentication references, not connection coordinates.`,
+        })
+      }
+    }
+  }
   // Module validation against .kaddo/modules.yml when available (no remote access).
   const mapped = loadMappedModules(dir).map((m) => m.id)
   if (mapped.length > 0) {
@@ -133,6 +159,25 @@ function buildFrontmatter(id: string, input: ResourceInput, base: Record<string,
   if (input.modules != null) data.modules = input.modules
   if (input.accessInterfaces != null) data.access_interfaces = input.accessInterfaces
   if (input.accessBoundaries != null) data.access_boundaries = input.accessBoundaries
+  if (input.connectionProfiles != null) {
+    data.connection_profiles = input.connectionProfiles
+      .map((p) => {
+        const coordinates: Record<string, string> = {}
+        for (const c of p.coordinates ?? []) {
+          const key = (c?.key ?? '').trim()
+          const value = (c?.value ?? '').trim()
+          // Secrets are rejected in validateResource; this is a final guard so no value ever persists.
+          if (!key || !value || looksLikeSecretCoordinate(key, value)) continue
+          coordinates[key] = value
+        }
+        const entry: Record<string, unknown> = {}
+        if (p.environment?.trim()) entry.environment = p.environment.trim()
+        if (p.interface?.trim()) entry.interface = p.interface.trim()
+        if (Object.keys(coordinates).length) entry.coordinates = coordinates
+        return entry
+      })
+      .filter((e) => Object.keys(e).length > 0)
+  }
   if (input.authentication != null) {
     const mode = input.authentication.mode
     const refs = sanitizeRefs(input.authentication.refs)

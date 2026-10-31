@@ -453,15 +453,23 @@ export type ResourceSummary = {
   environments: string[]; scope: ResourceScope | null; modules: string[]; path: string
 }
 export type ResourceReference = { kind: string; id: string; role: string; path: string }
+export type ResourceConnectionProfile = {
+  environment: string | null; interface: string | null; coordinates: { key: string; value: string }[]
+}
 export type ResourceDetail = ResourceSummary & {
   purpose: string | null; interfaces: ResourceAccessInterface[]
   boundaries: Record<string, string[]>; authRefs: string[]; authMode: string | null
+  connectionProfiles: ResourceConnectionProfile[]
   markdownBody: string; references: ResourceReference[]
+}
+export type ResourceConnectionProfileInput = {
+  environment?: string; interface?: string; coordinates?: { key: string; value: string }[]
 }
 export type ResourceInput = {
   title?: string; resourceType?: string; provider?: string; environments?: string[]
   scope?: { type: string; module?: string | null }; modules?: string[]; purpose?: string
   accessInterfaces?: { type: string; tool?: string; provider?: string; purpose?: string; operations?: string[]; environments?: string[]; constraints?: string }[]
+  connectionProfiles?: ResourceConnectionProfileInput[]
   authentication?: { mode?: string; refs?: string[] }
 }
 

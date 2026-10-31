@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useParams, useRouter } from '@tanstack/react-router'
 import { api } from '../lib/api'
+import { MarkdownRenderer } from '../components/MarkdownRenderer'
+import { toDraft, toInput, type ProfileDraft } from '../lib/resource-profiles'
 
 export function ResourceDetail() {
   const { resourceId } = useParams({ from: '/resources/$resourceId' })
@@ -12,12 +14,18 @@ export function ResourceDetail() {
   const [editing, setEditing] = useState(false)
   const [provider, setProvider] = useState('')
   const [purpose, setPurpose] = useState('')
+  const [profiles, setProfiles] = useState<ProfileDraft[]>([])
   const [confirmingDelete, setConfirmingDelete] = useState(false)
   const [refs, setRefs] = useState<{ id: string; role: string }[]>([])
   const [actionError, setActionError] = useState<string | null>(null)
 
   const save = useMutation({
-    mutationFn: () => api.updateResource(resourceId, { provider: provider.trim() || undefined, purpose: purpose.trim() || undefined }),
+    // Send the profiles back on every save so editing another field never drops them (AC-15).
+    mutationFn: () => api.updateResource(resourceId, {
+      provider: provider.trim() || undefined,
+      purpose: purpose.trim() || undefined,
+      connectionProfiles: toInput(profiles),
+    }),
     onSuccess: () => { setEditing(false); queryClient.invalidateQueries({ queryKey: ['resource', resourceId] }) },
     onError: (e: unknown) => setActionError(e instanceof Error ? e.message : 'Update failed.'),
   })
@@ -36,6 +44,14 @@ export function ResourceDetail() {
   if (isLoading) return <div style={{ padding: 24 }}>Loading…</div>
   if (error || !r) return <div style={{ padding: 24, color: 'var(--danger)' }}>{(error as Error)?.message ?? 'Not found.'}</div>
 
+  const startEdit = () => {
+    setProvider(r.provider ?? '')
+    setPurpose(r.purpose ?? '')
+    setProfiles(toDraft(r.connectionProfiles))
+    setEditing((v) => !v)
+    setActionError(null)
+  }
+
   return (
     <div style={{ padding: '24px 32px', maxWidth: 820, margin: '0 auto' }}>
       <button onClick={() => router.navigate({ to: '/resources' })} style={back}>← Resources</button>
@@ -45,7 +61,7 @@ export function ResourceDetail() {
           <h2 style={{ fontSize: 22, fontWeight: 700, margin: '4px 0 0' }}>{r.title}</h2>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
-          <button onClick={() => { setProvider(r.provider ?? ''); setPurpose(r.purpose ?? ''); setEditing((v) => !v); setActionError(null) }} style={btn}>{editing ? 'Cancel' : 'Edit'}</button>
+          <button onClick={startEdit} style={btn}>{editing ? 'Cancel' : 'Edit'}</button>
           <button onClick={() => { setActionError(null); startDelete.mutate() }} style={{ ...btn, color: 'var(--danger)' }}>Delete</button>
         </div>
       </div>
@@ -70,7 +86,37 @@ export function ResourceDetail() {
         <div style={card}>
           <label style={lbl}>Provider<input value={provider} onChange={(e) => setProvider(e.target.value)} style={input} /></label>
           <label style={lbl}>Purpose<textarea value={purpose} onChange={(e) => setPurpose(e.target.value)} rows={3} style={{ ...input, resize: 'vertical' }} /></label>
-          <button disabled={save.isPending} onClick={() => save.mutate()} style={{ ...btn, background: 'var(--primary)', color: 'var(--primary-foreground, #141b2d)', border: 'none' }}>{save.isPending ? 'Saving…' : 'Save'}</button>
+
+          <div style={{ marginTop: 6 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+              <span style={{ fontSize: 13, fontWeight: 600 }}>Connection profiles</span>
+              <span style={{ fontSize: 12, color: 'var(--foreground-muted)' }}>Non-secret config only — never credentials</span>
+            </div>
+            {profiles.map((p, pi) => (
+              <div key={pi} style={{ border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: 12, marginTop: 8 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: 8, alignItems: 'end' }}>
+                  <label style={lbl}>Environment<input value={p.environment} onChange={(e) => editProfile(setProfiles, pi, (d) => ({ ...d, environment: e.target.value }))} placeholder="production" style={input} /></label>
+                  <label style={lbl}>Interface<input value={p.interface} onChange={(e) => editProfile(setProfiles, pi, (d) => ({ ...d, interface: e.target.value }))} placeholder="sql / api / …" style={input} /></label>
+                  <button onClick={() => setProfiles((ps) => ps.filter((_, i) => i !== pi))} style={{ ...btn, color: 'var(--danger)' }}>Remove</button>
+                </div>
+                <div style={{ marginTop: 6 }}>
+                  {p.coordinates.map((c, ci) => (
+                    <div key={ci} style={{ display: 'grid', gridTemplateColumns: '1fr 1.4fr auto', gap: 8, marginTop: 6 }}>
+                      <input value={c.key} onChange={(e) => editCoord(setProfiles, pi, ci, (co) => ({ ...co, key: e.target.value }))} placeholder="host / port / database / username / region / url" style={input} />
+                      <input value={c.value} onChange={(e) => editCoord(setProfiles, pi, ci, (co) => ({ ...co, value: e.target.value }))} placeholder="value (no secrets)" style={input} />
+                      <button onClick={() => editProfile(setProfiles, pi, (d) => ({ ...d, coordinates: d.coordinates.filter((_, i) => i !== ci) }))} style={btn}>✕</button>
+                    </div>
+                  ))}
+                  <button onClick={() => editProfile(setProfiles, pi, (d) => ({ ...d, coordinates: [...d.coordinates, { key: '', value: '' }] }))} style={{ ...btn, marginTop: 8 }}>+ Coordinate</button>
+                </div>
+              </div>
+            ))}
+            <button onClick={() => setProfiles((ps) => [...ps, { environment: '', interface: '', coordinates: [{ key: '', value: '' }] }])} style={{ ...btn, marginTop: 8 }}>+ Connection profile</button>
+          </div>
+
+          <div style={{ marginTop: 12 }}>
+            <button disabled={save.isPending} onClick={() => { setActionError(null); save.mutate() }} style={{ ...btn, background: 'var(--primary)', color: 'var(--primary-foreground, #141b2d)', border: 'none' }}>{save.isPending ? 'Saving…' : 'Save'}</button>
+          </div>
         </div>
       )}
 
@@ -84,6 +130,25 @@ export function ResourceDetail() {
           ['Purpose', r.purpose ?? '—'],
         ]} />
       </Section>
+
+      {r.connectionProfiles.length > 0 && (
+        <Section title="Connection coordinates (non-secret — not credentials)">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {r.connectionProfiles.map((p, idx) => (
+              <div key={idx} style={{ border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '10px 14px' }}>
+                {(p.environment || p.interface) && (
+                  <div style={{ fontSize: 13, fontWeight: 600, marginBottom: p.coordinates.length ? 8 : 0 }}>
+                    {p.environment ?? 'any environment'}{p.interface ? <span style={{ color: 'var(--foreground-muted)', fontWeight: 400 }}> · {p.interface}</span> : null}
+                  </div>
+                )}
+                {p.coordinates.length > 0 && (
+                  <Grid rows={p.coordinates.map((c) => [c.key, c.value])} />
+                )}
+              </div>
+            ))}
+          </div>
+        </Section>
+      )}
 
       {r.interfaces.length > 0 && (
         <Section title="Access interfaces">
@@ -119,8 +184,21 @@ export function ResourceDetail() {
           </div>
         </Section>
       )}
+
+      {r.markdownBody.trim() && (
+        <Section title="Full document">
+          <MarkdownRenderer content={r.markdownBody} />
+        </Section>
+      )}
     </div>
   )
+}
+
+function editProfile(setProfiles: React.Dispatch<React.SetStateAction<ProfileDraft[]>>, pi: number, fn: (d: ProfileDraft) => ProfileDraft) {
+  setProfiles((ps) => ps.map((p, i) => (i === pi ? fn(p) : p)))
+}
+function editCoord(setProfiles: React.Dispatch<React.SetStateAction<ProfileDraft[]>>, pi: number, ci: number, fn: (c: { key: string; value: string }) => { key: string; value: string }) {
+  editProfile(setProfiles, pi, (d) => ({ ...d, coordinates: d.coordinates.map((c, i) => (i === ci ? fn(c) : c)) }))
 }
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {

@@ -111,6 +111,7 @@ export function Resources() {
                 </div>
                 <div style={{ fontSize: 13, color: 'var(--foreground-muted)', textAlign: 'right' }}>
                   <div>{r.resourceType ?? '—'}{r.provider ? ` · ${r.provider}` : ''}</div>
+                  {r.environments.length > 0 && <div style={{ fontSize: 12 }}>envs: {r.environments.join(', ')}</div>}
                   {r.modules.length > 0 && <div style={{ fontSize: 12 }}>used by: {r.modules.join(', ')}</div>}
                 </div>
               </button>
