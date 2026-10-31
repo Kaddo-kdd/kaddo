@@ -22,6 +22,13 @@ import {
   renderGraphHintsMarkdown,
   serializeGraphHintsJson,
 } from '../../cli/src/core/graph-hints.js'
+import {
+  buildConsolidationPlan,
+  renderConsolidationMarkdown,
+  serializeConsolidationJson,
+  type ConsolidationScope,
+} from '../../cli/src/core/knowledge-consolidation.js'
+import type { LayerName } from '../../cli/src/core/knowledge-discovery.js'
 import { buildCapsule, renderCapsuleMarkdown, serializeCapsuleJson } from '../../cli/src/core/capsule.js'
 import { buildImpactReport, renderImpactMarkdown, serializeImpactJson } from '../../cli/src/core/impact-report.js'
 import { buildSavingsReport, renderSavingsMarkdown, serializeSavingsJson } from '../../cli/src/core/savings.js'
@@ -125,6 +132,55 @@ export function generateGraph(root: string, scope: 'active' | 'all' = 'active'):
     summary: `Knowledge graph and hints generated successfully (${scope} scope).`,
     warnings,
     next_suggested_resources: ['kaddo://graph', 'kaddo://graph-hints'],
+  }
+}
+
+const LAYER_BY_FLAG: Record<string, LayerName> = {
+  business: 'Business',
+  product: 'Product',
+  tech: 'Tech',
+  delivery: 'Delivery',
+}
+
+/**
+ * kaddo_generate_consolidation_plan — analyze canonical knowledge and write a reviewable
+ * Consolidation Plan to `.kaddo/consolidation-plan.{md,json}` (WI-070). Deterministic: reads only
+ * `knowledge/`, never calls an LLM, never modifies canonical artifacts. Semantic review of the
+ * `suggested` candidates is an agent/skill step, not this tool.
+ */
+export function generateConsolidationPlan(
+  root: string,
+  opts: { layer?: string; module?: string } = {}
+): GenerateResult {
+  requireConfig(root)
+  requireKnowledge(root)
+
+  let scope: ConsolidationScope = { kind: 'all' }
+  if (opts.module) {
+    scope = { kind: 'module', module: opts.module }
+  } else if (opts.layer) {
+    const layer = LAYER_BY_FLAG[opts.layer.toLowerCase()]
+    if (!layer) {
+      throw new KaddoMcpError(`Unknown layer "${opts.layer}". Use one of: business, product, tech, delivery.`)
+    }
+    scope = { kind: 'layer', layer }
+  }
+
+  const plan = buildConsolidationPlan(root, { scope })
+  writeDerived(root, '.kaddo/consolidation-plan.md', renderConsolidationMarkdown(plan))
+  writeDerived(root, '.kaddo/consolidation-plan.json', serializeConsolidationJson(plan))
+
+  const warnings =
+    plan.summary.requires_semantic_review > 0
+      ? [`${plan.summary.requires_semantic_review} finding(s) require semantic review before acting — nothing was changed automatically.`]
+      : []
+
+  return {
+    status: 'ok',
+    files_written: ['.kaddo/consolidation-plan.md', '.kaddo/consolidation-plan.json'],
+    summary: `Consolidation Plan generated (scope: ${plan.scope}, ${plan.summary.total} opportunity/opportunities).`,
+    warnings,
+    next_suggested_resources: ['kaddo://consolidation-plan'],
   }
 }
 

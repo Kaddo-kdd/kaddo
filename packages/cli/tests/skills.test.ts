@@ -35,6 +35,7 @@ describe('Skills layer (VS-059)', () => {
         'evidence-verification',
         'graph-metadata-review',
         'implementation-planning',
+        'knowledge-consolidation',
         'learning-capture',
         'legacy-risk-assessment',
         'module-context-refinement',

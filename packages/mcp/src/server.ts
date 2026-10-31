@@ -69,6 +69,7 @@ import {
   generateExplain,
   generateUnderstand,
   generateGraph,
+  generateConsolidationPlan,
   generateCapsuleDraft,
   generateImpactReport,
   generateSavingsReport,
@@ -915,6 +916,18 @@ export function createServer(root: string): McpServer {
       inputSchema: { scope: z.enum(['active', 'all']).optional() },
     },
     async (args) => generated(root, 'generate knowledge graph', () => generateGraph(root, args.scope ?? 'active'))
+  )
+  server.registerTool(
+    'kaddo_generate_consolidation_plan',
+    {
+      title: 'Generate knowledge consolidation plan',
+      description: `Analyze canonical knowledge and write .kaddo/consolidation-plan.md/.json — a reviewable projection of consolidation opportunities (redundancy, unincorporated learning, fragmentation, relationships, potential inconsistencies, organization). Deterministic: facts are "observed"; anything needing judgement is a "suggested" candidate flagged for semantic review. Optional layer (business|product|tech|delivery) or module scope. ${DERIVED_NOTE}`,
+      inputSchema: { layer: z.string().optional(), module: z.string().optional() },
+    },
+    async (args) =>
+      generated(root, 'generate consolidation plan', () =>
+        generateConsolidationPlan(root, { layer: args.layer, module: args.module })
+      )
   )
   server.registerTool(
     'kaddo_generate_impact_report',

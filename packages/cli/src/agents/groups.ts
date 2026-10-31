@@ -31,6 +31,7 @@ export const AGENT_GROUPS: Record<AgentGroup, string[]> = {
     'implementation-agent.md',
     'ownership-agent.md',
     'git-strategy-agent.md',
+    'knowledge-consolidation-agent.md',
   ],
   utilities: ['legacy-agent.md'],
 }

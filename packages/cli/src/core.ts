@@ -8,6 +8,19 @@ export { buildDriftReport, renderDriftMarkdown, serializeDriftJson, type DriftRe
 export { buildSavingsReport, renderSavingsMarkdown, serializeSavingsJson, type SavingsReport } from './core/savings.js'
 export { buildReadinessReport, type ReadinessReport, type ReadinessStatus } from './core/readiness.js'
 export { buildProjectRoute, type ProjectRoute, type RouteStep, type RouteStepStatus } from './core/project-route.js'
+export {
+  buildConsolidationPlan,
+  consolidationPlanStaleness,
+  renderConsolidationMarkdown,
+  serializeConsolidationJson,
+  CONSOLIDATION_CATEGORIES,
+  type ConsolidationPlan,
+  type ConsolidationOpportunity,
+  type ConsolidationCategory,
+  type ConsolidationClassification,
+  type ConsolidationScope,
+  type StalenessResult,
+} from './core/knowledge-consolidation.js'
 export { knowledgeLayers, type LayerStatus, type LayerName, type LayerMaturity } from './core/layers.js'
 export { loadConfig, isModule, projectMode, setProjectMode, type KaddoConfig, type ProjectState, type ProjectMode, type RepositoryStructure } from './core/config.js'
 export { readPocSummary, POC_ARTIFACT_PATH, type PocSummary, type PocConclusion } from './core/poc.js'

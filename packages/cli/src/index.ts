@@ -60,6 +60,7 @@ import { runAdmin } from './commands/admin.js'
 import { runWorkItemImport } from './commands/work-item.js'
 import { runPocReport } from './commands/poc.js'
 import { runVerify } from './commands/verify.js'
+import { runKnowledgeConsolidate } from './commands/knowledge.js'
 import { runTelemetryStatus, runTelemetryEnable, runTelemetryDisable } from './commands/telemetry.js'
 import {
   runInitiativeList,
@@ -179,6 +180,20 @@ graphCmd
   .option('--format <format>', 'Output format: json, mermaid (default: both)')
   .action((opts: { scope?: string; format?: string }) => {
     runGraphExport(opts)
+  })
+
+const knowledgeCmd = program
+  .command('knowledge')
+  .description('Operate on the canonical knowledge base (consolidation analysis — read-only, no LLM)')
+
+knowledgeCmd
+  .command('consolidate')
+  .description('Analyze canonical knowledge and write a reviewable Consolidation Plan to .kaddo/ (no changes to knowledge/)')
+  .option('--layer <layer>', 'Limit the analysis to one layer: business, product, tech, delivery')
+  .option('--module <id>', 'Limit the analysis to artifacts affecting one mapped module')
+  .option('--scope <scope>', 'Analysis scope: all (default)')
+  .action((opts: { layer?: string; module?: string; scope?: string }) => {
+    runKnowledgeConsolidate(opts)
   })
 
 const topologyCmd = program

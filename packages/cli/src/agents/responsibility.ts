@@ -209,6 +209,24 @@ export const RESPONSIBILITY_MATRIX: Record<string, AgentResponsibility> = {
     ],
     next: ['kaddo graph export'],
   },
+  'knowledge-consolidation-agent': {
+    agent: 'knowledge-consolidation-agent',
+    responsibleFor: [
+      'Semantic review of the deterministic Consolidation Plan',
+      'Preparing reviewable knowledge refinements',
+    ],
+    produces: ['proposed refinements (before/after) for human approval'],
+    canSuggest: ['kaddo knowledge consolidate'],
+    cannotSuggest: [
+      'code',
+      'git',
+      'commits',
+      'modifying canonical knowledge without confirmation',
+      'inventing facts or relationships',
+      'deleting history',
+    ],
+    next: ['kaddo knowledge consolidate'],
+  },
   'ownership-agent': {
     agent: 'ownership-agent',
     responsibleFor: ['Precise code: ownership for Work Items and artifacts'],
@@ -419,6 +437,7 @@ export function renderResponsibilityMatrixMarkdown(): string {
     'implementation-agent',
     'capsule-agent',
     'graph-agent',
+    'knowledge-consolidation-agent',
     'ownership-agent',
     'guard-agent',
     'git-strategy-agent',

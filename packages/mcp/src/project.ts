@@ -111,6 +111,8 @@ const DERIVED_WRITE_FILES = new Set([
   '.kaddo/graph.mmd',
   '.kaddo/graph-hints.md',
   '.kaddo/graph-hints.json',
+  '.kaddo/consolidation-plan.md',
+  '.kaddo/consolidation-plan.json',
   '.kaddo/modules.yml',
 ])
 

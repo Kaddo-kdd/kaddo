@@ -113,6 +113,27 @@ export const RESOURCES: ResourceDescriptor[] = [
     },
   },
   {
+    uri: 'kaddo://consolidation-plan',
+    name: 'Kaddo consolidation plan',
+    description: 'Knowledge Consolidation Plan (.kaddo/consolidation-plan.md + .json) — reviewable opportunities to optimize, connect and refine canonical knowledge. Read-only.',
+    mimeType: 'text/markdown',
+    read: (root) => {
+      const md = readText(root, '.kaddo/consolidation-plan.md')
+      const json = readText(root, '.kaddo/consolidation-plan.json')
+      if (!md && !json) {
+        return text(
+          'kaddo://consolidation-plan',
+          'Consolidation Plan not found. Run `kaddo knowledge consolidate` (or the kaddo_generate_consolidation_plan tool) first.',
+          'text/plain'
+        )
+      }
+      const parts: ResourcePart[] = []
+      if (md) parts.push({ uri: 'kaddo://consolidation-plan', text: md, mimeType: 'text/markdown' })
+      if (json) parts.push({ uri: 'kaddo://consolidation-plan.json', text: json, mimeType: 'application/json' })
+      return parts
+    },
+  },
+  {
     uri: 'kaddo://build-contract',
     name: 'Kaddo build contract',
     description: 'The Kaddo-native Build Contract — lifecycle stages, entry/exit criteria, agents, skills, and CLI commands for the full Work Item lifecycle (Captured Intent → Completed).',

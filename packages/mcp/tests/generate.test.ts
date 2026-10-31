@@ -7,6 +7,7 @@ import {
   generateUnderstand,
   generateGraph,
   generateCapsuleDraft,
+  generateConsolidationPlan,
 } from '../src/generate.js'
 import { assertMcpDerivedWritePath, writeDerived, KaddoMcpError } from '../src/project.js'
 import { makeProject, write, config, workItem, cleanup } from './helpers.js'
@@ -87,6 +88,31 @@ describe('Derived generation tools (VS-058)', () => {
     expect(hintsJson.scope).toBe('all')
   })
 
+  it('WI-070: kaddo_generate_consolidation_plan writes the plan and never touches knowledge/', () => {
+    project()
+    write(
+      root,
+      'knowledge/delivery/work-items/completed/WI-050.md',
+      '---\nid: WI-050\ntype: feature\ntitle: Rule\nstatus: completed\n---\n# Rule\n\n## Learning\n\nThe importer must always validate the schema before writing; this is a hard rule.\n'
+    )
+    const before = fs.readFileSync(path.join(root, 'knowledge/business/business.md'), 'utf-8')
+    const r = generateConsolidationPlan(root)
+    expect(r.status).toBe('ok')
+    expect(r.files_written).toEqual(['.kaddo/consolidation-plan.md', '.kaddo/consolidation-plan.json'])
+    expect(exists('.kaddo/consolidation-plan.md')).toBe(true)
+    expect(exists('.kaddo/consolidation-plan.json')).toBe(true)
+    expect(r.next_suggested_resources).toContain('kaddo://consolidation-plan')
+    const planJson = JSON.parse(fs.readFileSync(path.join(root, '.kaddo/consolidation-plan.json'), 'utf-8'))
+    expect(planJson.opportunities.some((o: { category: string }) => o.category === 'unincorporated_learning')).toBe(true)
+    // knowledge/ is untouched by the analysis.
+    expect(fs.readFileSync(path.join(root, 'knowledge/business/business.md'), 'utf-8')).toBe(before)
+  })
+
+  it('WI-070: generate_consolidation_plan rejects an unknown layer', () => {
+    project()
+    expect(() => generateConsolidationPlan(root, { layer: 'nope' })).toThrow(/Unknown layer/)
+  })
+
   it('AC9/AC10: kaddo_generate_capsule_draft writes only under .kaddo/exports/ and does not register', () => {
     project()
     const r = generateCapsuleDraft(root)
@@ -122,6 +148,8 @@ describe('Derived generation tools (VS-058)', () => {
 
   it('AC17: assertMcpDerivedWritePath allows only derived paths', () => {
     expect(assertMcpDerivedWritePath('.kaddo/context-pack.md')).toBe('.kaddo/context-pack.md')
+    expect(assertMcpDerivedWritePath('.kaddo/consolidation-plan.md')).toBe('.kaddo/consolidation-plan.md')
+    expect(assertMcpDerivedWritePath('.kaddo/consolidation-plan.json')).toBe('.kaddo/consolidation-plan.json')
     expect(assertMcpDerivedWritePath('.kaddo/exports/demo.capsule.json')).toBe('.kaddo/exports/demo.capsule.json')
     for (const bad of [
       'knowledge/business/business.md',
