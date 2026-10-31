@@ -19,14 +19,17 @@ authentication:
   mode: none
 scope:
   type: system
+connection_profiles:
+  - environment: production
+    interface: api
+    coordinates:
+      host: telemetry.kaddo.org
+      protocol: HTTPS
 ---
 
 # Purpose
 
 The endpoint that receives **anonymous, opt-in usage telemetry** from the Kaddo CLI and MCP, hosted at
-`telemetry.kaddo.org`. It is disabled by default and requires explicit consent (see the Telemetry
-docs). This is product telemetry — it is **not** the website analytics on `kaddo.org` (Google
-Analytics), and the two share no identity.
 
 # Access Interfaces
 

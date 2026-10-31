@@ -2,9 +2,79 @@
 type: feature
 id: WI-069
 title: Mostrar los detalles completos de un Project Resource en Kaddo Admin
-status: ready
+status: completed
+completed_at: '2026-10-31'
 work_type: feature
 created_at: '2026-10-30'
+code:
+  - packages/cli/src/core/resources.ts
+  - packages/cli/src/core/resource-write.ts
+  - packages/admin/src/routes/ResourceDetail.tsx
+  - packages/admin/src/lib/resource-profiles.ts
+implementation_evidence:
+  repositories:
+    cli:
+      role: core
+      status: completed
+      changed_paths:
+        - packages/cli/src/core/resources.ts
+        - packages/cli/src/core/resource-write.ts
+        - packages/cli/src/core.ts
+        - packages/cli/tests/resource-write.test.ts
+      validations:
+        - command: >-
+            pnpm --filter @kaddo/cli exec vitest run
+            tests/resource-write.test.ts tests/resources.test.ts
+          status: passed
+          reason: >-
+            17 verdes (6 nuevos): coordenadas por entorno/interfaz round-trip,
+            rechazo de secreto con error sin el valor y sin persistir, redacción
+            en lectura de coordenada con pinta de secreto, preservación de
+            perfiles al actualizar otro campo.
+    admin-server:
+      role: module
+      status: completed
+      changed_paths:
+        - packages/admin-server/src/contracts/schemas.ts
+        - packages/admin-server/tests/resource-connection-profiles.test.ts
+      validations:
+        - command: >-
+            pnpm exec vitest run
+            packages/admin-server/tests/resource-connection-profiles.test.ts
+          status: passed
+          reason: >-
+            schema acepta perfiles; round-trip create/detail; rechazo de secreto
+            sin el valor.
+    admin:
+      role: module
+      status: completed
+      changed_paths:
+        - packages/admin/src/routes/ResourceDetail.tsx
+        - packages/admin/src/routes/Resources.tsx
+        - packages/admin/src/lib/api.ts
+        - packages/admin/src/lib/resource-profiles.ts
+        - packages/admin/tests/resource-profiles.test.ts
+      validations:
+        - command: pnpm --filter @kaddo/admin build && vitest run tests/
+          status: passed
+          reason: >-
+            tsc limpio; 69 verdes. Revisión visual (Commit Gate): crear/editar/
+            consultar perfil, render del cuerpo Markdown, rechazo de secreto con
+            error (valor no mostrado ni persistido), lista con tipo/proveedor/
+            entornos, light/dark y 375px.
+    docs:
+      role: module
+      status: completed
+      changed_paths:
+        - apps/docs/src/content/docs/project-resources.md
+        - apps/docs/src/content/docs/es/project-resources.md
+      validations:
+        - command: pnpm --filter @kaddo/docs build
+          status: passed
+          reason: 257 páginas; sección Connection coordinates + aviso OKF en EN/ES.
+implementation_status: completed
+validation_status: passed
+released_in: v3.128.0
 source:
   type: external
   imported_at: '2026-10-30'
@@ -49,6 +119,7 @@ original_snapshot:
     usuario por defecto, base de datos a usar, puerto, región, URL…
   type: feature
 ready_at: '2026-10-31'
+verified_at: '2026-10-31'
 ---
 
 # Mostrar los detalles completos de un Project Resource en Kaddo Admin
@@ -139,30 +210,30 @@ Resource Contract; crear una segunda fuente de verdad en Admin; editor avanzado;
 
 ## Acceptance criteria
 
-- [ ] AC-01: la vista del recurso en Admin renderiza el cuerpo Markdown del artifact (hoy no se muestra).
-- [ ] AC-02: el modelo de Resource admite coordenadas de conexión no secretas estructuradas (host/IP,
+- [x] AC-01: la vista del recurso en Admin renderiza el cuerpo Markdown del artifact (hoy no se muestra).
+- [x] AC-02: el modelo de Resource admite coordenadas de conexión no secretas estructuradas (host/IP,
   puerto, base de datos, usuario/rol, región, cuenta/proyecto, URL/endpoint), por entorno cuando aplique.
-- [ ] AC-03: esas coordenadas se muestran en la vista del recurso en una sección clara y legible.
-- [ ] AC-04: se conserva la invariante de solo referencias: ningún valor de credencial se almacena ni se
+- [x] AC-03: esas coordenadas se muestran en la vista del recurso en una sección clara y legible.
+- [x] AC-04: se conserva la invariante de solo referencias: ningún valor de credencial se almacena ni se
   muestra.
-- [ ] AC-05: el contrato (schema), writer, adapter y tipos cliente soportan los nuevos campos sin romper
+- [x] AC-05: el contrato (schema), writer, adapter y tipos cliente soportan los nuevos campos sin romper
   recursos existentes (backward-compatible, parsing laxo).
-- [ ] AC-06: la lista de recursos muestra como mínimo tipo, proveedor y entornos, sin exponer coordenadas
+- [x] AC-06: la lista de recursos muestra como mínimo tipo, proveedor y entornos, sin exponer coordenadas
   internas de conexión.
-- [ ] AC-07: light/dark y responsive consistentes con el resto del Admin.
-- [ ] AC-08: pruebas en Core, admin-server y Admin, incluida la no-filtración de secretos.
-- [ ] AC-09: Admin permite crear, editar y consultar perfiles de conexión por entorno.
-- [ ] AC-10: los campos estructurados son opcionales y compatibles con recursos existentes que no los
+- [x] AC-07: light/dark y responsive consistentes con el resto del Admin.
+- [x] AC-08: pruebas en Core, admin-server y Admin, incluida la no-filtración de secretos.
+- [x] AC-09: Admin permite crear, editar y consultar perfiles de conexión por entorno.
+- [x] AC-10: los campos estructurados son opcionales y compatibles con recursos existentes que no los
   declaran.
-- [ ] AC-11: la vista dedicada renderiza el cuerpo Markdown completo mediante `MarkdownRenderer`.
-- [ ] AC-12: no se duplican datos canónicos ni se genera una fuente de verdad adicional.
-- [ ] AC-13: los valores de credenciales incrustados en campos estructurados son rechazados antes de
+- [x] AC-11: la vista dedicada renderiza el cuerpo Markdown completo mediante `MarkdownRenderer`.
+- [x] AC-12: no se duplican datos canónicos ni se genera una fuente de verdad adicional.
+- [x] AC-13: los valores de credenciales incrustados en campos estructurados son rechazados antes de
   persistirse.
-- [ ] AC-14: los errores de validación se muestran al usuario sin revelar información sensible.
-- [ ] AC-15: los perfiles existentes permanecen intactos cuando se actualizan otros campos del Resource.
-- [ ] AC-16: la documentación explica los riesgos de compartir metadatos internos de infraestructura y su
+- [x] AC-14: los errores de validación se muestran al usuario sin revelar información sensible.
+- [x] AC-15: los perfiles existentes permanecen intactos cuando se actualizan otros campos del Resource.
+- [x] AC-16: la documentación explica los riesgos de compartir metadatos internos de infraestructura y su
   posible inclusión en exportaciones OKF.
-- [ ] AC-17: la interfaz se revisa localmente en light/dark y responsive antes de solicitar autorización
+- [x] AC-17: la interfaz se revisa localmente en light/dark y responsive antes de solicitar autorización
   para el commit.
 
 ## Implementation guidance
@@ -223,3 +294,31 @@ incluidos versionado y riesgos de exportación OKF. **Commit Gate** respetado.
 
 Un recurso solo es útil si se puede entender de un vistazo: qué es, dónde vive y cómo se accede a él —
 sin exponer secretos. Admin debe mostrar la configuración no secreta del recurso, no esconderla.
+
+## Learning
+
+El problema tenía dos capas y la de mayor impacto fue la más barata: `ResourceDetail` ya **recibía**
+`markdownBody` desde la API pero nunca lo renderizaba. Añadir una sección "Full document" con el
+`MarkdownRenderer` compartido (WI-067) hizo visible, sin tocar el backend, todo lo que los autores ya
+escribían en prosa (endpoints, boundaries). Lección: antes de modelar campos nuevos, comprobar qué dato
+**ya viaja** por la pila y no se muestra.
+
+La capa estructurada —perfiles de conexión por entorno e interfaz, con coordenadas como pares clave/valor
+opcionales por tipo— se resolvió con **parsing laxo** (coherente con el resto del Resource Contract) y una
+**frontera de seguridad en dos tiempos**: en **escritura** se *rechaza con error* (no se descarta en
+silencio) cualquier coordenada con pinta de credencial, y el mensaje nombra el campo y el entorno pero
+**nunca el valor**; en **lectura** se *redacta* defensivamente una coordenada sensible escrita a mano, para
+que la UI jamás la muestre. Separar "rechazo en write" de "redacción en read" fue clave: el write protege
+el conocimiento canónico; el read protege la pantalla aunque alguien edite el Markdown a mano. La heurística
+combina nombres de clave (`password`/`token`/`api_key`…) y formas de valor (AKIA/ghp_/sk-/JWT/base64 largo),
+favoreciendo el falso positivo renombrable sobre la fuga.
+
+Reutilizar la invariante ya existente (`authentication.refs` solo nombres) mantuvo un único mensaje de
+seguridad coherente. Propagar el campo por la pila (Core → schema zod → adapter → tipos cliente → vista)
+fue mecánico porque el contrato ya convergía en `resource-write.ts`. Para AC-15, el editor **recarga y
+reenvía** los perfiles existentes en cada guardado, de modo que editar otro campo nunca los pierde; los
+valores limpios hacen round-trip idempotente. La fuente de verdad sigue siendo el Markdown en
+`knowledge/tech/resources/` (sin copia en Admin), lo que lo hace versionable y exportable por OKF — con el
+aviso documentado de que son metadatos internos de infraestructura. El Commit Gate volvió a pagar: el flujo
+crear→editar→consultar y el rechazo del secreto solo se validan **viéndolos** en Admin, no compilando.
+Liberado en **v3.128.0**.
