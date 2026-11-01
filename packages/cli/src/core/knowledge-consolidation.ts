@@ -122,110 +122,140 @@ function sha256(content: string): string {
   return createHash('sha256').update(content, 'utf-8').digest('hex')
 }
 
+// --- Redundancy: content-based overlap (never heading-based) ---------------
+//
+// Sharing section titles (Decision/Consequences in ADRs, Expected value/Success criteria in
+// Initiatives) comes from a shared template and is NOT evidence of duplication. Redundancy is
+// therefore detected from DISTINCTIVE CONTENT: overlapping word-shingles of the prose body, with
+// headings, code blocks, list markers and block quotes stripped out.
+
+/** Shingle length (consecutive content words). Long enough that template boilerplate rarely collides. */
+const SHINGLE_SIZE = 6
 /**
- * Generic/structural headings that never indicate redundancy on their own — including the shared
- * Work Item template sections, so delivery records are not mistaken for duplicated knowledge.
+ * Minimum length of a CONTIGUOUS shared shingle run before two artifacts are a redundancy candidate.
+ * A run of N shingles means a shared passage of `SHINGLE_SIZE + N - 1` consecutive words. Requiring a
+ * contiguous run (not scattered matches) is what separates a genuinely duplicated passage from the
+ * handful of short boilerplate phrases two template-based ADRs/Initiatives inevitably share.
  */
-const GENERIC_HEADINGS = new Set([
-  'purpose',
-  'proposito',
-  'propósito',
-  'intent',
-  'goal',
-  'objetivo',
-  'summary',
-  'resumen',
-  'overview',
-  'context',
-  'contexto',
-  'scope',
-  'alcance',
-  'out of scope',
-  'fuera de alcance',
-  'acceptance criteria',
-  'criterios de aceptacion',
-  'criterios de aceptación',
-  'validation',
-  'validation scenarios',
-  'validacion',
-  'validación',
-  'escenarios de validacion',
-  'escenarios de validación',
-  'notes',
-  'notas',
-  'references',
-  'referencias',
-  'examples',
-  'ejemplos',
-  'learning',
-  'learnings',
-  'aprendizaje',
-  'aprendizajes',
-  // Work Item template sections
-  'problem',
-  'problema',
-  'expected result',
-  'resultado esperado',
-  'refinement',
-  'refinamiento',
-  'implementation guidance',
-  'guia de implementacion',
-  'guía de implementación',
-  'definition of done',
-  'definicion de hecho',
-  'definición de hecho',
-  'commit gate',
-  'future evolution',
-  'evolucion futura',
-  'evolución futura',
-  'guiding principle',
-  'principio rector',
-  'open questions',
-  'preguntas abiertas',
-  'dependencies',
-  'dependencias',
-  'conceptual model',
-  'goal',
-])
+const MIN_SHARED_RUN = 6 // ≈ an 11+ word passage repeated verbatim
 
-/** Keywords that suggest a learning encodes a durable, live rule worth incorporating. */
-const RULE_KEYWORDS = [
-  'siempre',
-  'nunca',
-  'debe',
-  'deben',
-  'requiere',
-  'requieren',
-  'invariante',
-  'restriccion',
-  'restricción',
-  'regla',
-  'obligatorio',
-  'must',
-  'always',
-  'never',
-  'require',
-  'requires',
-  'constraint',
-  'invariant',
-  'rule',
-]
-
-function normalizeHeading(h: string): string {
-  return h.trim().toLowerCase().replace(/\s+/g, ' ')
+/** Prose words of a markdown body, excluding headings, fenced code, block quotes and list markers. */
+function contentWords(body: string): string[] {
+  const words: string[] = []
+  let inFence = false
+  for (const raw of body.split(/\r?\n/)) {
+    const t = raw.trim()
+    if (/^```/.test(t)) {
+      inFence = !inFence
+      continue
+    }
+    if (inFence) continue
+    if (/^#{1,6}\s/.test(t)) continue // heading
+    if (/^>/.test(t)) continue // block quote
+    // strip leading list / numbering markers but keep the text
+    const text = t.replace(/^([-*+]\s+|\d+\.\s+)/, '')
+    const matched = text.toLowerCase().match(/[a-záéíóúñü0-9]+/gi)
+    if (matched) words.push(...matched)
+  }
+  return words
 }
 
-/** Extract `##`/`###` heading titles from markdown body, excluding generic ones. */
-function distinctiveHeadings(body: string): string[] {
-  const out: string[] = []
-  for (const line of body.split(/\r?\n/)) {
-    const m = line.match(/^#{2,3}\s+(.+?)\s*$/)
-    if (!m) continue
-    const norm = normalizeHeading(m[1])
-    if (!norm || GENERIC_HEADINGS.has(norm)) continue
-    out.push(norm)
+type Shingles = { words: string[]; keys: string[]; set: Set<string> }
+
+/** Ordered content shingles of a body plus a membership set, for contiguous-overlap detection. */
+function buildShingles(body: string): Shingles {
+  const words = contentWords(body)
+  const keys: string[] = []
+  const set = new Set<string>()
+  for (let i = 0; i + SHINGLE_SIZE <= words.length; i++) {
+    const key = words.slice(i, i + SHINGLE_SIZE).join(' ')
+    keys.push(key)
+    set.add(key)
   }
-  return [...new Set(out)]
+  return { words, keys, set }
+}
+
+/**
+ * Longest run of A's consecutive shingles that are all present in B, and the readable snippet of that
+ * run. A long run means a verbatim passage was repeated; scattered template phrases yield runs of 1-2.
+ */
+function longestSharedRun(a: Shingles, b: Shingles): { length: number; snippet: string } {
+  let best = 0
+  let bestStart = -1
+  let run = 0
+  let runStart = 0
+  for (let i = 0; i < a.keys.length; i++) {
+    if (b.set.has(a.keys[i])) {
+      if (run === 0) runStart = i
+      run += 1
+      if (run > best) {
+        best = run
+        bestStart = runStart
+      }
+    } else {
+      run = 0
+    }
+  }
+  if (best === 0) return { length: 0, snippet: '' }
+  const snippet = a.words.slice(bestStart, bestStart + SHINGLE_SIZE + best - 1).join(' ')
+  return { length: best, snippet }
+}
+
+// --- Learning classification (deterministic heuristic, never asserted as truth) ----------------
+//
+// A completed Work Item's learning may encode a durable rule OR merely record a historical result,
+// a benchmark, a test observation or an experiment. Only a sentence that reads as a normative rule
+// becomes a candidate, and the exact triggering sentence is kept as evidence.
+
+export type LearningKind =
+  | 'durable-rule'
+  | 'historical-result'
+  | 'benchmark-evidence'
+  | 'test-observation'
+  | 'experimental-result'
+  | 'none'
+
+// STRONG normative signals only (modal verbs / rule nouns). Bare `never/always/nunca/siempre` are
+// deliberately excluded: they read as past-tense narration as often as rules ("it never rendered"),
+// and treating them as rules produced false positives. A real rule here carries a modal or a rule noun.
+const NORMATIVE_RE =
+  /(^|[^a-záéíóúñü])(must|should|shall|debe[ns]?|deber[ií]a[ns]?|se\s+debe|hay\s+que|requiere[ns]?|require[sd]?|no\s+debe|invariant[e]?|invariants|restricci[oó]n|constraint|regla|obligatori[oa])([^a-záéíóúñü]|$)/i
+const PAST_RESULT_RE =
+  /(compil[aoeéó]\w*|compiled|benchmark\w*|passed|succeed\w*|succeeded|ran\s+successfully|ejecut\w*|resultad\w*|crates?\b|ns\/op|µs\b|throughput|latenc\w*|baseline|measured|medid\w*|\d+\s*%|\bx\d|faster|slower)/i
+const TEST_RE = /(\btest\w*|\bpruebas?\b|coverage|cobertura|verde[s]?|green\b|assert\w*)/i
+const BENCH_RE = /(benchmark\w*|ns\/op|µs\b|throughput|latenc\w*|ops\/s|\d+\s*%|faster|slower|baseline)/i
+const EXPERIMENT_RE = /(experiment\w*|experiment[oa]\w*|prototyp\w*|prototip\w*|spike\b|probamos|probé|intentamos)/i
+
+/** Split a block of prose into sentences (keeps it simple and deterministic). */
+function splitSentences(text: string): string[] {
+  return text
+    .replace(/\s+/g, ' ')
+    .split(/(?<=[.!?;])\s+/)
+    .map((s) => s.trim())
+    .filter(Boolean)
+}
+
+/** Classify one learning sentence. A durable rule needs normative phrasing not dominated by a result. */
+export function classifyLearningSentence(sentence: string): LearningKind {
+  const s = sentence.trim()
+  if (!s) return 'none'
+  const normative = NORMATIVE_RE.test(s)
+  const pastResult = PAST_RESULT_RE.test(s)
+  // A normative modal/term that is not merely narrating a past result is a durable-rule candidate.
+  if (normative && !pastResult) return 'durable-rule'
+  if (BENCH_RE.test(s)) return 'benchmark-evidence'
+  if (pastResult) return 'historical-result'
+  if (TEST_RE.test(s)) return 'test-observation'
+  if (EXPERIMENT_RE.test(s)) return 'experimental-result'
+  return 'none'
+}
+
+/** The first sentence of a learning that reads as a durable rule, or null. */
+function firstRuleFragment(learning: string): string | null {
+  for (const sentence of splitSentences(learning)) {
+    if (classifyLearningSentence(sentence) === 'durable-rule') return sentence
+  }
+  return null
 }
 
 /** Extract the body of a named section (## heading), case-insensitive, until the next `##`. */
@@ -345,37 +375,39 @@ export function buildConsolidationPlan(dir: string, opts: ConsolidationOptions =
   }
 
   // --- A. Knowledge redundancy candidates (SEMANTIC — flagged, never asserted) ---
-  // Only canonical layer knowledge is compared (Business/Product/Tech/Delivery). Work Items, the
-  // roadmap, and reusable scaffolding (agents/skills under knowledge/agents|skills/) intentionally
-  // share a template, so comparing them for "redundancy" would be exactly the over-optimization the
-  // WI warns against — `la.layer` is null for that scaffolding, which excludes it here.
-  const canonical = scoped.filter(
-    (la) => la.layer !== null && !isWorkItem(la) && la.artifact.type !== 'roadmap'
-  )
-  const byHeading = new Map<string, LoadedArtifact[]>()
-  for (const la of canonical) {
-    for (const h of distinctiveHeadings(la.body)) {
-      const arr = byHeading.get(h) ?? []
+  // Compared across all comparable knowledge (layer docs, ADRs and Initiatives included), but NOT
+  // Work Items, the roadmap, or reusable scaffolding (agents/skills/external capsules). The signal is
+  // DISTINCTIVE CONTENT overlap (shared word-shingles of the prose), never shared section titles — so
+  // two ADRs or two Initiatives built from the same template do not become a candidate on structure
+  // alone, while two documents that actually restate the same passage still do.
+  const comparable = scoped.filter(isComparableKnowledge)
+  const shingleIndex = new Map<string, LoadedArtifact[]>()
+  const shinglesByRel = new Map<string, Shingles>()
+  for (const la of comparable) {
+    const shingles = buildShingles(la.body)
+    shinglesByRel.set(la.rel, shingles)
+    for (const key of shingles.set) {
+      const arr = shingleIndex.get(key) ?? []
       arr.push(la)
-      byHeading.set(h, arr)
+      shingleIndex.set(key, arr)
     }
   }
-  // Pairs that share >= 2 distinctive headings are redundancy CANDIDATES for semantic review.
-  const pairHeadings = new Map<string, { a: LoadedArtifact; b: LoadedArtifact; shared: Set<string> }>()
-  for (const [heading, arts] of byHeading) {
+  // Candidate pairs share at least one shingle; a real overlap is then confirmed by a contiguous run.
+  const candidatePairs = new Map<string, { a: LoadedArtifact; b: LoadedArtifact }>()
+  for (const arts of shingleIndex.values()) {
     if (arts.length < 2) continue
     for (let i = 0; i < arts.length; i++) {
       for (let j = i + 1; j < arts.length; j++) {
         if (arts[i].rel === arts[j].rel) continue
         const key = [arts[i].rel, arts[j].rel].sort().join('||')
-        const entry = pairHeadings.get(key) ?? { a: arts[i], b: arts[j], shared: new Set<string>() }
-        entry.shared.add(heading)
-        pairHeadings.set(key, entry)
+        if (!candidatePairs.has(key)) candidatePairs.set(key, { a: arts[i], b: arts[j] })
       }
     }
   }
-  for (const { a, b, shared } of pairHeadings.values()) {
-    if (shared.size < 2) continue
+  for (const { a, b } of candidatePairs.values()) {
+    const run = longestSharedRun(shinglesByRel.get(a.rel)!, shinglesByRel.get(b.rel)!)
+    if (run.length < MIN_SHARED_RUN) continue // only a contiguous verbatim passage, not template phrases
+    const passageWords = SHINGLE_SIZE + run.length - 1
     opportunities.push({
       id: stableOpportunityId('knowledge_redundancy', [label(a), label(b)]),
       category: 'knowledge_redundancy',
@@ -384,22 +416,29 @@ export function buildConsolidationPlan(dir: string, opts: ConsolidationOptions =
       title: `Possible overlapping content between ${label(a)} and ${label(b)}`,
       source_artifacts: [label(a), label(b)],
       target_artifacts: [label(a), label(b)],
-      evidence: [`Both artifacts declare the sections: ${[...shared].sort().join(', ')}.`],
+      evidence: [
+        `A ${passageWords}-word passage appears verbatim in both artifacts: "${redactSecrets(run.snippet)}".`,
+      ],
       rationale:
-        'Shared section titles are a hint of potential overlap, NOT proof of duplication. Two documents can legitimately address the same topic from different layers/responsibilities.',
+        'A verbatim shared passage is a hint of potential duplication, NOT proof. Two documents can legitimately restate context from different layers/responsibilities; shared template structure alone was NOT used.',
       possible_impact: 'If genuinely duplicated, the same fact can drift out of sync across files.',
       suggested_action:
-        'Semantic review: compare the sections; if one restates the other, keep a single reference location and link the rest. Preserve layer separation.',
+        'Semantic review: compare the overlapping passage; if one restates the other, keep a single reference location and link the rest. Preserve layer separation.',
       requires_semantic_review: true,
     })
   }
 
   // --- B. Unincorporated learning candidates (SEMANTIC — flagged) ---
+  // A candidate requires a specific sentence that reads as a durable RULE — historical results,
+  // benchmarks, test observations and experiment outcomes do not qualify. The triggering sentence
+  // (not the section's opening) is kept as evidence. The destination is left UNRESOLVED: Core cannot
+  // justify a concrete target artifact, so it delegates that to semantic review (no generic codebase.md).
   for (const la of scoped) {
     if (!isCompletedWorkItem(la)) continue
     const learning = sectionBody(la.body, ['Learning', 'Aprendizaje', 'Aprendizajes', 'Learnings'])
     if (!learning) continue
-    if (!looksLikeDurableRule(learning)) continue
+    const ruleFragment = firstRuleFragment(learning)
+    if (!ruleFragment) continue
     opportunities.push({
       id: stableOpportunityId('unincorporated_learning', [label(la)]),
       category: 'unincorporated_learning',
@@ -407,20 +446,26 @@ export function buildConsolidationPlan(dir: string, opts: ConsolidationOptions =
       confidence: 'requires-review',
       title: `${label(la)} captured a learning that may belong in current knowledge`,
       source_artifacts: [label(la)],
-      target_artifacts: ['knowledge/tech/codebase.md'],
-      evidence: [`Completed Work Item records a rule-like learning: "${firstSentence(learning)}"`],
+      target_artifacts: [], // unresolved — determined in semantic review (never invent a destination)
+      evidence: [`Completed Work Item records a rule-like learning (heuristic classification): "${redactSecrets(ruleFragment)}"`],
       rationale:
-        'A learning phrased as a durable rule MAY represent live technical knowledge not yet reflected in Tech Knowledge. This is a candidate, not a confirmed gap.',
+        'A sentence phrased as a durable rule MAY represent live technical knowledge not yet reflected in current knowledge. The rule/result distinction is a heuristic, not a verified conclusion — this is a candidate, not a confirmed gap.',
       possible_impact: 'A relevant constraint stays buried in delivery history instead of informing current work.',
       suggested_action:
-        'Semantic review: decide whether this learning is a live rule; if so, incorporate it into the right Tech artifact WITH a reference back to the Work Item. Do not delete or summarize the Work Item.',
+        'Semantic review: confirm whether this is a live rule and determine the right destination artifact; if so, incorporate it WITH a reference back to the Work Item. Do not delete or summarize the Work Item.',
       requires_semantic_review: true,
     })
   }
 
-  // --- F / C. Knowledge organization + fragmentation (quality is observed; action is review) ---
+  // --- F / C. Knowledge organization + fragmentation ---
+  // Quality is only an organization opportunity for CONSOLIDATABLE canonical knowledge docs
+  // (Business/Product/Tech layer docs, ADRs included). Work Items (independent, historical units of
+  // traceability), the roadmap, initiatives, deprecations, generated inventories/indexes and
+  // agent/skill scaffolding are excluded: being short or weak there is expected, not an opportunity.
+  // The quality signal is `observed`; whether to expand/merge needs judgement → requires_semantic_review.
   const weakByFolder = new Map<string, LoadedArtifact[]>()
   for (const la of scoped) {
+    if (!isConsolidatableKnowledge(la)) continue
     const quality = safeQuality(dir, la.rel)
     if (quality === 'placeholder' || quality === 'weak') {
       opportunities.push({
@@ -431,12 +476,12 @@ export function buildConsolidationPlan(dir: string, opts: ConsolidationOptions =
         title: `${label(la)} is ${quality} and may need consolidation or expansion`,
         source_artifacts: [label(la)],
         target_artifacts: [label(la)],
-        evidence: [`Artifact quality analysis classifies this artifact as "${quality}".`],
+        evidence: [`Artifact quality analysis classifies this canonical knowledge artifact as "${quality}".`],
         rationale:
-          'Low-signal artifacts reduce retrieval quality. This is an observed quality signal, not a judgement that the content is wrong.',
+          'Observed: the quality heuristic rates this artifact low-signal. Whether it should be expanded, merged or cross-referenced is a judgement that needs semantic review — the quality signal alone does not decide it.',
         possible_impact: 'Readers must open more files to assemble a complete picture.',
-        suggested_action: 'Review whether to expand, merge into a stronger artifact, or cross-reference it.',
-        requires_semantic_review: false,
+        suggested_action: 'Semantic review: decide whether to expand, merge into a stronger artifact, or cross-reference it.',
+        requires_semantic_review: true,
       })
       const folder = la.rel.split('/').slice(0, -1).join('/')
       const arr = weakByFolder.get(folder) ?? []
@@ -451,12 +496,12 @@ export function buildConsolidationPlan(dir: string, opts: ConsolidationOptions =
       category: 'knowledge_fragmentation',
       classification: 'suggested',
       confidence: 'requires-review',
-      title: `${folder}/ holds ${arts.length} low-signal artifacts — possible fragmentation`,
+      title: `${folder}/ holds ${arts.length} low-signal canonical artifacts — possible fragmentation`,
       source_artifacts: arts.map((a) => label(a)),
       target_artifacts: [folder],
-      evidence: [`${arts.length} placeholder/weak artifacts in the same folder: ${arts.map((a) => a.rel.split('/').pop()).join(', ')}.`],
+      evidence: [`${arts.length} placeholder/weak canonical knowledge artifacts in the same folder: ${arts.map((a) => a.rel.split('/').pop()).join(', ')}.`],
       rationale:
-        'Several thin artifacts in one folder MAY be easier to consume if consolidated or cross-linked. Consolidation must preserve each distinct responsibility.',
+        'Several thin canonical artifacts in one folder MAY be easier to consume if consolidated or cross-linked. Consolidation must preserve each distinct responsibility; Work Items and generated/lifecycle artifacts are not considered here.',
       possible_impact: 'Related knowledge is spread across too many files to follow.',
       suggested_action: 'Semantic review: evaluate whether cross-references or a consolidation would add clarity. Do not merge by file count alone.',
       requires_semantic_review: true,
@@ -584,7 +629,9 @@ export function renderConsolidationMarkdown(plan: ConsolidationPlan): string {
     lines.push(`- Classification: **${o.classification}**${o.requires_semantic_review ? ' (requires semantic review)' : ''}`)
     lines.push(`- Confidence: ${o.confidence}`)
     lines.push(`- Source: ${o.source_artifacts.join(', ') || '—'}`)
-    lines.push(`- Suggested target: ${o.target_artifacts.join(', ') || '—'}`)
+    lines.push(
+      `- Suggested target: ${o.target_artifacts.length > 0 ? o.target_artifacts.join(', ') : '(unresolved — to be determined in semantic review)'}`
+    )
     lines.push(`- Evidence:`)
     for (const e of o.evidence) lines.push(`  - ${e}`)
     lines.push(`- Rationale: ${o.rationale}`)
@@ -618,16 +665,44 @@ function isCompletedWorkItem(la: LoadedArtifact): boolean {
   return p.includes('/delivery/work-items/completed/') || (isWorkItem(la) && la.artifact.status === 'completed')
 }
 
-function looksLikeDurableRule(text: string): boolean {
-  const lower = text.toLowerCase()
-  return RULE_KEYWORDS.some((k) => new RegExp(`(^|[^a-záéíóúñ])${k}([^a-záéíóúñ]|$)`, 'i').test(lower))
+/** Reusable scaffolding (agent/skill prompts, external capsules) — shares templates by design. */
+function isScaffolding(la: LoadedArtifact): boolean {
+  const p = toPosix(la.artifact.filePath)
+  return (
+    p.includes(`/${KNOWLEDGE}/agents/`) ||
+    p.includes(`/${KNOWLEDGE}/skills/`) ||
+    p.includes(`/${KNOWLEDGE}/external/`) ||
+    la.artifact.type === 'knowledge-capsule'
+  )
 }
 
-function firstSentence(text: string): string {
-  const flat = text.replace(/\s+/g, ' ').trim()
-  const m = flat.match(/^(.{0,200}?[.!?])(\s|$)/)
-  const s = (m ? m[1] : flat).slice(0, 200)
-  return redactSecrets(s.trim())
+/** Lifecycle/generated artifact types that are not canonical knowledge docs to organize. */
+const NON_KNOWLEDGE_DOC_TYPES = new Set([
+  'roadmap',
+  'initiative',
+  'deprecation',
+  'knowledge-capsule',
+  'inventory',
+  'project-resource',
+])
+
+/**
+ * Artifacts eligible for REDUNDANCY comparison: any knowledge document a human authored as content —
+ * layer docs, ADRs and Initiatives included — but not Work Items, the roadmap, or scaffolding.
+ */
+function isComparableKnowledge(la: LoadedArtifact): boolean {
+  return !isWorkItem(la) && la.artifact.type !== 'roadmap' && !isScaffolding(la)
+}
+
+/**
+ * Artifacts eligible for ORGANIZATION/FRAGMENTATION: canonical Business/Product/Tech knowledge docs
+ * (ADRs included). Excludes Work Items, Delivery lifecycle artifacts, generated inventories/indexes
+ * (layer null) and scaffolding — being short/weak there is expected, not an opportunity.
+ */
+function isConsolidatableKnowledge(la: LoadedArtifact): boolean {
+  if (isWorkItem(la) || isScaffolding(la)) return false
+  if (NON_KNOWLEDGE_DOC_TYPES.has(la.artifact.type)) return false
+  return la.layer === 'Business' || la.layer === 'Product' || la.layer === 'Tech'
 }
 
 /**

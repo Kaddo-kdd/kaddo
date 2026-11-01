@@ -63,15 +63,27 @@ never calls an LLM; the semantic review is done by the `knowledge-consolidation`
 
 | Category | What it surfaces |
 |---|---|
-| `knowledge_redundancy` | Canonical layer artifacts that may restate each other (candidate) |
-| `unincorporated_learning` | A completed Work Item's rule-like learning that may belong in current knowledge (candidate) |
-| `knowledge_fragmentation` | Several low-signal artifacts in one folder that may read better consolidated (candidate) |
+| `knowledge_redundancy` | Two knowledge documents (layer docs, ADRs or Initiatives) that repeat a **verbatim passage** of distinctive content (candidate) |
+| `unincorporated_learning` | A completed Work Item whose learning contains a **durable-rule sentence** that may belong in current knowledge (candidate) |
+| `knowledge_fragmentation` | Several low-signal **canonical** artifacts in one folder that may read better consolidated (candidate) |
 | `relationship_opportunity` | An optional relationship missing from the graph (observed, from graph hints) |
 | `potentially_outdated` | A verifiable inconsistency, e.g. a reference to a decision that no longer exists (observed) |
-| `knowledge_organization` | A placeholder/weak artifact worth expanding or merging (observed) |
+| `knowledge_organization` | A placeholder/weak **canonical knowledge** doc worth expanding or merging (observed evidence; the action needs review) |
 
-Work Items, the roadmap, and reusable scaffolding (agents/skills) intentionally share templates, so
-they are **not** compared for redundancy — avoiding false positives from structural similarity.
+**Precision rules that keep candidates trustworthy:**
+
+- **Redundancy is content-based, never structural.** Two ADRs or two Initiatives that share section
+  titles (`Decision`, `Consequences`, `Expected value`…) from a common template are *not* a candidate;
+  only a verbatim shared passage of distinctive prose is. Work Items, the roadmap and reusable
+  scaffolding (agents/skills/capsules) are excluded from the comparison.
+- **Learning candidates require a rule, not a result.** A sentence is flagged only when it reads as a
+  durable rule (a modal or a rule noun); compile successes, benchmarks, test results and experiment
+  outcomes are not. The exact triggering sentence is kept as evidence — not the section's opening.
+- **Learning destinations stay unresolved.** Core never invents a target artifact; it leaves the
+  destination for semantic review instead of defaulting everything to one file.
+- **Organization considers the artifact's nature.** Only canonical Business/Product/Tech docs qualify;
+  Work Items (independent historical units), generated inventories, deprecations, initiatives and
+  Project Resources are not given narrative consolidation recommendations just for being short.
 
 ## How it relates to other Kaddo capabilities
 

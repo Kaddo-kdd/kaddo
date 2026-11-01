@@ -7,6 +7,7 @@ import {
   consolidationPlanStaleness,
   renderConsolidationMarkdown,
   serializeConsolidationJson,
+  classifyLearningSentence,
   type ConsolidationPlan,
 } from '../src/core/knowledge-consolidation.js'
 
@@ -111,18 +112,127 @@ describe('Knowledge Consolidation — deterministic analysis (WI-070)', () => {
     expect(outdated[0].evidence.join(' ')).toContain('ADR-999')
   })
 
-  it('Scenario 2: two canonical artifacts sharing distinctive sections are a SUGGESTED candidate, never auto-merged', () => {
+  it('Scenario 2 / AC-02: two artifacts that repeat substantive CONTENT are a SUGGESTED candidate', () => {
     config()
-    const shared = '## Pricing engine\n\nText.\n\n## Settlement window\n\nText.\n'
-    write('knowledge/tech/current-state.md', `---\ntype: current-state\ntitle: Current state\n---\n# Current state\n\n${shared}`)
-    write('knowledge/product/capabilities.md', `---\ntype: capabilities\ntitle: Capabilities\n---\n# Capabilities\n\n${shared}`)
+    const duplicated =
+      'The settlement reconciliation engine matches each incoming payment line against the originating internal order using the external reference and the amount, then routes any unmatched line to the regional reviewer queue for manual resolution before close.'
+    write('knowledge/tech/current-state.md', `---\ntype: current-state\ntitle: Current state\n---\n# Current state\n\n## Engine\n\n${duplicated}\n`)
+    write('knowledge/product/capabilities.md', `---\ntype: capabilities\ntitle: Capabilities\n---\n# Capabilities\n\n## Matching\n\n${duplicated}\n`)
     const plan = buildConsolidationPlan(tmp, { now: FIXED_NOW })
     const red = plan.opportunities.filter((o) => o.category === 'knowledge_redundancy')
     expect(red).toHaveLength(1)
     expect(red[0].classification).toBe('suggested')
     expect(red[0].requires_semantic_review).toBe(true)
-    // Preserve layer separation — the action must not propose a silent merge.
+    // Evidence is a shared verbatim content passage, not shared section titles.
+    expect(red[0].evidence.join(' ')).toMatch(/passage appears verbatim/i)
     expect(red[0].suggested_action.toLowerCase()).toContain('preserve layer separation')
+  })
+
+  it('AC-01: two ADRs with the SAME template headings but DIFFERENT decisions are NOT redundancy', () => {
+    config()
+    const adr = (id: string, decision: string) =>
+      `---\nid: ${id}\ntype: adr\ntitle: ${id}\n---\n# ${id}\n\n## Context\n\nWe needed to choose an approach for ${id}.\n\n## Decision\n\n${decision}\n\n## Options considered\n\nSeveral alternatives were weighed for ${id}.\n\n## Consequences\n\nTrade-offs follow from the ${id} decision.\n`
+    write('knowledge/tech/decisions/ADR-001.md', adr('ADR-001', 'We will store events in an append-only Postgres table partitioned by month.'))
+    write('knowledge/tech/decisions/ADR-005.md', adr('ADR-005', 'We will authenticate service calls with short-lived mTLS certificates rotated hourly.'))
+    const plan = buildConsolidationPlan(tmp, { now: FIXED_NOW })
+    expect(plan.opportunities.filter((o) => o.category === 'knowledge_redundancy')).toHaveLength(0)
+  })
+
+  it('AC-01: two Initiatives sharing template sections but different content are NOT redundancy', () => {
+    config()
+    const ini = (id: string, value: string, criteria: string, candidates: string) =>
+      `---\nid: ${id}\ntype: initiative\ntitle: ${id}\n---\n# ${id}\n\n## Expected value\n\n${value}\n\n## Success criteria\n\n${criteria}\n\n## Work item candidates\n\n${candidates}\n`
+    write(
+      'knowledge/delivery/initiatives/INI-001.md',
+      ini(
+        'INI-001',
+        'Cut reconciliation time for the finance team across every supported region and currency.',
+        'Operators close the daily settlement in under thirty minutes with zero unresolved exceptions.',
+        'Automated matching engine, exception routing queue, and an auditable settlement sign-off log.'
+      )
+    )
+    write(
+      'knowledge/delivery/initiatives/INI-007.md',
+      ini(
+        'INI-007',
+        'Introduce real-time fraud scoring on the inbound payment ingestion path.',
+        'Suspicious transactions are flagged within fifty milliseconds and escalated to the risk team.',
+        'Streaming feature extractor, scoring model host, and a reviewer escalation dashboard.'
+      )
+    )
+    const plan = buildConsolidationPlan(tmp, { now: FIXED_NOW })
+    expect(plan.opportunities.filter((o) => o.category === 'knowledge_redundancy')).toHaveLength(0)
+  })
+
+  it('AC-04: a successful compile/benchmark learning is NOT turned into a durable rule', () => {
+    config()
+    write(
+      'knowledge/delivery/work-items/completed/AN-004.md',
+      '---\nid: AN-004\ntype: feature\ntitle: Build check\nstatus: completed\n---\n# Build check\n\n## Learning\n\nThe four crates compiled successfully and the benchmark suite ran without errors.\n'
+    )
+    const plan = buildConsolidationPlan(tmp, { now: FIXED_NOW })
+    expect(plan.opportunities.filter((o) => o.category === 'unincorporated_learning')).toHaveLength(0)
+  })
+
+  it('AC-03/AC-05: a durable-rule learning keeps the triggering fragment and leaves the target unresolved', () => {
+    config()
+    write(
+      'knowledge/delivery/work-items/completed/AN-065.md',
+      '---\nid: AN-065\ntype: feature\ntitle: Pooling\nstatus: completed\n---\n# Pooling\n\n## Learning\n\nThe benchmark ran in 42ms on the host. Host threads must be reused across calls, but WebAssembly instances must never be reused between requests.\n'
+    )
+    const plan = buildConsolidationPlan(tmp, { now: FIXED_NOW })
+    const learnings = plan.opportunities.filter((o) => o.category === 'unincorporated_learning')
+    expect(learnings).toHaveLength(1)
+    // Evidence is the normative sentence, NOT the opening benchmark sentence.
+    expect(learnings[0].evidence.join(' ')).toMatch(/must never be reused|must be reused/i)
+    expect(learnings[0].evidence.join(' ')).not.toMatch(/42ms/)
+    // Target is explicitly unresolved (no invented destination like codebase.md).
+    expect(learnings[0].target_artifacts).toEqual([])
+  })
+
+  it('classifyLearningSentence separates rules from results/benchmarks/tests', () => {
+    expect(classifyLearningSentence('Host threads must be reused across calls.')).toBe('durable-rule')
+    expect(classifyLearningSentence('Se debe validar el esquema antes de escribir.')).toBe('durable-rule')
+    expect(classifyLearningSentence('The four crates compiled successfully.')).toBe('historical-result')
+    expect(classifyLearningSentence('The benchmark ran at 1200 ns/op.')).toBe('benchmark-evidence')
+    expect(classifyLearningSentence('All unit tests are green.')).toBe('test-observation')
+    // Past-tense narration with a bare "never" is NOT a durable rule.
+    expect(classifyLearningSentence('The component never rendered the body it already received.')).not.toBe('durable-rule')
+  })
+
+  it('AC-06: a single short completed Work Item does NOT produce fragmentation', () => {
+    config()
+    for (const id of ['WI-200', 'WI-201', 'WI-202', 'WI-203', 'WI-204', 'WI-205']) {
+      write(
+        `knowledge/delivery/work-items/completed/${id}.md`,
+        `---\nid: ${id}\ntype: feature\ntitle: ${id}\nstatus: completed\n---\n# ${id}\n\nShort.\n`
+      )
+    }
+    const plan = buildConsolidationPlan(tmp, { now: FIXED_NOW })
+    expect(plan.opportunities.filter((o) => o.category === 'knowledge_fragmentation')).toHaveLength(0)
+    // And no organization opportunity is raised for historical Work Items either.
+    const orgOnWIs = plan.opportunities.filter(
+      (o) => o.category === 'knowledge_organization' && o.source_artifacts.some((s) => s.startsWith('WI-2'))
+    )
+    expect(orgOnWIs).toHaveLength(0)
+  })
+
+  it('AC-07: a generated inventory gets no organization recommendation', () => {
+    config()
+    write('knowledge/inventory.md', '---\ntype: inventory\ntitle: Inventory\ngenerated_by: kaddo\n---\n# Inventory\n\n- a\n- b\n')
+    const plan = buildConsolidationPlan(tmp, { now: FIXED_NOW })
+    const org = plan.opportunities.filter((o) => o.category === 'knowledge_organization')
+    expect(org.some((o) => o.source_artifacts.includes('knowledge/inventory.md'))).toBe(false)
+  })
+
+  it('AC-07/AC-08: a weak canonical doc is observed but its action requires semantic review', () => {
+    config()
+    write('knowledge/tech/codebase.md', '---\ntype: codebase\ntitle: Codebase\n---\n# Codebase\n\nThin.\n')
+    const plan = buildConsolidationPlan(tmp, { now: FIXED_NOW })
+    const org = plan.opportunities.find((o) => o.category === 'knowledge_organization')
+    expect(org).toBeDefined()
+    expect(org!.classification).toBe('observed')
+    expect(org!.requires_semantic_review).toBe(true)
   })
 
   it('does NOT treat Work Items that share a template as redundancy', () => {

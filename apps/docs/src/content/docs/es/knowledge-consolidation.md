@@ -63,16 +63,29 @@ nunca ejecuta un LLM; la revisión semántica la realizan la skill `knowledge-co
 
 | Categoría | Qué revela |
 |---|---|
-| `knowledge_redundancy` | Artifacts de capa canónica que podrían repetirse entre sí (candidato) |
-| `unincorporated_learning` | Un aprendizaje tipo regla de un Work Item completado que podría pertenecer al conocimiento vigente (candidato) |
-| `knowledge_fragmentation` | Varios artifacts de baja señal en una carpeta que podrían leerse mejor consolidados (candidato) |
+| `knowledge_redundancy` | Dos documentos de conocimiento (capa, ADRs o Initiatives) que repiten un **pasaje literal** de contenido distintivo (candidato) |
+| `unincorporated_learning` | Un Work Item completado cuyo learning contiene una **frase tipo regla** que podría pertenecer al conocimiento vigente (candidato) |
+| `knowledge_fragmentation` | Varios artifacts **canónicos** de baja señal en una carpeta que podrían leerse mejor consolidados (candidato) |
 | `relationship_opportunity` | Una relación opcional ausente en el grafo (observed, desde graph hints) |
 | `potentially_outdated` | Una inconsistencia verificable, p. ej. una referencia a una decisión que ya no existe (observed) |
-| `knowledge_organization` | Un artifact placeholder/débil que conviene ampliar o fusionar (observed) |
+| `knowledge_organization` | Un documento de **conocimiento canónico** placeholder/débil que conviene ampliar o fusionar (evidencia observed; la acción requiere revisión) |
 
-Los Work Items, el roadmap y el andamiaje reutilizable (agents/skills) comparten plantillas por
-diseño, así que **no** se comparan para detectar redundancia —evitando falsos positivos por
-similitud estructural—.
+**Reglas de precisión que mantienen confiables los candidatos:**
+
+- **La redundancia es por contenido, nunca por estructura.** Dos ADRs o dos Initiatives que comparten
+  títulos de sección (`Decision`, `Consequences`, `Expected value`…) por una plantilla común *no* son
+  un candidato; solo lo es un pasaje literal compartido de prosa distintiva. Los Work Items, el roadmap
+  y el andamiaje reutilizable (agents/skills/capsules) quedan excluidos de la comparación.
+- **Un learning requiere una regla, no un resultado.** Una frase se marca solo cuando se lee como una
+  regla durable (un modal o un sustantivo de regla); compilaciones exitosas, benchmarks, resultados de
+  pruebas y de experimentos no. Se conserva la frase exacta que disparó la detección —no el inicio de
+  la sección—.
+- **El destino del learning queda sin resolver.** Core nunca inventa un artifact destino; lo deja para
+  la revisión semántica en lugar de concentrar todo en un solo archivo.
+- **La organización considera la naturaleza del artifact.** Solo califican los documentos canónicos de
+  Business/Product/Tech; los Work Items (unidades históricas independientes), inventarios generados,
+  deprecaciones, initiatives y Project Resources no reciben recomendaciones narrativas de consolidación
+  solo por ser breves.
 
 ## Cómo se relaciona con otras capacidades de Kaddo
 
