@@ -127,7 +127,7 @@ export function ResourceDetail() {
           ['Scope', r.scope ? (r.scope.module ? `${r.scope.type}/${r.scope.module}` : r.scope.type) : '—'],
           ['Environments', r.environments.join(', ') || '—'],
           ['Used by modules', r.modules.join(', ') || '—'],
-          ['Purpose', r.purpose ?? '—'],
+          ['Purpose', r.purpose ? plainText(r.purpose) : '—'],
         ]} />
       </Section>
 
@@ -186,9 +186,14 @@ export function ResourceDetail() {
       )}
 
       {r.markdownBody.trim() && (
-        <Section title="Full document">
-          <MarkdownRenderer content={r.markdownBody} />
-        </Section>
+        <details style={{ marginTop: 20 }}>
+          <summary style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.4, color: 'var(--foreground-muted)', cursor: 'pointer', userSelect: 'none' }}>
+            Full document
+          </summary>
+          <div style={{ marginTop: 10, paddingTop: 12, borderTop: '1px solid var(--border)' }}>
+            <MarkdownRenderer content={r.markdownBody} />
+          </div>
+        </details>
       )}
     </div>
   )
@@ -199,6 +204,18 @@ function editProfile(setProfiles: React.Dispatch<React.SetStateAction<ProfileDra
 }
 function editCoord(setProfiles: React.Dispatch<React.SetStateAction<ProfileDraft[]>>, pi: number, ci: number, fn: (c: { key: string; value: string }) => { key: string; value: string }) {
   editProfile(setProfiles, pi, (d) => ({ ...d, coordinates: d.coordinates.map((c, i) => (i === ci ? fn(c) : c)) }))
+}
+
+/** Flatten inline markdown to clean one-line text for summary fields (no raw **, `code`, links). */
+function plainText(md: string): string {
+  return md
+    .replace(/`([^`]+)`/g, '$1')
+    .replace(/\*\*([^*]+)\*\*/g, '$1')
+    .replace(/__([^_]+)__/g, '$1')
+    .replace(/\*([^*]+)\*/g, '$1')
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
+    .replace(/\s+/g, ' ')
+    .trim()
 }
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
