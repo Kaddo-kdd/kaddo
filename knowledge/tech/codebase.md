@@ -51,6 +51,11 @@ El proyecto es un monorepo administrado con `pnpm` que contiene las siguientes c
 - Para las pruebas E2E del frontend, navegar a `packages/admin` y ejecutar `pnpm run test:e2e` (Playwright).
 - Herramientas de formateo y linting estático están disponibles vía `pnpm run lint` y `pnpm run format` en la raíz.
 
+## Documentation review
+
+- Toda revisión de documentación debe verificar los **nombres de las herramientas MCP** y los
+  **comandos CLI** frente al código actual, no solo la prosa. _(Origen: WI-068.)_
+
 ## Resolved questions
 
 - [resolved] Los scripts centrales para desarrollo concurrente están en el `package.json` raíz:
