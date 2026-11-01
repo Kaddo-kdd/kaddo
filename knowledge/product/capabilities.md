@@ -191,7 +191,7 @@ Kaddo es un toolkit local-first de Knowledge-Driven Development. Gestiona conoci
 
 ## Open Questions
 
-- [open] ¿Cómo debe evolucionar el System Graph/Map como fuente de contexto para agentes?
+- El seguimiento de la evolución del System Graph/Map está centralizado en [Product Context — Open questions](./product.md#open-questions).
 - [open] ¿Qué artifacts son obligatorios u opcionales según el tipo y nivel de un Work Item?
 - [open] ¿Qué mecanismos de source drift aportan valor sin convertir a Kaddo en un issue tracker externo?
 
