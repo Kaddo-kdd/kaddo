@@ -225,6 +225,46 @@ describe('Knowledge Consolidation — deterministic analysis (WI-070)', () => {
     expect(org.some((o) => o.source_artifacts.includes('knowledge/inventory.md'))).toBe(false)
   })
 
+  it('precision: a shared URL alone does NOT create a redundancy candidate', () => {
+    config()
+    const url = 'https://example.com/a/very/long/shared/reference/path/that/looks/identical'
+    write('knowledge/tech/current-state.md', `---\ntype: current-state\ntitle: CS\n---\n# CS\n\n## A\n\nDistinct prose about the ingestion pipeline and its retry policy lives here. See ${url} for the spec.\n`)
+    write('knowledge/product/capabilities.md', `---\ntype: capabilities\ntitle: Cap\n---\n# Cap\n\n## B\n\nUnrelated prose about the reviewer dashboard and its filters lives here. See ${url} for the spec.\n`)
+    const plan = buildConsolidationPlan(tmp, { now: FIXED_NOW })
+    expect(plan.opportunities.filter((o) => o.category === 'knowledge_redundancy')).toHaveLength(0)
+  })
+
+  it('precision: an identifier/code block containing "must" does NOT become a durable rule', () => {
+    config()
+    write(
+      'knowledge/delivery/work-items/completed/AN-300.md',
+      '---\nid: AN-300\ntype: feature\ntitle: Rename\nstatus: completed\n---\n# Rename\n\n## Learning\n\nWe renamed the helper `must_validate_schema()` and updated its callers. The snippet:\n\n```rust\nif must_reuse { reuse() }\n```\n'
+    )
+    const plan = buildConsolidationPlan(tmp, { now: FIXED_NOW })
+    expect(plan.opportunities.filter((o) => o.category === 'unincorporated_learning')).toHaveLength(0)
+  })
+
+  it('precision: shingle continuity is enforced per document, in BOTH directions', () => {
+    const full = 'alpha bravo charlie delta echo foxtrot golf hotel india juliet kilo lima'
+    // Same 12 words, but a blank line splits them into two blocks, so no block holds the whole run.
+    const split = 'alpha bravo charlie delta echo foxtrot\n\ngolf hotel india juliet kilo lima'
+    const run = (a: string, b: string) => {
+      tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'kaddo-kc-'))
+      config()
+      write('knowledge/tech/current-state.md', `---\ntype: current-state\ntitle: CS\n---\n# CS\n\n## A\n\n${a}\n`)
+      write('knowledge/tech/architecture-notes.md', `---\ntype: architecture-notes\ntitle: AN\n---\n# AN\n\n## B\n\n${b}\n`)
+      const r = buildConsolidationPlan(tmp, { now: FIXED_NOW }).opportunities.filter((o) => o.category === 'knowledge_redundancy').length
+      fs.rmSync(tmp, { recursive: true, force: true })
+      return r
+    }
+    // Split on either side → no contiguous shared passage → no candidate.
+    expect(run(split, full)).toBe(0) // split in the first document
+    expect(run(full, split)).toBe(0) // split in the second document
+    // Positive control: contiguous in BOTH documents → candidate (detection is not just disabled).
+    expect(run(full, full)).toBe(1)
+    tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'kaddo-kc-')) // restore for afterEach cleanup
+  })
+
   it('AC-07/AC-08: a weak canonical doc is observed but its action requires semantic review', () => {
     config()
     write('knowledge/tech/codebase.md', '---\ntype: codebase\ntitle: Codebase\n---\n# Codebase\n\nThin.\n')

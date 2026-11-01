@@ -126,8 +126,10 @@ function sha256(content: string): string {
 //
 // Sharing section titles (Decision/Consequences in ADRs, Expected value/Success criteria in
 // Initiatives) comes from a shared template and is NOT evidence of duplication. Redundancy is
-// therefore detected from DISTINCTIVE CONTENT: overlapping word-shingles of the prose body, with
-// headings, code blocks, list markers and block quotes stripped out.
+// therefore detected from DISTINCTIVE CONTENT: overlapping word-shingles of the prose, compared
+// WITHIN A BLOCK (a paragraph or a list item) so a "contiguous passage" is a real one and never
+// bridges a paragraph, list-item, heading or code boundary. Headings, fenced code, inline code,
+// block quotes and URLs are excluded so structure and shared links/identifiers do not drive matches.
 
 /** Shingle length (consecutive content words). Long enough that template boilerplate rarely collides. */
 const SHINGLE_SIZE = 6
@@ -139,66 +141,89 @@ const SHINGLE_SIZE = 6
  */
 const MIN_SHARED_RUN = 6 // ≈ an 11+ word passage repeated verbatim
 
-/** Prose words of a markdown body, excluding headings, fenced code, block quotes and list markers. */
-function contentWords(body: string): string[] {
-  const words: string[] = []
+/** Remove fenced code, inline code and URLs so they never contribute words or trigger NL rules. */
+function stripNoise(text: string): string {
+  return text
+    .replace(/```[\s\S]*?```/g, ' ') // fenced code blocks
+    .replace(/`[^`]*`/g, ' ') // inline code spans / identifiers
+    .replace(/https?:\/\/\S+|www\.\S+/gi, ' ') // URLs
+}
+
+/**
+ * Prose split into BLOCKS (paragraphs / list items), each a word array. A block ends at a blank line,
+ * heading, fenced code, block quote or list-item marker, so shingles never span unrelated passages.
+ * Inline code and URLs are stripped from every line.
+ */
+function contentBlocks(body: string): string[][] {
+  const blocks: string[][] = []
+  let cur: string[] = []
   let inFence = false
+  const flush = () => {
+    if (cur.length) blocks.push(cur)
+    cur = []
+  }
   for (const raw of body.split(/\r?\n/)) {
     const t = raw.trim()
     if (/^```/.test(t)) {
       inFence = !inFence
+      flush()
       continue
     }
     if (inFence) continue
-    if (/^#{1,6}\s/.test(t)) continue // heading
-    if (/^>/.test(t)) continue // block quote
-    // strip leading list / numbering markers but keep the text
-    const text = t.replace(/^([-*+]\s+|\d+\.\s+)/, '')
+    if (t === '' || /^#{1,6}\s/.test(t) || /^>/.test(t)) {
+      flush()
+      continue
+    }
+    const isListItem = /^([-*+]\s+|\d+\.\s+)/.test(t)
+    if (isListItem) flush() // each list item is its own block
+    const text = stripNoise(t.replace(/^([-*+]\s+|\d+\.\s+)/, ''))
     const matched = text.toLowerCase().match(/[a-záéíóúñü0-9]+/gi)
-    if (matched) words.push(...matched)
+    if (matched) cur.push(...matched)
   }
-  return words
+  flush()
+  return blocks
 }
 
-type Shingles = { words: string[]; keys: string[]; set: Set<string> }
+type Shingles = { blocks: string[][]; set: Set<string> }
 
-/** Ordered content shingles of a body plus a membership set, for contiguous-overlap detection. */
+/** Content shingles built per block (never across block boundaries), plus a membership set. */
 function buildShingles(body: string): Shingles {
-  const words = contentWords(body)
-  const keys: string[] = []
+  const blocks = contentBlocks(body)
   const set = new Set<string>()
-  for (let i = 0; i + SHINGLE_SIZE <= words.length; i++) {
-    const key = words.slice(i, i + SHINGLE_SIZE).join(' ')
-    keys.push(key)
-    set.add(key)
+  for (const block of blocks) {
+    for (let i = 0; i + SHINGLE_SIZE <= block.length; i++) {
+      set.add(block.slice(i, i + SHINGLE_SIZE).join(' '))
+    }
   }
-  return { words, keys, set }
+  return { blocks, set }
 }
 
 /**
- * Longest run of A's consecutive shingles that are all present in B, and the readable snippet of that
- * run. A long run means a verbatim passage was repeated; scattered template phrases yield runs of 1-2.
+ * Longest run of A's consecutive shingles (WITHIN one block) that are all present in B, and the
+ * readable snippet of that run. A long run means a verbatim passage was repeated; scattered template
+ * phrases yield runs of 1-2, and runs can never bridge a block boundary.
  */
 function longestSharedRun(a: Shingles, b: Shingles): { length: number; snippet: string } {
   let best = 0
-  let bestStart = -1
-  let run = 0
-  let runStart = 0
-  for (let i = 0; i < a.keys.length; i++) {
-    if (b.set.has(a.keys[i])) {
-      if (run === 0) runStart = i
-      run += 1
-      if (run > best) {
-        best = run
-        bestStart = runStart
+  let bestSnippet = ''
+  for (const block of a.blocks) {
+    let run = 0
+    let runStart = 0
+    for (let i = 0; i + SHINGLE_SIZE <= block.length; i++) {
+      const key = block.slice(i, i + SHINGLE_SIZE).join(' ')
+      if (b.set.has(key)) {
+        if (run === 0) runStart = i
+        run += 1
+        if (run > best) {
+          best = run
+          bestSnippet = block.slice(runStart, runStart + SHINGLE_SIZE + run - 1).join(' ')
+        }
+      } else {
+        run = 0
       }
-    } else {
-      run = 0
     }
   }
-  if (best === 0) return { length: 0, snippet: '' }
-  const snippet = a.words.slice(bestStart, bestStart + SHINGLE_SIZE + best - 1).join(' ')
-  return { length: best, snippet }
+  return { length: best, snippet: bestSnippet }
 }
 
 // --- Learning classification (deterministic heuristic, never asserted as truth) ----------------
@@ -435,8 +460,10 @@ export function buildConsolidationPlan(dir: string, opts: ConsolidationOptions =
   // justify a concrete target artifact, so it delegates that to semantic review (no generic codebase.md).
   for (const la of scoped) {
     if (!isCompletedWorkItem(la)) continue
-    const learning = sectionBody(la.body, ['Learning', 'Aprendizaje', 'Aprendizajes', 'Learnings'])
-    if (!learning) continue
+    const learningRaw = sectionBody(la.body, ['Learning', 'Aprendizaje', 'Aprendizajes', 'Learnings'])
+    if (!learningRaw) continue
+    // Strip code/URLs first so an identifier or snippet containing "must"/"debe" never triggers a rule.
+    const learning = stripNoise(learningRaw)
     const ruleFragment = firstRuleFragment(learning)
     if (!ruleFragment) continue
     opportunities.push({
