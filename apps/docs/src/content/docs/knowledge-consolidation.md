@@ -131,3 +131,23 @@ The same analysis is available to agents via the `kaddo_generate_consolidation_p
 `layer`/`module`), and the result is exposed read-only at `kaddo://consolidation-plan`. Core produces
 the deterministic analysis, MCP gives structured access, the agent/skill does the semantic review, and
 a human approves.
+
+## Admin Explorer
+
+Kaddo Admin includes a **Knowledge Consolidation Explorer** (Reports → Knowledge Consolidation, or the
+"Review Knowledge Consolidation" shortcut on the Knowledge page) at `/reports/consolidation`. It is a
+view for exploring and preparing reviews — it never applies changes to knowledge:
+
+- **Generate / regenerate** a plan for the whole project, a layer or a module. Generation reuses Core
+  and writes only `.kaddo/consolidation-plan.{json,md}`; `knowledge/` is never written.
+- **Dashboard** with totals, how many findings need semantic review, coverage, and a per-category
+  distribution — opportunities to review, never confirmed errors.
+- **Opportunities explorer**: search by id/title/reference and filter by category, classification and
+  review need; each opportunity opens a detail with its evidence, rationale, source/target references
+  (a copyable reference when there is no in-app page) and the unresolved-target note.
+- **Staleness**: when a recorded source changed, the plan is flagged stale (with the affected sources)
+  and can still be explored or regenerated.
+- **Export** the exact persisted snapshot as Markdown or JSON (never recomputed).
+- **Copy Agent Handoff**: produces a structured instruction for the `knowledge-consolidation-agent`
+  that treats the evidence as untrusted data and asks for human approval before any change. No agent is
+  executed and no LLM is called from Admin.

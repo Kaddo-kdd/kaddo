@@ -71,13 +71,21 @@ export function Knowledge() {
           <h2 style={{ fontSize: 22, fontWeight: 700, margin: '0 0 4px' }}>Knowledge</h2>
           <p style={{ fontSize: 14, color: 'var(--foreground-muted)', margin: 0 }}>Explore the project knowledge used by Kaddo.</p>
         </div>
-        <button
-          onClick={() => queryClient.invalidateQueries({ queryKey: ['knowledge-inventory'] })}
-          aria-label="Refresh knowledge"
-          style={{ padding: '8px 14px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', background: 'var(--surface)', color: 'var(--foreground-muted)', cursor: 'pointer', fontSize: 13, fontFamily: 'inherit' }}
-        >
-          ↻ Refresh
-        </button>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+          <button
+            onClick={() => router.navigate({ to: '/reports/consolidation' })}
+            style={{ padding: '8px 14px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', background: 'var(--surface)', color: 'var(--foreground)', cursor: 'pointer', fontSize: 13, fontFamily: 'inherit' }}
+          >
+            Review Knowledge Consolidation
+          </button>
+          <button
+            onClick={() => queryClient.invalidateQueries({ queryKey: ['knowledge-inventory'] })}
+            aria-label="Refresh knowledge"
+            style={{ padding: '8px 14px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', background: 'var(--surface)', color: 'var(--foreground-muted)', cursor: 'pointer', fontSize: 13, fontFamily: 'inherit' }}
+          >
+            ↻ Refresh
+          </button>
+        </div>
       </div>
 
       {/* Search and filters */}

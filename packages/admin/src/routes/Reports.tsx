@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useRouter } from '@tanstack/react-router'
-import { BarChart3, CircleHelp, RefreshCw, TrendingDown, Wallet } from 'lucide-react'
+import { BarChart3, CircleHelp, Layers, RefreshCw, TrendingDown, Wallet } from 'lucide-react'
 import { api, downloadReport, type ReportData, type ReportKind } from '../lib/api'
 import { EmptyState } from '../components/EmptyState'
 import { StatusBadge } from '../components/StatusBadge'
@@ -50,7 +50,11 @@ export function Reports({ kind }: { kind?: ReportKind }) {
         return <button key={report} onClick={() => router.navigate({ to: `/reports/${report}` })} style={cardButton}>
           <Icon size={24} color="var(--primary)" /><strong>{item.title}</strong><span>{item.description}</span>
         </button>
-      })}</div>
+      })}
+      <button key="consolidation" onClick={() => router.navigate({ to: '/reports/consolidation' })} style={cardButton}>
+        <Layers size={24} color="var(--primary)" /><strong>Knowledge Consolidation</strong><span>Explore opportunities to optimize, connect and refine knowledge; inspect evidence, review staleness and prepare agent handoffs.</span>
+      </button>
+      </div>
     </div>
   }
   return <ReportDashboard kind={kind} />

@@ -61,6 +61,9 @@ import {
   getDriftReportAdmin,
   getSavingsReportAdmin,
   exportReportAdmin,
+  getConsolidationPlanAdmin,
+  generateConsolidationPlanAdmin,
+  exportConsolidationAdmin,
   createDeprecationAdmin,
   CoreError,
 } from './core-adapter.js'
@@ -74,6 +77,7 @@ import {
   ResourceUpdateSchema,
   DeprecationCreateSchema,
   ProjectModeUpdateSchema,
+  ConsolidationGenerateSchema,
 } from './contracts/schemas.js'
 import type { AdminStorage } from './storage/admin-storage.js'
 
@@ -100,6 +104,8 @@ function statusForCode(code: string): number {
     case 'DEPRECATION_TARGET_NOT_FOUND':
     case 'NOT_FOUND': return 404
     case 'DUPLICATE': return 409
+    case 'CONSOLIDATION_NOT_GENERATED': return 404
+    case 'CONSOLIDATION_UNAVAILABLE': return 409
     default: return 500
   }
 }
@@ -208,6 +214,30 @@ export async function createAdminServer(opts: AdminServerOptions) {
     const content = exportReportAdmin(projectDir, report, format, scope)
     reply.header('content-type', format === 'json' ? 'application/json; charset=utf-8' : 'text/markdown; charset=utf-8')
     return reply.send(content)
+  })
+
+  // --- Knowledge Consolidation Explorer (WI-073) ---
+  app.get('/api/v1/admin/consolidation/plan', coreRoute(getConsolidationPlanAdmin))
+  app.post('/api/v1/admin/consolidation/generate', async (request, reply) => {
+    const parsed = ConsolidationGenerateSchema.safeParse(request.body)
+    if (!parsed.success) {
+      return reply.code(400).send({ error: { code: 'INVALID_INPUT', message: 'A valid consolidation scope is required (all | layer | module).' } })
+    }
+    return writeHandler(reply, () => generateConsolidationPlanAdmin(projectDir, parsed.data.scope))
+  })
+  app.get<{ Querystring: { format?: 'markdown' | 'json' } }>('/api/v1/admin/consolidation/export', async (request, reply) => {
+    const format = request.query.format ?? 'markdown'
+    if (!['markdown', 'json'].includes(format)) {
+      return reply.code(400).send({ error: { code: 'INVALID_INPUT', message: 'format must be markdown or json.' } })
+    }
+    try {
+      const content = exportConsolidationAdmin(projectDir, format)
+      reply.header('content-type', format === 'json' ? 'application/json; charset=utf-8' : 'text/markdown; charset=utf-8')
+      return reply.send(content)
+    } catch (err) {
+      if (err instanceof CoreError) return reply.code(statusForCode(err.code)).send({ error: { code: err.code, message: err.message } })
+      throw err
+    }
   })
   app.get<{ Querystring: { status?: string; module?: string; query?: string } }>(
     '/api/v1/admin/work-items',

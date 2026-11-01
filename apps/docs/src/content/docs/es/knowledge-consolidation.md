@@ -135,3 +135,24 @@ El mismo análisis está disponible para agentes vía el tool `kaddo_generate_co
 (con `layer`/`module` opcionales), y el resultado se expone en solo lectura en
 `kaddo://consolidation-plan`. Core produce el análisis determinístico, MCP da acceso estructurado, el
 agente/skill hace la revisión semántica y un humano aprueba.
+
+## Explorer en Admin
+
+Kaddo Admin incluye un **Knowledge Consolidation Explorer** (Reports → Knowledge Consolidation, o el
+acceso "Review Knowledge Consolidation" en la página de Knowledge) en `/reports/consolidation`. Es una
+vista para explorar y preparar revisiones — nunca aplica cambios al conocimiento:
+
+- **Generar / regenerar** un plan para todo el proyecto, una capa o un módulo. La generación reutiliza
+  Core y solo escribe `.kaddo/consolidation-plan.{json,md}`; `knowledge/` nunca se modifica.
+- **Dashboard** con totales, cuántos hallazgos requieren revisión semántica, cobertura y una
+  distribución por categoría — oportunidades a revisar, nunca errores confirmados.
+- **Explorer de oportunidades**: búsqueda por id/título/referencia y filtros por categoría,
+  clasificación y necesidad de revisión; cada oportunidad abre un detalle con su evidencia,
+  justificación, referencias de origen/destino (una referencia copiable cuando no hay página en la app)
+  y la nota de destino sin resolver.
+- **Staleness**: cuando una fuente registrada cambió, el plan se marca como stale (con las fuentes
+  afectadas) y puede seguir explorándose o regenerarse.
+- **Exportar** el snapshot persistido exacto como Markdown o JSON (nunca se recalcula).
+- **Copy Agent Handoff**: produce una instrucción estructurada para el `knowledge-consolidation-agent`
+  que trata la evidencia como dato no confiable y pide aprobación humana antes de cualquier cambio. No
+  se ejecuta ningún agente ni se llama a un LLM desde Admin.

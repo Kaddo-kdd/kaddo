@@ -96,7 +96,15 @@ import {
   type AssociatedWorkItem,
   type InitiativeAnalysis,
   type CompletionReadiness,
+  buildConsolidationPlan,
+  consolidationPlanStaleness,
+  renderConsolidationMarkdown,
+  serializeConsolidationJson,
+  type ConsolidationPlan,
+  type ConsolidationScope,
 } from '@kaddo/cli/core'
+import fs from 'node:fs'
+import path from 'node:path'
 import type {
   ProjectOverview,
   ProjectSummary,
@@ -169,6 +177,113 @@ export function exportReportAdmin(dir: string, report: 'impact' | 'drift' | 'sav
   }
   const value = getSavingsReportAdmin(dir, scope)
   return format === 'json' ? serializeSavingsJson(value) : renderSavingsMarkdown(value)
+}
+
+// --- Knowledge Consolidation Explorer (WI-073) -------------------------------
+// Admin surface over the deterministic Core analyzer. Reads/persists ONLY the derived projections
+// under .kaddo/; never touches knowledge/, never runs a shell, never calls an LLM. Core is the single
+// source of analysis (no logic duplicated here).
+
+const CONSOLIDATION_JSON = '.kaddo/consolidation-plan.json'
+const CONSOLIDATION_MD = '.kaddo/consolidation-plan.md'
+
+export type ConsolidationAvailability = 'not-generated' | 'current' | 'stale' | 'unavailable'
+
+export type ConsolidationPlanResponse = {
+  availability: ConsolidationAvailability
+  plan: ConsolidationPlan | null
+  staleness: { stale: boolean; changed: string[]; removed: string[] } | null
+  /** Present only when availability is 'unavailable': a safe, non-sensitive reason. */
+  reason?: string
+}
+
+/** Validate the minimal shape of a persisted plan before trusting it (corruption / version drift). */
+function isPlanShape(value: unknown): value is ConsolidationPlan {
+  if (!value || typeof value !== 'object') return false
+  const p = value as Record<string, unknown>
+  return (
+    typeof p.generated_at === 'string' &&
+    typeof p.scope === 'string' &&
+    Array.isArray(p.opportunities) &&
+    Array.isArray(p.source_files) &&
+    typeof p.summary === 'object' &&
+    p.summary !== null &&
+    typeof p.coverage === 'object' &&
+    p.coverage !== null
+  )
+}
+
+/**
+ * Read the persisted Consolidation Plan and compute its availability + staleness WITHOUT running a
+ * new analysis. A missing plan is `not-generated`; a corrupt/incompatible plan is `unavailable`.
+ */
+export function getConsolidationPlanAdmin(dir: string): ConsolidationPlanResponse {
+  const jsonPath = path.join(dir, CONSOLIDATION_JSON)
+  if (!fs.existsSync(jsonPath)) return { availability: 'not-generated', plan: null, staleness: null }
+  let raw: string
+  try {
+    raw = fs.readFileSync(jsonPath, 'utf-8')
+  } catch {
+    return { availability: 'unavailable', plan: null, staleness: null, reason: 'The consolidation plan could not be read.' }
+  }
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(raw)
+  } catch {
+    return { availability: 'unavailable', plan: null, staleness: null, reason: 'The consolidation plan is not valid JSON.' }
+  }
+  if (!isPlanShape(parsed)) {
+    return { availability: 'unavailable', plan: null, staleness: null, reason: 'The consolidation plan has an incompatible structure.' }
+  }
+  const plan = parsed as ConsolidationPlan
+  const staleness = consolidationPlanStaleness(dir, plan)
+  return { availability: staleness.stale ? 'stale' : 'current', plan, staleness }
+}
+
+/**
+ * Build a plan with Core and persist BOTH projections atomically: both strings are produced first, so
+ * a build error writes nothing; each file is written to a temp sibling and renamed, minimizing the
+ * window for an inconsistent JSON/Markdown pair. `knowledge/` is never written.
+ */
+export function generateConsolidationPlanAdmin(dir: string, scope: ConsolidationScope): ConsolidationPlanResponse {
+  let plan: ConsolidationPlan
+  try {
+    plan = buildConsolidationPlan(dir, { scope })
+  } catch (err) {
+    throw new CoreError('CONSOLIDATION_GENERATE_FAILED', err instanceof Error ? err.message : 'Could not generate the consolidation plan.')
+  }
+  const json = serializeConsolidationJson(plan)
+  const md = renderConsolidationMarkdown(plan)
+  const kaddoDir = path.join(dir, '.kaddo')
+  try {
+    fs.mkdirSync(kaddoDir, { recursive: true })
+    const jsonPath = path.join(dir, CONSOLIDATION_JSON)
+    const mdPath = path.join(dir, CONSOLIDATION_MD)
+    const jsonTmp = `${jsonPath}.tmp`
+    const mdTmp = `${mdPath}.tmp`
+    fs.writeFileSync(jsonTmp, json, 'utf-8')
+    fs.writeFileSync(mdTmp, md, 'utf-8')
+    fs.renameSync(jsonTmp, jsonPath)
+    fs.renameSync(mdTmp, mdPath)
+  } catch (err) {
+    throw new CoreError('CONSOLIDATION_WRITE_FAILED', err instanceof Error ? err.message : 'Could not persist the consolidation plan.')
+  }
+  const staleness = consolidationPlanStaleness(dir, plan)
+  return { availability: staleness.stale ? 'stale' : 'current', plan, staleness }
+}
+
+/** Return the persisted snapshot's content for export — never recomputes. */
+export function exportConsolidationAdmin(dir: string, format: 'markdown' | 'json'): string {
+  const rel = format === 'json' ? CONSOLIDATION_JSON : CONSOLIDATION_MD
+  const abs = path.join(dir, rel)
+  if (!fs.existsSync(abs)) {
+    throw new CoreError('CONSOLIDATION_NOT_GENERATED', 'No consolidation plan has been generated yet.')
+  }
+  try {
+    return fs.readFileSync(abs, 'utf-8')
+  } catch {
+    throw new CoreError('CONSOLIDATION_UNAVAILABLE', 'The consolidation plan could not be read.')
+  }
 }
 
 export function getWorkItemSummary(dir: string): WorkItemSummary {

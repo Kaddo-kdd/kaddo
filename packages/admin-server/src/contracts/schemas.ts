@@ -532,3 +532,12 @@ export const DeprecationCreateSchema = z.object({
   title: z.string().min(1),
   purpose: z.string().optional(),
 })
+
+// Knowledge Consolidation Explorer (WI-073): the generate request's scope. Validated so no arbitrary
+// path or layer can reach Core — all | layer <enum> | module <safe id>.
+export const ConsolidationScopeSchema = z.discriminatedUnion('kind', [
+  z.object({ kind: z.literal('all') }),
+  z.object({ kind: z.literal('layer'), layer: z.enum(['Business', 'Product', 'Tech', 'Delivery']) }),
+  z.object({ kind: z.literal('module'), module: z.string().min(1).max(100).regex(/^[A-Za-z0-9._-]+$/) }),
+])
+export const ConsolidationGenerateSchema = z.object({ scope: ConsolidationScopeSchema })

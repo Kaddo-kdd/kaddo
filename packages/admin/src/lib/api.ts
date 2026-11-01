@@ -602,3 +602,93 @@ export const api = {
   updateIntegrationFilters: (id: string, filters: ExternalWorkItemFilters) =>
     mutateApi<IntegrationSummary>(`/integrations/${encodeURIComponent(id)}/filters`, 'PUT', filters),
 }
+
+// --- Knowledge Consolidation Explorer (WI-073) ---
+export type ConsolidationCategory =
+  | 'knowledge_redundancy'
+  | 'unincorporated_learning'
+  | 'knowledge_fragmentation'
+  | 'relationship_opportunity'
+  | 'potentially_outdated'
+  | 'knowledge_organization'
+
+export type ConsolidationClassification = 'observed' | 'derived' | 'suggested' | 'unknown'
+export type ConsolidationConfidence = 'verified' | 'requires-review' | 'insufficient-evidence'
+
+export type ConsolidationOpportunity = {
+  id: string
+  category: ConsolidationCategory
+  classification: ConsolidationClassification
+  confidence: ConsolidationConfidence
+  title: string
+  source_artifacts: string[]
+  target_artifacts: string[]
+  evidence: string[]
+  rationale: string
+  possible_impact: string
+  suggested_action: string
+  requires_semantic_review: boolean
+}
+
+export type ConsolidationPlan = {
+  generated_at: string
+  scope: string
+  project_context: { state: string; mode: string; repository_structure: string }
+  coverage: {
+    scope: string
+    layers_evaluated: string[]
+    artifacts_evaluated: number
+    work_items_evaluated: number
+    excluded_sources: string[]
+  }
+  source_files: { path: string; hash: string }[]
+  opportunities: ConsolidationOpportunity[]
+  summary: {
+    total: number
+    by_category: Record<ConsolidationCategory, number>
+    requires_semantic_review: number
+  }
+}
+
+export type ConsolidationScope =
+  | { kind: 'all' }
+  | { kind: 'layer'; layer: 'Business' | 'Product' | 'Tech' | 'Delivery' }
+  | { kind: 'module'; module: string }
+
+export type ConsolidationAvailability = 'not-generated' | 'current' | 'stale' | 'unavailable'
+
+export type ConsolidationPlanResponse = {
+  availability: ConsolidationAvailability
+  plan: ConsolidationPlan | null
+  staleness: { stale: boolean; changed: string[]; removed: string[] } | null
+  reason?: string
+}
+
+export const CONSOLIDATION_CATEGORY_ORDER: ConsolidationCategory[] = [
+  'knowledge_redundancy',
+  'unincorporated_learning',
+  'knowledge_fragmentation',
+  'relationship_opportunity',
+  'potentially_outdated',
+  'knowledge_organization',
+]
+
+export async function getConsolidationPlan(): Promise<ConsolidationPlanResponse> {
+  return fetchApi<ConsolidationPlanResponse>('/consolidation/plan')
+}
+
+export async function generateConsolidationPlan(scope: ConsolidationScope): Promise<ConsolidationPlanResponse> {
+  return mutateApi<ConsolidationPlanResponse>('/consolidation/generate', 'POST', { scope })
+}
+
+export async function downloadConsolidation(format: 'markdown' | 'json'): Promise<void> {
+  const response = await fetch(`${BASE}/consolidation/export?format=${format}`, { credentials: 'include' })
+  if (!response.ok) throw new ApiError('EXPORT_FAILED', 'Could not export the consolidation plan.', response.status)
+  const blob = await response.blob()
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = `consolidation-plan.${format === 'markdown' ? 'md' : 'json'}`
+  link.click()
+  URL.revokeObjectURL(url)
+}
