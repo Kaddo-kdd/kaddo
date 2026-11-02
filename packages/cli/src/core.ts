@@ -9,6 +9,42 @@ export { buildSavingsReport, renderSavingsMarkdown, serializeSavingsJson, type S
 export { buildReadinessReport, type ReadinessReport, type ReadinessStatus } from './core/readiness.js'
 export { buildProjectRoute, type ProjectRoute, type RouteStep, type RouteStepStatus } from './core/project-route.js'
 export {
+  discoverDeliveryPlans,
+  discoverEpics,
+  getPlan,
+  getEpic,
+  nextPlanId as nextDeliveryPlanId,
+  nextEpicId,
+  epicsInPlan,
+  initiativesInEpic,
+  workItemsInEpic,
+  computeEpicProgress,
+  computePlanProgress,
+  validatePlanningGraph,
+  parseDeliveryPlan,
+  parseEpic,
+  DELIVERY_PLANS_DIR,
+  EPICS_DIR,
+  PLAN_STATES,
+  EPIC_STATES,
+  type DeliveryPlan,
+  type Epic,
+  type Milestone,
+  type PlanStatus,
+  type EpicStatus,
+  type PlanProgress,
+  type EpicProgress,
+  type PlanningFinding,
+} from './core/delivery-planning.js'
+export {
+  createDeliveryPlan,
+  createEpic,
+  associateInitiativeWithEpic,
+  DeliveryPlanningWriteError,
+  type CreatePlanInput,
+  type CreateEpicInput,
+} from './core/delivery-planning-write.js'
+export {
   buildConsolidationPlan,
   consolidationPlanStaleness,
   renderConsolidationMarkdown,

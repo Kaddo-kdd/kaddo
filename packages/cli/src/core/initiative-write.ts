@@ -144,6 +144,10 @@ export type CreateInitiativeInput = {
   relatedCapabilities?: string[]
   source?: string
   sourceId?: string
+  /** Optional Delivery Epic association + declared responsibilities (WI-074). */
+  epic?: string
+  owners?: string[]
+  contributors?: string[]
   candidates?: CandidateInput[]
   externalLinks?: InitiativeExternalLink[]
   body?: string
@@ -173,6 +177,9 @@ function buildInitiativeContent(id: string, input: CreateInitiativeInput): strin
   if (input.priority) data.priority = input.priority
   if (input.source) data.source = input.source
   if (input.sourceId) data.source_id = input.sourceId
+  if (input.epic) data.epic = input.epic.trim()
+  if (input.owners?.length) data.owners = input.owners.map((o) => o.trim()).filter(Boolean)
+  if (input.contributors?.length) data.contributors = input.contributors.map((c) => c.trim()).filter(Boolean)
 
   return matter.stringify('\n' + (input.body ?? defaultBody(input.title.trim())), data)
 }
@@ -239,6 +246,10 @@ export type UpdateInitiativeInput = {
   knowledgeLevel?: string
   domains?: string[]
   relatedCapabilities?: string[]
+  /** Optional Delivery Epic association + declared responsibilities (WI-074). */
+  epic?: string | null
+  owners?: string[]
+  contributors?: string[]
 }
 
 /**
@@ -259,6 +270,12 @@ export function updateInitiative(dir: string, id: string, patch: UpdateInitiativ
   if (patch.knowledgeLevel !== undefined) data.knowledge_level = patch.knowledgeLevel
   if (patch.domains !== undefined) data.domains = patch.domains
   if (patch.relatedCapabilities !== undefined) data.related_capabilities = patch.relatedCapabilities
+  if (patch.epic !== undefined) {
+    if (patch.epic === null || patch.epic.trim() === '') delete data.epic
+    else data.epic = patch.epic.trim()
+  }
+  if (patch.owners !== undefined) data.owners = patch.owners.map((o) => o.trim()).filter(Boolean)
+  if (patch.contributors !== undefined) data.contributors = patch.contributors.map((c) => c.trim()).filter(Boolean)
   const newContent = matter.stringify(content, data)
   writeFile(ini.filePath, newContent)
   const updated = parseInitiative(dir, ini.filePath, newContent)

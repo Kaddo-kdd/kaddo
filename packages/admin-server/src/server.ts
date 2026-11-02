@@ -64,6 +64,9 @@ import {
   getConsolidationPlanAdmin,
   generateConsolidationPlanAdmin,
   exportConsolidationAdmin,
+  getPlanningOverviewAdmin,
+  getPlanDetailAdmin,
+  getEpicDetailAdmin,
   createDeprecationAdmin,
   CoreError,
 } from './core-adapter.js'
@@ -105,6 +108,8 @@ function statusForCode(code: string): number {
     case 'NOT_FOUND': return 404
     case 'DUPLICATE': return 409
     case 'CONSOLIDATION_NOT_GENERATED': return 404
+    case 'PLAN_NOT_FOUND':
+    case 'EPIC_NOT_FOUND': return 404
     case 'CONSOLIDATION_UNAVAILABLE': return 409
     default: return 500
   }
@@ -215,6 +220,13 @@ export async function createAdminServer(opts: AdminServerOptions) {
     reply.header('content-type', format === 'json' ? 'application/json; charset=utf-8' : 'text/markdown; charset=utf-8')
     return reply.send(content)
   })
+
+  // --- Delivery Planning Explorer (WI-074) ---
+  app.get('/api/v1/admin/planning', coreRoute(getPlanningOverviewAdmin))
+  app.get<{ Params: { id: string } }>('/api/v1/admin/planning/plans/:id', async (request, reply) =>
+    writeHandler(reply, () => getPlanDetailAdmin(projectDir, request.params.id)))
+  app.get<{ Params: { id: string } }>('/api/v1/admin/planning/epics/:id', async (request, reply) =>
+    writeHandler(reply, () => getEpicDetailAdmin(projectDir, request.params.id)))
 
   // --- Knowledge Consolidation Explorer (WI-073) ---
   app.get('/api/v1/admin/consolidation/plan', coreRoute(getConsolidationPlanAdmin))

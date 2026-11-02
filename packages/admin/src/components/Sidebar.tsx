@@ -11,6 +11,7 @@ import {
   Settings,
   Target,
   type LucideIcon,
+  Map as MapIcon,
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { isNavItemActive } from '../lib/presentation'
@@ -34,6 +35,7 @@ const navItems: NavItem[] = [
   { label: 'Knowledge', path: '/knowledge', icon: BookOpen },
   { label: 'Work Items', path: '/work-items', icon: ClipboardList },
   { label: 'Initiatives', path: '/initiatives', icon: Target },
+  { label: 'Planning', path: '/planning', icon: MapIcon },
   { label: 'Resources', path: '/resources', icon: Database },
   { label: 'Deprecations', path: '/deprecations', icon: ArchiveX },
   { label: 'System', path: '/system', icon: Settings },

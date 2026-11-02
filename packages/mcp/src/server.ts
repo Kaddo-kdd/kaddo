@@ -93,6 +93,11 @@ import {
   analyzeInitiativeTool,
   completeInitiativeTool,
 } from './initiatives.js'
+import {
+  listPlansTool, getPlanTool, getPlanProgressTool,
+  listEpicsTool, getEpicTool, getEpicProgressTool, validatePlanningTool,
+  createPlanTool, createEpicTool, associateInitiativeTool,
+} from './planning.js'
 
 export const SERVER_NAME = 'kaddo'
 // Read the version from package.json at runtime so it never drifts from the published version.
@@ -734,6 +739,32 @@ export function createServer(root: string): McpServer {
     { title: 'Get initiative progress', description: `Planning coverage (candidates materialized/total) and delivery progress (Work Items by lifecycle state). ${INITIATIVE_READ_NOTE}`, inputSchema: { id: z.string() } },
     async (args) => toolText(guarded(root, () => getInitiativeProgressTool(root, args.id)))
   )
+
+  // --- Delivery Planning: Plans and Epics (WI-074) ---
+  const PLANNING_READ_NOTE =
+    'Read-only. Plans and Epics are an OPTIONAL planning layer; progress is derived from real Work Item state and never auto-completes.'
+  const PLANNING_WRITE_NOTE =
+    'Without confirm=true returns a preview. With confirm=true applies the change. Writes only under knowledge/delivery/; never changes another element lifecycle, never infers responsibility from Git.'
+  server.registerTool('kaddo_list_plans', { title: 'List delivery plans', description: `List delivery plans with milestone count, epics and delivery progress. ${PLANNING_READ_NOTE}`, inputSchema: {} },
+    async () => toolText(guarded(root, () => listPlansTool(root))))
+  server.registerTool('kaddo_get_plan', { title: 'Get delivery plan', description: `Get one plan: objective, milestones, dependencies, success criteria and its epics. ${PLANNING_READ_NOTE}`, inputSchema: { id: z.string() } },
+    async (args) => toolText(guarded(root, () => getPlanTool(root, args.id))))
+  server.registerTool('kaddo_get_plan_progress', { title: 'Get plan progress', description: `Planning coverage, delivery progress and completion readiness for a plan. ${PLANNING_READ_NOTE}`, inputSchema: { id: z.string() } },
+    async (args) => toolText(guarded(root, () => getPlanProgressTool(root, args.id))))
+  server.registerTool('kaddo_list_epics', { title: 'List epics', description: `List epics with their plan/milestone and delivery progress. ${PLANNING_READ_NOTE}`, inputSchema: {} },
+    async () => toolText(guarded(root, () => listEpicsTool(root))))
+  server.registerTool('kaddo_get_epic', { title: 'Get epic', description: `Get one epic: outcome, plan/milestone, dependencies, initiatives and work items (derived). ${PLANNING_READ_NOTE}`, inputSchema: { id: z.string() } },
+    async (args) => toolText(guarded(root, () => getEpicTool(root, args.id))))
+  server.registerTool('kaddo_get_epic_progress', { title: 'Get epic progress', description: `Planning coverage, delivery progress and completion readiness for an epic. ${PLANNING_READ_NOTE}`, inputSchema: { id: z.string() } },
+    async (args) => toolText(guarded(root, () => getEpicProgressTool(root, args.id))))
+  server.registerTool('kaddo_validate_planning', { title: 'Validate planning graph', description: `Deterministic validation: invalid references, dependency cycles, duplicate milestones and pending dependencies. ${PLANNING_READ_NOTE}`, inputSchema: {} },
+    async () => toolText(guarded(root, () => validatePlanningTool(root))))
+  server.registerTool('kaddo_create_plan', { title: 'Create delivery plan', description: `Create a new delivery plan. ${PLANNING_WRITE_NOTE}`, inputSchema: { title: z.string(), objective: z.string().optional(), confirm: z.boolean().optional() } },
+    async (args) => toolText(guarded(root, () => createPlanTool(root, args))))
+  server.registerTool('kaddo_create_epic', { title: 'Create epic', description: `Create a new epic, optionally in a plan/milestone (validated). ${PLANNING_WRITE_NOTE}`, inputSchema: { title: z.string(), plan: z.string().optional(), milestone: z.string().optional(), outcome: z.string().optional(), confirm: z.boolean().optional() } },
+    async (args) => toolText(guarded(root, () => createEpicTool(root, args))))
+  server.registerTool('kaddo_associate_initiative_epic', { title: 'Associate initiative with epic', description: `Associate an existing Initiative with an Epic (validated). ${PLANNING_WRITE_NOTE}`, inputSchema: { epic: z.string(), initiative: z.string(), confirm: z.boolean().optional() } },
+    async (args) => toolText(guarded(root, () => associateInitiativeTool(root, args))))
 
   const INITIATIVE_WRITE_NOTE =
     'Without confirm=true returns a preview. With confirm=true applies the change. Writes only under knowledge/delivery/.'

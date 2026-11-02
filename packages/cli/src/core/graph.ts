@@ -12,6 +12,7 @@ import { discoverKnowledge, type KnowledgeArtifact } from '../services/knowledge
 import { loadExternalRegistry } from './capsule.js'
 import { isActiveState } from './lifecycle.js'
 import { discoverInitiatives } from './initiative.js'
+import { discoverDeliveryPlans, discoverEpics } from './delivery-planning.js'
 import { getResources, parseWorkItemResources } from './resources.js'
 import { getDeprecationPlan, getDeprecationPlans, parseWorkItemDeprecationTargets } from './deprecation.js'
 import type { KaddoConfig } from './config.js'
@@ -46,6 +47,9 @@ export type GraphNodeType =
   | 'project-resource'
   | 'deprecation-plan'
   | 'deprecation-target'
+  | 'delivery-plan'
+  | 'epic'
+  | 'milestone'
 
 export type GraphEdgeType =
   | 'informs'
@@ -248,6 +252,30 @@ export function buildGraph(
         addEdge(targetId, dependencyId, 'depends_on_removal')
       }
     }
+  }
+
+  // --- Delivery Plans, milestones and Epics (WI-074) — declared relations only ---
+  for (const plan of discoverDeliveryPlans(dir)) {
+    const planId = `delivery-plan:${slug(plan.id) || plan.id}`
+    addNode({ id: planId, type: 'delivery-plan', label: `${plan.id} ${plan.title}`.trim(), path: plan.relPath, status: plan.status })
+    for (const m of plan.milestones) {
+      const milestoneId = `milestone:${slug(plan.id)}:${slug(m.id) || m.id}`
+      addNode({ id: milestoneId, type: 'milestone', label: `${m.id} ${m.title}`.trim(), path: plan.relPath })
+      addEdge(milestoneId, planId, 'belongs_to')
+    }
+  }
+  for (const epic of discoverEpics(dir)) {
+    const epicNodeId = `epic:${slug(epic.id) || epic.id}`
+    addNode({ id: epicNodeId, type: 'epic', label: `${epic.id} ${epic.title}`.trim(), path: epic.relPath, status: epic.status })
+    if (epic.plan) {
+      addEdge(epicNodeId, `delivery-plan:${slug(epic.plan)}`, 'belongs_to')
+      if (epic.milestone) addEdge(epicNodeId, `milestone:${slug(epic.plan)}:${slug(epic.milestone)}`, 'belongs_to')
+    }
+    for (const dep of epic.dependsOn) addEdge(epicNodeId, `epic:${slug(dep)}`, 'depends_on')
+  }
+  // Initiative → Epic (initiative nodes were already created above; add only declared edges).
+  for (const ini of discoverInitiatives(dir)) {
+    if (ini.epic) addEdge(`initiative:${slug(ini.id) || ini.id}`, `epic:${slug(ini.epic)}`, 'belongs_to')
   }
 
   for (const wi of selectedWIs) {

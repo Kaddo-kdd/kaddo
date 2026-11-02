@@ -692,3 +692,41 @@ export async function downloadConsolidation(format: 'markdown' | 'json'): Promis
   link.click()
   URL.revokeObjectURL(url)
 }
+
+// --- Delivery Planning Explorer (WI-074) ---
+export type PlanningDelivery = { total: number; byState: Record<string, number>; blocked: number; completed: number }
+export type PlanningFinding = { level: 'error' | 'warning'; kind: string; subject: string; message: string }
+export type PlanSummary = { id: string; title: string; status: string; milestones: number; epics: number; delivery: PlanningDelivery }
+export type EpicSummary = { id: string; title: string; status: string; plan: string | null; milestone: string | null; delivery: PlanningDelivery }
+export type PlanningOverview = { plans: PlanSummary[]; epics: EpicSummary[]; findings: PlanningFinding[] }
+export type Milestone = { id: string; title: string; exitCriteria: string[] }
+export type PlanningProgress = {
+  planning: { initiatives: number; candidates: number; materialized: number; remaining: number }
+  delivery: PlanningDelivery
+  readiness: { successCriteria: number; blockingDependencies: string[]; committedWorkComplete: boolean; meetsCompletionPreconditions: boolean; humanApprovalRequired: boolean }
+}
+export type PlanDetail = {
+  id: string; title: string; status: string; objective: string | null
+  milestones: Milestone[]; dependsOn: string[]; successCriteria: string[]; risks: string[]; references: string[]; body: string
+  progress: PlanningProgress & { epics: { total: number; byStatus: Record<string, number> } }
+  epics: { id: string; title: string; status: string; milestone: string | null; delivery: PlanningDelivery; blocked: string[] }[]
+  findings: PlanningFinding[]
+}
+export type EpicDetail = {
+  id: string; title: string; status: string; outcome: string | null; plan: string | null; milestone: string | null
+  dependsOn: string[]; successCriteria: string[]; relatedCapabilities: string[]; body: string
+  progress: PlanningProgress
+  initiatives: { id: string; title: string; status: string; owners: string[]; contributors: string[] }[]
+  workItems: { id: string; title: string; status: string }[]
+  findings: PlanningFinding[]
+}
+
+export async function getPlanningOverview(): Promise<PlanningOverview> {
+  return fetchApi<PlanningOverview>('/planning')
+}
+export async function getPlanDetail(id: string): Promise<PlanDetail> {
+  return fetchApi<PlanDetail>(`/planning/plans/${encodeURIComponent(id)}`)
+}
+export async function getEpicDetail(id: string): Promise<EpicDetail> {
+  return fetchApi<EpicDetail>(`/planning/epics/${encodeURIComponent(id)}`)
+}

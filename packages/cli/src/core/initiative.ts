@@ -80,6 +80,11 @@ export type Initiative = {
   source: string | null
   sourceId: string | null
   createdAt: string | null
+  /** Optional association to a Delivery Epic (WI-074). Declared one-way; never inferred. */
+  epic: string | null
+  /** Declared planning responsibility (WI-074) — metadata only, never authorization or Git-inferred. */
+  owners: string[]
+  contributors: string[]
   externalLinks: InitiativeExternalLink[]
   candidates: InitiativeCandidate[]
   filePath: string
@@ -179,6 +184,9 @@ export function parseInitiative(dir: string, filePath: string, raw: string): Ini
     source: optStr(data.source) ?? null,
     sourceId: optStr(data.source_id) ?? null,
     createdAt: optStr(data.created_at) ?? null,
+    epic: optStr(data.epic) ?? null,
+    owners: strList(data.owners),
+    contributors: strList(data.contributors),
     externalLinks: parseExternalLinks(data),
     candidates: parseCandidates(data),
     filePath,

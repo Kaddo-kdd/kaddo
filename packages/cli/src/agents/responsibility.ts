@@ -136,9 +136,9 @@ export const RESPONSIBILITY_MATRIX: Record<string, AgentResponsibility> = {
   },
   'roadmap-agent': {
     agent: 'roadmap-agent',
-    responsibleFor: ['Roadmap', 'Initiatives', 'Work Item candidates'],
+    responsibleFor: ['Roadmap', 'Initiatives', 'Work Item candidates', 'Delivery Plans and Epics (optional planning layer)'],
     produces: ['knowledge/delivery/roadmap.md'],
-    canSuggest: ['kaddo create --from roadmap', 'work-item-agent'],
+    canSuggest: ['kaddo create --from roadmap', 'work-item-agent', 'kaddo plan create', 'kaddo epic create'],
     cannotSuggest: ['branches', 'commits', 'pull requests', 'code'],
     next: ['kaddo create --from roadmap', 'work-item-agent'],
   },

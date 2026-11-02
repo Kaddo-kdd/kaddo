@@ -102,6 +102,16 @@ import {
   serializeConsolidationJson,
   type ConsolidationPlan,
   type ConsolidationScope,
+  discoverDeliveryPlans,
+  discoverEpics,
+  getPlan as coreGetPlan,
+  getEpic as coreGetEpic,
+  epicsInPlan,
+  initiativesInEpic,
+  workItemsInEpic,
+  computePlanProgress,
+  computeEpicProgress,
+  validatePlanningGraph,
 } from '@kaddo/cli/core'
 import fs from 'node:fs'
 import path from 'node:path'
@@ -283,6 +293,53 @@ export function exportConsolidationAdmin(dir: string, format: 'markdown' | 'json
     return fs.readFileSync(abs, 'utf-8')
   } catch {
     throw new CoreError('CONSOLIDATION_UNAVAILABLE', 'The consolidation plan could not be read.')
+  }
+}
+
+// --- Delivery Planning Explorer (WI-074) — read-only projections over Core ---
+
+export function getPlanningOverviewAdmin(dir: string) {
+  const plans = discoverDeliveryPlans(dir).map((p) => {
+    const prog = computePlanProgress(dir, p)
+    return { id: p.id, title: p.title, status: p.status, milestones: p.milestones.length, epics: prog.epics.total, delivery: prog.delivery }
+  })
+  const epics = discoverEpics(dir).map((e) => {
+    const prog = computeEpicProgress(dir, e)
+    return { id: e.id, title: e.title, status: e.status, plan: e.plan, milestone: e.milestone, delivery: prog.delivery }
+  })
+  const findings = validatePlanningGraph(dir)
+  return { plans, epics, findings }
+}
+
+export function getPlanDetailAdmin(dir: string, id: string) {
+  const plan = coreGetPlan(dir, id)
+  if (!plan) throw new CoreError('PLAN_NOT_FOUND', `Delivery Plan ${id} was not found.`)
+  const progress = computePlanProgress(dir, plan)
+  const epics = epicsInPlan(dir, plan.id).map((e) => {
+    const prog = computeEpicProgress(dir, e)
+    return { id: e.id, title: e.title, status: e.status, milestone: e.milestone, delivery: prog.delivery, blocked: prog.readiness.blockingDependencies }
+  })
+  const findings = validatePlanningGraph(dir).filter((f) => f.subject.toLowerCase() === plan.id.toLowerCase())
+  return {
+    id: plan.id, title: plan.title, status: plan.status, objective: plan.objective,
+    milestones: plan.milestones, dependsOn: plan.dependsOn, successCriteria: plan.successCriteria,
+    risks: plan.risks, references: plan.references, body: plan.body,
+    progress, epics, findings,
+  }
+}
+
+export function getEpicDetailAdmin(dir: string, id: string) {
+  const epic = coreGetEpic(dir, id)
+  if (!epic) throw new CoreError('EPIC_NOT_FOUND', `Epic ${id} was not found.`)
+  const progress = computeEpicProgress(dir, epic)
+  const initiatives = initiativesInEpic(dir, epic.id).map((i) => ({ id: i.id, title: i.title, status: i.status, owners: i.owners, contributors: i.contributors }))
+  const workItems = workItemsInEpic(dir, epic.id).map((w) => ({ id: w.id, title: w.title, status: w.lifecycle ?? 'ready' }))
+  const findings = validatePlanningGraph(dir).filter((f) => f.subject.toLowerCase() === epic.id.toLowerCase())
+  return {
+    id: epic.id, title: epic.title, status: epic.status, outcome: epic.outcome,
+    plan: epic.plan, milestone: epic.milestone, dependsOn: epic.dependsOn,
+    successCriteria: epic.successCriteria, relatedCapabilities: epic.relatedCapabilities, body: epic.body,
+    progress, initiatives, workItems, findings,
   }
 }
 

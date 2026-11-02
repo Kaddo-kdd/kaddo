@@ -188,6 +188,7 @@ export default defineConfig({
             { label: 'Knowledge Consolidation', translations: { es: 'Consolidación de Conocimiento' }, slug: 'knowledge-consolidation' },
             { label: 'Knowledge Capsules', translations: { es: 'Knowledge Capsules' }, slug: 'knowledge-capsules' },
             { label: 'Initiatives', translations: { es: 'Iniciativas' }, slug: 'initiatives' },
+            { label: 'Delivery Planning', translations: { es: 'Planificación de Entregas' }, slug: 'delivery-planning' },
             { label: 'Roadmap Quality', translations: { es: 'Calidad del roadmap' }, slug: 'roadmap-quality' },
             { label: 'Open Questions Gate', translations: { es: 'Preguntas abiertas' }, slug: 'open-questions' },
             { label: 'State-Aware Next Step', translations: { es: 'Siguiente paso según el estado' }, slug: 'next-step' },

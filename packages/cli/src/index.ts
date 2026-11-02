@@ -61,6 +61,10 @@ import { runWorkItemImport } from './commands/work-item.js'
 import { runPocReport } from './commands/poc.js'
 import { runVerify } from './commands/verify.js'
 import { runKnowledgeConsolidate } from './commands/knowledge.js'
+import {
+  runPlanList, runPlanShow, runPlanProgress, runPlanCreate,
+  runEpicList, runEpicShow, runEpicProgress, runEpicCreate, runEpicAssociate,
+} from './commands/plan.js'
 import { runTelemetryStatus, runTelemetryEnable, runTelemetryDisable } from './commands/telemetry.js'
 import {
   runInitiativeList,
@@ -195,6 +199,23 @@ knowledgeCmd
   .action((opts: { layer?: string; module?: string; scope?: string }) => {
     runKnowledgeConsolidate(opts)
   })
+
+const planCmd = program
+  .command('plan')
+  .description('Delivery Plans — milestones, epics and verifiable progress (WI-074)')
+planCmd.command('list').description('List delivery plans with progress').action(() => runPlanList())
+planCmd.command('show <id>').description('Show a delivery plan, its milestones and epics').action((id: string) => runPlanShow(id))
+planCmd.command('progress <id>').description('Planning coverage, delivery progress and completion readiness').action((id: string) => runPlanProgress(id))
+planCmd.command('create').description('Create a new delivery plan (interactive)').action(() => { void runPlanCreate() })
+
+const epicCmd = program
+  .command('epic')
+  .description('Delivery Epics — significant outcomes spanning Initiatives and Work Items (WI-074)')
+epicCmd.command('list').description('List epics with progress').action(() => runEpicList())
+epicCmd.command('show <id>').description('Show an epic, its plan/milestone and initiatives').action((id: string) => runEpicShow(id))
+epicCmd.command('progress <id>').description('Planning coverage, delivery progress and completion readiness').action((id: string) => runEpicProgress(id))
+epicCmd.command('create').description('Create a new epic (interactive)').action(() => { void runEpicCreate() })
+epicCmd.command('associate <epicId> <initiativeId>').description('Associate an existing Initiative with an Epic').action((e: string, i: string) => { void runEpicAssociate(e, i) })
 
 const topologyCmd = program
   .command('topology')
