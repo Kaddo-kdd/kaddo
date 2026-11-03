@@ -38,7 +38,7 @@ function Row({ item }: { item: InitiativeListItem }) {
       </div>
       <div style={{ display: 'flex', gap: 20, fontSize: 13, color: 'var(--foreground-muted)' }}>
         <span>Planning: {item.planning.materialized}/{item.planning.totalCandidates} materialized</span>
-        <span>Delivery: {item.delivery.byState.completed ?? 0}/{item.delivery.total} completed</span>
+        <span>{item.delivery.total > 0 ? `Delivery: ${item.delivery.byState.completed ?? 0}/${item.delivery.total} completed` : 'No Work Items linked'}</span>
       </div>
     </button>
   )

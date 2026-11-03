@@ -307,8 +307,34 @@ export function getPlanningOverviewAdmin(dir: string) {
     const prog = computeEpicProgress(dir, e)
     return { id: e.id, title: e.title, status: e.status, plan: e.plan, milestone: e.milestone, delivery: prog.delivery }
   })
+  // Initiatives are shown in the unified Planning overview even when no Plan/Epic exists (WI-075).
+  const initiatives = discoverInitiatives(dir).map((ini) => {
+    const prog = computeInitiativeProgress(dir, ini)
+    // The Initiative's delivery (total + byState) is normalized to include `completed` so indicators
+    // never render undefined; Initiatives do not track blocked Work Items here, so blocked is 0.
+    const completed = prog.delivery.byState?.completed ?? 0
+    return {
+      id: ini.id, title: ini.title, status: ini.status,
+      epic: ini.epic, owners: ini.owners, contributors: ini.contributors,
+      planning: prog.planning,
+      delivery: { total: prog.delivery.total, byState: prog.delivery.byState, completed, blocked: 0 },
+      // Linked Work Items derived from the Initiative's own associations only (never inferred).
+      hasWorkItems: prog.delivery.total > 0,
+    }
+  })
   const findings = validatePlanningGraph(dir)
-  return { plans, epics, findings }
+  const totals = {
+    plans: plans.length,
+    epics: epics.length,
+    initiatives: initiatives.length,
+    workItems: initiatives.reduce((n, i) => n + i.delivery.total, 0),
+    // Blocked WORK ITEMS (a WI with an unfinished dependency) — distinct from an Epic-level pending
+    // dependency, which is a planning signal and never changes the Epic's lifecycle state.
+    blockedWorkItems: epics.reduce((n, e) => n + e.delivery.blocked, 0),
+    epicsWithPendingDependencies: new Set(findings.filter((f) => f.kind === 'pending_dependency').map((f) => f.subject)).size,
+    unassignedInitiatives: initiatives.filter((i) => !i.epic).length,
+  }
+  return { plans, epics, initiatives, findings, totals }
 }
 
 export function getPlanDetailAdmin(dir: string, id: string) {

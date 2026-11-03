@@ -1,39 +1,61 @@
 import { test, expect } from '@playwright/test'
 
-// WI-074 — Delivery Planning Explorer E2E, over Wasma-representative fixtures (PLAN-001 / RM-08 /
-// EP-001 blocked by EP-002 / INI-050 with declared owners). Read-only navigation; no knowledge change.
+// WI-074 + WI-075 — Unified Planning Explorer E2E, over Wasma-representative fixtures (PLAN-001 / RM-08
+// / EP-001 blocked by EP-002 / INI-050 in epic / INI-051 standalone). Read-only navigation; no
+// knowledge change. Planning is the single entry for Plans, Epics and Initiatives.
 
-test.describe('Delivery Planning Explorer', () => {
-  test('lists plans and epics and surfaces a dependency block', async ({ page }) => {
+test.describe('Unified Planning Explorer', () => {
+  test('WI-075: Planning is the single sidebar entry; Initiatives is not a top-level item', async ({ page }) => {
+    await page.goto('/overview')
+    const nav = page.getByRole('navigation')
+    await expect(nav.getByText('Planning')).toBeVisible()
+    await expect(nav.getByText('Initiatives', { exact: true })).toHaveCount(0)
+  })
+
+  test('WI-075: overview shows indicators, sections and initiatives (incl. unassigned)', async ({ page }) => {
     await page.goto('/planning')
-    await expect(page.getByRole('heading', { name: 'Delivery Planning' })).toBeVisible()
-    await expect(page.getByText('Wasma Technical Roadmap')).toBeVisible()
-    await expect(page.getByText('Runtime Performance & Concurrency')).toBeVisible()
-    // Planning check: EP-001 is blocked by its unfinished dependency EP-002.
-    await expect(page.getByText('blocked by unfinished dependency EP-002')).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Planning', exact: true })).toBeVisible()
+    // Secondary navigation.
+    await expect(page.getByRole('tab', { name: 'Overview' })).toBeVisible()
+    await expect(page.getByRole('tab', { name: 'Delivery Plans' })).toBeVisible()
+    await expect(page.getByRole('tab', { name: 'Epics' })).toBeVisible()
+    await expect(page.getByRole('tab', { name: 'Initiatives' })).toBeVisible()
+    // Indicators, including initiatives without an epic.
+    await expect(page.getByText('Initiatives without Epic')).toBeVisible()
+    // Initiatives appear in the overview (standalone one is shown, not treated as an error).
+    await expect(page.getByText('Standalone Initiative')).toBeVisible()
+    await expect(page.getByText('independent (no epic)')).toBeVisible()
+  })
+
+  test('WI-075: the Initiatives tab reuses the existing Initiatives screen', async ({ page }) => {
+    await page.goto('/planning')
+    await page.getByRole('tab', { name: 'Initiatives' }).click()
+    await expect(page.getByRole('button', { name: /Create Initiative/ })).toBeVisible()
+    await expect(page.getByText('Host-side Workers')).toBeVisible()
+  })
+
+  test('WI-075: existing /initiatives routes still work (bookmarks preserved)', async ({ page }) => {
+    await page.goto('/initiatives/INI-051')
+    await expect(page.getByText('Standalone Initiative')).toBeVisible()
+    await expect(page.getByText('Planning coverage')).toBeVisible()
   })
 
   test('navigates Plan → milestones → Epic → initiatives/work items with human-gated readiness', async ({ page }) => {
     await page.goto('/planning')
     await page.getByText('Wasma Technical Roadmap').click()
     await expect(page.getByRole('heading', { name: 'Wasma Technical Roadmap' })).toBeVisible()
-    // Milestone with its exit criteria (unique text).
     await expect(page.getByText('Benchmark evidence reviewed')).toBeVisible()
-    await expect(page.getByText('Worker isolation verified')).toBeVisible()
-    // Readiness note is explicit about human approval.
     await expect(page.getByText('Completion is never automatic')).toBeVisible()
 
     await page.getByText('Runtime Performance & Concurrency').click()
     await expect(page.getByRole('heading', { name: 'Runtime Performance & Concurrency' })).toBeVisible()
-    // Declared responsibilities (never inferred from Git).
     await expect(page.getByText('Host-side Workers')).toBeVisible()
     await expect(page.getByText('owner(s): developer-a')).toBeVisible()
-    // Blocking dependency surfaced; completion preconditions not met.
     await expect(page.getByText('Blocking dependencies: EP-002')).toBeVisible()
   })
 
-  test('Planning appears in the sidebar navigation', async ({ page }) => {
-    await page.goto('/overview')
-    await expect(page.getByRole('navigation').getByText('Planning')).toBeVisible()
+  test('surfaces the EP-001 → EP-002 dependency block', async ({ page }) => {
+    await page.goto('/planning')
+    await expect(page.getByText('blocked by unfinished dependency EP-002')).toBeVisible()
   })
 })

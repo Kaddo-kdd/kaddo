@@ -698,7 +698,15 @@ export type PlanningDelivery = { total: number; byState: Record<string, number>;
 export type PlanningFinding = { level: 'error' | 'warning'; kind: string; subject: string; message: string }
 export type PlanSummary = { id: string; title: string; status: string; milestones: number; epics: number; delivery: PlanningDelivery }
 export type EpicSummary = { id: string; title: string; status: string; plan: string | null; milestone: string | null; delivery: PlanningDelivery }
-export type PlanningOverview = { plans: PlanSummary[]; epics: EpicSummary[]; findings: PlanningFinding[] }
+export type InitiativeInPlanning = {
+  id: string; title: string; status: string; epic: string | null
+  owners: string[]; contributors: string[]
+  planning: { totalCandidates: number; materialized: number; remaining: number }
+  delivery: PlanningDelivery
+  hasWorkItems: boolean
+}
+export type PlanningTotals = { plans: number; epics: number; initiatives: number; workItems: number; blockedWorkItems: number; epicsWithPendingDependencies: number; unassignedInitiatives: number }
+export type PlanningOverview = { plans: PlanSummary[]; epics: EpicSummary[]; initiatives: InitiativeInPlanning[]; findings: PlanningFinding[]; totals: PlanningTotals }
 export type Milestone = { id: string; title: string; exitCriteria: string[] }
 export type PlanningProgress = {
   planning: { initiatives: number; candidates: number; materialized: number; remaining: number }

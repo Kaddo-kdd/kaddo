@@ -1,12 +1,14 @@
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useRouter } from '@tanstack/react-router'
-import { Map as MapIcon, Milestone as MilestoneIcon, Boxes, AlertTriangle, ArrowRight } from 'lucide-react'
+import { Map as MapIcon, Milestone as MilestoneIcon, Boxes, AlertTriangle, ArrowRight, Target } from 'lucide-react'
 import {
   getPlanningOverview, getPlanDetail, getEpicDetail,
-  type PlanningDelivery, type PlanningFinding,
+  type PlanningDelivery, type PlanningFinding, type InitiativeInPlanning,
 } from '../lib/api'
 import { EmptyState } from '../components/EmptyState'
 import { StatusBadge } from '../components/StatusBadge'
+import { Initiatives } from './Initiatives'
 
 function DeliveryBar({ d }: { d: PlanningDelivery }) {
   return <span style={muted}>delivery {d.completed}/{d.total} completed{d.blocked ? ` · ${d.blocked} blocked` : ''}</span>
@@ -24,53 +26,134 @@ function ReadinessNote() {
   return <p style={mutedSmall}>Completion is never automatic — closing a Plan or Epic always requires human approval, even when all work is done.</p>
 }
 
-// --- Overview --------------------------------------------------------------
+// --- Unified Planning (tabs: Overview / Delivery Plans / Epics / Initiatives) ---
 
-export function Planning() {
-  const router = useRouter()
-  const q = useQuery({ queryKey: ['planning'], queryFn: getPlanningOverview, retry: false })
-  if (q.isLoading) return <div style={page}>Loading Planning…</div>
-  if (q.error) return <div style={page}><EmptyState title="Planning unavailable" description={(q.error as Error).message} action={{ label: 'Retry', onClick: () => void q.refetch() }} /></div>
-  const data = q.data!
+type PlanningTab = 'overview' | 'plans' | 'epics' | 'initiatives'
+
+function InitiativeCard({ i, onOpen }: { i: InitiativeInPlanning; onOpen: (id: string) => void }) {
   return (
-    <div style={page}>
+    <button style={card} onClick={() => onOpen(i.id)}>
+      <div style={cardTop}><StatusBadge variant="info">{i.status}</StatusBadge><span style={mono}>{i.id}</span></div>
+      <strong>{i.title}</strong>
+      <span style={muted}>{i.epic ? `in ${i.epic}` : 'independent (no epic)'}{i.owners.length ? ` · owner(s): ${i.owners.join(', ')}` : ''}</span>
+      {/* Planning Coverage (materialized candidates) is distinct from Delivery (linked Work Items). */}
+      <span style={muted}>coverage {i.planning.materialized}/{i.planning.totalCandidates} materialized</span>
+      <span style={muted}>{i.hasWorkItems ? `delivery ${i.delivery.completed ?? 0}/${i.delivery.total} completed` : 'No Work Items linked'}</span>
+    </button>
+  )
+}
+
+export function Planning({ initialTab = 'overview' }: { initialTab?: PlanningTab }) {
+  const router = useRouter()
+  const [tab, setTab] = useState<PlanningTab>(initialTab)
+  const q = useQuery({ queryKey: ['planning'], queryFn: getPlanningOverview, retry: false })
+
+  const tabs: { id: PlanningTab; label: string }[] = [
+    { id: 'overview', label: 'Overview' },
+    { id: 'plans', label: 'Delivery Plans' },
+    { id: 'epics', label: 'Epics' },
+    { id: 'initiatives', label: 'Initiatives' },
+  ]
+
+  const Header = (
+    <>
       <header style={header}>
         <div>
-          <h2 style={heading}><MapIcon size={22} color="var(--primary)" style={{ verticalAlign: 'middle', marginRight: 8 }} />Delivery Planning</h2>
-          <p style={subheading}>Plans group milestones and Epics; Epics group work across Initiatives and Work Items. All associations are optional and progress is derived from real Work Item state.</p>
+          <h2 style={heading}><MapIcon size={22} color="var(--primary)" style={{ verticalAlign: 'middle', marginRight: 8 }} />Planning</h2>
+          <p style={subheading}>Understand, organize and track the project's work. Delivery Plans and Epics are optional — Initiatives and Work Items work without them.</p>
         </div>
       </header>
-      <Findings findings={data.findings} />
-      <section style={section}>
-        <h3 style={h3}>Delivery Plans</h3>
-        {data.plans.length === 0 ? <p style={muted}>No delivery plans yet. Create one with <code>kaddo plan create</code>.</p> : (
-          <div style={cardGrid}>
-            {data.plans.map((p) => (
-              <button key={p.id} style={card} onClick={() => router.navigate({ to: '/planning/plans/$id', params: { id: p.id } })}>
-                <div style={cardTop}><StatusBadge variant="info">{p.status}</StatusBadge><span style={mono}>{p.id}</span></div>
-                <strong>{p.title}</strong>
-                <span style={muted}>{p.milestones} milestone(s) · {p.epics} epic(s)</span>
-                <DeliveryBar d={p.delivery} />
-              </button>
-            ))}
-          </div>
-        )}
-      </section>
-      <section style={section}>
-        <h3 style={h3}>Epics</h3>
-        {data.epics.length === 0 ? <p style={muted}>No epics yet. Create one with <code>kaddo epic create</code>.</p> : (
-          <div style={cardGrid}>
-            {data.epics.map((e) => (
-              <button key={e.id} style={card} onClick={() => router.navigate({ to: '/planning/epics/$id', params: { id: e.id } })}>
-                <div style={cardTop}><StatusBadge variant="info">{e.status}</StatusBadge><span style={mono}>{e.id}</span></div>
-                <strong>{e.title}</strong>
-                <span style={muted}>{e.plan ? `${e.plan}${e.milestone ? ` · ${e.milestone}` : ''}` : 'unassigned to a plan'}</span>
-                <DeliveryBar d={e.delivery} />
-              </button>
-            ))}
-          </div>
-        )}
-      </section>
+      <div role="tablist" aria-label="Planning sections" style={tabBar}>
+        {tabs.map((t) => (
+          <button key={t.id} role="tab" aria-selected={tab === t.id} onClick={() => setTab(t.id)} style={{ ...tabBtn, ...(tab === t.id ? tabBtnActive : {}) }}>{t.label}</button>
+        ))}
+      </div>
+    </>
+  )
+
+  if (q.isLoading) return <div style={page}>{Header}<p style={muted}>Loading Planning…</p></div>
+  if (q.error) return <div style={page}>{Header}<EmptyState title="Planning unavailable" description={(q.error as Error).message} action={{ label: 'Retry', onClick: () => void q.refetch() }} /></div>
+  const data = q.data!
+  const t = data.totals
+  const hasAny = t.plans + t.epics + t.initiatives > 0
+
+  const Plans = (
+    <section style={section}>
+      <h3 style={h3}><MapIcon size={16} style={{ verticalAlign: 'middle', marginRight: 6 }} />Delivery Plans</h3>
+      {data.plans.length === 0 ? <p style={muted}>No delivery plans yet. Plans are optional — create one with <code>kaddo plan create</code> to group milestones and Epics.</p> : (
+        <div style={cardGrid}>
+          {data.plans.map((p) => (
+            <button key={p.id} style={card} onClick={() => router.navigate({ to: '/planning/plans/$id', params: { id: p.id } })}>
+              <div style={cardTop}><StatusBadge variant="info">{p.status}</StatusBadge><span style={mono}>{p.id}</span></div>
+              <strong>{p.title}</strong>
+              <span style={muted}>{p.milestones} milestone(s) · {p.epics} epic(s)</span>
+              <DeliveryBar d={p.delivery} />
+            </button>
+          ))}
+        </div>
+      )}
+    </section>
+  )
+  const Epics = (
+    <section style={section}>
+      <h3 style={h3}><Boxes size={16} style={{ verticalAlign: 'middle', marginRight: 6 }} />Epics</h3>
+      {data.epics.length === 0 ? <p style={muted}>No epics yet. Epics are optional — they group work across Initiatives and Work Items.</p> : (
+        <div style={cardGrid}>
+          {data.epics.map((e) => (
+            <button key={e.id} style={card} onClick={() => router.navigate({ to: '/planning/epics/$id', params: { id: e.id } })}>
+              <div style={cardTop}><StatusBadge variant="info">{e.status}</StatusBadge><span style={mono}>{e.id}</span></div>
+              <strong>{e.title}</strong>
+              <span style={muted}>{e.plan ? `${e.plan}${e.milestone ? ` · ${e.milestone}` : ''}` : 'unassigned to a plan'}</span>
+              <DeliveryBar d={e.delivery} />
+            </button>
+          ))}
+        </div>
+      )}
+    </section>
+  )
+  const InitiativesOverview = (
+    <section style={section}>
+      <h3 style={h3}><Target size={16} style={{ verticalAlign: 'middle', marginRight: 6 }} />Initiatives</h3>
+      {data.initiatives.length === 0 ? <p style={muted}>No initiatives yet.</p> : (
+        <div style={cardGrid}>
+          {data.initiatives.map((i) => <InitiativeCard key={i.id} i={i} onOpen={(id) => router.navigate({ to: '/initiatives/$initiativeId', params: { initiativeId: id } })} />)}
+        </div>
+      )}
+    </section>
+  )
+
+  return (
+    <div style={page}>
+      {Header}
+      {tab === 'overview' && (
+        <>
+          {!hasAny ? (
+            <EmptyState title="Planning is optional" description="This project has no Plans, Epics or Initiatives yet. Start with an Initiative to group outcomes, add an Epic when work spans several Work Items, and a Delivery Plan to organize milestones. Work Items work on their own too." action={{ label: 'View Work Items', onClick: () => router.navigate({ to: '/work-items' }) }} />
+          ) : (
+            <>
+              <section style={grid}>
+                <Metric label="Delivery Plans" value={t.plans} />
+                <Metric label="Epics" value={t.epics} />
+                <Metric label="Initiatives" value={t.initiatives} />
+                <Metric label="Work Items linked" value={t.workItems} />
+                <Metric label="Blocked Work Items" value={t.blockedWorkItems} />
+                {t.epicsWithPendingDependencies > 0 && <Metric label="Epics with pending dependencies" value={t.epicsWithPendingDependencies} />}
+                <Metric label="Initiatives without Epic" value={t.unassignedInitiatives} />
+              </section>
+              <Findings findings={data.findings} />
+              {t.plans === 0 && t.epics === 0 && t.initiatives > 0 && (
+                <p style={mutedSmall}>This project organizes work with Initiatives. You can optionally group them into Epics and Delivery Plans — nothing is required or migrated.</p>
+              )}
+              {Plans}
+              {Epics}
+              {InitiativesOverview}
+            </>
+          )}
+        </>
+      )}
+      {tab === 'plans' && Plans}
+      {tab === 'epics' && Epics}
+      {tab === 'initiatives' && <div style={{ marginTop: 8 }}><Initiatives /></div>}
     </div>
   )
 }
@@ -185,6 +268,9 @@ const heading: React.CSSProperties = { margin: 0, fontSize: 24 }
 const h3: React.CSSProperties = { margin: '0 0 8px' }
 const subheading: React.CSSProperties = { color: 'var(--foreground-muted)', margin: '6px 0 0', maxWidth: 820 }
 const header: React.CSSProperties = { marginBottom: 12 }
+const tabBar: React.CSSProperties = { display: 'flex', gap: 4, flexWrap: 'wrap', borderBottom: '1px solid var(--border)', marginBottom: 8 }
+const tabBtn: React.CSSProperties = { padding: '8px 14px', border: 'none', borderBottom: '2px solid transparent', background: 'none', color: 'var(--foreground-muted)', cursor: 'pointer', font: 'inherit', fontSize: 14 }
+const tabBtnActive: React.CSSProperties = { color: 'var(--foreground)', borderBottomColor: 'var(--primary)', fontWeight: 600 }
 const section: React.CSSProperties = { marginTop: 20, padding: 18, border: '1px solid var(--border)', borderRadius: 'var(--radius)', background: 'var(--surface)' }
 const grid: React.CSSProperties = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 12, marginTop: 16 }
 const cardGrid: React.CSSProperties = { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 12, marginTop: 8 }

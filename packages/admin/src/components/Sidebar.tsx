@@ -9,7 +9,6 @@ import {
   Plug,
   Search,
   Settings,
-  Target,
   type LucideIcon,
   Map as MapIcon,
 } from 'lucide-react'
@@ -34,7 +33,6 @@ const navItems: NavItem[] = [
   { label: 'Overview', path: '/overview', icon: LayoutDashboard },
   { label: 'Knowledge', path: '/knowledge', icon: BookOpen },
   { label: 'Work Items', path: '/work-items', icon: ClipboardList },
-  { label: 'Initiatives', path: '/initiatives', icon: Target },
   { label: 'Planning', path: '/planning', icon: MapIcon },
   { label: 'Resources', path: '/resources', icon: Database },
   { label: 'Deprecations', path: '/deprecations', icon: ArchiveX },
