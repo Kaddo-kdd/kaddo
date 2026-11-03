@@ -41,7 +41,7 @@ export async function downloadReport(kind: ReportKind, format: 'markdown' | 'jso
   URL.revokeObjectURL(url)
 }
 
-async function mutateApi<T>(path: string, method: 'POST' | 'PUT' | 'DELETE', body?: unknown): Promise<T> {
+async function mutateApi<T>(path: string, method: 'POST' | 'PUT' | 'PATCH' | 'DELETE', body?: unknown): Promise<T> {
   const res = await fetch(`${BASE}${path}`, {
     method,
     credentials: 'include',
@@ -439,6 +439,9 @@ export type InitiativeDetail = {
   workItems: { id: string; title: string; status: string }[]
   analysis: { findings: InitiativeFinding[]; suggestedCandidates: InitiativeCandidate[]; successCriteria: { text: string; checked: boolean | null }[] }
   completion: { ready: boolean; readiness: string; reasons: string[] }
+  epic: string | null
+  owners: string[]
+  contributors: string[]
   body: string
 }
 
@@ -716,13 +719,15 @@ export type PlanningProgress = {
 export type PlanDetail = {
   id: string; title: string; status: string; objective: string | null
   milestones: Milestone[]; dependsOn: string[]; successCriteria: string[]; risks: string[]; references: string[]; body: string
+  revision: string
   progress: PlanningProgress & { epics: { total: number; byStatus: Record<string, number> } }
   epics: { id: string; title: string; status: string; milestone: string | null; delivery: PlanningDelivery; blocked: string[] }[]
   findings: PlanningFinding[]
 }
 export type EpicDetail = {
   id: string; title: string; status: string; outcome: string | null; plan: string | null; milestone: string | null
-  dependsOn: string[]; successCriteria: string[]; relatedCapabilities: string[]; body: string
+  dependsOn: string[]; successCriteria: string[]; relatedCapabilities: string[]; decisions: string[]; body: string
+  revision: string
   progress: PlanningProgress
   initiatives: { id: string; title: string; status: string; owners: string[]; contributors: string[] }[]
   workItems: { id: string; title: string; status: string }[]
@@ -737,4 +742,40 @@ export async function getPlanDetail(id: string): Promise<PlanDetail> {
 }
 export async function getEpicDetail(id: string): Promise<EpicDetail> {
   return fetchApi<EpicDetail>(`/planning/epics/${encodeURIComponent(id)}`)
+}
+
+// --- Planning Management writes (WI-076) ------------------------------------
+// Every write delegates to the server, which delegates to Core. Core generates ids; the client never
+// sends ids it chose or file paths. Optional-null fields clear a value; omitted fields are unchanged.
+export type PlanCreateInput = { title: string; objective?: string }
+export type MilestoneInput = { id: string; title?: string; exitCriteria?: string[] }
+export type PlanUpdateInput = {
+  title?: string; objective?: string | null
+  successCriteria?: string[]; risks?: string[]; dependsOn?: string[]; references?: string[]
+  milestones?: MilestoneInput[]; expectedRevision?: string
+}
+export type EpicCreateInput = { title: string; outcome?: string; plan?: string; milestone?: string }
+export type EpicUpdateInput = {
+  title?: string; outcome?: string | null; plan?: string | null; milestone?: string | null
+  successCriteria?: string[]; dependsOn?: string[]; relatedCapabilities?: string[]; decisions?: string[]
+  expectedRevision?: string
+}
+
+export async function createPlan(input: PlanCreateInput): Promise<{ id: string }> {
+  return mutateApi('/planning/plans', 'POST', input)
+}
+export async function updatePlan(id: string, patch: PlanUpdateInput): Promise<PlanDetail> {
+  return mutateApi(`/planning/plans/${encodeURIComponent(id)}`, 'PATCH', patch)
+}
+export async function createEpic(input: EpicCreateInput): Promise<{ id: string }> {
+  return mutateApi('/planning/epics', 'POST', input)
+}
+export async function updateEpic(id: string, patch: EpicUpdateInput): Promise<EpicDetail> {
+  return mutateApi(`/planning/epics/${encodeURIComponent(id)}`, 'PATCH', patch)
+}
+export async function associateInitiative(epicId: string, initiativeId: string): Promise<{ id: string; epic: string }> {
+  return mutateApi(`/planning/epics/${encodeURIComponent(epicId)}/initiatives`, 'POST', { initiativeId })
+}
+export async function disassociateInitiative(epicId: string, initiativeId: string): Promise<{ id: string }> {
+  return mutateApi(`/planning/epics/${encodeURIComponent(epicId)}/initiatives/${encodeURIComponent(initiativeId)}`, 'DELETE')
 }

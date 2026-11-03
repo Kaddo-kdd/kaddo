@@ -78,12 +78,32 @@ Read: `kaddo_list_plans`, `kaddo_get_plan`, `kaddo_get_plan_progress`, `kaddo_li
 (`kaddo_create_plan`, `kaddo_create_epic`, `kaddo_associate_initiative_epic`) follow the
 preview/confirm pattern and write only under `knowledge/delivery/`.
 
-## Admin — Planning Explorer
+## Admin — Planning Explorer and Management
 
 Kaddo Admin includes a **Planning** section (`/planning`) to explore a plan end to end: Plan →
 milestones → Epics → Initiatives → Work Items, with derived progress, dependency blocks and declared
-responsibilities, and links into Work Item and Initiative detail. It is a read/explore surface — it
-never applies changes and never closes a Plan or Epic automatically.
+responsibilities, and links into Work Item and Initiative detail.
+
+From the same space you can also **build and maintain** the planning structure without the CLI:
+
+- **Create a Delivery Plan** (Overview, the Delivery Plans tab, or the empty state) — Kaddo generates
+  the id and sets status `draft`.
+- **Edit a Plan** (title, objective, success criteria, risks, dependencies, references) and **manage
+  its milestones** (add, edit, remove) from the plan detail.
+- **Create an Epic** (independent or under a Plan and one of its milestones) and **edit it** (outcome,
+  plan, milestone, success criteria, dependencies, related capabilities, decisions).
+- **Associate, reassign or remove an Initiative** on an Epic, and manage the same association from the
+  Initiative's **Planning Context**.
+
+Every change goes through Core (the same contracts used by the CLI and MCP), so artifacts stay
+canonical and interoperable. Edits are **metadata only**: they never change a lifecycle state, and
+completion of a Plan or Epic always stays human-gated. References are validated (invalid or circular
+Epic dependencies and milestones not defined in the selected Plan are rejected), a milestone still
+referenced by an Epic cannot be removed or renamed, and a concurrent edit to the same artifact is
+detected via a revision fingerprint so a stale form is never saved silently.
+
+> Associating an Initiative with an Epic is also available from the CLI (`kaddo epic associate`) and
+> MCP (`kaddo_associate_initiative_epic`).
 
 ## Knowledge Graph
 

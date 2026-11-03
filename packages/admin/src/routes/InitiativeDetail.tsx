@@ -2,6 +2,7 @@ import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query'
 import { useParams, useRouter } from '@tanstack/react-router'
 import { api } from '../lib/api'
 import type { InitiativeFinding } from '../lib/api'
+import { InitiativePlanningContext } from '../components/PlanningManage'
 
 const card = {
   border: '1px solid var(--border)', borderRadius: 'var(--radius)', background: 'var(--surface)',
@@ -100,6 +101,14 @@ export function InitiativeDetail() {
           {updateMut.error && <span style={{ color: 'var(--danger)', fontSize: 13 }}>{(updateMut.error as Error).message}</span>}
         </div>
       )}
+
+      <Section title="Planning Context">
+        <InitiativePlanningContext
+          initiativeId={data.id}
+          epic={data.epic}
+          onOpenEpic={(epicId) => router.navigate({ to: '/planning/epics/$id', params: { id: epicId } })}
+        />
+      </Section>
 
       <Section title="Progress">
         <div style={{ display: 'flex', gap: 40, fontSize: 14 }}>

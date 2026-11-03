@@ -1,14 +1,23 @@
 import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useRouter } from '@tanstack/react-router'
 import { Map as MapIcon, Milestone as MilestoneIcon, Boxes, AlertTriangle, ArrowRight, Target } from 'lucide-react'
 import {
-  getPlanningOverview, getPlanDetail, getEpicDetail,
+  getPlanningOverview, getPlanDetail, getEpicDetail, disassociateInitiative,
   type PlanningDelivery, type PlanningFinding, type InitiativeInPlanning,
 } from '../lib/api'
 import { EmptyState } from '../components/EmptyState'
 import { StatusBadge } from '../components/StatusBadge'
+import { ConfirmDialog } from '../components/ConfirmDialog'
+import {
+  CreatePlanDrawer, EditPlanDrawer, MilestonesDrawer,
+  CreateEpicDrawer, EditEpicDrawer, AssociateInitiativeDrawer,
+} from '../components/PlanningManage'
 import { Initiatives } from './Initiatives'
+
+function Btn({ onClick, children, primary }: { onClick: () => void; children: React.ReactNode; primary?: boolean }) {
+  return <button onClick={onClick} style={primary ? actionPrimary : actionGhost}>{children}</button>
+}
 
 function DeliveryBar({ d }: { d: PlanningDelivery }) {
   return <span style={muted}>delivery {d.completed}/{d.total} completed{d.blocked ? ` · ${d.blocked} blocked` : ''}</span>
@@ -46,7 +55,10 @@ function InitiativeCard({ i, onOpen }: { i: InitiativeInPlanning; onOpen: (id: s
 export function Planning({ initialTab = 'overview' }: { initialTab?: PlanningTab }) {
   const router = useRouter()
   const [tab, setTab] = useState<PlanningTab>(initialTab)
+  const [creating, setCreating] = useState<null | 'plan' | 'epic'>(null)
   const q = useQuery({ queryKey: ['planning'], queryFn: getPlanningOverview, retry: false })
+  const openPlan = (id: string) => router.navigate({ to: '/planning/plans/$id', params: { id } })
+  const openEpic = (id: string) => router.navigate({ to: '/planning/epics/$id', params: { id } })
 
   const tabs: { id: PlanningTab; label: string }[] = [
     { id: 'overview', label: 'Overview' },
@@ -79,8 +91,13 @@ export function Planning({ initialTab = 'overview' }: { initialTab?: PlanningTab
 
   const Plans = (
     <section style={section}>
-      <h3 style={h3}><MapIcon size={16} style={{ verticalAlign: 'middle', marginRight: 6 }} />Delivery Plans</h3>
-      {data.plans.length === 0 ? <p style={muted}>No delivery plans yet. Plans are optional — create one with <code>kaddo plan create</code> to group milestones and Epics.</p> : (
+      <div style={sectionHead}>
+        <h3 style={h3}><MapIcon size={16} style={{ verticalAlign: 'middle', marginRight: 6 }} />Delivery Plans</h3>
+        <Btn primary onClick={() => setCreating('plan')}>+ Create Plan</Btn>
+      </div>
+      {data.plans.length === 0 ? (
+        <EmptyState title="No Delivery Plans yet" description="Delivery Plans organize milestones and Epics. They are optional — you can start with Initiatives or create a Plan to organize a larger roadmap." action={{ label: '+ Create Plan', onClick: () => setCreating('plan') }} />
+      ) : (
         <div style={cardGrid}>
           {data.plans.map((p) => (
             <button key={p.id} style={card} onClick={() => router.navigate({ to: '/planning/plans/$id', params: { id: p.id } })}>
@@ -96,8 +113,13 @@ export function Planning({ initialTab = 'overview' }: { initialTab?: PlanningTab
   )
   const Epics = (
     <section style={section}>
-      <h3 style={h3}><Boxes size={16} style={{ verticalAlign: 'middle', marginRight: 6 }} />Epics</h3>
-      {data.epics.length === 0 ? <p style={muted}>No epics yet. Epics are optional — they group work across Initiatives and Work Items.</p> : (
+      <div style={sectionHead}>
+        <h3 style={h3}><Boxes size={16} style={{ verticalAlign: 'middle', marginRight: 6 }} />Epics</h3>
+        <Btn primary onClick={() => setCreating('epic')}>+ Create Epic</Btn>
+      </div>
+      {data.epics.length === 0 ? (
+        <EmptyState title="No Epics yet" description="Epics organize related Initiatives and Work Items around a larger outcome." action={{ label: '+ Create Epic', onClick: () => setCreating('epic') }} />
+      ) : (
         <div style={cardGrid}>
           {data.epics.map((e) => (
             <button key={e.id} style={card} onClick={() => router.navigate({ to: '/planning/epics/$id', params: { id: e.id } })}>
@@ -127,8 +149,12 @@ export function Planning({ initialTab = 'overview' }: { initialTab?: PlanningTab
       {Header}
       {tab === 'overview' && (
         <>
+          <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 8 }}>
+            <Btn onClick={() => setCreating('plan')}>+ Create Plan</Btn>
+            <Btn primary onClick={() => setCreating('epic')}>+ Create Epic</Btn>
+          </div>
           {!hasAny ? (
-            <EmptyState title="Planning is optional" description="This project has no Plans, Epics or Initiatives yet. Start with an Initiative to group outcomes, add an Epic when work spans several Work Items, and a Delivery Plan to organize milestones. Work Items work on their own too." action={{ label: 'View Work Items', onClick: () => router.navigate({ to: '/work-items' }) }} />
+            <EmptyState title="Planning is optional" description="This project has no Plans, Epics or Initiatives yet. Start with an Initiative to group outcomes, add an Epic when work spans several Work Items, and a Delivery Plan to organize milestones. Work Items work on their own too." action={{ label: 'Create Plan', onClick: () => setCreating('plan') }} />
           ) : (
             <>
               <section style={grid}>
@@ -154,6 +180,9 @@ export function Planning({ initialTab = 'overview' }: { initialTab?: PlanningTab
       {tab === 'plans' && Plans}
       {tab === 'epics' && Epics}
       {tab === 'initiatives' && <div style={{ marginTop: 8 }}><Initiatives /></div>}
+
+      {creating === 'plan' && <CreatePlanDrawer onClose={() => setCreating(null)} onCreated={(id) => { setCreating(null); openPlan(id) }} />}
+      {creating === 'epic' && <CreateEpicDrawer onClose={() => setCreating(null)} onCreated={(id) => { setCreating(null); openEpic(id) }} />}
     </div>
   )
 }
@@ -162,6 +191,7 @@ export function Planning({ initialTab = 'overview' }: { initialTab?: PlanningTab
 
 export function PlanDetail({ id }: { id: string }) {
   const router = useRouter()
+  const [open, setOpen] = useState<null | 'edit' | 'milestones' | 'epic'>(null)
   const q = useQuery({ queryKey: ['planning', 'plan', id], queryFn: () => getPlanDetail(id), retry: false })
   if (q.isLoading) return <div style={page}>Loading plan…</div>
   if (q.error) return <div style={page}><EmptyState title="Plan not found" description={(q.error as Error).message} action={{ label: 'Back to Planning', onClick: () => router.navigate({ to: '/planning' }) }} /></div>
@@ -169,10 +199,23 @@ export function PlanDetail({ id }: { id: string }) {
   return (
     <div style={page}>
       <button style={back} onClick={() => router.navigate({ to: '/planning' })}>← Planning</button>
-      <h2 style={heading}>{p.title}</h2>
-      <p style={subheading}><span style={mono}>{p.id}</span> · <StatusBadge variant="info">{p.status}</StatusBadge></p>
+      <div style={detailHead}>
+        <div>
+          <h2 style={heading}>{p.title}</h2>
+          <p style={subheading}><span style={mono}>{p.id}</span> · <StatusBadge variant="info">{p.status}</StatusBadge></p>
+        </div>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <Btn onClick={() => setOpen('edit')}>Edit Plan</Btn>
+          <Btn onClick={() => setOpen('milestones')}>Manage Milestones</Btn>
+          <Btn primary onClick={() => setOpen('epic')}>+ Create Epic</Btn>
+        </div>
+      </div>
       {p.objective && <p style={muted}>{p.objective}</p>}
       <Findings findings={p.findings} />
+
+      {open === 'edit' && <EditPlanDrawer plan={p} onClose={() => setOpen(null)} />}
+      {open === 'milestones' && <MilestonesDrawer plan={p} onClose={() => setOpen(null)} />}
+      {open === 'epic' && <CreateEpicDrawer defaultPlan={p.id} onClose={() => setOpen(null)} onCreated={(eid) => { setOpen(null); router.navigate({ to: '/planning/epics/$id', params: { id: eid } }) }} />}
 
       <section style={grid}>
         <Metric label="Epics" value={p.progress.epics.total} />
@@ -214,7 +257,19 @@ export function PlanDetail({ id }: { id: string }) {
 
 export function EpicDetail({ id }: { id: string }) {
   const router = useRouter()
+  const qc = useQueryClient()
+  const [open, setOpen] = useState<null | 'edit' | 'associate'>(null)
+  const [removing, setRemoving] = useState<string | null>(null)
   const q = useQuery({ queryKey: ['planning', 'epic', id], queryFn: () => getEpicDetail(id), retry: false })
+  const removeMut = useMutation({
+    mutationFn: (initiativeId: string) => disassociateInitiative(id, initiativeId),
+    onSuccess: (_d, initiativeId) => {
+      setRemoving(null)
+      qc.invalidateQueries({ queryKey: ['planning'] })
+      qc.invalidateQueries({ queryKey: ['planning', 'epic', id] })
+      qc.invalidateQueries({ queryKey: ['initiative', initiativeId] })
+    },
+  })
   if (q.isLoading) return <div style={page}>Loading epic…</div>
   if (q.error) return <div style={page}><EmptyState title="Epic not found" description={(q.error as Error).message} action={{ label: 'Back to Planning', onClick: () => router.navigate({ to: '/planning' }) }} /></div>
   const e = q.data!
@@ -222,10 +277,27 @@ export function EpicDetail({ id }: { id: string }) {
   return (
     <div style={page}>
       <button style={back} onClick={() => (e.plan ? router.navigate({ to: '/planning/plans/$id', params: { id: e.plan } }) : router.navigate({ to: '/planning' }))}>← {e.plan ?? 'Planning'}</button>
-      <h2 style={heading}>{e.title}</h2>
-      <p style={subheading}><span style={mono}>{e.id}</span> · <StatusBadge variant="info">{e.status}</StatusBadge>{e.plan && <> · {e.plan}{e.milestone ? ` / ${e.milestone}` : ''}</>}</p>
+      <div style={detailHead}>
+        <div>
+          <h2 style={heading}>{e.title}</h2>
+          <p style={subheading}><span style={mono}>{e.id}</span> · <StatusBadge variant="info">{e.status}</StatusBadge>{e.plan && <> · {e.plan}{e.milestone ? ` / ${e.milestone}` : ''}</>}</p>
+        </div>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <Btn onClick={() => setOpen('edit')}>Edit Epic</Btn>
+          <Btn primary onClick={() => setOpen('associate')}>+ Associate Initiative</Btn>
+        </div>
+      </div>
       {e.outcome && <p style={muted}><strong>Outcome:</strong> {e.outcome}</p>}
       <Findings findings={e.findings} />
+
+      {open === 'edit' && <EditEpicDrawer epic={e} onClose={() => setOpen(null)} />}
+      {open === 'associate' && <AssociateInitiativeDrawer epicId={e.id} onClose={() => setOpen(null)} />}
+      {removing && (
+        <ConfirmDialog title="Remove association" confirmLabel="Remove" tone="danger" onCancel={() => setRemoving(null)} onConfirm={() => removeMut.mutate(removing)}>
+          Remove <strong>{removing}</strong> from this Epic? The Initiative, its Work Items, owners and lifecycle are kept — only the association is removed.
+          {removeMut.error && <p style={{ color: 'var(--danger)', marginTop: 8 }}>{(removeMut.error as Error).message}</p>}
+        </ConfirmDialog>
+      )}
 
       <section style={grid}>
         <Metric label="Work Items" value={e.progress.delivery.total} />
@@ -239,10 +311,15 @@ export function EpicDetail({ id }: { id: string }) {
 
       <section style={section}>
         <h3 style={h3}>Initiatives & responsibilities</h3>
-        {e.initiatives.length === 0 ? <p style={muted}>No initiatives associated.</p> : e.initiatives.map((i) => (
-          <div key={i.id} style={row}>
-            <a style={link} onClick={() => router.navigate({ to: '/initiatives/$initiativeId', params: { initiativeId: i.id } })}><span style={mono}>{i.id}</span> {i.title}</a> <StatusBadge variant="muted">{i.status}</StatusBadge>
-            <div style={mutedSmall}>{i.owners.length ? <>owner(s): {i.owners.join(', ')}</> : 'unassigned'}{i.contributors.length ? ` · contributors: ${i.contributors.join(', ')}` : ''}</div>
+        {e.initiatives.length === 0 ? (
+          <EmptyState title="No Initiatives associated" description="Associate an existing Initiative to organize its Work Items under this Epic." action={{ label: '+ Associate Initiative', onClick: () => setOpen('associate') }} />
+        ) : e.initiatives.map((i) => (
+          <div key={i.id} style={{ ...row, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10 }}>
+            <div>
+              <a style={link} onClick={() => router.navigate({ to: '/initiatives/$initiativeId', params: { initiativeId: i.id } })}><span style={mono}>{i.id}</span> {i.title}</a> <StatusBadge variant="muted">{i.status}</StatusBadge>
+              <div style={mutedSmall}>{i.owners.length ? <>owner(s): {i.owners.join(', ')}</> : 'unassigned'}{i.contributors.length ? ` · contributors: ${i.contributors.join(', ')}` : ''}</div>
+            </div>
+            <button onClick={() => setRemoving(i.id)} style={{ ...actionGhost, color: 'var(--danger)', flex: '0 0 auto' }}>Remove</button>
           </div>
         ))}
       </section>
@@ -268,6 +345,10 @@ const heading: React.CSSProperties = { margin: 0, fontSize: 24 }
 const h3: React.CSSProperties = { margin: '0 0 8px' }
 const subheading: React.CSSProperties = { color: 'var(--foreground-muted)', margin: '6px 0 0', maxWidth: 820 }
 const header: React.CSSProperties = { marginBottom: 12 }
+const sectionHead: React.CSSProperties = { display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, marginBottom: 4, flexWrap: 'wrap' }
+const detailHead: React.CSSProperties = { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' }
+const actionPrimary: React.CSSProperties = { padding: '8px 14px', border: '1px solid var(--primary)', borderRadius: 'var(--radius)', background: 'var(--primary)', color: 'var(--primary-foreground, #fff)', cursor: 'pointer', fontSize: 13, fontWeight: 600, fontFamily: 'inherit' }
+const actionGhost: React.CSSProperties = { padding: '8px 14px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', background: 'var(--surface)', color: 'var(--foreground)', cursor: 'pointer', fontSize: 13, fontWeight: 500, fontFamily: 'inherit' }
 const tabBar: React.CSSProperties = { display: 'flex', gap: 4, flexWrap: 'wrap', borderBottom: '1px solid var(--border)', marginBottom: 8 }
 const tabBtn: React.CSSProperties = { padding: '8px 14px', border: 'none', borderBottom: '2px solid transparent', background: 'none', color: 'var(--foreground-muted)', cursor: 'pointer', font: 'inherit', fontSize: 14 }
 const tabBtnActive: React.CSSProperties = { color: 'var(--foreground)', borderBottomColor: 'var(--primary)', fontWeight: 600 }

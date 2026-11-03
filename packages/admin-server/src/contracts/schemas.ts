@@ -541,3 +541,48 @@ export const ConsolidationScopeSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('module'), module: z.string().min(1).max(100).regex(/^[A-Za-z0-9._-]+$/) }),
 ])
 export const ConsolidationGenerateSchema = z.object({ scope: ConsolidationScopeSchema })
+
+// --- Planning Management write contracts (WI-076) ----------------------------
+// Admin never sends file paths or ids it chose; Core generates ids. Optional-nullable fields mean
+// "clear this value" when null and "leave unchanged" when omitted. `expectedRevision` enables
+// optimistic concurrency against a stale form.
+const StringListSchema = z.array(z.string().min(1).max(500)).max(100)
+export const MilestoneSchema = z.object({
+  id: z.string().min(1).max(60).regex(/^[A-Za-z0-9._-]+$/),
+  title: z.string().min(1).max(200).optional(),
+  exitCriteria: StringListSchema.optional(),
+})
+export const PlanCreateSchema = z.object({
+  title: z.string().min(1).max(200),
+  objective: z.string().max(2000).optional(),
+})
+export const PlanUpdateSchema = z.object({
+  title: z.string().min(1).max(200).optional(),
+  objective: z.string().max(2000).nullable().optional(),
+  successCriteria: StringListSchema.optional(),
+  risks: StringListSchema.optional(),
+  dependsOn: StringListSchema.optional(),
+  references: StringListSchema.optional(),
+  milestones: z.array(MilestoneSchema).max(100).optional(),
+  expectedRevision: z.string().min(1).optional(),
+})
+export const EpicCreateSchema = z.object({
+  title: z.string().min(1).max(200),
+  outcome: z.string().max(2000).optional(),
+  plan: z.string().min(1).max(60).optional(),
+  milestone: z.string().min(1).max(60).optional(),
+})
+export const EpicUpdateSchema = z.object({
+  title: z.string().min(1).max(200).optional(),
+  outcome: z.string().max(2000).nullable().optional(),
+  plan: z.string().min(1).max(60).nullable().optional(),
+  milestone: z.string().min(1).max(60).nullable().optional(),
+  successCriteria: StringListSchema.optional(),
+  dependsOn: StringListSchema.optional(),
+  relatedCapabilities: StringListSchema.optional(),
+  decisions: StringListSchema.optional(),
+  expectedRevision: z.string().min(1).optional(),
+})
+export const InitiativeAssociateSchema = z.object({
+  initiativeId: z.string().min(1).max(60),
+})

@@ -112,6 +112,17 @@ import {
   computePlanProgress,
   computeEpicProgress,
   validatePlanningGraph,
+  revisionOf,
+  createDeliveryPlan as coreCreateDeliveryPlan,
+  updateDeliveryPlan as coreUpdateDeliveryPlan,
+  createEpic as coreCreateEpic,
+  updateEpic as coreUpdateEpic,
+  associateInitiativeWithEpic as coreAssociateInitiativeWithEpic,
+  disassociateInitiativeFromEpic as coreDisassociateInitiativeFromEpic,
+  DeliveryPlanningWriteError,
+  PlanningConflictError,
+  type UpdatePlanInput,
+  type UpdateEpicInput,
 } from '@kaddo/cli/core'
 import fs from 'node:fs'
 import path from 'node:path'
@@ -350,6 +361,8 @@ export function getPlanDetailAdmin(dir: string, id: string) {
     id: plan.id, title: plan.title, status: plan.status, objective: plan.objective,
     milestones: plan.milestones, dependsOn: plan.dependsOn, successCriteria: plan.successCriteria,
     risks: plan.risks, references: plan.references, body: plan.body,
+    // Concurrency fingerprint (WI-076): the UI echoes it back on PATCH to detect stale edits.
+    revision: revisionOf(readFile(plan.filePath)),
     progress, epics, findings,
   }
 }
@@ -364,8 +377,102 @@ export function getEpicDetailAdmin(dir: string, id: string) {
   return {
     id: epic.id, title: epic.title, status: epic.status, outcome: epic.outcome,
     plan: epic.plan, milestone: epic.milestone, dependsOn: epic.dependsOn,
-    successCriteria: epic.successCriteria, relatedCapabilities: epic.relatedCapabilities, body: epic.body,
+    successCriteria: epic.successCriteria, relatedCapabilities: epic.relatedCapabilities,
+    decisions: epic.decisions, body: epic.body,
+    // Concurrency fingerprint (WI-076): the UI echoes it back on PATCH to detect stale edits.
+    revision: revisionOf(readFile(epic.filePath)),
     progress, initiatives, workItems, findings,
+  }
+}
+
+// --- Planning Management write adapters (WI-076) -----------------------------
+// Every mutation delegates to Core (no direct Markdown writes here) and maps Core errors to safe
+// HTTP-mappable codes. Lifecycle is never changed by these metadata operations.
+
+function assertPlanningId(kind: 'Plan' | 'Epic' | 'Initiative', id: string): void {
+  if (!id || id.includes('..') || id.includes('/') || id.includes('\\') || id.startsWith('.') || !/^[A-Za-z0-9._-]+$/.test(id)) {
+    throw new CoreError('INVALID_PLANNING_ID', `Invalid ${kind} identifier.`)
+  }
+}
+
+function mapPlanningError(err: unknown): never {
+  if (err instanceof PlanningConflictError) throw new CoreError('PLANNING_CONFLICT', err.message)
+  if (err instanceof DeliveryPlanningWriteError) throw new CoreError('PLANNING_WRITE', err.message)
+  if (err instanceof InitiativeWriteError) throw new CoreError('INITIATIVE_WRITE', err.message)
+  throw err as Error
+}
+
+export function createPlanAdmin(dir: string, body: { title: string; objective?: string }): { id: string } {
+  try {
+    const plan = coreCreateDeliveryPlan(dir, { title: body.title, objective: body.objective })
+    return { id: plan.id }
+  } catch (err) { mapPlanningError(err) }
+}
+
+export function updatePlanAdmin(
+  dir: string,
+  id: string,
+  body: UpdatePlanInput & { expectedRevision?: string },
+): ReturnType<typeof getPlanDetailAdmin> {
+  assertPlanningId('Plan', id)
+  const { expectedRevision, ...patch } = body
+  try {
+    coreUpdateDeliveryPlan(dir, id, patch, expectedRevision ? { expectedRevision } : undefined)
+    return getPlanDetailAdmin(dir, id)
+  } catch (err) { mapPlanningError(err) }
+}
+
+export function createEpicAdmin(
+  dir: string,
+  body: { title: string; outcome?: string; plan?: string; milestone?: string },
+): { id: string } {
+  try {
+    const epic = coreCreateEpic(dir, { title: body.title, outcome: body.outcome, plan: body.plan, milestone: body.milestone })
+    return { id: epic.id }
+  } catch (err) { mapPlanningError(err) }
+}
+
+export function updateEpicAdmin(
+  dir: string,
+  id: string,
+  body: UpdateEpicInput & { expectedRevision?: string },
+): ReturnType<typeof getEpicDetailAdmin> {
+  assertPlanningId('Epic', id)
+  const { expectedRevision, ...patch } = body
+  try {
+    coreUpdateEpic(dir, id, patch, expectedRevision ? { expectedRevision } : undefined)
+    return getEpicDetailAdmin(dir, id)
+  } catch (err) { mapPlanningError(err) }
+}
+
+export function associateInitiativeAdmin(dir: string, epicId: string, initiativeId: string): { id: string; epic: string } {
+  assertPlanningId('Epic', epicId)
+  assertPlanningId('Initiative', initiativeId)
+  try {
+    if (!coreGetEpic(dir, epicId)) throw new CoreError('EPIC_NOT_FOUND', `Epic ${epicId} was not found.`)
+    const ini = coreAssociateInitiativeWithEpic(dir, initiativeId, epicId)
+    return { id: ini.id, epic: ini.epic ?? epicId }
+  } catch (err) {
+    if (err instanceof CoreError) throw err
+    mapPlanningError(err)
+  }
+}
+
+export function disassociateInitiativeAdmin(dir: string, epicId: string, initiativeId: string): { id: string } {
+  assertPlanningId('Epic', epicId)
+  assertPlanningId('Initiative', initiativeId)
+  try {
+    const ini = coreGetInitiative(dir, initiativeId)
+    if (!ini) throw new CoreError('INITIATIVE_NOT_FOUND', `Initiative ${initiativeId} was not found.`)
+    // Only remove the association the caller actually targeted (guards against a stale UI link).
+    if ((ini.epic ?? '').toLowerCase() !== epicId.toLowerCase()) {
+      throw new CoreError('PLANNING_WRITE', `Initiative ${initiativeId} is not associated with Epic ${epicId}.`)
+    }
+    const updated = coreDisassociateInitiativeFromEpic(dir, initiativeId)
+    return { id: updated.id }
+  } catch (err) {
+    if (err instanceof CoreError) throw err
+    mapPlanningError(err)
   }
 }
 
@@ -852,6 +959,9 @@ export type InitiativeDetailAdmin = {
   workItems: AssociatedWorkItem[]
   analysis: InitiativeAnalysis
   completion: CompletionReadiness
+  epic: string | null
+  owners: string[]
+  contributors: string[]
   body: string
 }
 
@@ -903,6 +1013,10 @@ export function getInitiativeDetailAdmin(dir: string, id: string): InitiativeDet
     workItems: associatedWorkItems(dir, ini.id),
     analysis: analyzeInitiative(dir, ini),
     completion: evaluateInitiativeCompletion(dir, ini),
+    // Planning context (WI-076): the Epic association (if any) so the UI can show/manage it.
+    epic: ini.epic ?? null,
+    owners: ini.owners,
+    contributors: ini.contributors,
     body: ini.body,
   }
 }

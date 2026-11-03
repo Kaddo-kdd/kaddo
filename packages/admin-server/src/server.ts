@@ -67,6 +67,12 @@ import {
   getPlanningOverviewAdmin,
   getPlanDetailAdmin,
   getEpicDetailAdmin,
+  createPlanAdmin,
+  updatePlanAdmin,
+  createEpicAdmin,
+  updateEpicAdmin,
+  associateInitiativeAdmin,
+  disassociateInitiativeAdmin,
   createDeprecationAdmin,
   CoreError,
 } from './core-adapter.js'
@@ -81,6 +87,11 @@ import {
   DeprecationCreateSchema,
   ProjectModeUpdateSchema,
   ConsolidationGenerateSchema,
+  PlanCreateSchema,
+  PlanUpdateSchema,
+  EpicCreateSchema,
+  EpicUpdateSchema,
+  InitiativeAssociateSchema,
 } from './contracts/schemas.js'
 import type { AdminStorage } from './storage/admin-storage.js'
 
@@ -90,14 +101,17 @@ function statusForCode(code: string): number {
   switch (code) {
     case 'WORK_ITEM_NOT_FOUND': return 404
     case 'WORK_ITEM_CONFLICT':
-    case 'WORK_ITEM_NOT_EDITABLE': return 409
+    case 'WORK_ITEM_NOT_EDITABLE':
+    case 'PLANNING_CONFLICT': return 409
     case 'INVALID_INPUT':
     case 'INVALID_WORK_ITEM_ID':
     case 'INVALID_INTEGRATION_ID':
     case 'INVALID_SECRET_NAME':
     case 'INVALID_EXTERNAL_ID':
     case 'INVALID_INITIATIVE_ID':
+    case 'INVALID_PLANNING_ID':
     case 'INITIATIVE_WRITE':
+    case 'PLANNING_WRITE':
     case 'INVALID_TRANSITION':
     case 'VALIDATION_FAILED':
     case 'INVALID_DEPRECATION_ID': return 400
@@ -221,12 +235,42 @@ export async function createAdminServer(opts: AdminServerOptions) {
     return reply.send(content)
   })
 
-  // --- Delivery Planning Explorer (WI-074) ---
+  // --- Delivery Planning Explorer (WI-074) + Management (WI-076) ---
   app.get('/api/v1/admin/planning', coreRoute(getPlanningOverviewAdmin))
   app.get<{ Params: { id: string } }>('/api/v1/admin/planning/plans/:id', async (request, reply) =>
     writeHandler(reply, () => getPlanDetailAdmin(projectDir, request.params.id)))
   app.get<{ Params: { id: string } }>('/api/v1/admin/planning/epics/:id', async (request, reply) =>
     writeHandler(reply, () => getEpicDetailAdmin(projectDir, request.params.id)))
+
+  // Planning write operations (WI-076). Every mutation delegates to Core; Core generates ids and
+  // writes atomically, so a rejected write never leaves a partial artifact or changes a lifecycle.
+  app.post('/api/v1/admin/planning/plans', async (request, reply) => {
+    const parsed = PlanCreateSchema.safeParse(request.body)
+    if (!parsed.success) return reply.code(400).send({ error: { code: 'INVALID_INPUT', message: 'A Plan title is required.' } })
+    return writeHandler(reply, () => createPlanAdmin(projectDir, parsed.data))
+  })
+  app.patch<{ Params: { id: string } }>('/api/v1/admin/planning/plans/:id', async (request, reply) => {
+    const parsed = PlanUpdateSchema.safeParse(request.body)
+    if (!parsed.success) return reply.code(400).send({ error: { code: 'INVALID_INPUT', message: 'Invalid Plan update.' } })
+    return writeHandler(reply, () => updatePlanAdmin(projectDir, request.params.id, parsed.data))
+  })
+  app.post('/api/v1/admin/planning/epics', async (request, reply) => {
+    const parsed = EpicCreateSchema.safeParse(request.body)
+    if (!parsed.success) return reply.code(400).send({ error: { code: 'INVALID_INPUT', message: 'An Epic title is required.' } })
+    return writeHandler(reply, () => createEpicAdmin(projectDir, parsed.data))
+  })
+  app.patch<{ Params: { id: string } }>('/api/v1/admin/planning/epics/:id', async (request, reply) => {
+    const parsed = EpicUpdateSchema.safeParse(request.body)
+    if (!parsed.success) return reply.code(400).send({ error: { code: 'INVALID_INPUT', message: 'Invalid Epic update.' } })
+    return writeHandler(reply, () => updateEpicAdmin(projectDir, request.params.id, parsed.data))
+  })
+  app.post<{ Params: { id: string } }>('/api/v1/admin/planning/epics/:id/initiatives', async (request, reply) => {
+    const parsed = InitiativeAssociateSchema.safeParse(request.body)
+    if (!parsed.success) return reply.code(400).send({ error: { code: 'INVALID_INPUT', message: 'An initiativeId is required.' } })
+    return writeHandler(reply, () => associateInitiativeAdmin(projectDir, request.params.id, parsed.data.initiativeId))
+  })
+  app.delete<{ Params: { id: string; initiativeId: string } }>('/api/v1/admin/planning/epics/:id/initiatives/:initiativeId', async (request, reply) =>
+    writeHandler(reply, () => disassociateInitiativeAdmin(projectDir, request.params.id, request.params.initiativeId)))
 
   // --- Knowledge Consolidation Explorer (WI-073) ---
   app.get('/api/v1/admin/consolidation/plan', coreRoute(getConsolidationPlanAdmin))

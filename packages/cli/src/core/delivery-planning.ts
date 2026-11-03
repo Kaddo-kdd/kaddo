@@ -6,6 +6,7 @@
 // work_item.epic optional), and an Epic/Plan derives its Initiatives and Work Items rather than listing
 // them. Pure logic — no LLM, no git, no writes. Completion stays human-gated by callers.
 
+import { createHash } from 'node:crypto'
 import matter from 'gray-matter'
 import { exists, readFile, readDir, join, isFile } from '../utils/fs.js'
 import { discoverWorkItems, type KnowledgeArtifact } from '../services/knowledge-artifacts.js'
@@ -422,4 +423,48 @@ export function validatePlanningGraph(dir: string): PlanningFinding[] {
     findings.push({ level: 'warning', kind: 'pending_dependency', subject: e.id, message: `Epic ${e.id} is blocked by unfinished dependency ${d}.` })
 
   return findings
+}
+
+// --- Write-support helpers (concurrency + pre-write validation, no mutation) -
+
+/**
+ * Short content fingerprint used to detect concurrent edits (WI-076). A read exposes the artifact's
+ * current revision; a controlled write may pass `expectedRevision` and is rejected when the file on
+ * disk has changed since it was read. Deterministic and stable for identical bytes.
+ */
+export function revisionOf(content: string): string {
+  return createHash('sha256').update(content, 'utf8').digest('hex').slice(0, 16)
+}
+
+/**
+ * Validate a hypothetical Epic dependency set BEFORE writing it (WI-076): every target must be an
+ * existing Epic, self-dependency is rejected, and the change must not introduce a cycle among Epics.
+ * Returns human-readable error messages (empty = valid). Never mutates anything.
+ */
+export function validateEpicDependencyChange(dir: string, epicId: string, deps: string[]): string[] {
+  const epics = discoverEpics(dir)
+  const epicIds = new Set(epics.map((e) => e.id.toLowerCase()))
+  const self = epicId.toLowerCase()
+  const errors: string[] = []
+  const seen = new Set<string>()
+  for (const d of deps) {
+    const key = d.toLowerCase()
+    if (key === self) {
+      errors.push(`Epic ${epicId} cannot depend on itself.`)
+      continue
+    }
+    if (!epicIds.has(key)) {
+      errors.push(`Epic ${epicId} depends on missing Epic ${d}.`)
+      continue
+    }
+    if (seen.has(key)) errors.push(`Epic ${epicId} declares duplicate dependency ${d}.`)
+    seen.add(key)
+  }
+  if (errors.length > 0) return errors
+  // Cycle check with this epic's edges replaced by the proposed deps.
+  const edges = new Map<string, string[]>(epics.map((e) => [e.id.toLowerCase(), e.dependsOn.map((d) => d.toLowerCase())]))
+  edges.set(self, deps.map((d) => d.toLowerCase()))
+  const cycle = findCycle([...epicIds, self], edges)
+  if (cycle) errors.push(`Dependency cycle among Epics: ${cycle.join(' → ')}.`)
+  return errors
 }

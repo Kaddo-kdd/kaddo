@@ -79,12 +79,33 @@ Lectura: `kaddo_list_plans`, `kaddo_get_plan`, `kaddo_get_plan_progress`, `kaddo
 (`kaddo_create_plan`, `kaddo_create_epic`, `kaddo_associate_initiative_epic`) siguen el patrón
 preview/confirm y escriben solo bajo `knowledge/delivery/`.
 
-## Admin — Planning Explorer
+## Admin — Exploración y gestión de Planning
 
 Kaddo Admin incluye una sección **Planning** (`/planning`) para explorar un plan de extremo a extremo:
 Plan → milestones → Epics → Initiatives → Work Items, con progreso derivado, bloqueos por dependencia y
-responsabilidades declaradas, y enlaces al detalle de Work Item e Initiative. Es una superficie de
-exploración — nunca aplica cambios ni cierra un Plan o Epic automáticamente.
+responsabilidades declaradas, y enlaces al detalle de Work Item e Initiative.
+
+Desde el mismo espacio también puedes **construir y mantener** la estructura de planificación sin la CLI:
+
+- **Crear un Delivery Plan** (Overview, la pestaña Delivery Plans o el estado vacío) — Kaddo genera el
+  id y asigna el estado `draft`.
+- **Editar un Plan** (título, objetivo, criterios de éxito, riesgos, dependencias, referencias) y
+  **gestionar sus milestones** (agregar, editar, eliminar) desde el detalle del Plan.
+- **Crear una Epic** (independiente o bajo un Plan y uno de sus milestones) y **editarla** (resultado,
+  plan, milestone, criterios de éxito, dependencias, capacidades relacionadas, decisiones).
+- **Asociar, reasignar o retirar una Initiative** en una Epic, y gestionar la misma asociación desde el
+  **Planning Context** de la Initiative.
+
+Cada cambio pasa por Core (los mismos contratos que usan la CLI y MCP), de modo que los artifacts
+permanecen canónicos e interoperables. Las ediciones son **solo de metadatos**: nunca cambian un estado
+de lifecycle, y la finalización de un Plan o Epic siempre queda bajo aprobación humana. Las referencias
+se validan (se rechazan dependencias de Epic inválidas o circulares y milestones no definidos en el Plan
+seleccionado), un milestone referenciado por una Epic no puede eliminarse ni renombrarse, y una edición
+concurrente del mismo artifact se detecta mediante una huella de revisión para no guardar en silencio un
+formulario obsoleto.
+
+> Asociar una Initiative con una Epic también está disponible desde la CLI (`kaddo epic associate`) y
+> MCP (`kaddo_associate_initiative_epic`).
 
 ## Knowledge Graph
 
