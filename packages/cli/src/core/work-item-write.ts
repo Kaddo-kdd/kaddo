@@ -51,6 +51,8 @@ export type WorkItemInput = {
   acceptanceCriteria: WorkItemCriterionInput[]
   decisions: string[]
   relatedKnowledge: string[]
+  owners: string[]
+  contributors: string[]
 }
 
 export type WorkItemEditModel = WorkItemInput & {
@@ -275,6 +277,10 @@ function applyFrontmatter(data: Record<string, unknown>, input: WorkItemInput): 
   next.type = input.type
   next.work_type = input.type
   if (input.summary != null) next.summary = input.summary
+  // Older callers and imported artifacts did not have assignment fields. Treat an omitted
+  // field as an explicit empty list so editing remains backwards compatible.
+  next.owners = [...new Set((input.owners ?? []).map((v) => v.trim()).filter(Boolean))]
+  next.contributors = [...new Set((input.contributors ?? []).map((v) => v.trim()).filter(Boolean))]
   next.affected_modules = [...input.affectedModules]
 
   if (input.scopeConfidence && VALID_CONFIDENCE.has(input.scopeConfidence.level)) {
@@ -365,6 +371,8 @@ function toInput(data: Record<string, unknown>, content: string): WorkItemInput 
     acceptanceCriteria: criteria,
     decisions: Array.isArray(data.decisions) ? data.decisions.map(String) : [],
     relatedKnowledge: Array.isArray(data.related_knowledge) ? data.related_knowledge.map(String) : [],
+    owners: Array.isArray(data.owners) ? data.owners.map(String) : [],
+    contributors: Array.isArray(data.contributors) ? data.contributors.map(String) : [],
   }
 }
 

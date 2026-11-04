@@ -20,6 +20,7 @@ import {
   discoverKnowledge,
   getWorkItems as coreGetWorkItems,
   getWorkItem as coreGetWorkItem,
+  getWorkItemCollaboration as coreGetWorkItemCollaboration,
   WorkItemNotFoundError,
   createWorkItem as coreCreateWorkItem,
   updateWorkItem as coreUpdateWorkItem,
@@ -515,6 +516,14 @@ export function getWorkItemDetail(dir: string, workItemId: string): WorkItemDeta
     }
     throw err
   }
+}
+
+/** Derived Git evidence; never writes Git or canonical Work Item content. */
+export async function getWorkItemCollaborationAdmin(dir: string, workItemId: string) {
+  assertValidWorkItemId(workItemId)
+  try {
+    return await coreGetWorkItemCollaboration(dir, workItemId)
+  } catch (err) { mapWriteError(err) }
 }
 
 function assertValidWorkItemId(workItemId: string): void {
@@ -1039,7 +1048,7 @@ export function createInitiativeAdmin(
 export function updateInitiativeAdmin(
   dir: string,
   id: string,
-  body: { status?: string; title?: string; horizon?: string; priority?: string; domains?: string[] },
+  body: { status?: string; title?: string; horizon?: string; priority?: string; domains?: string[]; owners?: string[]; contributors?: string[] },
 ): { id: string; status: InitiativeStatus } {
   assertValidInitiativeId(id)
   try {
@@ -1048,12 +1057,14 @@ export function updateInitiativeAdmin(
     if (body.status) {
       ini = coreTransitionInitiative(dir, id, body.status as InitiativeStatus)
     }
-    if (body.title !== undefined || body.horizon !== undefined || body.priority !== undefined || body.domains !== undefined) {
+    if (body.title !== undefined || body.horizon !== undefined || body.priority !== undefined || body.domains !== undefined || body.owners !== undefined || body.contributors !== undefined) {
       ini = coreUpdateInitiative(dir, id, {
         title: body.title,
         horizon: body.horizon,
         priority: body.priority,
         domains: body.domains,
+        owners: body.owners,
+        contributors: body.contributors,
       })
     }
     return { id: ini.id, status: ini.status }

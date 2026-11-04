@@ -1,7 +1,7 @@
 ---
 type: agent
 name: implementation-agent
-version: 3.127.0
+version: 3.133.0
 group: delivery
 ---
 # Implementation Agent

@@ -188,6 +188,7 @@ export {
   type CompletionEvaluation,
 } from './core/implementation-evidence.js'
 export { computeRefinementStatus, type RefinementStatus } from './core/work-items.js'
+export { getWorkItemCollaboration, type WorkItemCollaboration, type GitCommitEvidence, type AttributionKind } from './core/collaboration.js'
 export {
   importWorkItem,
   detectFormat,

@@ -3,7 +3,7 @@ type: skill
 id: learning-capture
 name: learning-capture
 title: Learning Capture Skill
-version: 3.127.0
+version: 3.133.0
 group: delivery
 applies_to:
   - implementation-agent

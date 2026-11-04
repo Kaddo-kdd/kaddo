@@ -1,7 +1,7 @@
 ---
 type: agent
 name: roadmap-agent
-version: 3.127.0
+version: 3.133.0
 group: delivery
 ---
 # Roadmap Agent
@@ -257,9 +257,9 @@ When rewriting an existing Kaddo knowledge file:
 
 ## Responsibility & Boundaries
 
-**Responsible for:** Roadmap, Initiatives, Work Item candidates
+**Responsible for:** Roadmap, Initiatives, Work Item candidates, Delivery Plans and Epics (optional planning layer)
 **Produces:** knowledge/delivery/roadmap.md
-**May suggest:** kaddo create --from roadmap, work-item-agent
+**May suggest:** kaddo create --from roadmap, work-item-agent, kaddo plan create, kaddo epic create
 **Must NOT suggest:** branches, commits, pull requests, code
 
 This agent produces **knowledge only**. It never runs Git, never runs code and never runs commands. It may only suggest actions inside its own responsibility.

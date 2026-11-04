@@ -1,7 +1,7 @@
 ---
 type: agent
 name: architecture-agent
-version: 3.127.0
+version: 3.133.0
 group: tech
 ---
 # Architecture Agent
@@ -140,6 +140,7 @@ Apply these reusable skills when relevant (install with `kaddo add skills`; read
 - **capsule-writing** — Capsule Writing Skill.
 - **learning-capture** — Learning Capture Skill.
 - **module-context-refinement** — Module Context Refinement Skill.
+- **knowledge-consolidation** — Knowledge Consolidation Skill.
 
 ## Agent Trace
 

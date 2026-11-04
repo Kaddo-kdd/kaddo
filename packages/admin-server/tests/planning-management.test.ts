@@ -39,6 +39,7 @@ function tmpProject(): string {
   w('.kaddo/config.yml', 'version: 1\nproject:\n  name: t\n  state: new\n  structure: monorepo\n  language: en\nteam:\n  size: small\n')
   // A standalone Initiative to associate from Admin.
   w('knowledge/delivery/initiatives/INI-010.md', '---\ntype: initiative\nid: INI-010\ntitle: Host-side Workers\nstatus: in-progress\nowners:\n  - developer-a\n---\n# I\n')
+  w('knowledge/delivery/work-items/draft/WI-077.md', '---\ntype: feature\nid: WI-077\ntitle: Collaboration evidence\nstatus: draft\nowners:\n  - developer-a\ncontributors:\n  - developer-b\n---\n# WI\n')
   return dir
 }
 
@@ -65,6 +66,13 @@ describe('admin-server — Planning Management API (WI-076)', () => {
     if (body) headers['content-type'] = 'application/json'
     return app.inject({ method: method as any, url, headers, payload: body ? JSON.stringify(body) : undefined })
   }
+
+  it('exposes declared responsibility and readonly collaboration evidence for a Work Item', async () => {
+    const res = await send('GET', '/api/v1/admin/work-items/WI-077/collaboration')
+    expect(res.statusCode).toBe(200)
+    expect(res.json().responsibility).toEqual({ owners: ['developer-a'], contributors: ['developer-b'] })
+    expect(res.json().git.coverage.note).toContain('read-only')
+  })
 
   it('AC-01/AC-13: creates a Delivery Plan (Core generates the id, status draft)', async () => {
     const res = await send('POST', '/api/v1/admin/planning/plans', { title: 'Roadmap', objective: 'Ship' })

@@ -1,4 +1,5 @@
 import { execa } from 'execa'
+import path from 'node:path'
 
 export type DiffMode = 'staged' | 'unstaged' | 'head'
 
@@ -97,5 +98,54 @@ export async function getModifiedFilesInCommit(ref = 'HEAD'): Promise<string[]> 
       .filter(Boolean)
   } catch {
     return []
+  }
+}
+
+// Read-only collaboration evidence. Arguments are always structured; callers never provide a Git
+// command or ref. This service deliberately exposes no mutating Git operation.
+export type GitCommitObservation = {
+  sha: string
+  author: string
+  date: string
+  subject: string
+  files: string[]
+}
+export type GitBranchObservation = { name: string }
+export type GitObservation = {
+  availability: 'available' | 'partial' | 'unavailable'
+  repository: string | null
+  commits: GitCommitObservation[]
+  branches: GitBranchObservation[]
+  inspectedAt: string
+  limit: number
+}
+
+export async function observeGit(dir: string, maxCommits = 100): Promise<GitObservation> {
+  const limit = Math.max(1, Math.min(maxCommits, 250))
+  const inspectedAt = new Date().toISOString()
+  try {
+    const root = await getGitRoot(dir)
+    if (!root) return { availability: 'unavailable', repository: null, commits: [], branches: [], inspectedAt, limit }
+    const [log, refs] = await Promise.all([
+      execa('git', ['log', `--max-count=${limit}`, '--format=%H%x1f%an%x1f%aI%x1f%s', '--name-only'], { cwd: root, timeout: 5000 }),
+      execa('git', ['for-each-ref', '--format=%(refname:short)', 'refs/heads'], { cwd: root, timeout: 5000 }),
+    ])
+    const commits: GitCommitObservation[] = []
+    let current: GitCommitObservation | null = null
+    for (const line of log.stdout.split(/\r?\n/)) {
+      const parts = line.split('\x1f')
+      if (parts.length === 4) {
+        if (current) commits.push(current)
+        current = { sha: parts[0], author: parts[1], date: parts[2], subject: parts[3], files: [] }
+      } else if (current && line.trim()) current.files.push(line.trim())
+    }
+    if (current) commits.push(current)
+    return {
+      availability: 'available', repository: path.basename(root), commits,
+      branches: refs.stdout.split(/\r?\n/).map((name) => name.trim()).filter(Boolean).slice(0, 100).map((name) => ({ name })),
+      inspectedAt, limit,
+    }
+  } catch {
+    return { availability: 'partial', repository: null, commits: [], branches: [], inspectedAt, limit }
   }
 }

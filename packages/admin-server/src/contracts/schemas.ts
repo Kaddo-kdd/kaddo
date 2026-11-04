@@ -162,6 +162,8 @@ export const WorkItemListItemSchema = z.object({
   affectedModules: z.array(z.string()),
   scopeConfidenceLevel: z.string().nullable(),
   initiative: z.string().nullable(),
+  owners: z.array(z.string()),
+  contributors: z.array(z.string()),
 })
 
 export const WorkItemsListSchema = z.object({
@@ -301,6 +303,8 @@ export const WorkItemInputSchema = z.object({
   acceptanceCriteria: z.array(z.object({ text: z.string(), checked: z.boolean().nullable() })),
   decisions: z.array(z.string()),
   relatedKnowledge: z.array(z.string()),
+  owners: z.array(z.string()).default([]),
+  contributors: z.array(z.string()).default([]),
 })
 
 export const WorkItemCreateSchema = z.object({
@@ -331,6 +335,8 @@ export const InitiativeUpdateSchema = z.object({
   horizon: z.string().optional(),
   priority: z.string().optional(),
   domains: z.array(z.string()).optional(),
+  owners: z.array(z.string()).optional(),
+  contributors: z.array(z.string()).optional(),
 })
 
 export const WorkItemEditModelSchema = WorkItemInputSchema.extend({

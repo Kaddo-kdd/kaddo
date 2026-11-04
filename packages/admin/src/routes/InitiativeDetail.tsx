@@ -52,7 +52,7 @@ export function InitiativeDetail() {
   })
 
   const updateMut = useMutation({
-    mutationFn: (status: string) => api.updateInitiative(initiativeId, { status }),
+    mutationFn: (patch: { status?: string; owners?: string[]; contributors?: string[] }) => api.updateInitiative(initiativeId, patch),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['initiative', initiativeId] })
       queryClient.invalidateQueries({ queryKey: ['initiatives'] })
@@ -93,7 +93,7 @@ export function InitiativeDetail() {
         <div style={{ display: 'flex', gap: 8, marginBottom: 20, alignItems: 'center', flexWrap: 'wrap' }}>
           <span style={{ fontSize: 13, color: 'var(--foreground-muted)' }}>Move to:</span>
           {nextStatuses.map((s) => (
-            <button key={s} disabled={updateMut.isPending} onClick={() => updateMut.mutate(s)}
+            <button key={s} disabled={updateMut.isPending} onClick={() => updateMut.mutate({ status: s })}
               style={{ padding: '6px 12px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', background: 'var(--surface)', color: 'var(--foreground)', cursor: 'pointer', fontSize: 13, fontFamily: 'inherit' }}>
               {s}
             </button>
@@ -101,6 +101,17 @@ export function InitiativeDetail() {
           {updateMut.error && <span style={{ color: 'var(--danger)', fontSize: 13 }}>{(updateMut.error as Error).message}</span>}
         </div>
       )}
+
+      <Section title="Declared responsibility">
+        <p style={{ marginTop: 0, fontSize: 13, color: 'var(--foreground-muted)' }}>Initiative responsibility is declared metadata and is not inherited by Work Items.</p>
+        <div style={{ fontSize: 14 }}>Owners: {data.owners.length ? data.owners.join(', ') : 'Unassigned'}</div>
+        <div style={{ fontSize: 14, marginTop: 6 }}>Contributors: {data.contributors.length ? data.contributors.join(', ') : 'None declared'}</div>
+        <button disabled={updateMut.isPending} onClick={() => {
+          const owners = window.prompt('Owners (comma-separated)', data.owners.join(', ')); if (owners === null) return
+          const contributors = window.prompt('Contributors (comma-separated)', data.contributors.join(', ')); if (contributors === null) return
+          updateMut.mutate({ owners: owners.split(',').map((v) => v.trim()).filter(Boolean), contributors: contributors.split(',').map((v) => v.trim()).filter(Boolean) })
+        }} style={{ marginTop: 12, padding: '6px 12px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', background: 'var(--surface)', color: 'var(--foreground)', cursor: 'pointer', fontFamily: 'inherit', fontSize: 13 }}>Edit assignments</button>
+      </Section>
 
       <Section title="Planning Context">
         <InitiativePlanningContext

@@ -98,6 +98,7 @@ import {
   listEpicsTool, getEpicTool, getEpicProgressTool, validatePlanningTool,
   createPlanTool, createEpicTool, associateInitiativeTool,
 } from './planning.js'
+import { getWorkItemCollaborationTool } from './collaboration.js'
 
 export const SERVER_NAME = 'kaddo'
 // Read the version from package.json at runtime so it never drifts from the published version.
@@ -172,6 +173,16 @@ export function createServer(root: string): McpServer {
   }
 
   // --- Tools (read-only) ---
+  server.registerTool(
+    'kaddo_get_work_item_collaboration',
+    {
+      title: 'Get Work Item collaboration',
+      description: 'Read declared owners/contributors and bounded local Git evidence. Git is strictly read-only; observed authors never alter assignments.',
+      inputSchema: { id: z.string() },
+    },
+    async (args) => toolText(await guardedAsync(root, () => getWorkItemCollaborationTool(root, args.id)))
+  )
+
   server.registerTool(
     'kaddo_project_status',
     { title: 'Kaddo project status', description: 'Compact project status (state, phase, work items, ownership, graph quality, capsules).', inputSchema: {} },

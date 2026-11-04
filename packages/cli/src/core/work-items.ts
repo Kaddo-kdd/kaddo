@@ -51,6 +51,9 @@ export type WorkItemListItem = {
   affectedModules: string[]
   scopeConfidenceLevel: string | null
   initiative: string | null
+  /** Declared planning responsibility. This is intentionally distinct from code ownership. */
+  owners: string[]
+  contributors: string[]
 }
 
 export type WorkItemsResult = {
@@ -263,6 +266,8 @@ function toListItem(a: KnowledgeArtifact): WorkItemListItem {
     affectedModules: a.affectedModules,
     scopeConfidenceLevel: a.scopeConfidence?.level ?? null,
     initiative: a.initiative || null,
+    owners: Array.isArray(a.rawFrontmatter.owners) ? a.rawFrontmatter.owners.map(String).filter(Boolean) : [],
+    contributors: Array.isArray(a.rawFrontmatter.contributors) ? a.rawFrontmatter.contributors.map(String).filter(Boolean) : [],
   }
 }
 

@@ -43,6 +43,11 @@ export function WorkItemDetail() {
     refetchOnWindowFocus: true,
     retry: false,
   })
+  const collaboration = useQuery({
+    queryKey: ['work-item', workItemId, 'collaboration'],
+    queryFn: () => api.getWorkItemCollaboration(workItemId),
+    retry: false,
+  })
 
   if (isLoading) return <Skeleton />
 
@@ -215,6 +220,22 @@ export function WorkItemDetail() {
           </div>
         </Section>
       )}
+
+      <Section title="Collaboration">
+        <p style={{ marginTop: 0, color: 'var(--foreground-muted)', fontSize: 13 }}>Declared responsibility is not inferred from Git.</p>
+        <Field label="Owners" value={wi.owners.length ? wi.owners.join(', ') : 'Unassigned'} />
+        <Field label="Contributors" value={wi.contributors.length ? wi.contributors.join(', ') : 'None declared'} />
+        {collaboration.isLoading && <p style={{ color: 'var(--foreground-muted)', fontSize: 13 }}>Reading local Git activity…</p>}
+        {collaboration.error && <p style={{ color: 'var(--foreground-muted)', fontSize: 13 }}>Git activity is unavailable. Planning and assignments remain available.</p>}
+        {collaboration.data && <>
+          <Field label="Git availability" value={collaboration.data.git.availability} />
+          <Field label="Last inspected" value={collaboration.data.git.inspectedAt ?? 'Not inspected'} />
+          <Field label="Observed authors" value={collaboration.data.git.observedAuthors.join(', ') || 'No linked contributions found'} />
+          {collaboration.data.git.linkedCommits.map((commit) => <div key={`${commit.repository}:${commit.sha}`} style={{ fontSize: 13, marginTop: 8 }}><code>{commit.sha.slice(0, 8)}</code> · {commit.author} · {commit.subject}<br /><span style={{ color: 'var(--foreground-muted)' }}>{commit.evidence}</span></div>)}
+          {collaboration.data.git.relatedBranches.map((branch) => <div key={`${branch.repository}:${branch.name}`} style={{ fontSize: 13, marginTop: 8 }}><code>{branch.name}</code> · contextual branch association</div>)}
+          <button onClick={() => collaboration.refetch()} style={{ marginTop: 12, padding: '6px 12px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', background: 'var(--surface)', color: 'var(--foreground)', cursor: 'pointer', font: 'inherit', fontSize: 13 }}>Refresh Git Activity</button>
+        </>}
+      </Section>
 
       {/* Project Resources (WI-034) — external systems this WI relates to, by role. Navigable to the
           resource definition (a tech knowledge artifact). Read-only; distinct from affected modules. */}

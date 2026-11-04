@@ -137,6 +137,8 @@ export type WorkItemListItem = {
   affectedModules: string[]
   scopeConfidenceLevel: string | null
   initiative: string | null
+  owners: string[]
+  contributors: string[]
 }
 
 export type WorkItemsList = {
@@ -199,6 +201,21 @@ export type WorkItemDetail = WorkItemListItem & {
   refinement: RefinementStatus
 }
 
+export type WorkItemCollaboration = {
+  workItemId: string
+  responsibility: { owners: string[]; contributors: string[] }
+  git: {
+    availability: 'available' | 'partial' | 'unavailable'
+    repositories: string[]
+    observedAuthors: string[]
+    linkedCommits: { repository: string; sha: string; author: string; date: string; subject: string; paths: string[]; attribution: 'explicit-reference' | 'branch-associated'; evidence: string }[]
+    relatedBranches: { repository: string; name: string; attribution: 'branch-associated'; evidence: string }[]
+    unattributedActivityCount: number
+    inspectedAt: string | null
+    coverage: { maxCommits: number; inspectedCommits: number; note: string }
+  }
+}
+
 export type ExternalSnapshot = {
   title: string; description?: string; type?: string; status?: string
   labels?: string[]; assignee?: string; created_at?: string; updated_at?: string
@@ -239,6 +256,8 @@ export type WorkItemInput = {
   acceptanceCriteria: AcceptanceCriterion[]
   decisions: string[]
   relatedKnowledge: string[]
+  owners: string[]
+  contributors: string[]
 }
 
 export type WorkItemEditModel = WorkItemInput & {
@@ -514,12 +533,13 @@ export const api = {
   getKnowledgeArtifact: (artifactId: string) => fetchApi<KnowledgeArtifactDetail>(`/knowledge/artifact/${encodeURIComponent(artifactId)}`),
   getWorkItemsList: (filters: WorkItemFilters = {}) => fetchApi<WorkItemsList>(`/work-items${toQuery(filters)}`),
   getWorkItem: (workItemId: string) => fetchApi<WorkItemDetail>(`/work-items/${encodeURIComponent(workItemId)}`),
+  getWorkItemCollaboration: (workItemId: string) => fetchApi<WorkItemCollaboration>(`/work-items/${encodeURIComponent(workItemId)}/collaboration`),
   // Initiatives (WI-022)
   getInitiatives: () => fetchApi<{ initiatives: InitiativeListItem[] }>('/initiatives'),
   getInitiative: (initiativeId: string) => fetchApi<InitiativeDetail>(`/initiatives/${encodeURIComponent(initiativeId)}`),
   createInitiative: (body: { title: string; domains?: string[]; horizon?: string; priority?: string }) =>
     mutateApi<{ id: string }>('/initiatives', 'POST', body),
-  updateInitiative: (initiativeId: string, body: { status?: string; title?: string; horizon?: string; priority?: string; domains?: string[] }) =>
+  updateInitiative: (initiativeId: string, body: { status?: string; title?: string; horizon?: string; priority?: string; domains?: string[]; owners?: string[]; contributors?: string[] }) =>
     mutateApi<{ id: string; status: string }>(`/initiatives/${encodeURIComponent(initiativeId)}`, 'PUT', body),
   // Project Resources (WI-039)
   getResources: () => fetchApi<{ resources: ResourceSummary[] }>('/resources'),

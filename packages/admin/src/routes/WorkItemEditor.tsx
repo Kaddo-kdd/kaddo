@@ -216,6 +216,11 @@ export function WorkItemEditor() {
         <TextArea id="f-summary" label="Summary" hint="The original intent for this Work Item." value={model.summary ?? ''} onChange={(v) => update({ summary: v })} rows={2} />
       </Section>
 
+      <Section title="Assigned responsibility">
+        <TextField id="f-owners" label="Owners" hint="Comma-separated identifiers. Declared responsibility is not inferred from Git." value={model.owners.join(', ')} onChange={(v) => update({ owners: v.split(',').map((x) => x.trim()).filter(Boolean) })} />
+        <TextField id="f-contributors" label="Contributors" hint="Comma-separated declared collaborators; observed Git authors stay separate." value={model.contributors.join(', ')} onChange={(v) => update({ contributors: v.split(',').map((x) => x.trim()).filter(Boolean) })} />
+      </Section>
+
       <Section title="Outcome">
         <TextField id="f-actor" label="Actor" hint="Who experiences the change (optional)." value={model.actor ?? ''} onChange={(v) => update({ actor: v })} />
         <TextArea id="f-outcome" label="Observable outcome" value={model.outcome ?? ''} onChange={(v) => update({ outcome: v })} rows={2} />

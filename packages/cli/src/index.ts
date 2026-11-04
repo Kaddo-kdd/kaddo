@@ -66,6 +66,7 @@ import {
   runEpicList, runEpicShow, runEpicProgress, runEpicCreate, runEpicAssociate,
 } from './commands/plan.js'
 import { runTelemetryStatus, runTelemetryEnable, runTelemetryDisable } from './commands/telemetry.js'
+import { runCollaborationShow } from './commands/collaboration.js'
 import {
   runInitiativeList,
   runInitiativeShow,
@@ -868,6 +869,15 @@ initiativeCmd
   .description('Review completion readiness and mark an initiative completed (human-confirmed)')
   .option('--yes', 'Skip the confirmation prompt')
   .action(async (id: string, opts: { yes?: boolean }) => { await runInitiativeComplete(id, opts) })
+
+const collaborationCmd = program
+  .command('collaboration')
+  .description('Read declared responsibility and bounded, read-only local Git evidence')
+
+collaborationCmd
+  .command('show <id>')
+  .description('Show collaboration evidence for one Work Item')
+  .action(async (id: string) => { await runCollaborationShow(cwd(), id) })
 
 const telemetryCmd = program
   .command('telemetry')

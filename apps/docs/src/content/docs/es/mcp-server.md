@@ -19,10 +19,12 @@ Cliente MCP / IDE / Agente
 context · explain · understand · grafo · work items · capsules · prompts
 ```
 
-> **Mayormente de solo lectura.** El servidor nunca ejecuta git, llama a un LLM ni escanea tu código
+> **Mayormente de solo lectura.** El servidor nunca llama a un LLM ni escanea ampliamente tu código
 > fuente. Las herramientas de lifecycle (import, ready, evidence, verify) pueden escribir bajo
 > `knowledge/delivery/work-items/` y las derived tools escriben bajo `.kaddo/`. Todo lo demás es
-> estrictamente de solo lectura.
+> estrictamente de solo lectura. La proyección opcional de colaboración observa Git local de forma
+> acotada y solo lectura cuando se solicita: nunca cambia el estado de Git ni usa coincidencia de
+> archivos como atribución.
 
 ## Instalar y ejecutar
 
@@ -89,6 +91,7 @@ Hay un ejemplo listo para copiar en
 - `kaddo_project_status` — estado compacto (state, work items, ownership, calidad del grafo, capsules).
 - `kaddo_list_work_items` — filtra por `status` / `type` / `knowledge_level`.
 - `kaddo_get_work_item` — un Work Item por `id` (resumen + markdown completo).
+- `kaddo_get_work_item_collaboration` — responsables y colaboradores declarados más evidencia Git local acotada. Un commit requiere el ID exacto del Work Item; una rama relacionada es solo contexto, no prueba de responsabilidad.
 - `kaddo_list_capsules` / `kaddo_get_capsule` — Knowledge Capsules externas.
 - `kaddo_list_agents` / `kaddo_get_agent_prompt` — prompts de agentes instalados.
 - `kaddo_list_skills` / `kaddo_get_skill` — [skills](/es/skills/) reutilizables instaladas.

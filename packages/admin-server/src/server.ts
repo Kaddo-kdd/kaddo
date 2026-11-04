@@ -17,6 +17,7 @@ import {
   getKnowledgeArtifactDetail,
   getWorkItemsList,
   getWorkItemDetail,
+  getWorkItemCollaborationAdmin,
   createWorkItemAdmin,
   getWorkItemEdit,
   updateWorkItemAdmin,
@@ -377,6 +378,14 @@ export async function createAdminServer(opts: AdminServerOptions) {
         const code = err.code === 'WORK_ITEM_NOT_FOUND' ? 404 : err.code === 'INVALID_WORK_ITEM_ID' ? 400 : 500
         return reply.code(code).send({ error: { code: err.code, message: err.message } })
       }
+      throw err
+    }
+  })
+  app.get<{ Params: { workItemId: string } }>('/api/v1/admin/work-items/:workItemId/collaboration', async (request, reply) => {
+    try {
+      return await getWorkItemCollaborationAdmin(projectDir, request.params.workItemId)
+    } catch (err) {
+      if (err instanceof CoreError) return reply.code(statusForCode(err.code)).send({ error: { code: err.code, message: err.message } })
       throw err
     }
   })

@@ -18,9 +18,11 @@ MCP Client / IDE / Agent
 context · explain · understand · graph · work items · capsules · prompts
 ```
 
-> **Mostly read-only.** The server never runs git, calls an LLM or scans your source code.
+> **Mostly read-only.** The server never calls an LLM or scans your source code broadly.
 > Lifecycle tools (import, ready, evidence, verify) can write under `knowledge/delivery/work-items/`
-> and derived tools write under `.kaddo/`. Everything else is strictly read-only.
+> and derived tools write under `.kaddo/`. Everything else is strictly read-only. The optional
+> collaboration projection makes a bounded, local, read-only Git observation only when requested;
+> it never changes Git state or treats file overlap as attribution.
 
 ## Install & run
 
@@ -86,6 +88,7 @@ A ready-to-copy example lives in [`examples/mcp/`](https://github.com/Kaddo-kdd/
 - `kaddo_project_status` — compact status (state, work items, ownership, graph quality, capsules).
 - `kaddo_list_work_items` — filter by `status` / `type` / `knowledge_level`.
 - `kaddo_get_work_item` — a Work Item by `id` (summary + full markdown).
+- `kaddo_get_work_item_collaboration` — declared owners/contributors plus bounded local Git evidence. A commit needs an exact Work Item ID; branch matches are contextual, not proof of ownership.
 - `kaddo_list_capsules` / `kaddo_get_capsule` — external Knowledge Capsules.
 - `kaddo_list_agents` / `kaddo_get_agent_prompt` — installed agent prompts.
 - `kaddo_list_skills` / `kaddo_get_skill` — installed reusable [skills](/skills/).

@@ -1,7 +1,7 @@
 ---
 type: agent
 name: work-item-agent
-version: 3.127.0
+version: 3.133.0
 group: delivery
 ---
 # Work Item Agent
@@ -243,6 +243,7 @@ Apply these reusable skills when relevant (install with `kaddo add skills`; read
 - **implementation-planning** — Implementation Planning Skill.
 - **legacy-risk-assessment** — Legacy Risk Assessment Skill.
 - **poc-report-writing** — POC Final Report Writing Skill.
+- **knowledge-consolidation** — Knowledge Consolidation Skill.
 
 ## Agent Trace
 
