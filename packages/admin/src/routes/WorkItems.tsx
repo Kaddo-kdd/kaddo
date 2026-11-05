@@ -74,11 +74,19 @@ export function WorkItems() {
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [moduleFilter, setModuleFilter] = useState('all')
+  const [assignmentFilter, setAssignmentFilter] = useState('all')
+  const [gitFilter, setGitFilter] = useState('all')
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['work-items'],
     queryFn: () => api.getWorkItemsList(),
     refetchOnWindowFocus: true,
+  })
+  const gitIndex = useQuery({
+    queryKey: ['work-items', 'collaboration-index'],
+    queryFn: () => api.getWorkItemsCollaborationIndex(),
+    enabled: gitFilter !== 'all',
+    retry: false,
   })
 
   if (isLoading) return <Skeleton />
@@ -109,10 +117,18 @@ export function WorkItems() {
   }
 
   const q = search.trim().toLowerCase()
+  const gitById = new Map((gitIndex.data ?? []).map((item) => [item.workItemId, item]))
   const filtered = items.filter((it) => {
     if (moduleFilter !== 'all' && !it.affectedModules.includes(moduleFilter)) return false
     if (statusFilter === 'active' && !ACTIVE_STATES.includes(it.status)) return false
     if (statusFilter !== 'all' && statusFilter !== 'active' && it.status !== statusFilter) return false
+    if (assignmentFilter === 'unassigned' && it.owners.length > 0) return false
+    if (assignmentFilter.startsWith('person:') && ![...it.owners, ...it.contributors].some((person) => person.toLowerCase() === assignmentFilter.slice(7).toLowerCase())) return false
+    const observation = gitById.get(it.id)
+    if (gitFilter === 'with' && (!observation || observation.git.linkedCommits.length === 0)) return false
+    // A partial/unavailable observation cannot prove that activity is absent. Keep this filter
+    // conservative; users can still see the coverage warning and refine after Git is available.
+    if (gitFilter === 'without' && (!observation || observation.git.availability !== 'available' || observation.git.linkedCommits.length > 0)) return false
     if (q && !it.id.toLowerCase().includes(q) && !it.title.toLowerCase().includes(q) && !it.affectedModules.some((m) => m.toLowerCase().includes(q))) return false
     return true
   })
@@ -121,7 +137,8 @@ export function WorkItems() {
   const completed = filtered.filter((it) => it.status === 'completed')
   const archived = filtered.filter((it) => it.status === 'archived')
 
-  const hasFilters = q !== '' || statusFilter !== 'all' || moduleFilter !== 'all'
+  const people = [...new Set(items.flatMap((item) => [...item.owners, ...item.contributors]))].sort()
+  const hasFilters = q !== '' || statusFilter !== 'all' || moduleFilter !== 'all' || assignmentFilter !== 'all' || gitFilter !== 'all'
 
   return (
     <div style={{ padding: '24px 32px', maxWidth: 1000, margin: '0 auto' }}>
@@ -174,13 +191,23 @@ export function WorkItems() {
             {modules.map((m) => <option key={m} value={m}>{m}</option>)}
           </select>
         )}
+        <select value={assignmentFilter} onChange={(e) => setAssignmentFilter(e.target.value)} aria-label="Filter by assignment" style={inputStyle}>
+          <option value="all">All assignments</option><option value="unassigned">Unassigned owners</option>
+          {people.map((person) => <option key={person} value={`person:${person}`}>Assigned to: {person}</option>)}
+        </select>
+        <select value={gitFilter} onChange={(e) => setGitFilter(e.target.value)} aria-label="Filter by linked Git activity" style={inputStyle}>
+          <option value="all">All Git activity</option><option value="with">With linked Git activity</option><option value="without">Without linked Git activity</option>
+        </select>
       </div>
+      {gitFilter !== 'all' && gitIndex.isLoading && <p style={{ fontSize: 13, color: 'var(--foreground-muted)' }}>Reading one bounded Git snapshot for this collection…</p>}
+      {gitFilter !== 'all' && gitIndex.error && <p style={{ fontSize: 13, color: 'var(--warning)' }}>Git activity is unavailable; this filter cannot confirm absence of activity.</p>}
+      {gitFilter !== 'all' && gitIndex.data?.some((item) => item.git.availability === 'partial') && <p style={{ fontSize: 13, color: 'var(--warning)' }}>Git observation is partial; activity filters only reflect the inspected coverage.</p>}
 
       {filtered.length === 0 ? (
         hasFilters ? (
           <div style={{ textAlign: 'center', padding: 32, color: 'var(--foreground-muted)' }}>
             <p style={{ fontSize: 14, marginBottom: 12 }}>No Work Items match these filters.</p>
-            <button onClick={() => { setSearch(''); setStatusFilter('all'); setModuleFilter('all') }} style={{ ...inputStyle, cursor: 'pointer' }}>Clear filters</button>
+            <button onClick={() => { setSearch(''); setStatusFilter('all'); setModuleFilter('all'); setAssignmentFilter('all'); setGitFilter('all') }} style={{ ...inputStyle, cursor: 'pointer' }}>Clear filters</button>
           </div>
         ) : (
           <div style={{ textAlign: 'center', padding: 32, color: 'var(--foreground-muted)' }}>

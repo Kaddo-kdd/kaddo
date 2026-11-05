@@ -60,6 +60,41 @@ flowchart TD
 - Usa la revisión de PR para validar conocimiento, no para castigar la falta de docs.
 - Nunca aceptes output del LLM sin revisión humana.
 
+## Responsabilidad declarada y evidencia Git
+
+Los Work Items pueden declarar **Owners** y **Contributors** opcionales. Estos campos indican
+responsabilidad o colaboración; no se infieren desde commits. Kaddo Admin permite administrarlos
+en Work Items e Initiatives y muestra un resumen de Collaboration en Initiatives, Epics y Delivery
+Plans.
+
+El resumen mantiene separadas dos señales:
+
+- **Responsabilidad declarada** — Owners y Contributors de los metadatos de Planning.
+- **Actividad Git observada** — commits locales de solo lectura con una referencia exacta al Work
+  Item, su autor, fecha de inspección y procedencia.
+
+La actividad Git es evidencia para revisar, no prueba de que el trabajo terminó, de un cambio de
+responsabilidad ni de productividad. El nombre de una rama solo da contexto; Kaddo nunca atribuye
+un commit únicamente porque un archivo coincida con un Work Item.
+
+En la lista de Work Items, usa **Assigned to**, **Unassigned owners**, **With linked Git activity**
+y **Without linked Git activity** junto con búsqueda, estado y módulo. Git se observa solo al
+elegir un filtro de actividad. Si Git no está disponible o la cobertura es parcial, Kaddo no
+presenta la falta de un vínculo como prueba de que no hubo trabajo.
+
+En multirepo, Kaddo observa cada Git root declarado una vez por consulta y lo identifica desde el
+módulo declarado (o `core`); así, repositorios con la misma carpeta siguen separados. La observación
+es local y acotada: máximo 100 commits, 100 ramas locales y cinco segundos por comando Git y
+repositorio.
+
+### CLI y MCP
+
+Usa `kaddo collaboration show WI-123` para la proyección de un Work Item. MCP ofrece la misma
+proyección Core mediante `kaddo_get_work_item_collaboration`,
+`kaddo_get_initiative_collaboration`, `kaddo_get_epic_collaboration` y
+`kaddo_get_plan_collaboration`. Estas consultas no escriben Git, no cambian lifecycle ni contactan
+un proveedor Git remoto.
+
 ## Manejo de avisos de Guard
 
 `kaddo guard` es intencionalmente **no bloqueante**. Un aviso significa: "código cambiado

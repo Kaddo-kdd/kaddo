@@ -120,7 +120,7 @@ export type GitObservation = {
   limit: number
 }
 
-export async function observeGit(dir: string, maxCommits = 100): Promise<GitObservation> {
+export async function observeGit(dir: string, maxCommits = 100, repositoryId?: string): Promise<GitObservation> {
   const limit = Math.max(1, Math.min(maxCommits, 250))
   const inspectedAt = new Date().toISOString()
   try {
@@ -141,7 +141,10 @@ export async function observeGit(dir: string, maxCommits = 100): Promise<GitObse
     }
     if (current) commits.push(current)
     return {
-      availability: 'available', repository: path.basename(root), commits,
+      // The display identity is supplied by the caller when a project observes
+      // several repositories. A basename alone is ambiguous in a multirepo
+      // workspace (for example, two independent `api` folders).
+      availability: 'available', repository: repositoryId ?? path.basename(root), commits,
       branches: refs.stdout.split(/\r?\n/).map((name) => name.trim()).filter(Boolean).slice(0, 100).map((name) => ({ name })),
       inspectedAt, limit,
     }

@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useRouter } from '@tanstack/react-router'
 import { Map as MapIcon, Milestone as MilestoneIcon, Boxes, AlertTriangle, ArrowRight, Target } from 'lucide-react'
 import {
-  getPlanningOverview, getPlanDetail, getEpicDetail, disassociateInitiative,
+  api, getPlanningOverview, getPlanDetail, getEpicDetail, disassociateInitiative,
   type PlanningDelivery, type PlanningFinding, type InitiativeInPlanning,
 } from '../lib/api'
 import { EmptyState } from '../components/EmptyState'
@@ -14,6 +14,7 @@ import {
   CreateEpicDrawer, EditEpicDrawer, AssociateInitiativeDrawer,
 } from '../components/PlanningManage'
 import { Initiatives } from './Initiatives'
+import { CollaborationOverview } from '../components/CollaborationOverview'
 
 function Btn({ onClick, children, primary }: { onClick: () => void; children: React.ReactNode; primary?: boolean }) {
   return <button onClick={onClick} style={primary ? actionPrimary : actionGhost}>{children}</button>
@@ -193,6 +194,7 @@ export function PlanDetail({ id }: { id: string }) {
   const router = useRouter()
   const [open, setOpen] = useState<null | 'edit' | 'milestones' | 'epic'>(null)
   const q = useQuery({ queryKey: ['planning', 'plan', id], queryFn: () => getPlanDetail(id), retry: false })
+  const collaboration = useQuery({ queryKey: ['planning', 'plan', id, 'collaboration'], queryFn: () => api.getPlanCollaboration(id), retry: false })
   if (q.isLoading) return <div style={page}>Loading plan…</div>
   if (q.error) return <div style={page}><EmptyState title="Plan not found" description={(q.error as Error).message} action={{ label: 'Back to Planning', onClick: () => router.navigate({ to: '/planning' }) }} /></div>
   const p = q.data!
@@ -225,6 +227,7 @@ export function PlanDetail({ id }: { id: string }) {
         <Metric label="Blocked" value={p.progress.delivery.blocked} />
       </section>
       <ReadinessNote />
+      <CollaborationOverview data={collaboration.data} loading={collaboration.isLoading} error={Boolean(collaboration.error)} onOpenWorkItem={(workItemId) => router.navigate({ to: '/work-items/$workItemId', params: { workItemId } })} />
 
       <section style={section}>
         <h3 style={h3}><MilestoneIcon size={16} style={{ verticalAlign: 'middle', marginRight: 6 }} />Milestones</h3>
@@ -261,6 +264,7 @@ export function EpicDetail({ id }: { id: string }) {
   const [open, setOpen] = useState<null | 'edit' | 'associate'>(null)
   const [removing, setRemoving] = useState<string | null>(null)
   const q = useQuery({ queryKey: ['planning', 'epic', id], queryFn: () => getEpicDetail(id), retry: false })
+  const collaboration = useQuery({ queryKey: ['planning', 'epic', id, 'collaboration'], queryFn: () => api.getEpicCollaboration(id), retry: false })
   const removeMut = useMutation({
     mutationFn: (initiativeId: string) => disassociateInitiative(id, initiativeId),
     onSuccess: (_d, initiativeId) => {
@@ -307,6 +311,7 @@ export function EpicDetail({ id }: { id: string }) {
         <Metric label="Preconditions met" value={r.meetsCompletionPreconditions ? 'Yes' : 'No'} />
       </section>
       <ReadinessNote />
+      <CollaborationOverview data={collaboration.data} loading={collaboration.isLoading} error={Boolean(collaboration.error)} onOpenWorkItem={(workItemId) => router.navigate({ to: '/work-items/$workItemId', params: { workItemId } })} />
       {r.blockingDependencies.length > 0 && <p style={{ ...muted, color: 'var(--warning)' }}>Blocking dependencies: {r.blockingDependencies.join(', ')}</p>}
 
       <section style={section}>

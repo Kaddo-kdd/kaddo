@@ -21,9 +21,14 @@ import {
   getWorkItems as coreGetWorkItems,
   getWorkItem as coreGetWorkItem,
   getWorkItemCollaboration as coreGetWorkItemCollaboration,
+  getWorkItemsCollaboration as coreGetWorkItemsCollaboration,
+  getInitiativeCollaboration as coreGetInitiativeCollaboration,
+  getEpicCollaboration as coreGetEpicCollaboration,
+  getPlanCollaboration as coreGetPlanCollaboration,
   WorkItemNotFoundError,
   createWorkItem as coreCreateWorkItem,
   updateWorkItem as coreUpdateWorkItem,
+  updateWorkItemAssignments as coreUpdateWorkItemAssignments,
   getWorkItemForEdit as coreGetWorkItemForEdit,
   validateWorkItem as coreValidateWorkItem,
   transitionWorkItem as coreTransitionWorkItem,
@@ -525,6 +530,20 @@ export async function getWorkItemCollaborationAdmin(dir: string, workItemId: str
     return await coreGetWorkItemCollaboration(dir, workItemId)
   } catch (err) { mapWriteError(err) }
 }
+export async function getWorkItemsCollaborationAdmin(dir: string) {
+  const workItems = coreGetWorkItems(dir).items
+  return coreGetWorkItemsCollaboration(dir, workItems.map((item) => item.id))
+}
+
+export async function getInitiativeCollaborationAdmin(dir: string, id: string) {
+  try { return await coreGetInitiativeCollaboration(dir, id) } catch (err) { mapWriteError(err) }
+}
+export async function getEpicCollaborationAdmin(dir: string, id: string) {
+  try { return await coreGetEpicCollaboration(dir, id) } catch (err) { mapWriteError(err) }
+}
+export async function getPlanCollaborationAdmin(dir: string, id: string) {
+  try { return await coreGetPlanCollaboration(dir, id) } catch (err) { mapWriteError(err) }
+}
 
 function assertValidWorkItemId(workItemId: string): void {
   if (
@@ -584,6 +603,14 @@ export function updateWorkItemAdmin(dir: string, workItemId: string, body: { mod
   try {
     const res = coreUpdateWorkItem(dir, workItemId, body.model as CoreWorkItemInput, body.expectedRevision)
     return { id: workItemId, path: res.path, revision: res.revision }
+  } catch (err) { mapWriteError(err) }
+}
+
+export function updateWorkItemAssignmentsAdmin(dir: string, workItemId: string, body: { owners: string[]; contributors: string[]; expectedRevision: string }): WorkItemWriteResult {
+  assertValidWorkItemId(workItemId)
+  try {
+    const res = coreUpdateWorkItemAssignments(dir, workItemId, body, body.expectedRevision)
+    return { id: workItemId, path: res.path, revision: res.revision, status: res.status }
   } catch (err) { mapWriteError(err) }
 }
 

@@ -538,6 +538,30 @@ export function updateWorkItem(dir: string, id: string, input: WorkItemInput, ex
   return { revision: revisionOf(nextRaw), path: relPath }
 }
 
+/**
+ * Update responsibility without opening the general Work Item editor. This intentionally has a
+ * narrower lifecycle contract: assignment may change while work is in progress, but never after
+ * completion. The frontmatter merge preserves every unrelated artifact field and body section.
+ */
+export function updateWorkItemAssignments(dir: string, id: string, assignments: { owners: string[]; contributors: string[] }, expectedRevision: string): { revision: string; path: string; status: LifecycleState } {
+  const { filePath, relPath } = findArtifact(dir, id)
+  const raw = readFile(filePath)
+  if (revisionOf(raw) !== expectedRevision) {
+    throw new WorkItemWriteError('WORK_ITEM_CONFLICT', 'This Work Item changed outside Kaddo Admin. Reload the latest version before saving assignments.')
+  }
+  const { data, content } = matter(raw)
+  const status = lifecycleStateOf({ status: String((data as Record<string, unknown>).status ?? ''), filePath })
+  if (!['draft', 'ready', 'in-progress'].includes(status)) {
+    throw new WorkItemWriteError('WORK_ITEM_NOT_EDITABLE', `Assignments cannot be changed for a ${status} Work Item.`)
+  }
+  const next = { ...(data as Record<string, unknown>) }
+  next.owners = [...new Set((assignments.owners ?? []).map((value) => value.trim()).filter(Boolean))]
+  next.contributors = [...new Set((assignments.contributors ?? []).map((value) => value.trim()).filter(Boolean))]
+  const nextRaw = serialize(next, content)
+  atomicWrite(filePath, nextRaw)
+  return { revision: revisionOf(nextRaw), path: relPath, status }
+}
+
 // --- Validation --------------------------------------------------------------
 
 export function validateWorkItem(dir: string, id: string): ValidationResult {

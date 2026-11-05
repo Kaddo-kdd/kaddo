@@ -60,6 +60,41 @@ flowchart TD
 - Use PR review to validate knowledge, not to punish missing docs.
 - Never accept LLM output without human review.
 
+## Declared responsibility and Git evidence
+
+Work Items can declare optional **Owners** and **Contributors**. These fields state who is
+responsible or contributing; they are not inferred from commits. Kaddo Admin lets you manage them
+on Work Items and Initiatives, and shows a Collaboration overview on Initiatives, Epics and
+Delivery Plans.
+
+The overview keeps two signals separate:
+
+- **Declared responsibility** — Owners and Contributors from planning metadata.
+- **Observed Git activity** — local, read-only commits with an exact Work Item reference, their
+  author, inspection date and Work Item provenance.
+
+Git activity is evidence to review, not proof that work is complete, an ownership change, or a
+productivity measure. A branch name is contextual only; Kaddo never attributes a commit merely
+because a file overlaps a Work Item.
+
+In the Work Items list, use **Assigned to**, **Unassigned owners**, **With linked Git activity**
+and **Without linked Git activity** together with normal search, status and module filters. Git is
+observed only after a Git-activity filter is selected. When Git is unavailable or coverage is
+partial, Kaddo does not present a missing link as proof that no work happened.
+
+For multirepo projects, Kaddo observes each declared Git root once per request and identifies it
+from the declared module identity (or `core`), so repositories with the same folder name remain
+separate. Observation is local and bounded: at most 100 commits, 100 local branches and a five
+second Git command timeout per repository.
+
+### CLI and MCP
+
+Use `kaddo collaboration show WI-123` for a Work Item projection. MCP provides the same Core
+projection through `kaddo_get_work_item_collaboration`,
+`kaddo_get_initiative_collaboration`, `kaddo_get_epic_collaboration` and
+`kaddo_get_plan_collaboration`. These calls do not write Git, change a lifecycle, or contact a
+remote Git provider.
+
 ## Handling Guard warnings
 
 `kaddo guard` is intentionally **non-blocking**. A warning means: "changed code matches an

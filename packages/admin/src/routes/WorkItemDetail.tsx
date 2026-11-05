@@ -18,6 +18,7 @@ import { ArtifactPath } from '../components/ArtifactPath'
 import { RefinementHandoffCard } from '../components/RefinementHandoffCard'
 import { SystemImpact } from '../components/SystemImpact'
 import { humanize, presentWorkItemType } from '../lib/presentation'
+import { AssignmentDialog } from '../components/AssignmentDialog'
 
 function Skeleton() {
   return (
@@ -36,6 +37,9 @@ export function WorkItemDetail() {
   // Two reading modes over the same canonical artifact (WI-025): the structured projection, and the
   // full Markdown definition. Declared before any early return to keep hook order stable.
   const [view, setView] = useState<'overview' | 'full'>('overview')
+  const [assignmentDialog, setAssignmentDialog] = useState(false)
+  const [assignmentError, setAssignmentError] = useState<string | null>(null)
+  const [savingAssignments, setSavingAssignments] = useState(false)
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['work-item', workItemId],
@@ -78,12 +82,41 @@ export function WorkItemDetail() {
   if (!data) return null
   const wi: WorkItemDetailData = data
   const hasDelivery = wi.implementationStatus || wi.validationStatus || wi.releaseStatus
+  const canManageAssignments = ['draft', 'ready', 'in-progress'].includes(wi.status)
+  const manageAssignments = async (owners: string[], contributors: string[]) => {
+    setSavingAssignments(true)
+    setAssignmentError(null)
+    try {
+      // Fetch the current revision immediately before writing so this narrow operation gets the
+      // same optimistic-concurrency protection as the full editor.
+      const edit = await api.getWorkItemEdit(wi.id)
+      await api.updateWorkItemAssignments(wi.id, {
+        owners,
+        contributors,
+        expectedRevision: edit.revision,
+      })
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['work-item', workItemId] }),
+        queryClient.invalidateQueries({ queryKey: ['work-item', workItemId, 'collaboration'] }),
+        queryClient.invalidateQueries({ queryKey: ['work-items'] }),
+      ])
+      setAssignmentDialog(false)
+    } catch (err) {
+      setAssignmentError((err as Error).message)
+    } finally {
+      setSavingAssignments(false)
+    }
+  }
 
   return (
     <div style={{ padding: '24px 32px', maxWidth: 900, margin: '0 auto' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
         <Breadcrumbs crumbs={[{ label: 'Work Items', path: '/work-items' }, { label: wi.id }]} />
         <div style={{ display: 'flex', gap: 8 }}>
+          {canManageAssignments && <button
+            onClick={() => { setAssignmentError(null); setAssignmentDialog(true) }}
+            style={{ padding: '6px 12px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', background: 'var(--surface)', color: 'var(--foreground)', cursor: 'pointer', fontSize: 13, fontFamily: 'inherit' }}
+          >Manage assignments</button>}
           <button
             onClick={() => queryClient.invalidateQueries({ queryKey: ['work-item', workItemId] })}
             aria-label="Refresh work item"
@@ -101,6 +134,7 @@ export function WorkItemDetail() {
           )}
         </div>
       </div>
+      {assignmentDialog && <AssignmentDialog title={`Manage assignments — ${wi.id}`} owners={wi.owners} contributors={wi.contributors} saving={savingAssignments} error={assignmentError} onSave={manageAssignments} onCancel={() => setAssignmentDialog(false)} />}
 
       {/* Header */}
       <div style={{ marginBottom: 16 }}>

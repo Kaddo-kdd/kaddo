@@ -18,9 +18,14 @@ import {
   getWorkItemsList,
   getWorkItemDetail,
   getWorkItemCollaborationAdmin,
+  getWorkItemsCollaborationAdmin,
+  getInitiativeCollaborationAdmin,
+  getEpicCollaborationAdmin,
+  getPlanCollaborationAdmin,
   createWorkItemAdmin,
   getWorkItemEdit,
   updateWorkItemAdmin,
+  updateWorkItemAssignmentsAdmin,
   validateWorkItemAdmin,
   transitionWorkItemAdmin,
   getCaptureDefinition,
@@ -80,6 +85,7 @@ import {
 import {
   WorkItemCreateWithAnswersSchema,
   WorkItemUpdateSchema,
+  WorkItemAssignmentsSchema,
   WorkItemTransitionSchema,
   InitiativeCreateSchema,
   InitiativeUpdateSchema,
@@ -341,6 +347,12 @@ export async function createAdminServer(opts: AdminServerOptions) {
     return writeHandler(reply, () => updateWorkItemAdmin(projectDir, request.params.workItemId, parsed.data))
   })
 
+  app.put<{ Params: { workItemId: string } }>('/api/v1/admin/work-items/:workItemId/assignments', async (request, reply) => {
+    const parsed = WorkItemAssignmentsSchema.safeParse(request.body)
+    if (!parsed.success) return reply.code(400).send({ error: { code: 'INVALID_INPUT', message: 'Owners, contributors and expectedRevision are required.' } })
+    return writeHandler(reply, () => updateWorkItemAssignmentsAdmin(projectDir, request.params.workItemId, parsed.data))
+  })
+
   app.post<{ Params: { workItemId: string } }>('/api/v1/admin/work-items/:workItemId/validate', async (request, reply) => {
     return writeHandler(reply, () => validateWorkItemAdmin(projectDir, request.params.workItemId))
   })
@@ -388,6 +400,18 @@ export async function createAdminServer(opts: AdminServerOptions) {
       if (err instanceof CoreError) return reply.code(statusForCode(err.code)).send({ error: { code: err.code, message: err.message } })
       throw err
     }
+  })
+  app.get('/api/v1/admin/work-items/collaboration-index', async (_request, reply) => {
+    try { return await getWorkItemsCollaborationAdmin(projectDir) } catch (err) { if (err instanceof CoreError) return reply.code(statusForCode(err.code)).send({ error: { code: err.code, message: err.message } }); throw err }
+  })
+  app.get<{ Params: { id: string } }>('/api/v1/admin/initiatives/:id/collaboration', async (request, reply) => {
+    try { return await getInitiativeCollaborationAdmin(projectDir, request.params.id) } catch (err) { if (err instanceof CoreError) return reply.code(statusForCode(err.code)).send({ error: { code: err.code, message: err.message } }); throw err }
+  })
+  app.get<{ Params: { id: string } }>('/api/v1/admin/planning/epics/:id/collaboration', async (request, reply) => {
+    try { return await getEpicCollaborationAdmin(projectDir, request.params.id) } catch (err) { if (err instanceof CoreError) return reply.code(statusForCode(err.code)).send({ error: { code: err.code, message: err.message } }); throw err }
+  })
+  app.get<{ Params: { id: string } }>('/api/v1/admin/planning/plans/:id/collaboration', async (request, reply) => {
+    try { return await getPlanCollaborationAdmin(projectDir, request.params.id) } catch (err) { if (err instanceof CoreError) return reply.code(statusForCode(err.code)).send({ error: { code: err.code, message: err.message } }); throw err }
   })
   // Initiatives (WI-022)
   app.get('/api/v1/admin/initiatives', coreRoute(getInitiativesListAdmin))

@@ -1,8 +1,11 @@
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query'
+import { useState } from 'react'
 import { useParams, useRouter } from '@tanstack/react-router'
 import { api } from '../lib/api'
 import type { InitiativeFinding } from '../lib/api'
 import { InitiativePlanningContext } from '../components/PlanningManage'
+import { CollaborationOverview } from '../components/CollaborationOverview'
+import { AssignmentDialog } from '../components/AssignmentDialog'
 
 const card = {
   border: '1px solid var(--border)', borderRadius: 'var(--radius)', background: 'var(--surface)',
@@ -45,17 +48,20 @@ export function InitiativeDetail() {
   const { initiativeId } = useParams({ from: '/initiatives/$initiativeId' })
   const queryClient = useQueryClient()
   const router = useRouter()
+  const [assignmentDialog, setAssignmentDialog] = useState(false)
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['initiative', initiativeId],
     queryFn: () => api.getInitiative(initiativeId),
   })
+  const collaboration = useQuery({ queryKey: ['initiative', initiativeId, 'collaboration'], queryFn: () => api.getInitiativeCollaboration(initiativeId), retry: false })
 
   const updateMut = useMutation({
     mutationFn: (patch: { status?: string; owners?: string[]; contributors?: string[] }) => api.updateInitiative(initiativeId, patch),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['initiative', initiativeId] })
       queryClient.invalidateQueries({ queryKey: ['initiatives'] })
+      setAssignmentDialog(false)
     },
   })
 
@@ -106,12 +112,9 @@ export function InitiativeDetail() {
         <p style={{ marginTop: 0, fontSize: 13, color: 'var(--foreground-muted)' }}>Initiative responsibility is declared metadata and is not inherited by Work Items.</p>
         <div style={{ fontSize: 14 }}>Owners: {data.owners.length ? data.owners.join(', ') : 'Unassigned'}</div>
         <div style={{ fontSize: 14, marginTop: 6 }}>Contributors: {data.contributors.length ? data.contributors.join(', ') : 'None declared'}</div>
-        <button disabled={updateMut.isPending} onClick={() => {
-          const owners = window.prompt('Owners (comma-separated)', data.owners.join(', ')); if (owners === null) return
-          const contributors = window.prompt('Contributors (comma-separated)', data.contributors.join(', ')); if (contributors === null) return
-          updateMut.mutate({ owners: owners.split(',').map((v) => v.trim()).filter(Boolean), contributors: contributors.split(',').map((v) => v.trim()).filter(Boolean) })
-        }} style={{ marginTop: 12, padding: '6px 12px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', background: 'var(--surface)', color: 'var(--foreground)', cursor: 'pointer', fontFamily: 'inherit', fontSize: 13 }}>Edit assignments</button>
+        <button disabled={updateMut.isPending} onClick={() => setAssignmentDialog(true)} style={{ marginTop: 12, padding: '6px 12px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', background: 'var(--surface)', color: 'var(--foreground)', cursor: 'pointer', fontFamily: 'inherit', fontSize: 13 }}>Edit assignments</button>
       </Section>
+      {assignmentDialog && <AssignmentDialog title={`Edit assignments — ${data.id}`} owners={data.owners} contributors={data.contributors} saving={updateMut.isPending} error={updateMut.error ? (updateMut.error as Error).message : null} onCancel={() => setAssignmentDialog(false)} onSave={(owners, contributors) => updateMut.mutate({ owners, contributors })} />}
 
       <Section title="Planning Context">
         <InitiativePlanningContext
@@ -120,6 +123,7 @@ export function InitiativeDetail() {
           onOpenEpic={(epicId) => router.navigate({ to: '/planning/epics/$id', params: { id: epicId } })}
         />
       </Section>
+      <CollaborationOverview data={collaboration.data} loading={collaboration.isLoading} error={Boolean(collaboration.error)} onOpenWorkItem={(id) => router.navigate({ to: '/work-items/$workItemId', params: { workItemId: id } })} />
 
       <Section title="Progress">
         <div style={{ display: 'flex', gap: 40, fontSize: 14 }}>

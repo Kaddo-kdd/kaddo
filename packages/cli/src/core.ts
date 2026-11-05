@@ -143,6 +143,7 @@ export {
 export {
   createWorkItem,
   updateWorkItem,
+  updateWorkItemAssignments,
   getWorkItemForEdit,
   validateWorkItem,
   transitionWorkItem,
@@ -188,7 +189,7 @@ export {
   type CompletionEvaluation,
 } from './core/implementation-evidence.js'
 export { computeRefinementStatus, type RefinementStatus } from './core/work-items.js'
-export { getWorkItemCollaboration, type WorkItemCollaboration, type GitCommitEvidence, type AttributionKind } from './core/collaboration.js'
+export { getWorkItemCollaboration, getWorkItemsCollaboration, getInitiativeCollaboration, getEpicCollaboration, getPlanCollaboration, type WorkItemCollaboration, type CollaborationAggregate, type GitCommitEvidence, type AttributionKind } from './core/collaboration.js'
 export {
   importWorkItem,
   detectFormat,

@@ -272,6 +272,7 @@ export type WorkItemEditModel = WorkItemInput & {
 export type ValidationFinding = { level: 'blocking' | 'warning' | 'fyi'; message: string }
 export type ValidationResult = { findings: ValidationFinding[]; canMarkReady: boolean }
 export type WorkItemWriteResult = { id: string; path: string; revision: string; status?: string }
+export type CollaborationAggregate = { id: string; responsibility: { owners: string[]; contributors: string[] }; workItems: { id: string; owners: string[]; contributors: string[]; linkedCommitCount: number }[]; observedAuthors: string[]; linkedCommits: { repository: string; sha: string; author: string; date: string; subject: string; evidence: string; workItemIds: string[] }[]; unassignedWorkItemIds: string[]; git: WorkItemCollaboration['git'] }
 
 // --- Refinement (VS-099.1) ---------------------------------------------------
 
@@ -534,6 +535,12 @@ export const api = {
   getWorkItemsList: (filters: WorkItemFilters = {}) => fetchApi<WorkItemsList>(`/work-items${toQuery(filters)}`),
   getWorkItem: (workItemId: string) => fetchApi<WorkItemDetail>(`/work-items/${encodeURIComponent(workItemId)}`),
   getWorkItemCollaboration: (workItemId: string) => fetchApi<WorkItemCollaboration>(`/work-items/${encodeURIComponent(workItemId)}/collaboration`),
+  getWorkItemsCollaborationIndex: () => fetchApi<WorkItemCollaboration[]>('/work-items/collaboration-index'),
+  getInitiativeCollaboration: (id: string) => fetchApi<CollaborationAggregate>(`/initiatives/${encodeURIComponent(id)}/collaboration`),
+  getEpicCollaboration: (id: string) => fetchApi<CollaborationAggregate>(`/planning/epics/${encodeURIComponent(id)}/collaboration`),
+  getPlanCollaboration: (id: string) => fetchApi<CollaborationAggregate>(`/planning/plans/${encodeURIComponent(id)}/collaboration`),
+  updateWorkItemAssignments: (workItemId: string, body: { owners: string[]; contributors: string[]; expectedRevision: string }) =>
+    mutateApi<WorkItemWriteResult>(`/work-items/${encodeURIComponent(workItemId)}/assignments`, 'PUT', body),
   // Initiatives (WI-022)
   getInitiatives: () => fetchApi<{ initiatives: InitiativeListItem[] }>('/initiatives'),
   getInitiative: (initiativeId: string) => fetchApi<InitiativeDetail>(`/initiatives/${encodeURIComponent(initiativeId)}`),

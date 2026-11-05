@@ -317,6 +317,12 @@ export const WorkItemUpdateSchema = z.object({
   expectedRevision: z.string().min(1),
 })
 
+export const WorkItemAssignmentsSchema = z.object({
+  owners: z.array(z.string()).default([]),
+  contributors: z.array(z.string()).default([]),
+  expectedRevision: z.string().min(1),
+})
+
 export const WorkItemTransitionSchema = z.object({
   expectedRevision: z.string().min(1),
 })

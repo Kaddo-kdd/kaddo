@@ -103,6 +103,30 @@ describe('VS-099: edit round-trip', () => {
   })
 })
 
+describe('WI-077: assignment-only updates', () => {
+  let dir: string
+  beforeEach(() => { dir = tmpDir(); initProject(dir) })
+  afterEach(() => { fs.rmSync(dir, { recursive: true, force: true }) })
+
+  it('updates assignments in-progress without changing lifecycle or body', async () => {
+    const core = await import('../src/core.js')
+    write(dir, 'knowledge/delivery/work-items/in-progress/WI-001.md', '---\ntype: feature\nid: WI-001\ntitle: In flight\nstatus: in-progress\n---\n# In flight\n\n## Acceptance criteria\n\n- Preserve me\n')
+    const result = core.updateWorkItemAssignments(dir, 'WI-001', { owners: ['developer-a'], contributors: ['developer-b'] }, core.getWorkItemForEdit(dir, 'WI-001').revision)
+    expect(result.status).toBe('in-progress')
+    const saved = fs.readFileSync(path.join(dir, 'knowledge/delivery/work-items/in-progress/WI-001.md'), 'utf-8')
+    expect(saved).toContain('status: in-progress')
+    expect(saved).toContain('Preserve me')
+    expect(core.getWorkItem(dir, 'WI-001').owners).toEqual(['developer-a'])
+  })
+
+  it('rejects stale assignment updates and completed Work Items', async () => {
+    const core = await import('../src/core.js')
+    write(dir, 'knowledge/delivery/work-items/completed/WI-002.md', '---\ntype: feature\nid: WI-002\ntitle: Done\nstatus: completed\n---\n# Done\n')
+    expect(() => core.updateWorkItemAssignments(dir, 'WI-002', { owners: ['developer-a'], contributors: [] }, core.getWorkItemForEdit(dir, 'WI-002').revision)).toThrow('Assignments cannot be changed')
+    expect(() => core.updateWorkItemAssignments(dir, 'WI-002', { owners: [], contributors: [] }, 'stale')).toThrow('changed outside')
+  })
+})
+
 describe('VS-099: no-lossy rewrite', () => {
   let dir: string
   beforeEach(() => { dir = tmpDir(); initProject(dir) })
@@ -218,6 +242,7 @@ describe('VS-099: validation + transitions', () => {
     expect(back.status).toBe('draft')
     expect(core.getWorkItemForEdit(dir, id).editable).toBe(true)
   })
+
 })
 
 describe('VS-099: source of truth', () => {

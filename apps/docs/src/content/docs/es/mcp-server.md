@@ -92,6 +92,7 @@ Hay un ejemplo listo para copiar en
 - `kaddo_list_work_items` — filtra por `status` / `type` / `knowledge_level`.
 - `kaddo_get_work_item` — un Work Item por `id` (resumen + markdown completo).
 - `kaddo_get_work_item_collaboration` — responsables y colaboradores declarados más evidencia Git local acotada. Un commit requiere el ID exacto del Work Item; una rama relacionada es solo contexto, no prueba de responsabilidad.
+- `kaddo_get_initiative_collaboration` / `kaddo_get_epic_collaboration` / `kaddo_get_plan_collaboration` — agregan la misma responsabilidad declarada y evidencia Git en Planning. Un commit compartido se deduplica por identidad de repositorio y SHA, conservando cada Work Item vinculado.
 - `kaddo_list_capsules` / `kaddo_get_capsule` — Knowledge Capsules externas.
 - `kaddo_list_agents` / `kaddo_get_agent_prompt` — prompts de agentes instalados.
 - `kaddo_list_skills` / `kaddo_get_skill` — [skills](/es/skills/) reutilizables instaladas.

@@ -89,6 +89,7 @@ A ready-to-copy example lives in [`examples/mcp/`](https://github.com/Kaddo-kdd/
 - `kaddo_list_work_items` — filter by `status` / `type` / `knowledge_level`.
 - `kaddo_get_work_item` — a Work Item by `id` (summary + full markdown).
 - `kaddo_get_work_item_collaboration` — declared owners/contributors plus bounded local Git evidence. A commit needs an exact Work Item ID; branch matches are contextual, not proof of ownership.
+- `kaddo_get_initiative_collaboration` / `kaddo_get_epic_collaboration` / `kaddo_get_plan_collaboration` — aggregate the same declared responsibility and Git evidence across Planning. A shared commit is deduplicated by repository identity plus SHA while retaining every linked Work Item.
 - `kaddo_list_capsules` / `kaddo_get_capsule` — external Knowledge Capsules.
 - `kaddo_list_agents` / `kaddo_get_agent_prompt` — installed agent prompts.
 - `kaddo_list_skills` / `kaddo_get_skill` — installed reusable [skills](/skills/).
