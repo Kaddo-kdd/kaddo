@@ -32,13 +32,57 @@ function findWorkItemFile(dir: string, id: string): string | null {
 
 export type ParsedAcceptanceCriterion = { criterion: string; checked: boolean }
 
-/** Read canonical EN/ES acceptance criteria and preserve the author's explicit checkbox evidence. */
+type PersistedACVerification = {
+  criterion?: unknown
+  status?: unknown
+  evidence?: unknown
+  reference?: unknown
+  method?: unknown
+}
+
+function normalizeAC(text: string): string {
+  return text.trim().toLowerCase().replace(/\s+/g, ' ')
+}
+
+function storedACVerifications(value: unknown): Map<string, PersistedACVerification> {
+  if (!Array.isArray(value)) return new Map()
+  return new Map(value
+    .filter((entry): entry is PersistedACVerification => Boolean(entry) && typeof entry === 'object')
+    .filter((entry) => typeof entry.criterion === 'string')
+    .map((entry) => [normalizeAC(entry.criterion as string), entry]))
+}
+
+/** Resolve parsed criteria from durable frontmatter evidence, never checkboxes alone. */
+export function buildACVerifications(
+  acs: ParsedAcceptanceCriterion[],
+  persisted: unknown,
+) {
+  const persistedACs = storedACVerifications(persisted)
+  return acs.map((ac) => {
+    const stored = persistedACs.get(normalizeAC(ac.criterion))
+    const validStatus = stored?.status === 'passed' || stored?.status === 'failed' ||
+      stored?.status === 'not-verified' || stored?.status === 'manual-review-required'
+      ? stored.status
+      : 'not-verified' as const
+    const hasEvidence = typeof stored?.evidence === 'string' && stored.evidence.trim().length > 0 &&
+      typeof stored?.reference === 'string' && stored.reference.trim().length > 0
+    return {
+      criterion: ac.criterion,
+      status: validStatus === 'passed' && !hasEvidence ? 'not-verified' as const : validStatus,
+      ...(typeof stored?.evidence === 'string' ? { evidence: stored.evidence } : {}),
+      ...(typeof stored?.reference === 'string' ? { reference: stored.reference } : {}),
+      ...(stored?.method === 'automated' || stored?.method === 'manual' ? { method: stored.method } : {}),
+    }
+  })
+}
+
+/** Read canonical EN/ES acceptance criteria. Checkboxes express intent, not verification evidence. */
 export function extractACsFromBody(body: string): ParsedAcceptanceCriterion[] {
   const lines = body.split(/\r?\n/)
   let inAC = false
   const acs: ParsedAcceptanceCriterion[] = []
   for (const line of lines) {
-    if (/^#{1,6}\s+(acceptance\s+criteria|criterios\s+de\s+aceptaci[oó]n)/i.test(line)) {
+    if (/^#{1,6}\s+(?:\d+(?:\.\d+)*\.?\s+)?(acceptance\s+criteria|criterios\s+de\s+aceptaci[oó]n)\s*$/i.test(line)) {
       inAC = true
       continue
     }
@@ -98,7 +142,10 @@ export async function runVerify(workItemId: string, opts: { json?: boolean; yes?
   const acs = extractACsFromBody(parsed.content)
 
   // Build evidence input from existing frontmatter + git data
-  const existingEvidence = fm.implementation_evidence as { repositories?: Record<string, unknown> } | undefined
+  const existingEvidence = fm.implementation_evidence as {
+    repositories?: Record<string, unknown>
+    ac_verifications?: PersistedACVerification[]
+  } | undefined
   const existingRepos = existingEvidence?.repositories ?? {}
 
   const repos = Object.keys(existingRepos).length > 0
@@ -127,12 +174,10 @@ export async function runVerify(workItemId: string, opts: { json?: boolean; yes?
       })
     : [{ repoId: 'core', changedPaths, validations: [] }]
 
-  // AC verifications: mark all as not-verified by default (agent fills these)
-  const acVerifications = acs.map((ac) => ({
-    criterion: ac.criterion,
-    status: ac.checked ? 'passed' as const : 'not-verified' as const,
-    ...(ac.checked ? { evidence: 'Explicitly checked in the Work Item acceptance criteria.' } : {}),
-  }))
+  // A checked Markdown item is author intent, not independently reviewable
+  // evidence. Only an evidence record stored in the canonical frontmatter can
+  // verify an AC across repeated `kaddo verify` invocations.
+  const acVerifications = buildACVerifications(acs, existingEvidence?.ac_verifications)
 
   const input: CollectEvidenceInput = {
     repos,

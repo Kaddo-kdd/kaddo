@@ -692,6 +692,8 @@ export function createServer(root: string): McpServer {
     criterion: z.string(),
     status: z.enum(['passed', 'failed', 'not-verified', 'manual-review-required']),
     evidence: z.string().optional(),
+    reference: z.string().optional(),
+    method: z.enum(['automated', 'manual']).optional(),
   })
   const evidenceInputSchema = z.object({
     repos: z.array(evidenceRepoSchema),

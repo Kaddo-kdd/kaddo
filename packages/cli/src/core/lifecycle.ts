@@ -124,8 +124,22 @@ export type RepoEvidence = {
   migrations?: { id: string; environment: string; status: string; idempotency?: string; reason?: string }[]
 }
 
+/**
+ * A durable verification record for one acceptance criterion.  It lives with
+ * implementation evidence so verification can be repeated without treating a
+ * Markdown checkbox as proof on its own.
+ */
+export type AcceptanceCriterionEvidence = {
+  criterion: string
+  status: 'passed' | 'failed' | 'not-verified' | 'manual-review-required'
+  evidence?: string
+  reference?: string
+  method?: 'automated' | 'manual'
+}
+
 export type ImplementationEvidence = {
   repositories?: Record<string, RepoEvidence>
+  ac_verifications?: AcceptanceCriterionEvidence[]
 }
 
 /** Zeroed counts for every lifecycle state. */

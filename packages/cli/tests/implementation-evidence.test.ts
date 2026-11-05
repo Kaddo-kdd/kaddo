@@ -110,6 +110,28 @@ describe('VS-111: collectImplementationEvidence', () => {
     expect(evidence.repositories!['core'].validations![0].status).toBe('passed')
   })
 
+  it('preserves structured Acceptance Criteria evidence with its reference and method', async () => {
+    write(dir, 'knowledge/delivery/work-items/in-progress/WI-020.md', IN_PROGRESS_WI)
+    const core = await import('../src/core.js')
+    const evidence = core.collectImplementationEvidence(dir, 'WI-020', {
+      repos: [],
+      acVerifications: [{
+        criterion: 'Evidence collection produces structured output',
+        status: 'passed',
+        evidence: 'Focused Core test passed.',
+        reference: 'packages/cli/tests/implementation-evidence.test.ts',
+        method: 'automated',
+      }],
+    })
+    expect(evidence.ac_verifications).toEqual([{
+      criterion: 'Evidence collection produces structured output',
+      status: 'passed',
+      evidence: 'Focused Core test passed.',
+      reference: 'packages/cli/tests/implementation-evidence.test.ts',
+      method: 'automated',
+    }])
+  })
+
   it('throws WorkItemNotFoundError for unknown WI', async () => {
     const core = await import('../src/core.js')
     expect(() => core.collectImplementationEvidence(dir, 'WI-999', {

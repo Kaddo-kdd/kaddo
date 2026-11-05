@@ -243,6 +243,29 @@ describe('VS-099: validation + transitions', () => {
     expect(core.getWorkItemForEdit(dir, id).editable).toBe(true)
   })
 
+  it('starts a ready item without loss or duplicate artifacts', async () => {
+    const core = await import('../src/core.js')
+    const { id } = core.createWorkItem(dir, { intent: 'Start', type: 'feature' })
+    const initial = core.getWorkItemForEdit(dir, id)
+    const updated = core.updateWorkItem(dir, id, emptyInput({ title: 'Start', targetBehavior: 'Done.', affectedModules: ['core'], moduleCoverage: [{ id: 'core', status: 'affected' }], scopeConfidence: { level: 'high', reasons: [] }, acceptanceCriteria: [{ text: 'Works.', checked: null }] }), initial.revision)
+    const ready = core.transitionWorkItem(dir, id, 'ready', updated.revision)
+    const started = core.transitionWorkItem(dir, id, 'in-progress', ready.revision)
+    expect(started.status).toBe('in-progress')
+    expect(started.path).toContain('/in-progress/')
+    expect(fs.existsSync(path.join(dir, started.path))).toBe(true)
+    expect(fs.existsSync(path.join(dir, ready.path))).toBe(false)
+    expect(fs.readFileSync(path.join(dir, started.path), 'utf8')).toContain('## Target behavior\n\nDone.')
+  })
+
+  it('rejects stale and invalid transitions to in-progress', async () => {
+    const core = await import('../src/core.js')
+    const { id } = core.createWorkItem(dir, { intent: 'Start', type: 'feature' })
+    const edit = core.getWorkItemForEdit(dir, id)
+    expect(() => core.transitionWorkItem(dir, id, 'in-progress', edit.revision)).toThrow('Cannot transition a draft')
+    write(dir, 'knowledge/delivery/work-items/completed/WI-999.md', '---\nid: WI-999\ntitle: Done\ntype: feature\nstatus: completed\n---\n# Done')
+    expect(() => core.transitionWorkItem(dir, 'WI-999', 'in-progress', core.getWorkItemForEdit(dir, 'WI-999').revision)).toThrow('Cannot transition a completed')
+  })
+
 })
 
 describe('VS-099: source of truth', () => {

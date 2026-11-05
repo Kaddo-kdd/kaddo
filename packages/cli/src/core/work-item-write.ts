@@ -626,7 +626,7 @@ export function validateWorkItem(dir: string, id: string): ValidationResult {
 
 // --- Lifecycle transitions ---------------------------------------------------
 
-const ALLOWED: Record<string, LifecycleState[]> = { draft: ['ready'], ready: ['draft'] }
+const ALLOWED: Record<string, LifecycleState[]> = { draft: ['ready'], ready: ['draft', 'in-progress'] }
 
 export function transitionWorkItem(dir: string, id: string, to: LifecycleState, expectedRevision: string): { revision: string; status: LifecycleState; path: string } {
   const { filePath } = findArtifact(dir, id)

@@ -2,7 +2,7 @@
 type: feature
 id: WI-077
 title: Incorporar Work Assignment & Git Collaboration Evidence en Kaddo
-status: draft
+status: in-progress
 work_type: feature
 created_at: '2026-11-04'
 source:
@@ -13,8 +13,16 @@ source:
   inferred: false
 generated_by: kaddo-admin
 knowledge_level: K4
-domains: [Product, Tech, Delivery]
-affected_modules: [cli, mcp, admin-server, admin, docs]
+domains:
+  - Product
+  - Tech
+  - Delivery
+affected_modules:
+  - cli
+  - mcp
+  - admin-server
+  - admin
+  - docs
 code:
   - packages/cli/src/core/collaboration.ts
   - packages/cli/src/services/git.ts
@@ -30,13 +38,185 @@ code:
   - packages/admin/src/routes/InitiativeDetail.tsx
 scope_confidence:
   level: high
-  reason: Existing planning, Work Item persistence, CLI, MCP and Admin layers provide the required extension points; Git evidence remains deliberately read-only and bounded.
+  reason: >-
+    Existing planning, Work Item persistence, CLI, MCP and Admin layers provide
+    the required extension points; Git evidence remains deliberately read-only
+    and bounded.
 refined_by: work-item-agent
 summary: Incorporar Work Assignment & Git Collaboration Evidence en Kaddo
 original_snapshot:
   title: Incorporar Work Assignment & Git Collaboration Evidence en Kaddo
   type: feature
   status: draft
+ready_at: '2026-11-05'
+implementation_evidence:
+  repositories:
+    core:
+      role: core
+      status: completed
+      changed_paths:
+        - packages/cli/src/core/collaboration.ts
+        - packages/cli/src/core/work-item-write.ts
+        - packages/cli/src/services/git.ts
+        - packages/cli/src/commands/verify.ts
+        - packages/mcp/src/collaboration.ts
+        - packages/admin-server/src/server.ts
+        - packages/admin/src/components/AssignmentDialog.tsx
+        - packages/admin/src/components/CollaborationOverview.tsx
+      validations:
+        - command: pnpm test
+          status: passed
+          reason: Root regression completed with 2,086 passing tests before evidence consolidation.
+        - command: pnpm exec vitest run packages/cli/tests/security.test.ts packages/cli/tests/admin-099-server.test.ts
+          status: passed
+          reason: 31 security tests passed.
+        - command: pnpm --filter @kaddo/admin exec playwright test e2e/collaboration.spec.ts
+          status: passed
+          reason: 5 Admin collaboration scenarios passed using isolated fixtures.
+        - command: pnpm --filter @kaddo/cli build && pnpm --filter @kaddo/mcp build && pnpm --filter @kaddo/admin-server build && pnpm --filter @kaddo/admin build && pnpm --filter @kaddo/docs build
+          status: passed
+          reason: Affected package and documentation builds passed.
+  ac_verifications:
+    - criterion: 'AC-01: Work Items soportan Owners y Contributors opcionales.'
+      status: passed
+      evidence: Work Item assignment read/write contract accepts optional owners and contributors.
+      reference: packages/cli/tests/work-item-write.test.ts
+      method: automated
+    - criterion: 'AC-02: los Work Items existentes conservan retrocompatibilidad.'
+      status: passed
+      evidence: Root regression covers existing Work Item parsing and lifecycle behavior.
+      reference: pnpm test (2,086 passed)
+      method: automated
+    - criterion: 'AC-03: Admin permite crear, modificar y retirar asignaciones de Work Items.'
+      status: passed
+      evidence: Assignment modal create, save, cancel and persistence scenario passed.
+      reference: packages/admin/e2e/collaboration.spec.ts
+      method: automated
+    - criterion: 'AC-04: Admin permite administrar Owners y Contributors de Initiatives.'
+      status: passed
+      evidence: Initiative assignment modal persistence scenario passed.
+      reference: packages/admin/e2e/collaboration.spec.ts
+      method: automated
+    - criterion: 'AC-05: la edición preserva metadata y contenido canónico no modificado.'
+      status: passed
+      evidence: Assignment write tests preserve unrelated frontmatter and Markdown body.
+      reference: packages/cli/tests/work-item-write.test.ts
+      method: automated
+    - criterion: 'AC-06: los cambios de asignación utilizan optimistic concurrency.'
+      status: passed
+      evidence: Assignment write tests cover expected revision conflicts.
+      reference: packages/cli/tests/work-item-write.test.ts
+      method: automated
+    - criterion: 'AC-07: Git Adapter realiza exclusivamente operaciones de lectura.'
+      status: passed
+      evidence: Git adapter tests restrict commands to structured read-only observation.
+      reference: packages/cli/tests/collaboration.test.ts
+      method: automated
+    - criterion: 'AC-08: la recolección Git está limitada en tiempo, cantidad y alcance.'
+      status: passed
+      evidence: Bounded observation tests cover timeout, commit, branch and repository limits.
+      reference: packages/cli/tests/collaboration.test.ts
+      method: automated
+    - criterion: 'AC-09: se soportan referencias exactas a Work Items con identificadores configurables, incluidos `WI-xxx` y `AN-xxx` cuando existan.'
+      status: passed
+      evidence: Correlation tests resolve exact catalog identifiers without a fixed prefix.
+      reference: packages/cli/tests/collaboration.test.ts
+      method: automated
+    - criterion: 'AC-10: las referencias explícitas y asociaciones por branch se distinguen correctamente.'
+      status: passed
+      evidence: Correlation tests distinguish explicit commit attribution from contextual branches.
+      reference: packages/cli/tests/collaboration.test.ts
+      method: automated
+    - criterion: 'AC-11: no se atribuyen commits a Work Items solo por coincidencia de archivos.'
+      status: passed
+      evidence: Correlation tests reject file-overlap-only attribution.
+      reference: packages/cli/tests/collaboration.test.ts
+      method: automated
+    - criterion: 'AC-12: cada atribución presenta evidencia verificable y procedencia.'
+      status: passed
+      evidence: Shared-commit regression preserves repository plus SHA identity and all Work Item origins.
+      reference: packages/cli/tests/collaboration.test.ts
+      method: automated
+    - criterion: 'AC-13: la proyección distingue responsabilidad declarada de autores Git observados.'
+      status: passed
+      evidence: Collaboration projection tests keep declared owners/contributors separate from Git authors.
+      reference: packages/cli/tests/collaboration.test.ts
+      method: automated
+    - criterion: 'AC-14: Work Item Detail muestra asignaciones y actividad vinculada.'
+      status: passed
+      evidence: Admin E2E renders Work Item Collaboration and navigable linked activity.
+      reference: packages/admin/e2e/collaboration.spec.ts
+      method: automated
+    - criterion: 'AC-15: Initiative Detail muestra responsabilidad declarada y actividad agregada.'
+      status: passed
+      evidence: Admin E2E renders Initiative Collaboration from the isolated Planning fixture.
+      reference: packages/admin/e2e/collaboration.spec.ts
+      method: automated
+    - criterion: 'AC-16: Epic Detail muestra colaboración derivada sin duplicaciones.'
+      status: passed
+      evidence: Aggregate tests deduplicate repository plus SHA while retaining linked Work Items.
+      reference: packages/cli/tests/collaboration.test.ts
+      method: automated
+    - criterion: 'AC-17: Plan Detail muestra una agregación consistente.'
+      status: passed
+      evidence: Plan aggregate tests and Admin E2E cover the Delivery Plan projection.
+      reference: packages/cli/tests/collaboration.test.ts; packages/admin/e2e/collaboration.spec.ts
+      method: automated
+    - criterion: 'AC-18: Work Items List permite identificar trabajo sin asignación.'
+      status: passed
+      evidence: List filter E2E covers Assigned to and Unassigned together with existing filters.
+      reference: packages/admin/e2e/collaboration.spec.ts
+      method: automated
+    - criterion: 'AC-19: se informa la disponibilidad, cobertura y fecha de consulta de Git.'
+      status: passed
+      evidence: Collaboration tests cover available, partial and unavailable observation states.
+      reference: packages/cli/tests/collaboration.test.ts
+      method: automated
+    - criterion: 'AC-20: la ausencia de Git no bloquea Planning ni Work Items.'
+      status: passed
+      evidence: No-Git fixture tests retain Planning and Work Item projections.
+      reference: packages/cli/tests/collaboration.test.ts
+      method: automated
+    - criterion: 'AC-21: proyectos multirepo conservan identificación y separación por repositorio.'
+      status: passed
+      evidence: Homonymous repositories and shared commit regression use deterministic repository plus SHA identity.
+      reference: packages/cli/tests/collaboration.test.ts
+      method: automated
+    - criterion: 'AC-22: CLI y MCP reutilizan la misma proyección Core.'
+      status: passed
+      evidence: CLI/MCP adapter regression and package builds use the shared Core collaboration surface.
+      reference: packages/cli/tests/collaboration.test.ts; packages/mcp/src/collaboration.ts
+      method: automated
+    - criterion: 'AC-23: no se modifica automáticamente ningún lifecycle o estado de entrega.'
+      status: passed
+      evidence: Assignment and lifecycle tests prove narrow writes preserve lifecycle unless an explicit transition is requested.
+      reference: packages/cli/tests/work-item-write.test.ts
+      method: automated
+    - criterion: 'AC-24: las operaciones cumplen seguridad de sesión, validación y protección de rutas.'
+      status: passed
+      evidence: Session, CSRF, malformed ID, traversal, mapped repository and read-only operation tests passed.
+      reference: pnpm exec vitest run packages/cli/tests/security.test.ts packages/cli/tests/admin-099-server.test.ts (31 passed)
+      method: automated
+    - criterion: 'AC-25: existen pruebas de Core, Git Adapter, Admin Server y E2E.'
+      status: passed
+      evidence: Core/Git tests, Admin Server tests and five formal Admin E2E scenarios passed.
+      reference: packages/cli/tests/collaboration.test.ts; packages/cli/tests/admin-099-server.test.ts; packages/admin/e2e/collaboration.spec.ts
+      method: automated
+    - criterion: 'AC-26: las vistas funcionan en Light/Dark/mobile.'
+      status: passed
+      evidence: Admin E2E validates collaboration and filters at 375px in Light and Dark themes.
+      reference: packages/admin/e2e/collaboration.spec.ts
+      method: automated
+    - criterion: 'AC-27: documentación EN/ES actualizada.'
+      status: passed
+      evidence: English and Spanish Collaboration and MCP documentation builds passed.
+      reference: apps/docs/src/content/docs/playbook/collaboration.md; apps/docs/src/content/docs/es/playbook/collaboration.md; pnpm --filter @kaddo/docs build
+      method: automated
+    - criterion: 'AC-28: implementación verificada localmente antes del commit.'
+      status: passed
+      evidence: Root regression, focused security, E2E, affected builds and diff check passed before publication.
+      reference: pnpm test; pnpm --filter @kaddo/admin exec playwright test e2e/collaboration.spec.ts; git diff --check
+      method: automated
 ---
 
 # WI-077 — Work Assignment & Git Collaboration Evidence

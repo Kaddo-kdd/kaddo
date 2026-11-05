@@ -17,6 +17,7 @@ import type {
   CompletionException,
   ValidationStatus,
   ImplementationStatus,
+  AcceptanceCriterionEvidence,
 } from './lifecycle.js'
 
 // --- Error classes -----------------------------------------------------------
@@ -47,11 +48,7 @@ export type RepoEvidenceInput = {
   migrations?: { id: string; environment: string; status: string; reason?: string }[]
 }
 
-export type ACVerificationInput = {
-  criterion: string
-  status: 'passed' | 'failed' | 'not-verified' | 'manual-review-required'
-  evidence?: string
-}
+export type ACVerificationInput = AcceptanceCriterionEvidence
 
 export type CollectEvidenceInput = {
   repos: RepoEvidenceInput[]
@@ -168,7 +165,12 @@ export function collectImplementationEvidence(
     }
   }
 
-  return { repositories }
+  return {
+    repositories,
+    ...(input.acVerifications.length > 0 ? {
+      ac_verifications: input.acVerifications.map((verification) => ({ ...verification })),
+    } : {}),
+  }
 }
 
 export function verifyWorkItem(
@@ -252,6 +254,9 @@ export function evaluateCompletion(verification: VerificationResult): Completion
   }
 
   // Check ACs
+  if (verification.acSummary.total === 0) {
+    blockers.push('No acceptance criteria were detected; completion evidence is insufficient.')
+  }
   if (verification.acSummary.failed > 0) {
     const failedACs = verification.acVerifications.filter((ac) => ac.status === 'failed')
     for (const ac of failedACs) {
@@ -267,12 +272,19 @@ export function evaluateCompletion(verification: VerificationResult): Completion
 
   // Check manual review ACs
   if (verification.acSummary.manualReview > 0) {
-    warnings.push(`${verification.acSummary.manualReview} AC(s) require manual review.`)
+    blockers.push(`${verification.acSummary.manualReview} AC(s) require manual review.`)
   }
 
   // Check not-verified ACs
   if (verification.acSummary.notVerified > 0) {
-    warnings.push(`${verification.acSummary.notVerified} AC(s) not yet verified.`)
+    blockers.push(`${verification.acSummary.notVerified} AC(s) not yet verified.`)
+  }
+
+  if (verification.implementationStatus !== 'completed') {
+    blockers.push(`Implementation status is "${verification.implementationStatus}", not "completed".`)
+  }
+  if (!['passed', 'accepted-with-exceptions'].includes(verification.validationStatus)) {
+    blockers.push(`Validation status is "${verification.validationStatus}", not passed.`)
   }
 
   // Warning findings
@@ -296,8 +308,8 @@ export function evaluateCompletion(verification: VerificationResult): Completion
   let readiness: CompletionReadiness
 
   if (blockers.length > 0) {
-    const hasOnlyACFailures = blockers.every((b) => b.startsWith('AC failed:'))
-    if (hasOnlyACFailures) {
+    const needsEvidence = blockers.every((b) => b.startsWith('AC failed:') || b.includes('acceptance criteria') || b.includes('AC(s)') || b.startsWith('Implementation status') || b.startsWith('Validation status'))
+    if (needsEvidence) {
       readiness = 'NEEDS_WORK'
       reasons.push('Acceptance criteria have failures that must be addressed.')
     } else {

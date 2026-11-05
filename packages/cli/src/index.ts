@@ -56,6 +56,7 @@ import { runAdr } from './commands/adr.js'
 import { runTechOrganize } from './commands/tech.js'
 import { runAssetsStatus, runAssetsUpdate } from './commands/assets.js'
 import { runReady } from './commands/ready.js'
+import { runStart } from './commands/start.js'
 import { runAdmin } from './commands/admin.js'
 import { runWorkItemImport } from './commands/work-item.js'
 import { runPocReport } from './commands/poc.js'
@@ -142,6 +143,14 @@ program
   .option('--yes', 'Skip confirmation prompt')
   .action(async (id: string, opts: { yes?: boolean }) => {
     await runReady(id, opts)
+  })
+
+program
+  .command('start <id>')
+  .description('Start a ready Work Item and move it to in-progress')
+  .option('--yes', 'Skip confirmation prompt')
+  .action(async (id: string, opts: { yes?: boolean }) => {
+    await runStart(id, opts)
   })
 
 const pocCmd = program
