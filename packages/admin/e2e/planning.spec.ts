@@ -24,7 +24,7 @@ test.describe('Unified Planning Explorer', () => {
     await expect(page.getByText('Initiatives without Epic')).toBeVisible()
     // Initiatives appear in the overview (standalone one is shown, not treated as an error).
     await expect(page.getByText('Standalone Initiative')).toBeVisible()
-    await expect(page.getByText('independent (no epic)')).toBeVisible()
+    await expect(page.getByText('independent (no epic)').first()).toBeVisible()
   })
 
   test('WI-075: the Initiatives tab reuses the existing Initiatives screen', async ({ page }) => {
@@ -44,8 +44,10 @@ test.describe('Unified Planning Explorer', () => {
     await page.goto('/planning')
     await page.getByText('Wasma Technical Roadmap').click()
     await expect(page.getByRole('heading', { name: 'Wasma Technical Roadmap' })).toBeVisible()
-    await expect(page.getByText('Benchmark evidence reviewed')).toBeVisible()
-    await expect(page.getByText('Completion is never automatic')).toBeVisible()
+    await expect(page.getByText('Benchmark evidence reviewed').first()).toBeVisible()
+    // Completion is human-gated via the canonical Completion Review (WI-078).
+    await expect(page.getByRole('heading', { name: 'Completion Review' })).toBeVisible()
+    await expect(page.getByText(/never completes anything automatically/)).toBeVisible()
 
     await page.getByText('Runtime Performance & Concurrency').click()
     await expect(page.getByRole('heading', { name: 'Runtime Performance & Concurrency' })).toBeVisible()

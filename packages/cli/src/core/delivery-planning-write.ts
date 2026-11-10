@@ -20,6 +20,8 @@ import {
   epicsInPlan,
   revisionOf,
   validateEpicDependencyChange,
+  PLAN_TRANSITIONS,
+  EPIC_TRANSITIONS,
   type DeliveryPlan,
   type Epic,
   type PlanStatus,
@@ -28,6 +30,13 @@ import {
 } from './delivery-planning.js'
 import { getInitiative, type Initiative } from './initiative.js'
 import { updateInitiative } from './initiative-write.js'
+import {
+  evaluateEpicCompletion,
+  evaluatePlanCompletion,
+  normalizeCriterion,
+  type EntityCompletionEvaluation,
+} from './delivery-verification.js'
+import type { AcceptanceCriterionEvidence } from './lifecycle.js'
 
 export class DeliveryPlanningWriteError extends Error {
   constructor(message: string) {
@@ -48,7 +57,11 @@ export class PlanningConflictError extends Error {
   }
 }
 
-export type UpdateOptions = { expectedRevision?: string }
+export type UpdateOptions = {
+  expectedRevision?: string
+  /** Allow removing a milestone that still carries exit-criteria evidence (explicit, never accidental). */
+  allowMilestoneEvidenceLoss?: boolean
+}
 
 /** Guard a controlled write against a stale form (optimistic concurrency). No mutation. */
 function assertFreshRevision(id: string, currentContent: string, opts?: UpdateOptions): void {
@@ -156,8 +169,25 @@ export type UpdatePlanInput = {
   milestones?: MilestoneInput[]
 }
 
-/** Normalize a milestone patch to canonical frontmatter shape, enforcing unique ids within the Plan. */
-function normalizeMilestones(planId: string, input: MilestoneInput[]): { data: Record<string, unknown>[]; model: Milestone[] } {
+/**
+ * Normalize a milestone patch to canonical frontmatter shape, enforcing unique ids within the Plan.
+ * Each milestone is MERGED onto its existing entry (matched by id): recorded `exit_verifications` and
+ * any unknown keys are preserved, while only id/title/exit_criteria are taken from the patch. Editing a
+ * title keeps the evidence; editing an exit criterion keeps its prior evidence (which the evaluator then
+ * surfaces as stale) rather than deleting the trail (adjustment 1).
+ */
+function normalizeMilestones(
+  planId: string,
+  input: MilestoneInput[],
+  existing: Record<string, unknown>[],
+): { data: Record<string, unknown>[]; model: Milestone[] } {
+  const byId = new Map<string, Record<string, unknown>>()
+  for (const e of existing) {
+    if (e && typeof e === 'object' && !Array.isArray(e)) {
+      const eid = typeof e.id === 'string' ? e.id.trim().toLowerCase() : ''
+      if (eid) byId.set(eid, e)
+    }
+  }
   const seen = new Set<string>()
   const data: Record<string, unknown>[] = []
   const model: Milestone[] = []
@@ -169,12 +199,21 @@ function normalizeMilestones(planId: string, input: MilestoneInput[]): { data: R
     seen.add(key)
     const title = m.title?.trim() || id
     const exit = cleanList(m.exitCriteria ?? [])
-    const entry: Record<string, unknown> = { id, title }
+    // Start from the existing entry to keep unknown keys and exit_verifications, then apply the patch.
+    const entry: Record<string, unknown> = { ...(byId.get(key) ?? {}) }
+    entry.id = id
+    entry.title = title
     if (exit.length > 0) entry.exit_criteria = exit
+    else delete entry.exit_criteria
     data.push(entry)
     model.push({ id, title, exitCriteria: exit })
   }
   return { data, model }
+}
+
+/** True when a raw milestone entry carries at least one recorded exit-criterion verification. */
+function hasExitEvidence(entry: Record<string, unknown> | undefined): boolean {
+  return !!entry && Array.isArray(entry.exit_verifications) && (entry.exit_verifications as unknown[]).length > 0
 }
 
 /**
@@ -204,7 +243,8 @@ export function updateDeliveryPlan(dir: string, id: string, patch: UpdatePlanInp
   if (patch.references !== undefined) setListOrDelete(data, 'references', patch.references)
 
   if (patch.milestones !== undefined) {
-    const { data: msData, model } = normalizeMilestones(plan.id, patch.milestones)
+    const existingRaw = Array.isArray(data.milestones) ? (data.milestones as Record<string, unknown>[]) : []
+    const { data: msData, model } = normalizeMilestones(plan.id, patch.milestones, existingRaw)
     const newIds = new Set(model.map((m) => m.id.toLowerCase()))
     // Reject removal/rename of a milestone an Epic still points at (no silent dangling reference).
     const referencedByEpic = new Map<string, string[]>()
@@ -220,6 +260,15 @@ export function updateDeliveryPlan(dir: string, id: string, patch: UpdatePlanInp
     if (referencedByEpic.size > 0) {
       const detail = [...referencedByEpic.entries()].map(([ms, epics]) => `${ms} (used by ${epics.join(', ')})`).join('; ')
       throw new DeliveryPlanningWriteError(`Cannot remove or rename milestone(s) still referenced by an Epic: ${detail}. Reassign the Epic first.`)
+    }
+    // Removing a milestone that still carries exit-criteria evidence needs an explicit decision (adjustment 1).
+    if (!opts?.allowMilestoneEvidenceLoss) {
+      const droppedWithEvidence = existingRaw
+        .filter((e) => e && typeof e === 'object' && typeof e.id === 'string' && !newIds.has(e.id.trim().toLowerCase()) && hasExitEvidence(e))
+        .map((e) => String(e.id))
+      if (droppedWithEvidence.length > 0) {
+        throw new DeliveryPlanningWriteError(`Milestone(s) ${droppedWithEvidence.join(', ')} still carry exit-criteria evidence. Removing them discards that evidence — pass allowMilestoneEvidenceLoss to confirm.`)
+      }
     }
     data.milestones = msData
   }
@@ -311,5 +360,199 @@ export function updateEpic(dir: string, id: string, patch: UpdateEpicInput, opts
   writeFile(epic.filePath, newContent)
   const updated = parseEpic(dir, epic.filePath, newContent)
   if (!updated) throw new DeliveryPlanningWriteError('Failed to parse the Epic after update.')
+  return updated
+}
+
+// --- Lifecycle transitions, outcome evidence, and completion (WI-078) --------
+// Transitions enforce PLAN_TRANSITIONS/EPIC_TRANSITIONS and never fire from derived progress. Evidence
+// is recorded per declared criterion (indexed by text). Completion is human-gated: it requires a READY
+// evaluation and records the decision — it is never triggered automatically by finished Work Items.
+
+function today(): string {
+  return new Date().toISOString().slice(0, 10)
+}
+
+export class PlanningNotReadyError extends DeliveryPlanningWriteError {
+  constructor(public evaluation: EntityCompletionEvaluation) {
+    super(`${evaluation.kind === 'plan' ? 'Plan' : 'Epic'} ${evaluation.id} is not ready to complete (${evaluation.readiness}).`)
+    this.name = 'PlanningNotReadyError'
+  }
+}
+
+export function transitionDeliveryPlan(dir: string, id: string, to: PlanStatus, opts?: UpdateOptions): DeliveryPlan {
+  const plan = getPlan(dir, id)
+  if (!plan) throw new DeliveryPlanningWriteError(`Plan ${id} does not exist.`)
+  if (!(PLAN_STATES as readonly string[]).includes(to)) throw new DeliveryPlanningWriteError(`Invalid plan status: ${to}.`)
+  if (to === 'completed') throw new DeliveryPlanningWriteError(`Completing Plan ${id} requires evidence-based review — use completeDeliveryPlan.`)
+  const raw = readFile(plan.filePath)
+  assertFreshRevision(plan.id, raw, opts)
+  if (plan.status === to) return plan
+  if (!PLAN_TRANSITIONS[plan.status].includes(to)) throw new DeliveryPlanningWriteError(`Invalid transition ${plan.status} → ${to} for Plan ${id}.`)
+  const { data, content } = matter(raw, {})
+  data.status = to
+  if (to === 'completed') data.completed_at = today()
+  const newContent = matter.stringify(content, data)
+  writeFile(plan.filePath, newContent)
+  const updated = parseDeliveryPlan(dir, plan.filePath, newContent)
+  if (!updated) throw new DeliveryPlanningWriteError('Failed to parse the Plan after transition.')
+  return updated
+}
+
+export function transitionEpic(dir: string, id: string, to: EpicStatus, opts?: UpdateOptions): Epic {
+  const epic = getEpic(dir, id)
+  if (!epic) throw new DeliveryPlanningWriteError(`Epic ${id} does not exist.`)
+  if (!(EPIC_STATES as readonly string[]).includes(to)) throw new DeliveryPlanningWriteError(`Invalid epic status: ${to}.`)
+  if (to === 'completed') throw new DeliveryPlanningWriteError(`Completing Epic ${id} requires evidence-based review — use completeEpic.`)
+  const raw = readFile(epic.filePath)
+  assertFreshRevision(epic.id, raw, opts)
+  if (epic.status === to) return epic
+  if (!EPIC_TRANSITIONS[epic.status].includes(to)) throw new DeliveryPlanningWriteError(`Invalid transition ${epic.status} → ${to} for Epic ${id}.`)
+  const { data, content } = matter(raw, {})
+  data.status = to
+  if (to === 'completed') data.completed_at = today()
+  const newContent = matter.stringify(content, data)
+  writeFile(epic.filePath, newContent)
+  const updated = parseEpic(dir, epic.filePath, newContent)
+  if (!updated) throw new DeliveryPlanningWriteError('Failed to parse the Epic after transition.')
+  return updated
+}
+
+export type OutcomeEvidenceInput = {
+  criterion: string
+  status: AcceptanceCriterionEvidence['status']
+  evidence?: string
+  reference?: string
+  method?: 'automated' | 'manual'
+  verifiedBy?: string
+}
+
+function assertCriterionDeclared(declared: string[], criterion: string, kind: string): void {
+  const key = normalizeCriterion(criterion)
+  const matches = declared.filter((c) => normalizeCriterion(c) === key).length
+  if (matches === 0) throw new DeliveryPlanningWriteError(`"${criterion}" is not a declared ${kind} criterion.`)
+  // Evidence must never be shared between colliding criteria — require disambiguation first (adjustment 2).
+  if (matches > 1) throw new DeliveryPlanningWriteError(`"${criterion}" matches more than one declared ${kind} criterion — rename them to disambiguate before recording evidence.`)
+}
+
+/** Upsert an evidence record by normalized criterion text (replace same criterion, else append). */
+function upsertEvidence(existing: unknown, input: OutcomeEvidenceInput): Record<string, unknown>[] {
+  const list = Array.isArray(existing) ? (existing as unknown[]).filter((e) => e && typeof e === 'object' && !Array.isArray(e)) as Record<string, unknown>[] : []
+  const key = normalizeCriterion(input.criterion)
+  const kept = list.filter((e) => normalizeCriterion(String(e.criterion ?? '')) !== key)
+  const obj: Record<string, unknown> = { criterion: input.criterion.trim(), status: input.status }
+  if (input.evidence?.trim()) obj.evidence = input.evidence.trim()
+  if (input.reference?.trim()) obj.reference = input.reference.trim()
+  if (input.method) obj.method = input.method
+  obj.verified_at = today()
+  if (input.verifiedBy?.trim()) obj.verified_by = input.verifiedBy.trim()
+  return [...kept, obj]
+}
+
+export function recordEpicOutcomeVerification(dir: string, id: string, input: OutcomeEvidenceInput, opts?: UpdateOptions): Epic {
+  const epic = getEpic(dir, id)
+  if (!epic) throw new DeliveryPlanningWriteError(`Epic ${id} does not exist.`)
+  assertCriterionDeclared(epic.successCriteria, input.criterion, 'success')
+  const raw = readFile(epic.filePath)
+  assertFreshRevision(epic.id, raw, opts)
+  const { data, content } = matter(raw, {})
+  data.outcome_verifications = upsertEvidence(data.outcome_verifications, input)
+  const newContent = matter.stringify(content, data)
+  writeFile(epic.filePath, newContent)
+  const updated = parseEpic(dir, epic.filePath, newContent)
+  if (!updated) throw new DeliveryPlanningWriteError('Failed to parse the Epic after recording evidence.')
+  return updated
+}
+
+export function recordPlanOutcomeVerification(dir: string, id: string, input: OutcomeEvidenceInput, opts?: UpdateOptions): DeliveryPlan {
+  const plan = getPlan(dir, id)
+  if (!plan) throw new DeliveryPlanningWriteError(`Plan ${id} does not exist.`)
+  assertCriterionDeclared(plan.successCriteria, input.criterion, 'success')
+  const raw = readFile(plan.filePath)
+  assertFreshRevision(plan.id, raw, opts)
+  const { data, content } = matter(raw, {})
+  data.outcome_verifications = upsertEvidence(data.outcome_verifications, input)
+  const newContent = matter.stringify(content, data)
+  writeFile(plan.filePath, newContent)
+  const updated = parseDeliveryPlan(dir, plan.filePath, newContent)
+  if (!updated) throw new DeliveryPlanningWriteError('Failed to parse the Plan after recording evidence.')
+  return updated
+}
+
+/** Record verification for a milestone exit criterion, stored inside that milestone's Plan entry. */
+export function recordMilestoneExitVerification(dir: string, planId: string, milestoneId: string, input: OutcomeEvidenceInput, opts?: UpdateOptions): DeliveryPlan {
+  const plan = getPlan(dir, planId)
+  if (!plan) throw new DeliveryPlanningWriteError(`Plan ${planId} does not exist.`)
+  const milestone = plan.milestones.find((m) => m.id.toLowerCase() === milestoneId.toLowerCase())
+  if (!milestone) throw new DeliveryPlanningWriteError(`Milestone ${milestoneId} is not defined in ${planId}.`)
+  assertCriterionDeclared(milestone.exitCriteria, input.criterion, 'exit')
+  const raw = readFile(plan.filePath)
+  assertFreshRevision(plan.id, raw, opts)
+  const { data, content } = matter(raw, {})
+  const rawMs = Array.isArray(data.milestones) ? (data.milestones as Record<string, unknown>[]) : []
+  const entry = rawMs.find((m) => m && typeof m === 'object' && String(m.id ?? '').toLowerCase() === milestoneId.toLowerCase())
+  if (!entry) throw new DeliveryPlanningWriteError(`Milestone ${milestoneId} entry not found in ${planId} frontmatter.`)
+  entry.exit_verifications = upsertEvidence(entry.exit_verifications, input)
+  data.milestones = rawMs
+  const newContent = matter.stringify(content, data)
+  writeFile(plan.filePath, newContent)
+  const updated = parseDeliveryPlan(dir, plan.filePath, newContent)
+  if (!updated) throw new DeliveryPlanningWriteError('Failed to parse the Plan after recording milestone evidence.')
+  return updated
+}
+
+export type CompletionDecisionInput = { decidedBy?: string; note?: string }
+
+function completionDecisionRecord(evaluation: EntityCompletionEvaluation, input: CompletionDecisionInput): Record<string, unknown> {
+  const rec: Record<string, unknown> = { readiness: evaluation.readiness, decided_at: today(), reasons: evaluation.reasons }
+  if (input.decidedBy?.trim()) rec.decided_by = input.decidedBy.trim()
+  if (input.note?.trim()) rec.note = input.note.trim()
+  const acceptedExceptions = evaluation.exceptions.filter((x) => x.status === 'accepted')
+  if (acceptedExceptions.length > 0) rec.exceptions = acceptedExceptions
+  return rec
+}
+
+/**
+ * Complete an Epic — the only path from any state to `completed`. It re-reads the canonical artifact,
+ * re-evaluates readiness at the moment of the call, checks the expected revision (rejecting a stale or
+ * concurrent write), and records `completion_decision` with the responsible party. Genuine human
+ * authorization is the caller's responsibility: an MCP `confirm: true` flag is a confirmation step, not
+ * by itself proof of human approval (§3 of WI-078). A READY_* evaluation never completes on its own.
+ */
+export function completeEpic(dir: string, id: string, input: CompletionDecisionInput = {}, opts?: UpdateOptions): Epic {
+  const epic = getEpic(dir, id)
+  if (!epic) throw new DeliveryPlanningWriteError(`Epic ${id} does not exist.`)
+  const evaluation = evaluateEpicCompletion(dir, epic)
+  if (evaluation.readiness !== 'READY_TO_COMPLETE' && evaluation.readiness !== 'READY_WITH_EXCEPTIONS') throw new PlanningNotReadyError(evaluation)
+  if (!EPIC_TRANSITIONS[epic.status].includes('completed')) throw new DeliveryPlanningWriteError(`Epic ${id} cannot move from ${epic.status} to completed.`)
+  const raw = readFile(epic.filePath)
+  assertFreshRevision(epic.id, raw, opts)
+  const { data, content } = matter(raw, {})
+  data.status = 'completed'
+  data.completed_at = today()
+  data.completion_decision = completionDecisionRecord(evaluation, input)
+  const newContent = matter.stringify(content, data)
+  writeFile(epic.filePath, newContent)
+  const updated = parseEpic(dir, epic.filePath, newContent)
+  if (!updated) throw new DeliveryPlanningWriteError('Failed to parse the Epic after completion.')
+  return updated
+}
+
+/** Complete a Delivery Plan — only when its evaluation is READY; records the decision. */
+export function completeDeliveryPlan(dir: string, id: string, input: CompletionDecisionInput = {}, opts?: UpdateOptions): DeliveryPlan {
+  const plan = getPlan(dir, id)
+  if (!plan) throw new DeliveryPlanningWriteError(`Plan ${id} does not exist.`)
+  const evaluation = evaluatePlanCompletion(dir, plan)
+  if (evaluation.readiness !== 'READY_TO_COMPLETE' && evaluation.readiness !== 'READY_WITH_EXCEPTIONS') throw new PlanningNotReadyError(evaluation)
+  if (!PLAN_TRANSITIONS[plan.status].includes('completed')) throw new DeliveryPlanningWriteError(`Plan ${id} cannot move from ${plan.status} to completed.`)
+  const raw = readFile(plan.filePath)
+  assertFreshRevision(plan.id, raw, opts)
+  const { data, content } = matter(raw, {})
+  data.status = 'completed'
+  data.completed_at = today()
+  data.completion_decision = completionDecisionRecord(evaluation, input)
+  const newContent = matter.stringify(content, data)
+  writeFile(plan.filePath, newContent)
+  const updated = parseDeliveryPlan(dir, plan.filePath, newContent)
+  if (!updated) throw new DeliveryPlanningWriteError('Failed to parse the Plan after completion.')
   return updated
 }

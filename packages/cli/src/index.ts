@@ -64,7 +64,9 @@ import { runVerify } from './commands/verify.js'
 import { runKnowledgeConsolidate } from './commands/knowledge.js'
 import {
   runPlanList, runPlanShow, runPlanProgress, runPlanCreate,
+  runPlanStart, runPlanVerify, runPlanComplete, runPlanEvidence,
   runEpicList, runEpicShow, runEpicProgress, runEpicCreate, runEpicAssociate,
+  runEpicStart, runEpicVerify, runEpicComplete, runEpicEvidence,
 } from './commands/plan.js'
 import { runTelemetryStatus, runTelemetryEnable, runTelemetryDisable } from './commands/telemetry.js'
 import { runCollaborationShow } from './commands/collaboration.js'
@@ -217,6 +219,18 @@ planCmd.command('list').description('List delivery plans with progress').action(
 planCmd.command('show <id>').description('Show a delivery plan, its milestones and epics').action((id: string) => runPlanShow(id))
 planCmd.command('progress <id>').description('Planning coverage, delivery progress and completion readiness').action((id: string) => runPlanProgress(id))
 planCmd.command('create').description('Create a new delivery plan (interactive)').action(() => { void runPlanCreate() })
+planCmd.command('start <id>').description('Transition a Delivery Plan to in-progress (WI-078)').action((id: string) => runPlanStart(id))
+planCmd.command('verify <id>').description('Evidence-based completion readiness of a Plan (read-only)').option('--json', 'Machine-readable output').action((id: string, o: { json?: boolean }) => runPlanVerify(id, o))
+planCmd.command('evidence <id>').description('Record outcome (or milestone exit) verification evidence')
+  .requiredOption('--criterion <text>', 'The declared success / exit criterion')
+  .option('--status <status>', 'passed | failed | not-verified | manual-review-required', 'passed')
+  .option('--evidence <text>', 'What the evidence shows').option('--reference <ref>', 'File, test, ADR or report')
+  .option('--method <method>', 'automated | manual').option('--milestone <id>', 'Verify a milestone exit criterion instead of a Plan success criterion')
+  .option('--by <who>', 'Who verified it')
+  .action((id: string, o: Record<string, string>) => runPlanEvidence(id, o))
+planCmd.command('complete <id>').description('Complete a Plan after an evidence-based review (human-gated)')
+  .option('-y, --yes', 'Skip the confirmation prompt').option('--by <who>', 'Who approved the completion')
+  .action((id: string, o: { yes?: boolean; by?: string }) => { void runPlanComplete(id, o) })
 
 const epicCmd = program
   .command('epic')
@@ -226,6 +240,17 @@ epicCmd.command('show <id>').description('Show an epic, its plan/milestone and i
 epicCmd.command('progress <id>').description('Planning coverage, delivery progress and completion readiness').action((id: string) => runEpicProgress(id))
 epicCmd.command('create').description('Create a new epic (interactive)').action(() => { void runEpicCreate() })
 epicCmd.command('associate <epicId> <initiativeId>').description('Associate an existing Initiative with an Epic').action((e: string, i: string) => { void runEpicAssociate(e, i) })
+epicCmd.command('start <id>').description('Transition an Epic to in-progress (WI-078)').action((id: string) => runEpicStart(id))
+epicCmd.command('verify <id>').description('Evidence-based completion readiness of an Epic (read-only)').option('--json', 'Machine-readable output').action((id: string, o: { json?: boolean }) => runEpicVerify(id, o))
+epicCmd.command('evidence <id>').description('Record outcome verification evidence for a success criterion')
+  .requiredOption('--criterion <text>', 'The declared success criterion')
+  .option('--status <status>', 'passed | failed | not-verified | manual-review-required', 'passed')
+  .option('--evidence <text>', 'What the evidence shows').option('--reference <ref>', 'File, test, ADR or report')
+  .option('--method <method>', 'automated | manual').option('--by <who>', 'Who verified it')
+  .action((id: string, o: Record<string, string>) => runEpicEvidence(id, o))
+epicCmd.command('complete <id>').description('Complete an Epic after an evidence-based review (human-gated)')
+  .option('-y, --yes', 'Skip the confirmation prompt').option('--by <who>', 'Who approved the completion')
+  .action((id: string, o: { yes?: boolean; by?: string }) => { void runEpicComplete(id, o) })
 
 const topologyCmd = program
   .command('topology')

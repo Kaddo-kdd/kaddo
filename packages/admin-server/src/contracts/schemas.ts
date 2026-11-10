@@ -598,3 +598,28 @@ export const EpicUpdateSchema = z.object({
 export const InitiativeAssociateSchema = z.object({
   initiativeId: z.string().min(1).max(60),
 })
+
+// --- Planning lifecycle & evidence-based completion contracts (WI-078) --------
+const EvidenceStatusSchema = z.enum(['passed', 'failed', 'not-verified', 'manual-review-required'])
+const EvidenceMethodSchema = z.enum(['automated', 'manual'])
+export const PlanTransitionSchema = z.object({
+  to: z.enum(['in-progress', 'cancelled']), // completion uses the dedicated endpoint
+  expectedRevision: z.string().min(1).optional(),
+})
+export const EpicTransitionSchema = PlanTransitionSchema
+const EvidenceBaseSchema = {
+  criterion: z.string().min(1).max(500),
+  status: EvidenceStatusSchema,
+  evidence: z.string().max(2000).optional(),
+  reference: z.string().max(500).optional(),
+  method: EvidenceMethodSchema.optional(),
+  verifiedBy: z.string().max(120).optional(),
+  expectedRevision: z.string().min(1).optional(),
+}
+export const EpicEvidenceSchema = z.object(EvidenceBaseSchema)
+export const PlanEvidenceSchema = z.object({ ...EvidenceBaseSchema, milestone: z.string().min(1).max(60).optional() })
+export const CompleteEntitySchema = z.object({
+  decidedBy: z.string().max(120).optional(),
+  note: z.string().max(2000).optional(),
+  expectedRevision: z.string().min(1).optional(),
+})

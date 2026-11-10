@@ -97,6 +97,8 @@ import {
   listPlansTool, getPlanTool, getPlanProgressTool,
   listEpicsTool, getEpicTool, getEpicProgressTool, validatePlanningTool,
   createPlanTool, createEpicTool, associateInitiativeTool,
+  verifyPlanTool, verifyEpicTool, recordPlanEvidenceTool, recordEpicEvidenceTool,
+  transitionPlanTool, transitionEpicTool, completePlanTool, completeEpicTool,
 } from './planning.js'
 import { getWorkItemCollaborationTool, getPlanningCollaborationTool } from './collaboration.js'
 
@@ -785,6 +787,25 @@ export function createServer(root: string): McpServer {
     async (args) => toolText(guarded(root, () => createEpicTool(root, args))))
   server.registerTool('kaddo_associate_initiative_epic', { title: 'Associate initiative with epic', description: `Associate an existing Initiative with an Epic (validated). ${PLANNING_WRITE_NOTE}`, inputSchema: { epic: z.string(), initiative: z.string(), confirm: z.boolean().optional() } },
     async (args) => toolText(guarded(root, () => associateInitiativeTool(root, args))))
+
+  // --- Evidence-based lifecycle & completion (WI-078) ---
+  const EVIDENCE_IN = { id: z.string(), criterion: z.string(), status: z.string().optional(), evidence: z.string().optional(), reference: z.string().optional(), method: z.string().optional(), verifiedBy: z.string().optional(), confirm: z.boolean().optional() }
+  server.registerTool('kaddo_verify_plan', { title: 'Verify plan outcome', description: `Evidence-based completion readiness of a Plan: success criteria, milestone exit criteria, dependencies and reasons. ${PLANNING_READ_NOTE}`, inputSchema: { id: z.string() } },
+    async (args) => toolText(guarded(root, () => verifyPlanTool(root, args.id))))
+  server.registerTool('kaddo_verify_epic', { title: 'Verify epic outcome', description: `Evidence-based completion readiness of an Epic: success criteria, delivery, dependencies and reasons. ${PLANNING_READ_NOTE}`, inputSchema: { id: z.string() } },
+    async (args) => toolText(guarded(root, () => verifyEpicTool(root, args.id))))
+  server.registerTool('kaddo_record_plan_evidence', { title: 'Record plan evidence', description: `Record outcome (or milestone exit) verification evidence for one declared criterion. ${PLANNING_WRITE_NOTE}`, inputSchema: { ...EVIDENCE_IN, milestone: z.string().optional() } },
+    async (args) => toolText(guarded(root, () => recordPlanEvidenceTool(root, args))))
+  server.registerTool('kaddo_record_epic_evidence', { title: 'Record epic evidence', description: `Record outcome verification evidence for one declared success criterion. ${PLANNING_WRITE_NOTE}`, inputSchema: EVIDENCE_IN },
+    async (args) => toolText(guarded(root, () => recordEpicEvidenceTool(root, args))))
+  server.registerTool('kaddo_transition_plan', { title: 'Transition plan', description: `Transition a Delivery Plan (start/cancel). Completion uses kaddo_complete_plan. ${PLANNING_WRITE_NOTE}`, inputSchema: { id: z.string(), to: z.string(), confirm: z.boolean().optional() } },
+    async (args) => toolText(guarded(root, () => transitionPlanTool(root, args))))
+  server.registerTool('kaddo_transition_epic', { title: 'Transition epic', description: `Transition an Epic (start/cancel). Completion uses kaddo_complete_epic. ${PLANNING_WRITE_NOTE}`, inputSchema: { id: z.string(), to: z.string(), confirm: z.boolean().optional() } },
+    async (args) => toolText(guarded(root, () => transitionEpicTool(root, args))))
+  server.registerTool('kaddo_complete_plan', { title: 'Complete plan', description: `Review readiness, then (confirm=true) record a human completion decision for a Plan. Never completes automatically; confirm is not itself proof of human approval. ${PLANNING_WRITE_NOTE}`, inputSchema: { id: z.string(), decidedBy: z.string().optional(), confirm: z.boolean().optional() } },
+    async (args) => toolText(guarded(root, () => completePlanTool(root, args))))
+  server.registerTool('kaddo_complete_epic', { title: 'Complete epic', description: `Review readiness, then (confirm=true) record a human completion decision for an Epic. Never completes automatically; confirm is not itself proof of human approval. ${PLANNING_WRITE_NOTE}`, inputSchema: { id: z.string(), decidedBy: z.string().optional(), confirm: z.boolean().optional() } },
+    async (args) => toolText(guarded(root, () => completeEpicTool(root, args))))
 
   const INITIATIVE_WRITE_NOTE =
     'Without confirm=true returns a preview. With confirm=true applies the change. Writes only under knowledge/delivery/.'

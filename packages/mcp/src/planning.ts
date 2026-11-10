@@ -19,9 +19,30 @@ import {
   createDeliveryPlan,
   createEpic,
   associateInitiativeWithEpic,
+  transitionDeliveryPlan,
+  transitionEpic,
+  recordPlanOutcomeVerification,
+  recordEpicOutcomeVerification,
+  recordMilestoneExitVerification,
+  completeDeliveryPlan,
+  completeEpic,
+  evaluatePlanCompletion,
+  evaluateEpicCompletion,
   DeliveryPlanningWriteError,
+  PlanningNotReadyError,
+  type OutcomeEvidenceInput,
 } from '@kaddo/cli/core'
 import type { ToolResult } from './tools.js'
+
+type EvidenceArgs = { id: string; criterion: string; status?: string; evidence?: string; reference?: string; method?: string; verifiedBy?: string; confirm?: boolean }
+const EVIDENCE_STATUSES = ['passed', 'failed', 'not-verified', 'manual-review-required']
+function toEvidence(a: EvidenceArgs): OutcomeEvidenceInput | string {
+  if (!a.criterion?.trim()) return 'criterion is required.'
+  const status = a.status ?? 'passed'
+  if (!EVIDENCE_STATUSES.includes(status)) return `status must be one of: ${EVIDENCE_STATUSES.join(', ')}.`
+  const method = a.method === 'automated' || a.method === 'manual' ? a.method : undefined
+  return { criterion: a.criterion.trim(), status: status as OutcomeEvidenceInput['status'], evidence: a.evidence, reference: a.reference, method, verifiedBy: a.verifiedBy }
+}
 
 const ok = (data: unknown): ToolResult => ({ ok: true, data })
 const fail = (message: string): ToolResult => ({ ok: false, message })
@@ -117,4 +138,69 @@ export function associateInitiativeTool(root: string, args: { epic: string; init
   if (!args.epic?.trim() || !args.initiative?.trim()) return fail('epic and initiative are required.')
   return previewOrApply(args.confirm, 'associate-initiative-epic', `Initiative ${args.initiative} will be associated with Epic ${args.epic}.`,
     () => associateInitiativeWithEpic(root, args.initiative, args.epic))
+}
+
+// --- Lifecycle, outcome verification and completion (WI-078) ------------------
+// Read tools expose the evidence-based readiness; mutations follow preview/confirm. Completion is a
+// human decision: confirm=true is a confirmation step, NOT by itself proof of human approval.
+
+export function verifyPlanTool(root: string, id: string): ToolResult {
+  const plan = getPlan(root, id)
+  if (!plan) return fail(`Plan ${id} not found.`)
+  return ok(evaluatePlanCompletion(root, plan))
+}
+
+export function verifyEpicTool(root: string, id: string): ToolResult {
+  const epic = getEpic(root, id)
+  if (!epic) return fail(`Epic ${id} not found.`)
+  return ok(evaluateEpicCompletion(root, epic))
+}
+
+export function recordPlanEvidenceTool(root: string, args: EvidenceArgs & { milestone?: string }): ToolResult {
+  const input = toEvidence(args)
+  if (typeof input === 'string') return fail(input)
+  const target = args.milestone ? `milestone ${args.milestone}` : 'Plan outcome'
+  return previewOrApply(args.confirm, 'record-plan-evidence', `Evidence [${input.status}] for ${target} criterion "${input.criterion}" on ${args.id} will be recorded.`,
+    () => args.milestone ? recordMilestoneExitVerification(root, args.id, args.milestone, input) : recordPlanOutcomeVerification(root, args.id, input))
+}
+
+export function recordEpicEvidenceTool(root: string, args: EvidenceArgs): ToolResult {
+  const input = toEvidence(args)
+  if (typeof input === 'string') return fail(input)
+  return previewOrApply(args.confirm, 'record-epic-evidence', `Evidence [${input.status}] for Epic outcome criterion "${input.criterion}" on ${args.id} will be recorded.`,
+    () => recordEpicOutcomeVerification(root, args.id, input))
+}
+
+export function transitionPlanTool(root: string, args: { id: string; to: string; confirm?: boolean }): ToolResult {
+  if (args.to === 'completed') return fail('Use complete_plan for an evidence-based completion.')
+  return previewOrApply(args.confirm, 'transition-plan', `Plan ${args.id} will transition to ${args.to}.`,
+    () => transitionDeliveryPlan(root, args.id, args.to as never))
+}
+
+export function transitionEpicTool(root: string, args: { id: string; to: string; confirm?: boolean }): ToolResult {
+  if (args.to === 'completed') return fail('Use complete_epic for an evidence-based completion.')
+  return previewOrApply(args.confirm, 'transition-epic', `Epic ${args.id} will transition to ${args.to}.`,
+    () => transitionEpic(root, args.id, args.to as never))
+}
+
+const APPROVAL_NOTE = 'confirm=true is a confirmation step, not by itself proof of human approval — only complete with genuine human authorization.'
+
+export function completePlanTool(root: string, args: { id: string; decidedBy?: string; confirm?: boolean }): ToolResult {
+  const plan = getPlan(root, args.id)
+  if (!plan) return fail(`Plan ${args.id} not found.`)
+  const evaluation = evaluatePlanCompletion(root, plan)
+  const ready = evaluation.readiness === 'READY_TO_COMPLETE' || evaluation.readiness === 'READY_WITH_EXCEPTIONS'
+  if (!args.confirm) return ok({ action: 'complete-plan', readiness: evaluation.readiness, evaluation, note: APPROVAL_NOTE, instruction: ready ? 'Review the evaluation; call again with confirm=true to record the human completion decision.' : `Not ready (${evaluation.readiness}). Resolve the blockers first.` })
+  try { return ok({ applied: true, result: completeDeliveryPlan(root, args.id, { decidedBy: args.decidedBy }) }) }
+  catch (err) { if (err instanceof PlanningNotReadyError || err instanceof DeliveryPlanningWriteError) return fail(err.message); throw err }
+}
+
+export function completeEpicTool(root: string, args: { id: string; decidedBy?: string; confirm?: boolean }): ToolResult {
+  const epic = getEpic(root, args.id)
+  if (!epic) return fail(`Epic ${args.id} not found.`)
+  const evaluation = evaluateEpicCompletion(root, epic)
+  const ready = evaluation.readiness === 'READY_TO_COMPLETE' || evaluation.readiness === 'READY_WITH_EXCEPTIONS'
+  if (!args.confirm) return ok({ action: 'complete-epic', readiness: evaluation.readiness, evaluation, note: APPROVAL_NOTE, instruction: ready ? 'Review the evaluation; call again with confirm=true to record the human completion decision.' : `Not ready (${evaluation.readiness}). Resolve the blockers first.` })
+  try { return ok({ applied: true, result: completeEpic(root, args.id, { decidedBy: args.decidedBy }) }) }
+  catch (err) { if (err instanceof PlanningNotReadyError || err instanceof DeliveryPlanningWriteError) return fail(err.message); throw err }
 }

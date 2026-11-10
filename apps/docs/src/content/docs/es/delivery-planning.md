@@ -41,9 +41,50 @@ El progreso se calcula desde el estado real de los elementos relacionados, nunca
 - **Planning coverage** — Initiatives y candidatos (materializados vs pendientes).
 - **Delivery progress** — Work Items por estado de lifecycle y cuántos están bloqueados.
 - **Completion readiness** — criterios de éxito, dependencias bloqueantes y si el trabajo comprometido
-  está completo. `meetsCompletionPreconditions` nunca es positivo sin entregables reales ni criterios
-  declarados. **Cerrar un Plan o Epic siempre requiere aprobación humana** — un Epic no está "listo"
-  solo porque sus Work Items lo estén; también deben verificarse los criterios del resultado.
+  está completo. `meetsCompletionPreconditions` es solo una señal *estructural*; la readiness canónica
+  es la evaluación basada en evidencia descrita abajo. **Cerrar un Plan o Epic siempre requiere
+  aprobación humana** — un Epic no está "listo" solo porque sus Work Items lo estén; también deben
+  verificarse los criterios del resultado.
+
+## Lifecycle y cierre basado en evidencia
+
+Plans y Epics tienen un lifecycle real y con control humano. Kaddo separa **trabajo terminado** (todos
+los Work Items hechos) de **resultado alcanzado** (los criterios de éxito verificados con evidencia).
+
+**Transiciones.** `draft`/`planned` → `in-progress` → `completed` / `cancelled`. Iniciar y cancelar son
+transiciones ordinarias; **completar es una operación dedicada y protegida** — la transición general
+rechaza `→ completed` y remite al comando de cierre. Las transiciones preservan id, relaciones,
+frontmatter desconocido y cuerpo Markdown, y usan la misma huella de revisión para concurrencia.
+
+**Verificación de resultado.** Cada criterio de éxito declarado (y cada exit criterion de milestone)
+puede registrar una verificación — `status` (passed / failed / not-verified / manual-review-required),
+`evidence` (qué demuestra, no solo un checkbox), `reference` (archivo, test, ADR, reporte), `method` y
+`verified_by` — almacenada canónicamente en `outcome_verifications` del Plan/Epic y en
+`exit_verifications` de cada milestone. La evidencia se asocia al criterio **por su texto**: reordenar
+es seguro y **editar un criterio deja obsoleta su evidencia previa** (se muestra, nunca se reasigna en
+silencio ni se da por aprobada). Los criterios con texto colisionante deben desambiguarse antes de
+atribuir evidencia.
+
+**Completion readiness** es `READY_TO_COMPLETE`, `READY_WITH_EXCEPTIONS`, `NEEDS_WORK` o `BLOCKED`, con
+razones y hallazgos. Es conservadora: sin resultado, sin criterios, criterios sin verificar o fallidos,
+trabajo comprometido incompleto, referencias inválidas o una dependencia bloqueante impiden estar listo.
+Un estado `READY_*` **nunca completa nada** — el cierre es una acción humana explícita que registra un
+`completion_decision` (readiness, quién decidió, cuándo y por qué). Una excepción aceptada puede eximir
+un criterio concreto (con motivo), pero nunca una dependencia bloqueante, trabajo incompleto, ausencia
+de entregables ni un error de integridad.
+
+```bash
+kaddo epic start EP-001
+kaddo epic evidence EP-001 --criterion "SSO works end to end" --status passed \
+  --evidence "Verificado contra Okta/Azure AD" --reference reports/sso.md --method manual --by dev-a
+kaddo epic verify EP-001 --json   # readiness de solo lectura
+kaddo epic complete EP-001 --by lead   # con control humano; rechaza si no está READY
+```
+
+MCP expone lo mismo con `kaddo_verify_plan` / `kaddo_verify_epic` (solo lectura),
+`kaddo_record_plan_evidence` / `kaddo_record_epic_evidence`, `kaddo_transition_plan` /
+`kaddo_transition_epic` y `kaddo_complete_plan` / `kaddo_complete_epic` (preview → confirm). Un flag
+`confirm: true` es un paso de confirmación, **no por sí solo prueba de aprobación humana**.
 
 ## Responsabilidad
 

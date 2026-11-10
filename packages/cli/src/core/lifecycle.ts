@@ -135,6 +135,10 @@ export type AcceptanceCriterionEvidence = {
   evidence?: string
   reference?: string
   method?: 'automated' | 'manual'
+  // Optional provenance (WI-078): when an outcome/exit criterion was verified and by whom. Additive —
+  // never required, so existing Work Item ac_verifications remain valid.
+  verified_at?: string
+  verified_by?: string
 }
 
 export type ImplementationEvidence = {

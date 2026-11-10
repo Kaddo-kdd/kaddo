@@ -743,10 +743,12 @@ export type PlanningProgress = {
   delivery: PlanningDelivery
   readiness: { successCriteria: number; blockingDependencies: string[]; committedWorkComplete: boolean; meetsCompletionPreconditions: boolean; humanApprovalRequired: boolean }
 }
+export type CompletionDecision = { readiness: string; decided_at: string; decided_by?: string; note?: string; reasons?: string[] }
 export type PlanDetail = {
   id: string; title: string; status: string; objective: string | null
   milestones: Milestone[]; dependsOn: string[]; successCriteria: string[]; risks: string[]; references: string[]; body: string
   revision: string
+  completionDecision: CompletionDecision | null
   progress: PlanningProgress & { epics: { total: number; byStatus: Record<string, number> } }
   epics: { id: string; title: string; status: string; milestone: string | null; delivery: PlanningDelivery; blocked: string[] }[]
   findings: PlanningFinding[]
@@ -755,10 +757,38 @@ export type EpicDetail = {
   id: string; title: string; status: string; outcome: string | null; plan: string | null; milestone: string | null
   dependsOn: string[]; successCriteria: string[]; relatedCapabilities: string[]; decisions: string[]; body: string
   revision: string
+  completionDecision: CompletionDecision | null
   progress: PlanningProgress
   initiatives: { id: string; title: string; status: string; owners: string[]; contributors: string[] }[]
   workItems: { id: string; title: string; status: string }[]
   findings: PlanningFinding[]
+}
+
+// --- Evidence-based lifecycle & completion (WI-078) -------------------------
+export type EvidenceStatus = 'passed' | 'failed' | 'not-verified' | 'manual-review-required'
+export type CriterionVerification = {
+  criterion: string; status: EvidenceStatus; evidence?: string; reference?: string
+  method?: 'automated' | 'manual'; verifiedAt?: string; verifiedBy?: string; waived?: boolean; ambiguous?: boolean
+}
+export type OutcomeVerification = {
+  total: number; passed: number; failed: number; notVerified: number; manualReview: number; ambiguous: number
+  criteria: CriterionVerification[]; stale: { criterion: string }[]
+}
+export type MilestoneVerification = { id: string; title: string; outcome: OutcomeVerification }
+export type EntityEvaluation = {
+  id: string; kind: 'plan' | 'epic'; status: string
+  readiness: 'READY_TO_COMPLETE' | 'READY_WITH_EXCEPTIONS' | 'NEEDS_WORK' | 'BLOCKED'
+  reasons: string[]; blockers: string[]; warnings: string[]
+  outcome: OutcomeVerification
+  delivery: { total: number; completed: number; blocked: number }
+  blockingDependencies: string[]
+  milestones?: MilestoneVerification[]
+  epics?: { id: string; status: string }[]
+  exceptions: { id: string; criterion?: string; status: string; reason?: string }[]
+}
+export type EvidenceInput = {
+  criterion: string; status: EvidenceStatus; evidence?: string; reference?: string
+  method?: 'automated' | 'manual'; verifiedBy?: string; milestone?: string; expectedRevision?: string
 }
 
 export async function getPlanningOverview(): Promise<PlanningOverview> {
@@ -805,4 +835,30 @@ export async function associateInitiative(epicId: string, initiativeId: string):
 }
 export async function disassociateInitiative(epicId: string, initiativeId: string): Promise<{ id: string }> {
   return mutateApi(`/planning/epics/${encodeURIComponent(epicId)}/initiatives/${encodeURIComponent(initiativeId)}`, 'DELETE')
+}
+
+// --- Lifecycle, verification and completion (WI-078) ------------------------
+export async function verifyPlan(id: string): Promise<EntityEvaluation> {
+  return fetchApi<EntityEvaluation>(`/planning/plans/${encodeURIComponent(id)}/verify`)
+}
+export async function verifyEpic(id: string): Promise<EntityEvaluation> {
+  return fetchApi<EntityEvaluation>(`/planning/epics/${encodeURIComponent(id)}/verify`)
+}
+export async function transitionPlan(id: string, to: 'in-progress' | 'cancelled', expectedRevision?: string): Promise<PlanDetail> {
+  return mutateApi(`/planning/plans/${encodeURIComponent(id)}/transition`, 'POST', { to, expectedRevision })
+}
+export async function transitionEpic(id: string, to: 'in-progress' | 'cancelled', expectedRevision?: string): Promise<EpicDetail> {
+  return mutateApi(`/planning/epics/${encodeURIComponent(id)}/transition`, 'POST', { to, expectedRevision })
+}
+export async function recordPlanEvidence(id: string, input: EvidenceInput): Promise<PlanDetail> {
+  return mutateApi(`/planning/plans/${encodeURIComponent(id)}/evidence`, 'POST', input)
+}
+export async function recordEpicEvidence(id: string, input: EvidenceInput): Promise<EpicDetail> {
+  return mutateApi(`/planning/epics/${encodeURIComponent(id)}/evidence`, 'POST', input)
+}
+export async function completePlan(id: string, body: { decidedBy?: string; note?: string; expectedRevision?: string }): Promise<PlanDetail> {
+  return mutateApi(`/planning/plans/${encodeURIComponent(id)}/complete`, 'POST', body)
+}
+export async function completeEpic(id: string, body: { decidedBy?: string; note?: string; expectedRevision?: string }): Promise<EpicDetail> {
+  return mutateApi(`/planning/epics/${encodeURIComponent(id)}/complete`, 'POST', body)
 }

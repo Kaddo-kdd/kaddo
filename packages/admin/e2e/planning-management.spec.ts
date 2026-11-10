@@ -27,8 +27,9 @@ test.describe('Planning Management (WI-076)', () => {
     await page.getByPlaceholder('RM-01').fill('RM-10')
     await page.getByPlaceholder('Milestone title').fill('E2E Milestone')
     await page.getByRole('button', { name: 'Save milestones' }).click()
-    await expect(page.getByText('RM-10')).toBeVisible()
-    await expect(page.getByText('E2E Milestone')).toBeVisible()
+    // RM-10 appears both in the Milestones section and the Completion Review (WI-078) — assert at least one.
+    await expect(page.getByText('RM-10').first()).toBeVisible()
+    await expect(page.getByText('E2E Milestone').first()).toBeVisible()
 
     // Create an Epic from the plan detail (plan is pre-selected).
     await page.getByRole('button', { name: '+ Create Epic' }).click()

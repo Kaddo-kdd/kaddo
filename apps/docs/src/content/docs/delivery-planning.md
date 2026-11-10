@@ -40,9 +40,53 @@ Progress is computed from the real state of related elements, never a single arb
 - **Planning coverage** — Initiatives and candidates (materialized vs pending).
 - **Delivery progress** — Work Items by lifecycle state, and how many are blocked.
 - **Completion readiness** — success criteria, blocking dependencies and whether committed work is
-  complete. `meetsCompletionPreconditions` is never positive without real deliverables and declared
-  criteria. **Closing a Plan or Epic always requires human approval** — an Epic is never "done" just
-  because its Work Items are; the outcome's criteria must also be verified.
+  complete. `meetsCompletionPreconditions` is a *structural* signal only; the canonical readiness is
+  the evidence-based evaluation below. **Closing a Plan or Epic always requires human approval** — an
+  Epic is never "done" just because its Work Items are; the outcome's criteria must also be verified.
+
+## Lifecycle & evidence-based completion
+
+Plans and Epics have a real, human-gated lifecycle. Kaddo separates **work finished** (all Work Items
+done) from **outcome achieved** (the declared success criteria verified with evidence).
+
+**Transitions.** `draft`/`planned` → `in-progress` → `completed` / `cancelled`. Starting and cancelling
+are ordinary transitions; **completing is a dedicated, gated operation** — the general transition
+refuses `→ completed` and points to the completion command. Transitions preserve the id, relations,
+unknown frontmatter and Markdown body, and use the same revision fingerprint for optimistic concurrency.
+
+**Outcome verification.** Each declared success criterion (and each milestone exit criterion) can carry
+a verification record — `status` (passed / failed / not-verified / manual-review-required), `evidence`
+(what it shows, not just a checkbox), `reference` (file, test, ADR, report), `method` and `verified_by`
+— stored canonically in `outcome_verifications` on the Plan/Epic and in each milestone's
+`exit_verifications`. Evidence is matched to a criterion **by its text**: reordering is safe, and
+**editing a criterion leaves the old evidence stale** (surfaced, never silently reattributed or
+auto-passed). Criteria that collide in text must be disambiguated before evidence can be attributed.
+
+**Completion readiness** is one of `READY_TO_COMPLETE`, `READY_WITH_EXCEPTIONS`, `NEEDS_WORK` or
+`BLOCKED`, with reasons and findings. It is conservative: no outcome, no criteria, unverified or failed
+criteria, incomplete committed work, invalid references or a blocking dependency all keep it from being
+ready. A `READY_*` status **never completes anything** — completion is an explicit human action that
+records a `completion_decision` (readiness, who decided, when, and why). An accepted completion
+exception can waive a specific criterion (with a reason), but never a blocking dependency, incomplete
+work, missing deliverables or a data-integrity error.
+
+```bash
+kaddo epic start EP-001
+kaddo epic evidence EP-001 --criterion "SSO works end to end" --status passed \
+  --evidence "Verified against Okta/Azure AD" --reference reports/sso.md --method manual --by dev-a
+kaddo epic verify EP-001 --json   # read-only readiness
+kaddo epic complete EP-001 --by lead   # human-gated; refuses unless READY
+
+kaddo plan start PLAN-001
+kaddo plan evidence PLAN-001 --milestone RM-01 --criterion "Go-live checklist signed" --status passed
+kaddo plan verify PLAN-001
+kaddo plan complete PLAN-001
+```
+
+MCP exposes the same via `kaddo_verify_plan` / `kaddo_verify_epic` (read-only), `kaddo_record_plan_evidence`
+/ `kaddo_record_epic_evidence`, `kaddo_transition_plan` / `kaddo_transition_epic`, and
+`kaddo_complete_plan` / `kaddo_complete_epic` (preview → confirm). A `confirm: true` flag is a
+confirmation step, **not by itself proof of human approval**.
 
 ## Ownership
 

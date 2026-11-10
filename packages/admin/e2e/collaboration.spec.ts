@@ -21,7 +21,8 @@ test.describe('Collaboration and assignment management (WI-077)', () => {
   })
 
   test('edits Initiative assignments through the same modal', async ({ page }) => {
-    await page.goto('/initiatives/INI-050')
+    // Mutate a dedicated Initiative (INI-053) so read-only tests can rely on INI-050's fixture owners.
+    await page.goto('/initiatives/INI-053')
     await page.getByRole('button', { name: 'Edit assignments' }).click()
     const dialog = page.getByRole('dialog', { name: /Edit assignments/ })
     await dialog.getByLabel('Owners').fill('initiative-owner')

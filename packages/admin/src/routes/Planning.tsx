@@ -13,6 +13,7 @@ import {
   CreatePlanDrawer, EditPlanDrawer, MilestonesDrawer,
   CreateEpicDrawer, EditEpicDrawer, AssociateInitiativeDrawer,
 } from '../components/PlanningManage'
+import { PlanningCompletion } from '../components/PlanningCompletion'
 import { Initiatives } from './Initiatives'
 import { CollaborationOverview } from '../components/CollaborationOverview'
 
@@ -31,9 +32,6 @@ function Findings({ findings }: { findings: PlanningFinding[] }) {
       {findings.map((f, i) => <div key={i} style={{ ...muted, color: f.level === 'error' ? 'var(--danger)' : 'var(--warning)' }}>{f.message}</div>)}
     </div>
   )
-}
-function ReadinessNote() {
-  return <p style={mutedSmall}>Completion is never automatic — closing a Plan or Epic always requires human approval, even when all work is done.</p>
 }
 
 // --- Unified Planning (tabs: Overview / Delivery Plans / Epics / Initiatives) ---
@@ -226,7 +224,7 @@ export function PlanDetail({ id }: { id: string }) {
         <Metric label="Completed" value={p.progress.delivery.completed} />
         <Metric label="Blocked" value={p.progress.delivery.blocked} />
       </section>
-      <ReadinessNote />
+      <PlanningCompletion kind="plan" id={p.id} status={p.status} revision={p.revision} completionDecision={p.completionDecision} />
       <CollaborationOverview data={collaboration.data} loading={collaboration.isLoading} error={Boolean(collaboration.error)} onOpenWorkItem={(workItemId) => router.navigate({ to: '/work-items/$workItemId', params: { workItemId } })} />
 
       <section style={section}>
@@ -303,14 +301,14 @@ export function EpicDetail({ id }: { id: string }) {
         </ConfirmDialog>
       )}
 
+      {/* Execution progress only — outcome verification and completion readiness are canonical below. */}
       <section style={grid}>
         <Metric label="Work Items" value={e.progress.delivery.total} />
         <Metric label="Completed" value={e.progress.delivery.completed} />
         <Metric label="Blocked" value={e.progress.delivery.blocked} />
-        <Metric label="Success criteria" value={r.successCriteria} />
-        <Metric label="Preconditions met" value={r.meetsCompletionPreconditions ? 'Yes' : 'No'} />
+        <Metric label="Success criteria (declared)" value={r.successCriteria} />
       </section>
-      <ReadinessNote />
+      <PlanningCompletion kind="epic" id={e.id} status={e.status} revision={e.revision} completionDecision={e.completionDecision} />
       <CollaborationOverview data={collaboration.data} loading={collaboration.isLoading} error={Boolean(collaboration.error)} onOpenWorkItem={(workItemId) => router.navigate({ to: '/work-items/$workItemId', params: { workItemId } })} />
       {r.blockingDependencies.length > 0 && <p style={{ ...muted, color: 'var(--warning)' }}>Blocking dependencies: {r.blockingDependencies.join(', ')}</p>}
 

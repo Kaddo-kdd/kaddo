@@ -76,18 +76,34 @@ export function buildACVerifications(
   })
 }
 
-/** Read canonical EN/ES acceptance criteria. Checkboxes express intent, not verification evidence. */
+/**
+ * Read canonical EN/ES acceptance criteria. Checkboxes express intent, not verification evidence.
+ *
+ * The Acceptance Criteria block may contain subsections (e.g. `### Lifecycle`, `### Verification`): the
+ * parser enters on the (optionally numbered) EN/ES heading, keeps collecting through any *deeper*
+ * heading, and stops only at a heading of the same or a higher level — so content from later top-level
+ * sections is never read as an acceptance criterion, while grouped ACs are all recognized.
+ */
 export function extractACsFromBody(body: string): ParsedAcceptanceCriterion[] {
   const lines = body.split(/\r?\n/)
-  let inAC = false
+  let acLevel = 0 // 0 = not inside the Acceptance Criteria section; otherwise the heading level (# count)
   const acs: ParsedAcceptanceCriterion[] = []
   for (const line of lines) {
-    if (/^#{1,6}\s+(?:\d+(?:\.\d+)*\.?\s+)?(acceptance\s+criteria|criterios\s+de\s+aceptaci[oó]n)\s*$/i.test(line)) {
-      inAC = true
+    const heading = line.match(/^(#{1,6})\s+(.*)$/)
+    if (heading) {
+      const level = heading[1].length
+      if (acLevel === 0) {
+        if (/^(?:\d+(?:\.\d+)*\.?\s+)?(acceptance\s+criteria|criterios\s+de\s+aceptaci[oó]n)\s*$/i.test(heading[2].trim())) {
+          acLevel = level
+        }
+        continue
+      }
+      // Inside the block: a heading at the same or a higher level ends it; a deeper heading is a
+      // subsection and stays inside.
+      if (level <= acLevel) break
       continue
     }
-    if (inAC && /^#{1,6}\s+/.test(line)) break
-    if (inAC) {
+    if (acLevel > 0) {
       const m = line.match(/^\s*[-*+]\s+(?:\[([ xX])\]\s*)?(.+)$/)
       if (m) {
         const text = m[2].trim()

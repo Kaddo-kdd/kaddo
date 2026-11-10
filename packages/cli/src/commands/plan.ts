@@ -21,8 +21,22 @@ import {
   createDeliveryPlan,
   createEpic,
   associateInitiativeWithEpic,
+  transitionDeliveryPlan,
+  transitionEpic,
+  recordPlanOutcomeVerification,
+  recordEpicOutcomeVerification,
+  recordMilestoneExitVerification,
+  completeDeliveryPlan,
+  completeEpic,
   DeliveryPlanningWriteError,
+  PlanningNotReadyError,
+  type OutcomeEvidenceInput,
 } from '../core/delivery-planning-write.js'
+import {
+  evaluatePlanCompletion,
+  evaluateEpicCompletion,
+  type EntityCompletionEvaluation,
+} from '../core/delivery-verification.js'
 
 function requireInit(dir: string): void {
   if (!loadConfig(dir)) {
@@ -200,4 +214,109 @@ export async function runEpicAssociate(epicId: string, initiativeId: string): Pr
     log.error(err instanceof DeliveryPlanningWriteError ? err.message : String(err))
     process.exit(1)
   }
+}
+
+// --- Lifecycle, outcome verification and evidence-based completion (WI-078) ---
+
+const EVIDENCE_STATUSES = ['passed', 'failed', 'not-verified', 'manual-review-required'] as const
+
+function printEvaluation(ev: EntityCompletionEvaluation): void {
+  log.info(`  Readiness: ${ev.readiness}`)
+  const o = ev.outcome
+  log.info(`  Outcome criteria: ${o.passed}/${o.total} passed${o.failed ? ` · ${o.failed} failed` : ''}${o.notVerified ? ` · ${o.notVerified} unverified` : ''}${o.ambiguous ? ` · ${o.ambiguous} ambiguous` : ''}`)
+  for (const c of o.criteria) log.info(`    [${c.status}${c.waived ? '/waived' : ''}${c.ambiguous ? '/ambiguous' : ''}] ${c.criterion}`)
+  if (o.stale.length) log.warn(`  Stale evidence (criterion changed): ${o.stale.map((s) => s.criterion).join('; ')}`)
+  if (ev.milestones) for (const m of ev.milestones) log.info(`  Milestone ${m.id}: ${m.outcome.passed}/${m.outcome.total} exit criteria verified`)
+  if (ev.blockingDependencies.length) log.warn(`  Blocking dependencies: ${ev.blockingDependencies.join(', ')}`)
+  for (const b of ev.blockers) log.warn(`  Blocker: ${b}`)
+  for (const w of ev.warnings) log.warn(`  Warning: ${w}`)
+  for (const r of ev.reasons) log.info(`  ${r}`)
+  log.info('  Completion is never automatic — it always requires an explicit human decision.')
+}
+
+function evidenceInput(opts: { criterion?: string; status?: string; evidence?: string; reference?: string; method?: string; by?: string }): OutcomeEvidenceInput {
+  if (!opts.criterion?.trim()) { log.error('A --criterion is required.'); process.exit(1) }
+  const status = opts.status ?? 'passed'
+  if (!(EVIDENCE_STATUSES as readonly string[]).includes(status)) { log.error(`--status must be one of: ${EVIDENCE_STATUSES.join(', ')}.`); process.exit(1) }
+  const method = opts.method === 'automated' || opts.method === 'manual' ? opts.method : undefined
+  return { criterion: opts.criterion.trim(), status: status as OutcomeEvidenceInput['status'], evidence: opts.evidence, reference: opts.reference, method, verifiedBy: opts.by }
+}
+
+export function runPlanStart(id: string): void {
+  const dir = cwd(); requireInit(dir)
+  intro(`kaddo plan start ${id}`)
+  try { const p = transitionDeliveryPlan(dir, id, 'in-progress'); log.success(`Plan ${p.id} is now ${p.status}.`); outro('Started.') }
+  catch (err) { log.error(err instanceof DeliveryPlanningWriteError ? err.message : String(err)); process.exit(1) }
+}
+
+export function runPlanVerify(id: string, opts: { json?: boolean } = {}): void {
+  const dir = cwd(); requireInit(dir)
+  const plan = getPlan(dir, id)
+  if (!plan) { if (opts.json) console.log(JSON.stringify({ error: `Plan ${id} not found.` })); else log.error(`Plan ${id} not found.`); process.exit(1) }
+  const ev = evaluatePlanCompletion(dir, plan!)
+  if (opts.json) { console.log(JSON.stringify(ev, null, 2)); return }
+  intro(`kaddo plan verify ${id}`); printEvaluation(ev); outro(`Plan ${id} — ${ev.readiness}.`)
+}
+
+export async function runPlanComplete(id: string, opts: { yes?: boolean; by?: string } = {}): Promise<void> {
+  const dir = cwd(); requireInit(dir)
+  intro(`kaddo plan complete ${id}`)
+  const plan = getPlan(dir, id)
+  if (!plan) { log.error(`Plan ${id} not found.`); process.exit(1) }
+  const ev = evaluatePlanCompletion(dir, plan!)
+  printEvaluation(ev)
+  if (ev.readiness !== 'READY_TO_COMPLETE' && ev.readiness !== 'READY_WITH_EXCEPTIONS') { log.error(`Plan ${id} is not ready to complete (${ev.readiness}).`); process.exit(1) }
+  const ok = opts.yes === true || (await confirm({ message: `Complete Plan ${id}? This records a human completion decision.` })) === true
+  if (!ok) { cancel('Cancelled.'); return }
+  try { const done = completeDeliveryPlan(dir, id, { decidedBy: opts.by }); log.success(`Plan ${done.id} completed (${ev.readiness}).`); outro('Completion decision recorded.') }
+  catch (err) { log.error(err instanceof DeliveryPlanningWriteError ? err.message : String(err)); process.exit(1) }
+}
+
+export function runPlanEvidence(id: string, opts: { criterion?: string; status?: string; evidence?: string; reference?: string; method?: string; milestone?: string; by?: string } = {}): void {
+  const dir = cwd(); requireInit(dir)
+  intro(`kaddo plan evidence ${id}`)
+  const input = evidenceInput(opts)
+  try {
+    if (opts.milestone) { recordMilestoneExitVerification(dir, id, opts.milestone, input); log.success(`Recorded evidence for milestone ${opts.milestone} criterion.`) }
+    else { recordPlanOutcomeVerification(dir, id, input); log.success('Recorded Plan outcome evidence.') }
+    outro(`[${input.status}] ${input.criterion}`)
+  } catch (err) { log.error(err instanceof DeliveryPlanningWriteError ? err.message : String(err)); process.exit(1) }
+}
+
+export function runEpicStart(id: string): void {
+  const dir = cwd(); requireInit(dir)
+  intro(`kaddo epic start ${id}`)
+  try { const e = transitionEpic(dir, id, 'in-progress'); log.success(`Epic ${e.id} is now ${e.status}.`); outro('Started.') }
+  catch (err) { log.error(err instanceof DeliveryPlanningWriteError ? err.message : String(err)); process.exit(1) }
+}
+
+export function runEpicVerify(id: string, opts: { json?: boolean } = {}): void {
+  const dir = cwd(); requireInit(dir)
+  const epic = getEpic(dir, id)
+  if (!epic) { if (opts.json) console.log(JSON.stringify({ error: `Epic ${id} not found.` })); else log.error(`Epic ${id} not found.`); process.exit(1) }
+  const ev = evaluateEpicCompletion(dir, epic!)
+  if (opts.json) { console.log(JSON.stringify(ev, null, 2)); return }
+  intro(`kaddo epic verify ${id}`); printEvaluation(ev); outro(`Epic ${id} — ${ev.readiness}.`)
+}
+
+export async function runEpicComplete(id: string, opts: { yes?: boolean; by?: string } = {}): Promise<void> {
+  const dir = cwd(); requireInit(dir)
+  intro(`kaddo epic complete ${id}`)
+  const epic = getEpic(dir, id)
+  if (!epic) { log.error(`Epic ${id} not found.`); process.exit(1) }
+  const ev = evaluateEpicCompletion(dir, epic!)
+  printEvaluation(ev)
+  if (ev.readiness !== 'READY_TO_COMPLETE' && ev.readiness !== 'READY_WITH_EXCEPTIONS') { log.error(`Epic ${id} is not ready to complete (${ev.readiness}).`); process.exit(1) }
+  const ok = opts.yes === true || (await confirm({ message: `Complete Epic ${id}? This records a human completion decision.` })) === true
+  if (!ok) { cancel('Cancelled.'); return }
+  try { const done = completeEpic(dir, id, { decidedBy: opts.by }); log.success(`Epic ${done.id} completed (${ev.readiness}).`); outro('Completion decision recorded.') }
+  catch (err) { log.error(err instanceof PlanningNotReadyError || err instanceof DeliveryPlanningWriteError ? err.message : String(err)); process.exit(1) }
+}
+
+export function runEpicEvidence(id: string, opts: { criterion?: string; status?: string; evidence?: string; reference?: string; method?: string; by?: string } = {}): void {
+  const dir = cwd(); requireInit(dir)
+  intro(`kaddo epic evidence ${id}`)
+  const input = evidenceInput(opts)
+  try { recordEpicOutcomeVerification(dir, id, input); log.success('Recorded Epic outcome evidence.'); outro(`[${input.status}] ${input.criterion}`) }
+  catch (err) { log.error(err instanceof DeliveryPlanningWriteError ? err.message : String(err)); process.exit(1) }
 }

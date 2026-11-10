@@ -79,6 +79,14 @@ import {
   updateEpicAdmin,
   associateInitiativeAdmin,
   disassociateInitiativeAdmin,
+  verifyPlanAdmin,
+  verifyEpicAdmin,
+  transitionPlanAdmin,
+  transitionEpicAdmin,
+  recordPlanEvidenceAdmin,
+  recordEpicEvidenceAdmin,
+  completePlanAdmin,
+  completeEpicAdmin,
   createDeprecationAdmin,
   CoreError,
 } from './core-adapter.js'
@@ -99,6 +107,11 @@ import {
   EpicCreateSchema,
   EpicUpdateSchema,
   InitiativeAssociateSchema,
+  PlanTransitionSchema,
+  EpicTransitionSchema,
+  PlanEvidenceSchema,
+  EpicEvidenceSchema,
+  CompleteEntitySchema,
 } from './contracts/schemas.js'
 import type { AdminStorage } from './storage/admin-storage.js'
 
@@ -109,7 +122,8 @@ function statusForCode(code: string): number {
     case 'WORK_ITEM_NOT_FOUND': return 404
     case 'WORK_ITEM_CONFLICT':
     case 'WORK_ITEM_NOT_EDITABLE':
-    case 'PLANNING_CONFLICT': return 409
+    case 'PLANNING_CONFLICT':
+    case 'PLANNING_NOT_READY': return 409
     case 'INVALID_INPUT':
     case 'INVALID_WORK_ITEM_ID':
     case 'INVALID_INTEGRATION_ID':
@@ -278,6 +292,43 @@ export async function createAdminServer(opts: AdminServerOptions) {
   })
   app.delete<{ Params: { id: string; initiativeId: string } }>('/api/v1/admin/planning/epics/:id/initiatives/:initiativeId', async (request, reply) =>
     writeHandler(reply, () => disassociateInitiativeAdmin(projectDir, request.params.id, request.params.initiativeId)))
+
+  // Lifecycle, evidence and evidence-based completion (WI-078). `verify` is read-only; completion is
+  // human-gated and records the decision — endpoints delegate to Core and never write Markdown.
+  app.get<{ Params: { id: string } }>('/api/v1/admin/planning/plans/:id/verify', async (request, reply) =>
+    writeHandler(reply, () => verifyPlanAdmin(projectDir, request.params.id)))
+  app.get<{ Params: { id: string } }>('/api/v1/admin/planning/epics/:id/verify', async (request, reply) =>
+    writeHandler(reply, () => verifyEpicAdmin(projectDir, request.params.id)))
+  app.post<{ Params: { id: string } }>('/api/v1/admin/planning/plans/:id/transition', async (request, reply) => {
+    const parsed = PlanTransitionSchema.safeParse(request.body)
+    if (!parsed.success) return reply.code(400).send({ error: { code: 'INVALID_INPUT', message: 'A valid target state (in-progress | cancelled) is required.' } })
+    return writeHandler(reply, () => transitionPlanAdmin(projectDir, request.params.id, parsed.data.to, parsed.data.expectedRevision))
+  })
+  app.post<{ Params: { id: string } }>('/api/v1/admin/planning/epics/:id/transition', async (request, reply) => {
+    const parsed = EpicTransitionSchema.safeParse(request.body)
+    if (!parsed.success) return reply.code(400).send({ error: { code: 'INVALID_INPUT', message: 'A valid target state (in-progress | cancelled) is required.' } })
+    return writeHandler(reply, () => transitionEpicAdmin(projectDir, request.params.id, parsed.data.to, parsed.data.expectedRevision))
+  })
+  app.post<{ Params: { id: string } }>('/api/v1/admin/planning/plans/:id/evidence', async (request, reply) => {
+    const parsed = PlanEvidenceSchema.safeParse(request.body)
+    if (!parsed.success) return reply.code(400).send({ error: { code: 'INVALID_INPUT', message: 'A criterion and a valid status are required.' } })
+    return writeHandler(reply, () => recordPlanEvidenceAdmin(projectDir, request.params.id, parsed.data))
+  })
+  app.post<{ Params: { id: string } }>('/api/v1/admin/planning/epics/:id/evidence', async (request, reply) => {
+    const parsed = EpicEvidenceSchema.safeParse(request.body)
+    if (!parsed.success) return reply.code(400).send({ error: { code: 'INVALID_INPUT', message: 'A criterion and a valid status are required.' } })
+    return writeHandler(reply, () => recordEpicEvidenceAdmin(projectDir, request.params.id, parsed.data))
+  })
+  app.post<{ Params: { id: string } }>('/api/v1/admin/planning/plans/:id/complete', async (request, reply) => {
+    const parsed = CompleteEntitySchema.safeParse(request.body ?? {})
+    if (!parsed.success) return reply.code(400).send({ error: { code: 'INVALID_INPUT', message: 'Invalid completion request.' } })
+    return writeHandler(reply, () => completePlanAdmin(projectDir, request.params.id, parsed.data))
+  })
+  app.post<{ Params: { id: string } }>('/api/v1/admin/planning/epics/:id/complete', async (request, reply) => {
+    const parsed = CompleteEntitySchema.safeParse(request.body ?? {})
+    if (!parsed.success) return reply.code(400).send({ error: { code: 'INVALID_INPUT', message: 'Invalid completion request.' } })
+    return writeHandler(reply, () => completeEpicAdmin(projectDir, request.params.id, parsed.data))
+  })
 
   // --- Knowledge Consolidation Explorer (WI-073) ---
   app.get('/api/v1/admin/consolidation/plan', coreRoute(getConsolidationPlanAdmin))

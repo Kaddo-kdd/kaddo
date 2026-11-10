@@ -125,10 +125,23 @@ import {
   updateEpic as coreUpdateEpic,
   associateInitiativeWithEpic as coreAssociateInitiativeWithEpic,
   disassociateInitiativeFromEpic as coreDisassociateInitiativeFromEpic,
+  transitionDeliveryPlan as coreTransitionDeliveryPlan,
+  transitionEpic as coreTransitionEpic,
+  recordPlanOutcomeVerification as coreRecordPlanOutcomeVerification,
+  recordEpicOutcomeVerification as coreRecordEpicOutcomeVerification,
+  recordMilestoneExitVerification as coreRecordMilestoneExitVerification,
+  completeDeliveryPlan as coreCompleteDeliveryPlan,
+  completeEpic as coreCompleteEpic,
+  evaluatePlanCompletion,
+  evaluateEpicCompletion,
   DeliveryPlanningWriteError,
   PlanningConflictError,
+  PlanningNotReadyError,
   type UpdatePlanInput,
   type UpdateEpicInput,
+  type OutcomeEvidenceInput,
+  type PlanStatus,
+  type EpicStatus,
 } from '@kaddo/cli/core'
 import fs from 'node:fs'
 import path from 'node:path'
@@ -369,6 +382,8 @@ export function getPlanDetailAdmin(dir: string, id: string) {
     risks: plan.risks, references: plan.references, body: plan.body,
     // Concurrency fingerprint (WI-076): the UI echoes it back on PATCH to detect stale edits.
     revision: revisionOf(readFile(plan.filePath)),
+    // Recorded human completion decision (WI-078), if the Plan has been completed.
+    completionDecision: (plan.rawFrontmatter?.completion_decision as Record<string, unknown> | undefined) ?? null,
     progress, epics, findings,
   }
 }
@@ -387,6 +402,8 @@ export function getEpicDetailAdmin(dir: string, id: string) {
     decisions: epic.decisions, body: epic.body,
     // Concurrency fingerprint (WI-076): the UI echoes it back on PATCH to detect stale edits.
     revision: revisionOf(readFile(epic.filePath)),
+    // Recorded human completion decision (WI-078), if the Epic has been completed.
+    completionDecision: (epic.rawFrontmatter?.completion_decision as Record<string, unknown> | undefined) ?? null,
     progress, initiatives, workItems, findings,
   }
 }
@@ -403,6 +420,7 @@ function assertPlanningId(kind: 'Plan' | 'Epic' | 'Initiative', id: string): voi
 
 function mapPlanningError(err: unknown): never {
   if (err instanceof PlanningConflictError) throw new CoreError('PLANNING_CONFLICT', err.message)
+  if (err instanceof PlanningNotReadyError) throw new CoreError('PLANNING_NOT_READY', err.message)
   if (err instanceof DeliveryPlanningWriteError) throw new CoreError('PLANNING_WRITE', err.message)
   if (err instanceof InitiativeWriteError) throw new CoreError('INITIATIVE_WRITE', err.message)
   throw err as Error
@@ -480,6 +498,82 @@ export function disassociateInitiativeAdmin(dir: string, epicId: string, initiat
     if (err instanceof CoreError) throw err
     mapPlanningError(err)
   }
+}
+
+// --- Lifecycle, outcome verification and completion (WI-078) ------------------
+// Every mutation delegates to Core; the server never writes Markdown. Completion is human-gated and
+// records the decision. `verify` is read-only and is the canonical source of Completion Readiness.
+
+type EvidenceBody = { criterion: string; status: string; evidence?: string; reference?: string; method?: string; verifiedBy?: string; expectedRevision?: string }
+
+function toEvidenceInput(body: EvidenceBody): OutcomeEvidenceInput {
+  const method = body.method === 'automated' || body.method === 'manual' ? body.method : undefined
+  return { criterion: body.criterion, status: body.status as OutcomeEvidenceInput['status'], evidence: body.evidence, reference: body.reference, method, verifiedBy: body.verifiedBy }
+}
+
+export function verifyPlanAdmin(dir: string, id: string): ReturnType<typeof evaluatePlanCompletion> {
+  assertPlanningId('Plan', id)
+  const plan = coreGetPlan(dir, id)
+  if (!plan) throw new CoreError('PLAN_NOT_FOUND', `Delivery Plan ${id} was not found.`)
+  return evaluatePlanCompletion(dir, plan)
+}
+
+export function verifyEpicAdmin(dir: string, id: string): ReturnType<typeof evaluateEpicCompletion> {
+  assertPlanningId('Epic', id)
+  const epic = coreGetEpic(dir, id)
+  if (!epic) throw new CoreError('EPIC_NOT_FOUND', `Epic ${id} was not found.`)
+  return evaluateEpicCompletion(dir, epic)
+}
+
+export function transitionPlanAdmin(dir: string, id: string, to: string, expectedRevision?: string): ReturnType<typeof getPlanDetailAdmin> {
+  assertPlanningId('Plan', id)
+  try {
+    coreTransitionDeliveryPlan(dir, id, to as PlanStatus, expectedRevision ? { expectedRevision } : undefined)
+    return getPlanDetailAdmin(dir, id)
+  } catch (err) { if (err instanceof CoreError) throw err; mapPlanningError(err) }
+}
+
+export function transitionEpicAdmin(dir: string, id: string, to: string, expectedRevision?: string): ReturnType<typeof getEpicDetailAdmin> {
+  assertPlanningId('Epic', id)
+  try {
+    coreTransitionEpic(dir, id, to as EpicStatus, expectedRevision ? { expectedRevision } : undefined)
+    return getEpicDetailAdmin(dir, id)
+  } catch (err) { if (err instanceof CoreError) throw err; mapPlanningError(err) }
+}
+
+export function recordPlanEvidenceAdmin(dir: string, id: string, body: EvidenceBody & { milestone?: string }): ReturnType<typeof getPlanDetailAdmin> {
+  assertPlanningId('Plan', id)
+  const { expectedRevision } = body
+  try {
+    if (body.milestone) coreRecordMilestoneExitVerification(dir, id, body.milestone, toEvidenceInput(body), expectedRevision ? { expectedRevision } : undefined)
+    else coreRecordPlanOutcomeVerification(dir, id, toEvidenceInput(body), expectedRevision ? { expectedRevision } : undefined)
+    return getPlanDetailAdmin(dir, id)
+  } catch (err) { if (err instanceof CoreError) throw err; mapPlanningError(err) }
+}
+
+export function recordEpicEvidenceAdmin(dir: string, id: string, body: EvidenceBody): ReturnType<typeof getEpicDetailAdmin> {
+  assertPlanningId('Epic', id)
+  const { expectedRevision } = body
+  try {
+    coreRecordEpicOutcomeVerification(dir, id, toEvidenceInput(body), expectedRevision ? { expectedRevision } : undefined)
+    return getEpicDetailAdmin(dir, id)
+  } catch (err) { if (err instanceof CoreError) throw err; mapPlanningError(err) }
+}
+
+export function completePlanAdmin(dir: string, id: string, body: { decidedBy?: string; note?: string; expectedRevision?: string }): ReturnType<typeof getPlanDetailAdmin> {
+  assertPlanningId('Plan', id)
+  try {
+    coreCompleteDeliveryPlan(dir, id, { decidedBy: body.decidedBy, note: body.note }, body.expectedRevision ? { expectedRevision: body.expectedRevision } : undefined)
+    return getPlanDetailAdmin(dir, id)
+  } catch (err) { if (err instanceof CoreError) throw err; mapPlanningError(err) }
+}
+
+export function completeEpicAdmin(dir: string, id: string, body: { decidedBy?: string; note?: string; expectedRevision?: string }): ReturnType<typeof getEpicDetailAdmin> {
+  assertPlanningId('Epic', id)
+  try {
+    coreCompleteEpic(dir, id, { decidedBy: body.decidedBy, note: body.note }, body.expectedRevision ? { expectedRevision: body.expectedRevision } : undefined)
+    return getEpicDetailAdmin(dir, id)
+  } catch (err) { if (err instanceof CoreError) throw err; mapPlanningError(err) }
 }
 
 export function getWorkItemSummary(dir: string): WorkItemSummary {
