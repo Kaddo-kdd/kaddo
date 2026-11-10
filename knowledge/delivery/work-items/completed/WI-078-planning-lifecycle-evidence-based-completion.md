@@ -2,7 +2,7 @@
 type: feature
 id: WI-078
 title: Planning Lifecycle & Evidence-Based Completion
-status: in-progress
+status: completed
 work_type: feature
 created_at: '2026-11-06'
 source:
@@ -392,6 +392,8 @@ implementation_evidence:
         unit tests pass.
       reference: apps/docs/src/content/docs/delivery-planning.md
       method: manual
+released_in: v3.135.0
+completed_at: '2026-11-10'
 ---
 
 # WI-078 — Planning Lifecycle & Evidence-Based Completion
@@ -1084,3 +1086,58 @@ Durante la implementación:
 ## 18. Learning
 
 _Pendiente de completar después de la implementación y validación._
+
+## Learning
+
+Capturado al cerrar WI-078 (liberado en v3.135.0).
+
+- **Delivery Progress ≠ Outcome Verification.** Que todos los Work Items estén completos ("trabajo
+  terminado") no demuestra que se alcanzó el resultado esperado. WI-078 separó explícitamente el
+  progreso de ejecución (Delivery) de la verificación del resultado (Outcome), y la readiness canónica
+  (`evaluate*Completion`) pasó a ser la fuente de verdad del cierre, reemplazando la señal estructural
+  `meetsCompletionPreconditions`. **Por qué:** mezclarlas producía falsos "listo" cuando faltaba
+  evidencia del resultado.
+
+- **El resultado se verifica por criterio, con evidencia concreta, no con checkboxes.** Cada Success
+  Criterion (y cada Exit Criterion de milestone) registra `status`/`evidence`/`reference`/`method`/
+  `verified_at`/`verified_by`, reutilizando `AcceptanceCriterionEvidence` (de WI-077) sin crear un
+  segundo motor de verificación. Un criterio `passed` sólo cuenta si tiene evidencia y referencia
+  reales; un Work Item completado nunca aprueba automáticamente un criterio de resultado.
+
+- **Modificar milestones no puede destruir evidencia en silencio.** `normalizeMilestones` fusiona sobre
+  la entrada existente (preserva `exit_verifications` y claves desconocidas); editar el título o
+  reordenar conserva la evidencia; eliminar un milestone con evidencia exige `allowMilestoneEvidenceLoss`,
+  y la UI de Admin ni siquiera envía ese flag, por lo que falla en vez de borrar. La cascada correcta en
+  datos necesita además una barrera explícita de autorización.
+
+- **Identidad de criterios estable: contra duplicados y evidencia obsoleta.** La evidencia se indexa por
+  el texto normalizado del criterio dentro de su ámbito (Epic/Plan/Milestone). Dos criterios con texto
+  colisionante no comparten evidencia (se rechaza el registro y se marcan ambiguos); editar un criterio
+  deja su evidencia previa *stale* (visible, nunca reatribuida ni dada por aprobada).
+
+- **Readiness ≠ autorización humana.** `READY_TO_COMPLETE`/`READY_WITH_EXCEPTIONS` jamás transiciona por
+  sí solo. Completar es una acción humana explícita (`completeEpic`/`completeDeliveryPlan`) que relee el
+  estado, reevalúa en el momento, comprueba la revisión y registra `completion_decision`. En MCP se
+  documentó que `confirm: true` es un paso de confirmación, no prueba de aprobación humana. Una excepción
+  aceptada exime un criterio concreto con motivo, pero nunca una dependencia bloqueante, trabajo
+  incompleto, ausencia de entregables ni un error de integridad.
+
+- **Integración Core → CLI/MCP/Admin sobre un único contrato.** La lógica de negocio vive sólo en Core;
+  CLI (`plan|epic start/verify/evidence/complete`), MCP (preview→confirm) y Admin (Completion Review) son
+  superficies delgadas que delegan. Un mismo artifact Markdown canónico es leído y escrito por las tres
+  interfaces — verificado en vivo: Admin escribió `outcome_verifications` + `completion_decision` y
+  `kaddo epic verify` los leyó.
+
+### Correcciones de pre-release
+
+- El parser de `kaddo verify` ahora reconoce AC agrupados en subsecciones (continúa dentro de
+  encabezados más profundos y se detiene en uno del mismo nivel o superior), sin aplanar los encabezados
+  de WI-078. Añadidas pruebas focalizadas del parser.
+- Se endureció el aislamiento del E2E de Planning (fixture dedicado `INI-053` para la mutación de
+  colaboración; aserciones con `.first()`).
+
+### Deuda independiente
+
+- `integrations.spec:17` (flujo de importación de Work Items externos) es intermitentemente inestable,
+  **preexistente** y ajeno a WI-078 (el diff no toca archivos de integraciones); queda documentado como
+  deuda independiente y no se ocultó con retries.
