@@ -13,13 +13,21 @@ import {
   transitionInitiative,
   updateInitiative,
   addCandidate,
+  updateCandidate,
+  removeCandidate,
   materializeCandidate,
+  recordInitiativeOutcomeVerification,
+  completeInitiative,
   addExternalLink,
   analyzeInitiative,
   evaluateInitiativeCompletion,
+  evaluateInitiativeById,
   suggestInitiativesForExternalItem,
   InitiativeWriteError,
+  InitiativeNotReadyError,
   type InitiativeStatus,
+  type UpdateCandidateInput,
+  type InitiativeEvidenceInput,
 } from '@kaddo/cli/core'
 import type { ToolResult } from './tools.js'
 
@@ -237,14 +245,15 @@ export function analyzeInitiativeTool(root: string, id: string): ToolResult {
 }
 
 /**
- * Human-gated completion. Without confirm, returns the completion-readiness analysis (preview) and
- * does NOT complete. With confirm=true (the human decision relayed by the agent), transitions the
- * Initiative to completed; the readiness findings are returned either way so uncovered scope is
- * visible even when the human chooses to complete anyway.
+ * Human-gated, evidence-based completion (WI-079). Without confirm, returns the readiness evaluation
+ * (declared success criteria vs recorded evidence, pending candidates, delivery, provenance) and does
+ * NOT complete. With confirm=true (the human decision relayed by the agent), it routes through the
+ * gated `completeInitiative`: when readiness is not READY_*, Core refuses — a Markdown checkbox is not
+ * evidence and cannot be bypassed. Record outcome evidence first (recordInitiativeEvidenceTool).
  */
 export function completeInitiativeTool(
   root: string,
-  args: { id: string; confirm?: boolean },
+  args: { id: string; confirm?: boolean; decidedBy?: string },
 ): ToolResult {
   const ini = getInitiative(root, args.id)
   if (!ini) return fail(`Initiative ${args.id} not found.`)
@@ -254,13 +263,84 @@ export function completeInitiativeTool(
       action: 'complete-initiative',
       readiness,
       instruction: readiness.ready
-        ? 'Initiative looks ready. Call again with confirm=true to complete (human decision).'
-        : 'Initiative is NOT ready (see readiness.reasons). Completion requires an explicit human decision: call again with confirm=true only if the human chooses to complete anyway.',
+        ? `Initiative is ${readiness.readiness}. Call again with confirm=true to complete (human decision).`
+        : 'Initiative is NOT ready (see readiness.reasons). Resolve blockers and record outcome evidence for each success criterion, then call again with confirm=true.',
     })
   }
   try {
-    const done = transitionInitiative(root, args.id, 'completed')
+    const done = completeInitiative(root, args.id, args.decidedBy ? { decidedBy: args.decidedBy } : {})
     return ok({ applied: true, readiness, result: { id: done.id, status: done.status } })
+  } catch (err) {
+    if (err instanceof InitiativeNotReadyError) {
+      return fail(`${err.message} Completion is evidence-gated and cannot be forced; record evidence and resolve blockers first.`)
+    }
+    if (err instanceof InitiativeWriteError) return fail(err.message)
+    throw err
+  }
+}
+
+/**
+ * Record outcome evidence for one declared success criterion (preview/confirm). The criterion text
+ * must match a criterion in the Initiative's "## Success Criteria"; undeclared criteria are rejected.
+ * Evidence is what moves an Initiative toward READY (a checkbox never does).
+ */
+export function recordInitiativeEvidenceTool(
+  root: string,
+  args: { id: string; criterion: string; status: InitiativeEvidenceInput['status']; evidence?: string; reference?: string; method?: InitiativeEvidenceInput['method']; confirm?: boolean },
+): ToolResult {
+  const ini = getInitiative(root, args.id)
+  if (!ini) return fail(`Initiative ${args.id} not found.`)
+  const input: InitiativeEvidenceInput = {
+    criterion: args.criterion,
+    status: args.status,
+    ...(args.evidence ? { evidence: args.evidence } : {}),
+    ...(args.reference ? { reference: args.reference } : {}),
+    ...(args.method ? { method: args.method } : {}),
+  }
+  if (!args.confirm) {
+    return ok({ action: 'record-initiative-evidence', preview: input, instruction: 'Call again with confirm=true to record this evidence.' })
+  }
+  try {
+    recordInitiativeOutcomeVerification(root, args.id, input)
+    return ok({ applied: true, readiness: evaluateInitiativeById(root, args.id) })
+  } catch (err) {
+    if (err instanceof InitiativeWriteError) return fail(err.message)
+    throw err
+  }
+}
+
+/** Edit a pending candidate (id, source signals and provenance are preserved). Materialized candidates are rejected. */
+export function updateCandidateTool(
+  root: string,
+  args: { id: string; candidateId: string; patch: UpdateCandidateInput; confirm?: boolean },
+): ToolResult {
+  const ini = getInitiative(root, args.id)
+  if (!ini) return fail(`Initiative ${args.id} not found.`)
+  if (!args.confirm) {
+    return ok({ action: 'update-candidate', preview: { candidateId: args.candidateId, patch: args.patch }, instruction: 'Call again with confirm=true to apply.' })
+  }
+  try {
+    const updated = updateCandidate(root, args.id, args.candidateId, args.patch)
+    return ok({ applied: true, candidates: updated.candidates })
+  } catch (err) {
+    if (err instanceof InitiativeWriteError) return fail(err.message)
+    throw err
+  }
+}
+
+/** Remove a pending candidate with a logged justification (never silently). Materialized candidates are rejected. */
+export function removeCandidateTool(
+  root: string,
+  args: { id: string; candidateId: string; reason: string; confirm?: boolean },
+): ToolResult {
+  const ini = getInitiative(root, args.id)
+  if (!ini) return fail(`Initiative ${args.id} not found.`)
+  if (!args.confirm) {
+    return ok({ action: 'remove-candidate', preview: { candidateId: args.candidateId, reason: args.reason }, instruction: 'Call again with confirm=true to remove.' })
+  }
+  try {
+    const updated = removeCandidate(root, args.id, args.candidateId, args.reason)
+    return ok({ applied: true, candidates: updated.candidates })
   } catch (err) {
     if (err instanceof InitiativeWriteError) return fail(err.message)
     throw err

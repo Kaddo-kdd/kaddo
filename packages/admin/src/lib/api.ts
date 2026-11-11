@@ -423,8 +423,33 @@ export type InitiativeCandidate = {
   id: string
   title: string
   type?: string
+  suggestedKnowledgeLevel?: string
   expectedValue?: string
+  notes?: string
   materializedAs: string | null
+}
+
+// Evidence-based Initiative completion (WI-079). `completion` on the detail is this shape.
+export type InitiativeCompletionEvaluation = {
+  id: string
+  kind: 'initiative'
+  status: string
+  readiness: 'READY_TO_COMPLETE' | 'READY_WITH_EXCEPTIONS' | 'NEEDS_WORK' | 'BLOCKED'
+  ready: boolean
+  reasons: string[]
+  blockers: string[]
+  warnings: string[]
+  outcome: OutcomeVerification
+  delivery: { total: number; completed: number; incomplete: number }
+  pendingCandidates: string[]
+  provenanceIssues: string[]
+  exceptions: { id: string; criterion?: string; status: string; reason?: string }[]
+}
+
+export type MaterializeCandidateResult = {
+  workItemId: string
+  fileName: string | null
+  alreadyMaterialized: boolean
 }
 
 export type InitiativeExternalLink = {
@@ -458,11 +483,12 @@ export type InitiativeDetail = {
   progress: { initiative: string; status: string; planning: InitiativePlanning; delivery: InitiativeDelivery }
   workItems: { id: string; title: string; status: string }[]
   analysis: { findings: InitiativeFinding[]; suggestedCandidates: InitiativeCandidate[]; successCriteria: { text: string; checked: boolean | null }[] }
-  completion: { ready: boolean; readiness: string; reasons: string[] }
+  completion: InitiativeCompletionEvaluation
   epic: string | null
   owners: string[]
   contributors: string[]
   body: string
+  revision: string
 }
 
 // Project Resources (WI-039)
@@ -546,8 +572,23 @@ export const api = {
   getInitiative: (initiativeId: string) => fetchApi<InitiativeDetail>(`/initiatives/${encodeURIComponent(initiativeId)}`),
   createInitiative: (body: { title: string; domains?: string[]; horizon?: string; priority?: string }) =>
     mutateApi<{ id: string }>('/initiatives', 'POST', body),
-  updateInitiative: (initiativeId: string, body: { status?: string; title?: string; horizon?: string; priority?: string; domains?: string[]; owners?: string[]; contributors?: string[] }) =>
+  updateInitiative: (initiativeId: string, body: { status?: string; title?: string; horizon?: string; priority?: string; domains?: string[]; owners?: string[]; contributors?: string[]; sections?: Record<string, string>; expectedRevision?: string }) =>
     mutateApi<{ id: string; status: string }>(`/initiatives/${encodeURIComponent(initiativeId)}`, 'PUT', body),
+  // Initiative candidate management + evidence-based completion (WI-079)
+  addInitiativeCandidate: (initiativeId: string, body: { title: string; type?: string; suggestedKnowledgeLevel?: string; expectedValue?: string; notes?: string }) =>
+    mutateApi<{ candidates: InitiativeCandidate[] }>(`/initiatives/${encodeURIComponent(initiativeId)}/candidates`, 'POST', body),
+  updateInitiativeCandidate: (initiativeId: string, candidateId: string, body: { title?: string; type?: string; suggestedKnowledgeLevel?: string; expectedValue?: string; notes?: string }) =>
+    mutateApi<{ candidates: InitiativeCandidate[] }>(`/initiatives/${encodeURIComponent(initiativeId)}/candidates/${encodeURIComponent(candidateId)}`, 'PUT', body),
+  removeInitiativeCandidate: (initiativeId: string, candidateId: string, reason: string) =>
+    mutateApi<{ candidates: InitiativeCandidate[] }>(`/initiatives/${encodeURIComponent(initiativeId)}/candidates/${encodeURIComponent(candidateId)}`, 'DELETE', { reason }),
+  materializeInitiativeCandidate: (initiativeId: string, candidateId: string) =>
+    mutateApi<MaterializeCandidateResult>(`/initiatives/${encodeURIComponent(initiativeId)}/candidates/${encodeURIComponent(candidateId)}/materialize`, 'POST'),
+  getInitiativeCompletion: (initiativeId: string) =>
+    fetchApi<InitiativeCompletionEvaluation>(`/initiatives/${encodeURIComponent(initiativeId)}/completion`),
+  recordInitiativeEvidence: (initiativeId: string, body: { criterion: string; status: EvidenceStatus; evidence?: string; reference?: string; method?: 'automated' | 'manual'; verifiedBy?: string }) =>
+    mutateApi<{ completion: InitiativeCompletionEvaluation }>(`/initiatives/${encodeURIComponent(initiativeId)}/evidence`, 'POST', body),
+  completeInitiative: (initiativeId: string, body: { decidedBy?: string; notes?: string }) =>
+    mutateApi<{ id: string; status: string; completion: InitiativeCompletionEvaluation }>(`/initiatives/${encodeURIComponent(initiativeId)}/complete`, 'POST', body),
   // Project Resources (WI-039)
   getResources: () => fetchApi<{ resources: ResourceSummary[] }>('/resources'),
   getResource: (id: string) => fetchApi<ResourceDetail>(`/resources/${encodeURIComponent(id)}`),

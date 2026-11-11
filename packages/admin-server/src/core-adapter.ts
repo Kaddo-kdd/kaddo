@@ -67,7 +67,16 @@ import {
   createInitiative as coreCreateInitiative,
   transitionInitiative as coreTransitionInitiative,
   updateInitiative as coreUpdateInitiative,
+  addCandidate as coreAddCandidate,
+  updateCandidate as coreUpdateCandidate,
+  removeCandidate as coreRemoveCandidate,
+  materializeCandidate as coreMaterializeCandidate,
+  recordInitiativeOutcomeVerification as coreRecordInitiativeOutcomeVerification,
+  completeInitiative as coreCompleteInitiative,
+  revisionOf as coreRevisionOf,
   InitiativeWriteError,
+  InitiativeNotReadyError,
+  InitiativeConflictError,
   getResources as coreGetResources,
   getResource as coreGetResource,
   createResource as coreCreateResource,
@@ -101,7 +110,11 @@ import {
   type InitiativeExternalLink,
   type AssociatedWorkItem,
   type InitiativeAnalysis,
-  type CompletionReadiness,
+  type InitiativeCompletionEvaluation,
+  type UpdateCandidateInput,
+  type CandidateInput,
+  type InitiativeEvidenceInput,
+  type MaterializeCandidateResult,
   buildConsolidationPlan,
   consolidationPlanStaleness,
   renderConsolidationMarkdown,
@@ -1088,11 +1101,13 @@ export type InitiativeDetailAdmin = {
   progress: InitiativeProgress
   workItems: AssociatedWorkItem[]
   analysis: InitiativeAnalysis
-  completion: CompletionReadiness
+  completion: InitiativeCompletionEvaluation
   epic: string | null
   owners: string[]
   contributors: string[]
   body: string
+  /** Concurrency fingerprint (WI-079 AC-04): echo back on edits to reject stale forms. */
+  revision: string
 }
 
 function assertValidInitiativeId(id: string): void {
@@ -1102,6 +1117,8 @@ function assertValidInitiativeId(id: string): void {
 }
 
 function mapInitiativeError(err: unknown): never {
+  if (err instanceof InitiativeNotReadyError) throw new CoreError('INITIATIVE_NOT_READY', err.message)
+  if (err instanceof InitiativeConflictError) throw new CoreError('INITIATIVE_CONFLICT', err.message)
   if (err instanceof InitiativeWriteError) throw new CoreError('INITIATIVE_WRITE', err.message)
   throw err as Error
 }
@@ -1148,6 +1165,7 @@ export function getInitiativeDetailAdmin(dir: string, id: string): InitiativeDet
     owners: ini.owners,
     contributors: ini.contributors,
     body: ini.body,
+    revision: coreRevisionOf(readFile(ini.filePath)),
   }
 }
 
@@ -1169,16 +1187,19 @@ export function createInitiativeAdmin(
 export function updateInitiativeAdmin(
   dir: string,
   id: string,
-  body: { status?: string; title?: string; horizon?: string; priority?: string; domains?: string[]; owners?: string[]; contributors?: string[] },
+  body: { status?: string; title?: string; horizon?: string; priority?: string; domains?: string[]; owners?: string[]; contributors?: string[]; sections?: Record<string, string>; expectedRevision?: string },
 ): { id: string; status: InitiativeStatus } {
   assertValidInitiativeId(id)
   try {
     let ini = coreGetInitiative(dir, id)
     if (!ini) throw new CoreError('INITIATIVE_NOT_FOUND', 'This Initiative does not exist in the current project.')
+    // A status change is a lifecycle transition, never a metadata edit (AC-04: no lifecycle change during
+    // a metadata edit). Completion stays off this path — it is evidence-gated via completeInitiativeAdmin.
     if (body.status) {
       ini = coreTransitionInitiative(dir, id, body.status as InitiativeStatus)
     }
-    if (body.title !== undefined || body.horizon !== undefined || body.priority !== undefined || body.domains !== undefined || body.owners !== undefined || body.contributors !== undefined) {
+    const hasMetadata = body.title !== undefined || body.horizon !== undefined || body.priority !== undefined || body.domains !== undefined || body.owners !== undefined || body.contributors !== undefined || body.sections !== undefined
+    if (hasMetadata) {
       ini = coreUpdateInitiative(dir, id, {
         title: body.title,
         horizon: body.horizon,
@@ -1186,13 +1207,76 @@ export function updateInitiativeAdmin(
         domains: body.domains,
         owners: body.owners,
         contributors: body.contributors,
-      })
+        ...(body.sections ? { sections: body.sections } : {}),
+      }, body.expectedRevision ? { expectedRevision: body.expectedRevision } : undefined)
     }
     return { id: ini.id, status: ini.status }
   } catch (err) {
     if (err instanceof CoreError) throw err
     mapInitiativeError(err)
   }
+}
+
+// --- Initiative candidates, outcome evidence & evidence-based completion (WI-079) ----------------
+
+export function addInitiativeCandidateAdmin(dir: string, id: string, body: CandidateInput): { candidates: InitiativeCandidate[] } {
+  assertValidInitiativeId(id)
+  try {
+    const ini = coreAddCandidate(dir, id, body)
+    return { candidates: ini.candidates }
+  } catch (err) { if (err instanceof CoreError) throw err; mapInitiativeError(err) }
+}
+
+export function updateInitiativeCandidateAdmin(dir: string, id: string, candidateId: string, patch: UpdateCandidateInput): { candidates: InitiativeCandidate[] } {
+  assertValidInitiativeId(id)
+  try {
+    const ini = coreUpdateCandidate(dir, id, candidateId, patch)
+    return { candidates: ini.candidates }
+  } catch (err) { if (err instanceof CoreError) throw err; mapInitiativeError(err) }
+}
+
+export function removeInitiativeCandidateAdmin(dir: string, id: string, candidateId: string, reason: string): { candidates: InitiativeCandidate[] } {
+  assertValidInitiativeId(id)
+  try {
+    const ini = coreRemoveCandidate(dir, id, candidateId, reason)
+    return { candidates: ini.candidates }
+  } catch (err) { if (err instanceof CoreError) throw err; mapInitiativeError(err) }
+}
+
+export function materializeInitiativeCandidateAdmin(dir: string, id: string, candidateId: string): MaterializeCandidateResult {
+  assertValidInitiativeId(id)
+  try {
+    return coreMaterializeCandidate(dir, id, candidateId)
+  } catch (err) { if (err instanceof CoreError) throw err; mapInitiativeError(err) }
+}
+
+/** Read-only readiness evaluation (declared success criteria vs recorded evidence + delivery + provenance). */
+export function getInitiativeCompletionAdmin(dir: string, id: string): InitiativeCompletionEvaluation {
+  assertValidInitiativeId(id)
+  const ini = coreGetInitiative(dir, id)
+  if (!ini) throw new CoreError('INITIATIVE_NOT_FOUND', 'This Initiative does not exist in the current project.')
+  return evaluateInitiativeCompletion(dir, ini)
+}
+
+export function recordInitiativeEvidenceAdmin(dir: string, id: string, body: InitiativeEvidenceInput): { completion: InitiativeCompletionEvaluation } {
+  assertValidInitiativeId(id)
+  try {
+    coreRecordInitiativeOutcomeVerification(dir, id, body)
+    const ini = coreGetInitiative(dir, id)!
+    return { completion: evaluateInitiativeCompletion(dir, ini) }
+  } catch (err) { if (err instanceof CoreError) throw err; mapInitiativeError(err) }
+}
+
+/** Evidence-gated completion. Refuses (INITIATIVE_NOT_READY) unless readiness is READY_*. */
+export function completeInitiativeAdmin(dir: string, id: string, body: { decidedBy?: string; notes?: string } = {}): { id: string; status: InitiativeStatus; completion: InitiativeCompletionEvaluation } {
+  assertValidInitiativeId(id)
+  try {
+    const done = coreCompleteInitiative(dir, id, {
+      ...(body.decidedBy ? { decidedBy: body.decidedBy } : {}),
+      ...(body.notes ? { note: body.notes } : {}),
+    })
+    return { id: done.id, status: done.status, completion: evaluateInitiativeCompletion(dir, done) }
+  } catch (err) { if (err instanceof CoreError) throw err; mapInitiativeError(err) }
 }
 
 export function getIntegrationFiltersAdmin(dir: string, id: string): ReturnType<typeof coreGetIntegrationFilters> {

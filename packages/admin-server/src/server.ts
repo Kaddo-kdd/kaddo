@@ -55,6 +55,13 @@ import {
   getInitiativeDetailAdmin,
   createInitiativeAdmin,
   updateInitiativeAdmin,
+  addInitiativeCandidateAdmin,
+  updateInitiativeCandidateAdmin,
+  removeInitiativeCandidateAdmin,
+  materializeInitiativeCandidateAdmin,
+  getInitiativeCompletionAdmin,
+  recordInitiativeEvidenceAdmin,
+  completeInitiativeAdmin,
   getResourcesAdmin,
   getResourceDetailAdmin,
   createResourceAdmin,
@@ -97,6 +104,11 @@ import {
   WorkItemTransitionSchema,
   InitiativeCreateSchema,
   InitiativeUpdateSchema,
+  InitiativeCandidateCreateSchema,
+  InitiativeCandidateUpdateSchema,
+  InitiativeCandidateRemoveSchema,
+  InitiativeEvidenceSchema,
+  InitiativeCompleteSchema,
   ResourceCreateSchema,
   ResourceUpdateSchema,
   DeprecationCreateSchema,
@@ -123,7 +135,9 @@ function statusForCode(code: string): number {
     case 'WORK_ITEM_CONFLICT':
     case 'WORK_ITEM_NOT_EDITABLE':
     case 'PLANNING_CONFLICT':
-    case 'PLANNING_NOT_READY': return 409
+    case 'PLANNING_NOT_READY':
+    case 'INITIATIVE_CONFLICT':
+    case 'INITIATIVE_NOT_READY': return 409
     case 'INVALID_INPUT':
     case 'INVALID_WORK_ITEM_ID':
     case 'INVALID_INTEGRATION_ID':
@@ -478,6 +492,39 @@ export async function createAdminServer(opts: AdminServerOptions) {
     const parsed = InitiativeUpdateSchema.safeParse(request.body)
     if (!parsed.success) return reply.code(400).send({ error: { code: 'INVALID_INPUT', message: 'Invalid initiative update.' } })
     return writeHandler(reply, () => updateInitiativeAdmin(projectDir, request.params.initiativeId, parsed.data))
+  })
+  // Candidate management (WI-079): add / edit / remove (justified) / materialize.
+  app.post<{ Params: { initiativeId: string } }>('/api/v1/admin/initiatives/:initiativeId/candidates', async (request, reply) => {
+    const parsed = InitiativeCandidateCreateSchema.safeParse(request.body)
+    if (!parsed.success) return reply.code(400).send({ error: { code: 'INVALID_INPUT', message: 'A candidate title is required.' } })
+    return writeHandler(reply, () => addInitiativeCandidateAdmin(projectDir, request.params.initiativeId, parsed.data))
+  })
+  app.put<{ Params: { initiativeId: string; candidateId: string } }>('/api/v1/admin/initiatives/:initiativeId/candidates/:candidateId', async (request, reply) => {
+    const parsed = InitiativeCandidateUpdateSchema.safeParse(request.body)
+    if (!parsed.success) return reply.code(400).send({ error: { code: 'INVALID_INPUT', message: 'Invalid candidate update.' } })
+    return writeHandler(reply, () => updateInitiativeCandidateAdmin(projectDir, request.params.initiativeId, request.params.candidateId, parsed.data))
+  })
+  app.delete<{ Params: { initiativeId: string; candidateId: string } }>('/api/v1/admin/initiatives/:initiativeId/candidates/:candidateId', async (request, reply) => {
+    const parsed = InitiativeCandidateRemoveSchema.safeParse(request.body)
+    if (!parsed.success) return reply.code(400).send({ error: { code: 'INVALID_INPUT', message: 'A justification is required to remove a candidate.' } })
+    return writeHandler(reply, () => removeInitiativeCandidateAdmin(projectDir, request.params.initiativeId, request.params.candidateId, parsed.data.reason))
+  })
+  app.post<{ Params: { initiativeId: string; candidateId: string } }>('/api/v1/admin/initiatives/:initiativeId/candidates/:candidateId/materialize', async (request, reply) => {
+    return writeHandler(reply, () => materializeInitiativeCandidateAdmin(projectDir, request.params.initiativeId, request.params.candidateId))
+  })
+  // Evidence-based completion (WI-079): readiness, record outcome evidence, complete (gated).
+  app.get<{ Params: { initiativeId: string } }>('/api/v1/admin/initiatives/:initiativeId/completion', async (request, reply) => {
+    return writeHandler(reply, () => getInitiativeCompletionAdmin(projectDir, request.params.initiativeId))
+  })
+  app.post<{ Params: { initiativeId: string } }>('/api/v1/admin/initiatives/:initiativeId/evidence', async (request, reply) => {
+    const parsed = InitiativeEvidenceSchema.safeParse(request.body)
+    if (!parsed.success) return reply.code(400).send({ error: { code: 'INVALID_INPUT', message: 'A criterion and status are required.' } })
+    return writeHandler(reply, () => recordInitiativeEvidenceAdmin(projectDir, request.params.initiativeId, parsed.data))
+  })
+  app.post<{ Params: { initiativeId: string } }>('/api/v1/admin/initiatives/:initiativeId/complete', async (request, reply) => {
+    const parsed = InitiativeCompleteSchema.safeParse(request.body ?? {})
+    if (!parsed.success) return reply.code(400).send({ error: { code: 'INVALID_INPUT', message: 'Invalid completion request.' } })
+    return writeHandler(reply, () => completeInitiativeAdmin(projectDir, request.params.initiativeId, parsed.data))
   })
 
   // Project Resources (WI-039): list/detail + CRUD, all via the Core contract.

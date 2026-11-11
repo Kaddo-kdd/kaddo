@@ -5,11 +5,16 @@ import os from 'node:os'
 import matter from 'gray-matter'
 import {
   analyzeInitiative,
-  evaluateInitiativeCompletion,
   parseSuccessCriteria,
 } from '../src/core/initiative-analysis.js'
+import { evaluateInitiativeCompletion } from '../src/core/initiative-verification.js'
 import { getInitiative } from '../src/core/initiative.js'
-import { createInitiative, materializeCandidate, transitionInitiative } from '../src/core/initiative-write.js'
+import {
+  createInitiative,
+  materializeCandidate,
+  transitionInitiative,
+  recordInitiativeOutcomeVerification,
+} from '../src/core/initiative-write.js'
 
 function makeProject(): string {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'kaddo-ini-analysis-'))
@@ -109,7 +114,7 @@ describe('evaluateInitiativeCompletion (AC-19, AC-20)', () => {
     expect(r.reasons.join(' ')).toMatch(/candidate/i)
   })
 
-  it('detects uncovered success criteria even when all Work Items are completed (AC-19)', () => {
+  it('treats unverified success criteria as not ready even when all Work Items are completed (AC-19, AC-22)', () => {
     const body = [
       '# Auth',
       '## Success Criteria',
@@ -123,17 +128,25 @@ describe('evaluateInitiativeCompletion (AC-19, AC-20)', () => {
     setWorkItemStatus(dir, 'WI-001', 'completed')
     const r = evaluateInitiativeCompletion(dir, getInitiative(dir, 'INI-001')!)
     expect(r.ready).toBe(false)
-    expect(r.reasons.join(' ')).toMatch(/uncovered/i)
+    expect(r.readiness).toBe('NEEDS_WORK')
+    // A Markdown checkbox is not evidence (AC-22); both criteria read as unverified.
+    expect(r.reasons.join(' ')).toMatch(/not verified/i)
   })
 
-  it('is ready when scope is covered and all Work Items completed', () => {
-    const body = ['# Auth', '## Success Criteria', '- [x] Login works', ''].join('\n')
+  it('is ready when every success criterion has recorded evidence and all Work Items completed', () => {
+    const body = ['# Auth', '## Success Criteria', '- Login works', ''].join('\n')
     createInitiative(dir, { title: 'Auth', candidates: [{ title: 'Login' }], body })
     materializeCandidate(dir, 'INI-001', 'WI-CANDIDATE-001')
     setWorkItemStatus(dir, 'WI-001', 'completed')
+    recordInitiativeOutcomeVerification(dir, 'INI-001', {
+      criterion: 'Login works',
+      status: 'passed',
+      evidence: 'login e2e green',
+      reference: 'auth.spec.ts',
+    })
     const r = evaluateInitiativeCompletion(dir, getInitiative(dir, 'INI-001')!)
     expect(r.ready).toBe(true)
-    expect(r.reasons).toHaveLength(0)
+    expect(r.readiness).toBe('READY_TO_COMPLETE')
   })
 
   it('never transitions the initiative (reports only — human gate)', () => {

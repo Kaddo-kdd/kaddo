@@ -13,6 +13,7 @@ import {
   materializeInitiativeCandidateTool,
   analyzeInitiativeTool,
   completeInitiativeTool,
+  recordInitiativeEvidenceTool,
   addInitiativeExternalLinkTool,
   suggestInitiativeForExternalItemTool,
 } from '../src/initiatives.js'
@@ -197,14 +198,62 @@ describe('kaddo_complete_initiative (AC-19, AC-20)', () => {
     expect(getInitiative(root, 'INI-001')!.status).toBe('in-progress') // not completed
   })
 
-  it('with confirm transitions to completed (human gate relayed)', () => {
+  it('refuses to complete an unverified Initiative even with confirm (evidence gate, AC-22)', () => {
     root = makeProject()
     config(root)
     createInitiativeTool(root, { title: 'Auth', confirm: true })
     updateInitiativeTool(root, { id: 'INI-001', status: 'in-progress', confirm: true })
-    const done = completeInitiativeTool(root, { id: 'INI-001', confirm: true })
+    const res = completeInitiativeTool(root, { id: 'INI-001', confirm: true })
+    expect(res.ok).toBe(false) // a Markdown checkbox / bare status is not evidence; cannot be forced
+    expect(getInitiative(root, 'INI-001')!.status).toBe('in-progress') // unchanged
+  })
+
+  it('completes once outcome evidence is recorded and committed scope is delivered', () => {
+    root = makeProject()
+    config(root)
+    // Initiative with one declared success criterion + a materialized, completed Work Item.
+    fs.mkdirSync(path.join(root, 'knowledge', 'delivery', 'initiatives'), { recursive: true })
+    fs.writeFileSync(
+      path.join(root, 'knowledge', 'delivery', 'initiatives', 'INI-020.md'),
+      [
+        '---', 'type: initiative', 'id: INI-020', 'title: Auth', 'status: in-progress',
+        'candidates:', '  - id: WI-CANDIDATE-001', '    title: SSO', '    materialized_as: WI-900',
+        '---', '# Auth', '', '## Success Criteria', '', '- SSO works end to end', '',
+      ].join('\n'),
+    )
+    const doneDir = path.join(root, 'knowledge', 'delivery', 'work-items', 'completed')
+    fs.mkdirSync(doneDir, { recursive: true })
+    fs.writeFileSync(
+      path.join(doneDir, 'WI-900.md'),
+      [
+        '---', 'id: WI-900', 'type: feature', 'title: SSO', 'status: completed',
+        'initiative: INI-020', 'source: initiative', 'source_id: WI-CANDIDATE-001',
+        'source_initiative: INI-020', '---', '# x', '',
+      ].join('\n'),
+    )
+
+    // Not ready until evidence is recorded.
+    expect(completeInitiativeTool(root, { id: 'INI-020', confirm: true }).ok).toBe(false)
+
+    const rec = recordInitiativeEvidenceTool(root, {
+      id: 'INI-020', criterion: 'SSO works end to end', status: 'passed',
+      evidence: 'sso e2e green', reference: 'sso.spec.ts', confirm: true,
+    })
+    expect(rec.ok).toBe(true)
+
+    const done = completeInitiativeTool(root, { id: 'INI-020', confirm: true, decidedBy: 'lead' })
     expect(done.ok).toBe(true)
     expect(data(done).applied).toBe(true)
-    expect(getInitiative(root, 'INI-001')!.status).toBe('completed')
+    expect(getInitiative(root, 'INI-020')!.status).toBe('completed')
+  })
+
+  it('rejects evidence for an undeclared criterion', () => {
+    root = makeProject()
+    config(root)
+    createInitiativeTool(root, { title: 'Auth', confirm: true })
+    const res = recordInitiativeEvidenceTool(root, {
+      id: 'INI-001', criterion: 'not a declared criterion', status: 'passed', confirm: true,
+    })
+    expect(res.ok).toBe(false)
   })
 })

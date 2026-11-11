@@ -106,12 +106,11 @@ describe('initiative transitions', () => {
   beforeEach(() => { dir = makeProject() })
   afterEach(() => cleanup(dir))
 
-  it('transitions planned → in-progress → completed and sets completed_at', () => {
+  it('transitions planned → in-progress, and refuses → completed (completion is evidence-gated)', () => {
     createInitiative(dir, { title: 'X' })
     expect(transitionInitiative(dir, 'INI-001', 'in-progress').status).toBe('in-progress')
-    const done = transitionInitiative(dir, 'INI-001', 'completed')
-    expect(done.status).toBe('completed')
-    expect(done.rawFrontmatter.completed_at).toBeTruthy()
+    // Completion is no longer a plain transition (WI-079 D7): it must go through completeInitiative.
+    expect(() => transitionInitiative(dir, 'INI-001', 'completed')).toThrow(/completeInitiative/)
   })
 
   it('rejects an invalid transition', () => {
@@ -169,10 +168,13 @@ describe('candidate materialization (AC-08)', () => {
     expect(cand.materializedAs).toBe('WI-001')
   })
 
-  it('refuses to materialize the same candidate twice', () => {
+  it('is idempotent when materializing the same candidate twice (WI-079 D3)', () => {
     createInitiative(dir, { title: 'Auth', candidates: [{ title: 'Login form' }] })
-    materializeCandidate(dir, 'INI-001', 'WI-CANDIDATE-001')
-    expect(() => materializeCandidate(dir, 'INI-001', 'WI-CANDIDATE-001')).toThrow(InitiativeWriteError)
+    const first = materializeCandidate(dir, 'INI-001', 'WI-CANDIDATE-001')
+    expect(first.alreadyMaterialized).toBe(false)
+    const second = materializeCandidate(dir, 'INI-001', 'WI-CANDIDATE-001')
+    expect(second.alreadyMaterialized).toBe(true)
+    expect(second.workItemId).toBe(first.workItemId)
   })
 })
 

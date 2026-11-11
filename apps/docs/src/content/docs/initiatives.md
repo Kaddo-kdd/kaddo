@@ -60,9 +60,18 @@ association from the Work Item artifacts themselves — there is no second list 
 
 ## Candidates
 
-An Initiative can hold **Work Item candidates** that are not yet materialized. Materializing a
-candidate creates a draft Work Item associated to the Initiative and marks the candidate as
-materialized, so planning coverage reflects it.
+An Initiative can hold **Work Item candidates** that are not yet materialized. A pending candidate
+can be **edited** (its id, source signals and provenance are preserved) or **removed** — removal
+always requires a justification and is logged under `removed_candidates`, and a removed candidate's
+id is **retired, never reused**. A materialized candidate is read-only here; reconcile it through its
+Work Item instead.
+
+Materializing a candidate creates a draft Work Item associated to the Initiative and marks the
+candidate as materialized, so planning coverage reflects it. Materialization is **idempotent**:
+re-running it returns the same Work Item instead of creating a duplicate, and if a forward pointer is
+lost (a partial failure) Kaddo recovers it from the Work Item's provenance rather than re-creating
+work. A dangling `materialized_as` (the Work Item is gone) is surfaced as an error, never silently
+re-created.
 
 ## Progress
 
@@ -77,11 +86,20 @@ Kaddo separates two dimensions — there is no single arbitrary percentage:
 pending candidates, delivery status, and findings. Suggested candidates are the Initiative's own
 pending candidates (which carry their source signals) — Kaddo never invents work.
 
-Completion is **human-gated**. `kaddo initiative complete <id>` reports completion readiness and
-asks for confirmation. An Initiative is *ready* only when committed scope is covered: no pending
-candidates, no uncovered success criteria, and all associated Work Items completed. Kaddo detects
-committed-but-uncovered scope **even when every Work Item is completed**, and never marks an
-Initiative completed on its own.
+Completion is **evidence-based and human-gated**, reusing the same verification contract as Plans and
+Epics — there is no parallel verifier. Readiness is one of `READY_TO_COMPLETE`,
+`READY_WITH_EXCEPTIONS`, `NEEDS_WORK` or `BLOCKED`. An Initiative is *ready* only when:
+
+- every declared **success criterion** has **recorded outcome evidence** (`passed`, or waived by an
+  accepted exception) — a Markdown checkbox is **not** evidence;
+- there are no pending candidates and all committed scope is delivered;
+- candidate → Work Item provenance is intact (a broken relation is `BLOCKED`).
+
+Evidence is recorded per criterion in frontmatter `outcome_verifications` (same shape as
+Epics/Plans). A completed delivery whose outcome is still unverified stays `NEEDS_WORK`. Completion is
+never a plain status transition: `transitionInitiative(... 'completed')` is refused, and
+`completeInitiative` applies only when readiness is `READY_*`, recording an explicit
+`completion_decision`. Kaddo never marks an Initiative completed on its own.
 
 ## CLI
 
@@ -104,10 +122,20 @@ Read tools: `kaddo_list_initiatives`, `kaddo_get_initiative`, `kaddo_get_initiat
 `kaddo_suggest_initiative_for_external_item`.
 
 Mutation tools (preview without `confirm`, apply with `confirm: true`): `kaddo_create_initiative`,
-`kaddo_update_initiative`, `kaddo_add_initiative_candidate`,
-`kaddo_materialize_initiative_candidate`, `kaddo_add_initiative_external_link`,
-`kaddo_complete_initiative`. Agents can analyze, propose and preview, but never materialize
-candidates or complete an Initiative silently.
+`kaddo_update_initiative`, `kaddo_add_initiative_candidate`, `kaddo_update_initiative_candidate`,
+`kaddo_remove_initiative_candidate`, `kaddo_materialize_initiative_candidate`,
+`kaddo_add_initiative_external_link`, `kaddo_record_initiative_evidence`, `kaddo_complete_initiative`.
+Recording evidence rejects any criterion that is not declared in the Initiative's success criteria,
+and completion is evidence-gated — it cannot be forced past an unverified outcome. Agents can analyze,
+propose and preview, but never materialize candidates, record evidence, or complete an Initiative
+silently.
+
+## Admin
+
+The Admin **Initiative** screen manages candidates (add / edit / remove-with-justification /
+materialize), shows the **Completion Review** with per-criterion outcome verification, lets a human
+record evidence, and offers a gated **Complete** action. Completion never appears as a plain status
+button — it is an explicit, evidence-backed decision.
 
 ## External traceability
 

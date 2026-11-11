@@ -343,6 +343,45 @@ export const InitiativeUpdateSchema = z.object({
   domains: z.array(z.string()).optional(),
   owners: z.array(z.string()).optional(),
   contributors: z.array(z.string()).optional(),
+  // WI-079: structured intention-section edits (heading → new body) + concurrency guard.
+  sections: z.record(z.string()).optional(),
+  expectedRevision: z.string().optional(),
+})
+
+// Initiative candidate management (WI-079)
+export const InitiativeCandidateCreateSchema = z.object({
+  title: z.string().min(1),
+  type: z.string().optional(),
+  suggestedKnowledgeLevel: z.string().optional(),
+  expectedValue: z.string().optional(),
+  notes: z.string().optional(),
+})
+
+export const InitiativeCandidateUpdateSchema = z.object({
+  title: z.string().min(1).optional(),
+  type: z.string().optional(),
+  suggestedKnowledgeLevel: z.string().optional(),
+  expectedValue: z.string().optional(),
+  notes: z.string().optional(),
+})
+
+export const InitiativeCandidateRemoveSchema = z.object({
+  reason: z.string().min(1),
+})
+
+// Initiative outcome evidence + evidence-based completion (WI-079)
+export const InitiativeEvidenceSchema = z.object({
+  criterion: z.string().min(1),
+  status: z.enum(['passed', 'failed', 'not-verified', 'manual-review-required']),
+  evidence: z.string().optional(),
+  reference: z.string().optional(),
+  method: z.enum(['automated', 'manual']).optional(),
+  verifiedBy: z.string().optional(),
+})
+
+export const InitiativeCompleteSchema = z.object({
+  decidedBy: z.string().optional(),
+  notes: z.string().optional(),
 })
 
 export const WorkItemEditModelSchema = WorkItemInputSchema.extend({

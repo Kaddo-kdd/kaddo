@@ -92,6 +92,9 @@ import {
   suggestInitiativeForExternalItemTool,
   analyzeInitiativeTool,
   completeInitiativeTool,
+  recordInitiativeEvidenceTool,
+  updateCandidateTool,
+  removeCandidateTool,
 } from './initiatives.js'
 import {
   listPlansTool, getPlanTool, getPlanProgressTool,
@@ -908,10 +911,56 @@ export function createServer(root: string): McpServer {
     'kaddo_complete_initiative',
     {
       title: 'Complete initiative',
-      description: 'Human-gated completion. Without confirm returns completion readiness (does NOT complete). With confirm=true transitions the Initiative to completed; readiness findings are returned either way so uncovered scope stays visible. Never completes autonomously.',
-      inputSchema: { id: z.string(), confirm: z.boolean().optional() },
+      description: `Human-gated, evidence-based completion. Without confirm returns readiness (does NOT complete). With confirm=true routes through the gated path: if readiness is not READY_* Core refuses — a Markdown checkbox is not evidence and cannot be bypassed. Record outcome evidence first. ${INITIATIVE_WRITE_NOTE}`,
+      inputSchema: { id: z.string(), confirm: z.boolean().optional(), decidedBy: z.string().optional() },
     },
     async (args) => toolText(guarded(root, () => completeInitiativeTool(root, args)))
+  )
+  server.registerTool(
+    'kaddo_record_initiative_evidence',
+    {
+      title: 'Record initiative outcome evidence',
+      description: `Record outcome evidence for one declared success criterion (preview/confirm). The criterion text must match the Initiative's "## Success Criteria"; undeclared criteria are rejected. Evidence is what moves an Initiative toward READY. ${INITIATIVE_WRITE_NOTE}`,
+      inputSchema: {
+        id: z.string(),
+        criterion: z.string(),
+        status: z.enum(['passed', 'failed', 'not-verified', 'manual-review-required']),
+        evidence: z.string().optional(),
+        reference: z.string().optional(),
+        method: z.enum(['automated', 'manual']).optional(),
+        confirm: z.boolean().optional(),
+      },
+    },
+    async (args) => toolText(guarded(root, () => recordInitiativeEvidenceTool(root, args)))
+  )
+  server.registerTool(
+    'kaddo_update_initiative_candidate',
+    {
+      title: 'Update initiative candidate',
+      description: `Edit a pending candidate (title, type, expected value, notes). Its id, source signals and provenance are preserved; materialized candidates are rejected. ${INITIATIVE_WRITE_NOTE}`,
+      inputSchema: {
+        id: z.string(),
+        candidateId: z.string(),
+        patch: z.object({
+          title: z.string().optional(),
+          type: z.string().optional(),
+          suggestedKnowledgeLevel: z.string().optional(),
+          expectedValue: z.string().optional(),
+          notes: z.string().optional(),
+        }),
+        confirm: z.boolean().optional(),
+      },
+    },
+    async (args) => toolText(guarded(root, () => updateCandidateTool(root, args)))
+  )
+  server.registerTool(
+    'kaddo_remove_initiative_candidate',
+    {
+      title: 'Remove initiative candidate',
+      description: `Remove a pending candidate with a logged justification (never silently; the id is retired, never reused). Materialized candidates are rejected. ${INITIATIVE_WRITE_NOTE}`,
+      inputSchema: { id: z.string(), candidateId: z.string(), reason: z.string(), confirm: z.boolean().optional() },
+    },
+    async (args) => toolText(guarded(root, () => removeCandidateTool(root, args)))
   )
 
   // --- Telemetry (WI-016) ---

@@ -16,9 +16,12 @@ import {
   createInitiative,
   transitionInitiative,
   materializeCandidate,
+  completeInitiative,
   InitiativeWriteError,
+  InitiativeNotReadyError,
 } from '../core/initiative-write.js'
-import { analyzeInitiative, evaluateInitiativeCompletion } from '../core/initiative-analysis.js'
+import { analyzeInitiative } from '../core/initiative-analysis.js'
+import { evaluateInitiativeCompletion } from '../core/initiative-verification.js'
 
 function requireInit(dir: string): void {
   if (!loadConfig(dir)) {
@@ -209,18 +212,20 @@ export async function runInitiativeComplete(id: string, opts: { yes?: boolean } 
   }
   const readiness = evaluateInitiativeCompletion(dir, ini)
   if (readiness.ready) {
-    log.success('Completion readiness: ready.')
+    log.success(`Completion readiness: ${readiness.readiness}.`)
   } else {
-    log.warn('Completion readiness: NOT ready.')
+    log.warn(`Completion readiness: ${readiness.readiness} — NOT ready.`)
     for (const r of readiness.reasons) log.warn(`  - ${r}`)
   }
 
+  // Completion is evidence-gated (WI-079): unless readiness is READY_*, completeInitiative refuses.
+  // We surface the readiness, let the human confirm, and route the close through the gated path.
   if (!opts.yes) {
     log.info('')
     const proceed = await confirm({
       message: readiness.ready
         ? 'Mark this Initiative as completed?'
-        : 'This Initiative is not ready. Complete it anyway?',
+        : 'This Initiative is not ready. Try to complete it anyway?',
       initialValue: false,
     })
     if (!proceed) {
@@ -230,10 +235,15 @@ export async function runInitiativeComplete(id: string, opts: { yes?: boolean } 
   }
 
   try {
-    const done = transitionInitiative(dir, id, 'completed')
+    const done = completeInitiative(dir, id)
     log.success(`Status: ${done.status}`)
     outro(`Initiative ${done.id} completed.`)
   } catch (err) {
+    if (err instanceof InitiativeNotReadyError) {
+      log.error(err.message)
+      log.warn('Record outcome evidence and resolve blockers before completing this Initiative.')
+      process.exit(1)
+    }
     log.error(err instanceof InitiativeWriteError ? err.message : String(err))
     process.exit(1)
   }

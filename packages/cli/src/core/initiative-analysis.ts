@@ -42,13 +42,6 @@ export type InitiativeAnalysis = {
   suggestedCandidates: InitiativeCandidate[]
 }
 
-export type CompletionReadiness = {
-  initiative: string
-  ready: boolean
-  readiness: 'ready' | 'not-ready'
-  reasons: string[]
-}
-
 const SUCCESS_HEADING_RE = /^#{1,6}\s*(success criteria|criterios de[ét]xito|criterios de éxito)\s*$/i
 const HEADING_RE = /^#{1,6}\s+/
 const CHECK_ITEM_RE = /^\s*[-*]\s+\[([ xX])\]\s+(.*)$/
@@ -150,32 +143,8 @@ export function analyzeInitiative(dir: string, ini: Initiative): InitiativeAnaly
   }
 }
 
-/**
- * Evaluate whether an Initiative looks complete. Reports only — it never transitions the Initiative
- * (completion is human-gated by the caller). An Initiative is "ready" only when committed scope is
- * covered: no pending candidates, no uncovered success criteria, and all associated Work Items
- * completed (with at least one). Detects committed-but-uncovered scope even if every Work Item is
- * done (AC-19).
- */
-export function evaluateInitiativeCompletion(dir: string, ini: Initiative): CompletionReadiness {
-  const analysis = analyzeInitiative(dir, ini)
-  const reasons: string[] = []
-
-  for (const f of analysis.findings) {
-    if (f.severity === 'blocking') reasons.push(f.message)
-  }
-  if (analysis.progress.delivery.total === 0 && analysis.pendingCandidates.length === 0) {
-    reasons.push('Nothing has been delivered or committed under this Initiative.')
-  }
-
-  const ready = reasons.length === 0
-  return {
-    initiative: ini.id,
-    ready,
-    readiness: ready ? 'ready' : 'not-ready',
-    reasons,
-  }
-}
+// Completion evaluation moved to initiative-verification.ts (WI-079): it is now evidence-based and
+// reuses WI-078's categories/contracts, instead of treating a Markdown checkbox as coverage.
 
 /** Re-export so analysis consumers can assemble context from one import. */
 export { getInitiativeContext }

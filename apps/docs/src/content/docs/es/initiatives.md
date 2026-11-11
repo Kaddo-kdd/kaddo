@@ -61,9 +61,18 @@ sincronizada.
 
 ## Candidates
 
-Una Iniciativa puede contener **Work Item candidates** aún no materializados. Materializar un
-candidate crea un Work Item draft asociado a la Iniciativa y marca el candidate como materializado,
-de modo que la cobertura de planning lo refleja.
+Una Iniciativa puede contener **Work Item candidates** aún no materializados. Un candidate pendiente
+puede **editarse** (se conservan su id, source signals y provenance) o **retirarse** — el retiro
+siempre exige una justificación, queda registrado en `removed_candidates`, y el id del candidate
+retirado **se jubila, nunca se reutiliza**. Un candidate materializado es de solo lectura aquí;
+reconcílialo a través de su Work Item.
+
+Materializar un candidate crea un Work Item draft asociado a la Iniciativa y marca el candidate como
+materializado, de modo que la cobertura de planning lo refleja. La materialización es **idempotente**:
+repetirla devuelve el mismo Work Item en lugar de crear un duplicado, y si se pierde el puntero hacia
+adelante (un fallo parcial) Kaddo lo recupera desde el provenance del Work Item en vez de recrear
+trabajo. Un `materialized_as` colgante (el Work Item ya no existe) se reporta como error, nunca se
+recrea en silencio.
 
 ## Progreso
 
@@ -79,11 +88,21 @@ criteria, candidates pendientes, estado del delivery y findings. Los candidates 
 propios candidates pendientes de la Iniciativa (que llevan sus source signals) — Kaddo nunca
 inventa trabajo.
 
-La completion tiene **human gate**. `kaddo initiative complete <id>` reporta la readiness y pide
-confirmación. Una Iniciativa está *ready* solo cuando el scope comprometido está cubierto: sin
-candidates pendientes, sin success criteria sin cubrir, y con todos los Work Items asociados
-completados. Kaddo detecta scope comprometido sin cubrir **aunque todos los Work Items estén
-completados**, y nunca marca una Iniciativa como completada por su cuenta.
+La completion es **basada en evidencia y con human gate**, reutilizando el mismo contrato de
+verificación que Plans y Epics — no hay un verificador paralelo. La readiness es uno de
+`READY_TO_COMPLETE`, `READY_WITH_EXCEPTIONS`, `NEEDS_WORK` o `BLOCKED`. Una Iniciativa está *ready*
+solo cuando:
+
+- cada **success criterion** declarado tiene **evidencia de resultado registrada** (`passed`, o
+  exceptuado por una excepción aceptada) — un checkbox de Markdown **no** es evidencia;
+- no hay candidates pendientes y todo el scope comprometido está entregado;
+- el provenance candidate → Work Item está íntegro (una relación rota es `BLOCKED`).
+
+La evidencia se registra por criterio en el frontmatter `outcome_verifications` (misma forma que
+Epics/Plans). Un delivery completado cuyo resultado sigue sin verificar permanece en `NEEDS_WORK`. La
+completion nunca es una simple transición de estado: `transitionInitiative(... 'completed')` se
+rechaza, y `completeInitiative` solo aplica cuando la readiness es `READY_*`, registrando una
+`completion_decision` explícita. Kaddo nunca marca una Iniciativa como completada por su cuenta.
 
 ## CLI
 
@@ -106,10 +125,20 @@ Tools de lectura: `kaddo_list_initiatives`, `kaddo_get_initiative`, `kaddo_get_i
 `kaddo_suggest_initiative_for_external_item`.
 
 Tools de mutación (preview sin `confirm`, aplican con `confirm: true`): `kaddo_create_initiative`,
-`kaddo_update_initiative`, `kaddo_add_initiative_candidate`,
-`kaddo_materialize_initiative_candidate`, `kaddo_add_initiative_external_link`,
-`kaddo_complete_initiative`. Los agentes pueden analizar, proponer y hacer preview, pero nunca
-materializan candidates ni completan una Iniciativa en silencio.
+`kaddo_update_initiative`, `kaddo_add_initiative_candidate`, `kaddo_update_initiative_candidate`,
+`kaddo_remove_initiative_candidate`, `kaddo_materialize_initiative_candidate`,
+`kaddo_add_initiative_external_link`, `kaddo_record_initiative_evidence`, `kaddo_complete_initiative`.
+Registrar evidencia rechaza cualquier criterio que no esté declarado en los success criteria de la
+Iniciativa, y la completion está basada en evidencia — no puede forzarse con un resultado sin
+verificar. Los agentes pueden analizar, proponer y hacer preview, pero nunca materializan candidates,
+registran evidencia ni completan una Iniciativa en silencio.
+
+## Admin
+
+La pantalla **Initiative** de Admin gestiona candidates (crear / editar / retirar-con-justificación /
+materializar), muestra el **Completion Review** con verificación de resultado por criterio, permite a
+una persona registrar evidencia y ofrece una acción **Complete** con gate. La completion nunca aparece
+como un simple botón de estado — es una decisión explícita respaldada por evidencia.
 
 ## Trazabilidad externa
 
