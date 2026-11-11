@@ -2,7 +2,7 @@
 type: feature
 id: WI-081
 title: Planning Progress & Execution Insights
-status: in-progress
+status: completed
 work_type: feature
 created_at: '2026-11-11'
 source:
@@ -63,6 +63,239 @@ original_snapshot:
   type: feature
   status: draft
 ready_at: '2026-11-11'
+implementation_status: completed
+validation_status: passed
+released_in: v3.137.0
+implementation_evidence:
+  repositories:
+    cli:
+      role: core
+      status: completed
+      changed_paths:
+        - packages/cli/src/core/planning-insights.ts
+        - packages/cli/src/core/delivery-planning.ts
+        - packages/cli/src/core.ts
+        - packages/cli/tests/planning-insights.test.ts
+      validations:
+        - command: pnpm vitest run packages/cli/tests/planning-insights.test.ts
+          status: passed
+        - command: pnpm --filter @kaddo/cli build
+          status: passed
+    admin-server:
+      role: module
+      status: completed
+      changed_paths:
+        - packages/admin-server/src/core-adapter.ts
+        - packages/admin-server/src/server.ts
+        - packages/admin-server/tests/planning-insights.test.ts
+      validations:
+        - command: >-
+            pnpm vitest run packages/admin-server/tests/planning-insights.test.ts
+          status: passed
+    admin:
+      role: module
+      status: completed
+      changed_paths:
+        - packages/admin/src/components/PlanningInsights.tsx
+        - packages/admin/src/routes/Planning.tsx
+        - packages/admin/src/lib/api.ts
+        - packages/admin/e2e/planning-insights.spec.ts
+      validations:
+        - command: >-
+            pnpm --filter @kaddo/admin exec playwright test (suite completa, 53/53)
+          status: passed
+        - command: pnpm --filter @kaddo/admin exec tsc -b
+          status: passed
+    docs:
+      role: module
+      status: completed
+      changed_paths:
+        - apps/docs/src/content/docs/delivery-planning.md
+        - apps/docs/src/content/docs/es/delivery-planning.md
+      validations:
+        - command: pnpm --filter ./apps/docs build
+          status: passed
+  ac_verifications:
+    - criterion: '**AC-01:** Existe un inventario documentado de métricas/señales, sus funciones canónicas y su interpretación.'
+      status: passed
+      evidence: >-
+        §6.5 del WI tabula cada indicador con su función Core de origen
+        (computeX Progress, evaluateX Completion, validatePlanningGraph, etc.).
+      reference: knowledge/delivery/work-items/completed/WI-081-planning-progress-execution-insights.md
+      method: manual
+    - criterion: '**AC-02:** Planning Coverage, Delivery Progress y Outcome Verification aparecen separados; no existe porcentaje global engañoso.'
+      status: passed
+      evidence: >-
+        PlanningInsights expone coverage/delivery/outcome como estructuras
+        distintas; test "keeps coverage, delivery and outcome separate".
+      reference: packages/cli/tests/planning-insights.test.ts
+      method: automated
+    - criterion: '**AC-03:** Los totales de Work Items no presentan doble conteo por asociaciones múltiples dentro del mismo universo.'
+      status: passed
+      evidence: >-
+        Se enumera cada WI una vez (discoverWorkItems) y se clasifica; test
+        "dedupes a Work Item shared by Initiative and Epic".
+      reference: packages/cli/tests/planning-insights.test.ts
+      method: automated
+    - criterion: '**AC-04:** La ausencia de datos se comunica sin inventar ceros, cumplimiento, riesgos ni fechas.'
+      status: passed
+      evidence: >-
+        Proyecto vacío devuelve ceros sin NaN; la UI muestra "—"/"no data" cuando
+        el denominador es cero (test empty project + componente).
+      reference: packages/cli/tests/planning-insights.test.ts
+      method: automated
+    - criterion: '**AC-05:** La vista admite Plans/Epics/Initiatives opcionales y Work Items independientes sin relaciones ficticias.'
+      status: passed
+      evidence: >-
+        delivery.independent separa los WI sin jerarquía; test valida WI
+        independiente contado aparte, no forzado.
+      reference: packages/cli/tests/planning-insights.test.ts
+      method: automated
+    - criterion: '**AC-06:** Toda agregación o clasificación nueva se implementa en Core y Admin no duplica reglas de dominio.'
+      status: passed
+      evidence: >-
+        La agregación vive en planning-insights.ts (Core); el adaptador solo
+        delega (getPlanningInsightsAdmin), sin reglas en adapter/UI/SQL.
+      reference: packages/cli/src/core/planning-insights.ts
+      method: automated
+    - criterion: '**AC-07:** Overview muestra una síntesis legible de bloqueos, resultados pendientes de verificación y milestones que requieren revisión.'
+      status: passed
+      evidence: >-
+        Tres indicadores (blocking/outcome/milestones) en el Overview; E2E asserta
+        su presencia.
+      reference: packages/admin/e2e/planning-insights.spec.ts
+      method: automated
+    - criterion: '**AC-08:** La vista presenta cobertura de candidatos y entrega de Work Items, con universos y denominadores claros.'
+      status: passed
+      evidence: >-
+        Coverage (materialized/total) y Delivery (completed/total, blocked,
+        independent) con denominadores explícitos; test del endpoint.
+      reference: packages/admin-server/tests/planning-insights.test.ts
+      method: automated
+    - criterion: '**AC-09:** Los estados de outcome muestran passed/failed/not-verified/manual-review y situaciones ambiguas/obsoletas donde existan.'
+      status: passed
+      evidence: >-
+        OutcomeRollup lleva passed/failed/notVerified/manualReview/ambiguous/stale;
+        la UI los muestra por separado.
+      reference: packages/cli/tests/planning-insights.test.ts
+      method: automated
+    - criterion: '**AC-10:** Completion readiness se representa sin confundirlo con lifecycle `completed` ni con autorización humana.'
+      status: passed
+      evidence: >-
+        La tabla Readiness muestra READY_*/NEEDS_WORK/BLOCKED distinto del status;
+        E2E asserta la nota "not the same as a completed lifecycle status".
+      reference: packages/admin/e2e/planning-insights.spec.ts
+      method: automated
+    - criterion: '**AC-11:** Needs attention recoge hallazgos canónicos de dependencias, trabajo incompleto, cobertura y verificación pendiente.'
+      status: passed
+      evidence: >-
+        La Attention Queue se deriva de validatePlanningGraph + evaluaciones por
+        entidad; test "surfaces structured attention signals".
+      reference: packages/cli/tests/planning-insights.test.ts
+      method: automated
+    - criterion: '**AC-12:** Cada señal conserva artifact origen, tipo, explicación y enlace de navegación cuando existe destino.'
+      status: passed
+      evidence: >-
+        AttentionItem lleva type/severity/artifactId/artifactKind/title/reason/link;
+        test asserta artifactId y link.
+      reference: packages/cli/tests/planning-insights.test.ts
+      method: automated
+    - criterion: '**AC-13:** Señales duplicadas por la misma causa se consolidan sin perder hallazgos diferentes.'
+      status: passed
+      evidence: >-
+        Consolidación por clave (type|artifactId|reason) con Set; se conservan
+        razones distintas y el orden es determinista.
+      reference: packages/cli/src/core/planning-insights.ts
+      method: automated
+    - criterion: '**AC-14:** Los filtros por tipo de señal y tipo de artifact funcionan sin alterar los datos.'
+      status: passed
+      evidence: >-
+        E2E filtra por "dependency" y vuelve a "all"; el filtrado es solo de vista
+        (useMemo), sin mutación.
+      reference: packages/admin/e2e/planning-insights.spec.ts
+      method: automated
+    - criterion: '**AC-15:** Riesgos declarados y bloqueos detectados son conceptos separados; no hay scores de riesgo inventados.'
+      status: passed
+      evidence: >-
+        Los riesgos declarados son tipo "declared-risk" (info), separados de los
+        blockers; test asserta la categoría. Sin score de riesgo.
+      reference: packages/cli/tests/planning-insights.test.ts
+      method: automated
+    - criterion: '**AC-16:** Milestones exponen criterios de salida y evidencia actual sin inferir aprobación desde delivery o checkboxes.'
+      status: passed
+      evidence: >-
+        MilestoneInsight usa planMilestoneVerifications (contrato WI-078); test y
+        E2E confirman RM-08 needsReview sin inferir del Epic.
+      reference: packages/cli/tests/planning-insights.test.ts
+      method: automated
+    - criterion: '**AC-17:** La navegación desde insights lleva correctamente a los detalles canónicos existentes.'
+      status: passed
+      evidence: >-
+        E2E hace clic en PLAN-001 y aterriza en /planning/plans/PLAN-001; links
+        por kind (plan/epic/initiative/work-item).
+      reference: packages/admin/e2e/planning-insights.spec.ts
+      method: automated
+    - criterion: '**AC-18:** Consultar, filtrar o navegar por insights no escribe Markdown ni cambia lifecycle de ninguna entidad.'
+      status: passed
+      evidence: >-
+        La proyección es pura (read-only); tests de Core y admin-server comparan
+        hashes antes/después y no cambian.
+      reference: packages/admin-server/tests/planning-insights.test.ts
+      method: automated
+    - criterion: '**AC-19:** Los cálculos respetan el motor de verificación WI-078/WI-079 sin crear un verificador paralelo.'
+      status: passed
+      evidence: >-
+        El outcome/readiness viene de evaluatePlan/Epic/InitiativeCompletion; no
+        se reimplementa verificación.
+      reference: packages/cli/src/core/planning-insights.ts
+      method: automated
+    - criterion: '**AC-20:** El endpoint conserva las medidas existentes de seguridad y la interfaz maneja errores, loading y empty states.'
+      status: passed
+      evidence: >-
+        La ruta usa coreRoute (sesión/same-origin existentes); el componente
+        maneja loading/error/empty.
+      reference: packages/admin-server/src/server.ts
+      method: manual
+    - criterion: '**AC-21:** La UI resulta usable en Light/Dark, navegación por teclado y viewport de 375px.'
+      status: passed
+      evidence: >-
+        Estilos con CSS vars (Light/Dark); E2E a 375px sin overflow horizontal;
+        controles nativos (select/button) accesibles por teclado.
+      reference: packages/admin/e2e/planning-insights.spec.ts
+      method: automated
+    - criterion: '**AC-22:** Pruebas unitarias de Core cubren deduplicación, casos vacíos, jerarquía parcial, bloqueos y evidencia stale/ambiguous.'
+      status: passed
+      evidence: '6 tests de Core: empty, dedup, separación de dimensiones, señales, milestones, read-only.'
+      reference: packages/cli/tests/planning-insights.test.ts
+      method: automated
+    - criterion: '**AC-23:** Pruebas de Admin Server confirman exactitud de la proyección y ausencia de mutaciones.'
+      status: passed
+      evidence: >-
+        3 tests: proyección con dimensiones separadas, no-mutación de artifacts, y
+        no shadowing de la ruta de detalle.
+      reference: packages/admin-server/tests/planning-insights.test.ts
+      method: automated
+    - criterion: '**AC-24:** Pruebas E2E aisladas cubren Overview, Needs attention, filtros, milestones, navegación y responsive.'
+      status: passed
+      evidence: >-
+        planning-insights.spec cubre indicadores, dimensiones, filtros, milestones,
+        navegación y 375px; suite E2E completa 53/53.
+      reference: packages/admin/e2e/planning-insights.spec.ts
+      method: automated
+    - criterion: '**AC-25:** Tests relevantes, suite de regresión, typecheck y builds pasan; cualquier fallo ajeno se registra explícitamente, sin ocultarlo con retries.'
+      status: passed
+      evidence: >-
+        2169 tests (176 files) en verde; tsc -b de admin limpio; builds OK. Sin
+        fallos ajenos; el flaky histórico de integrations quedó resuelto en WI-080.
+      reference: packages/cli/tests/planning-insights.test.ts
+      method: automated
+    - criterion: '**AC-26:** Documentación EN/ES y `kaddo verify WI-081` presentan evidencia por AC, con los gates independientes respetados.'
+      status: passed
+      evidence: >-
+        delivery-planning.md EN/ES documentan Execution Insights; kaddo verify
+        WI-081 -> READY (26/26); gates A/B/C con autorización humana independiente.
+      reference: apps/docs/src/content/docs/delivery-planning.md
+      method: manual
 ---
 
 # WI-081 — Planning Progress & Execution Insights
@@ -347,4 +580,47 @@ Fixtures temporales, escenarios A–J, pruebas Light/Dark y 375px, build y regre
 
 ## 14. Learning
 
-*Pendiente hasta implementación, validación y revisión humana.*
+Publicado en **v3.137.0**. Execution Insights quedó como una capa de lectura que **traduce señales ya
+canónicas en decisiones**, sin inventar métricas ni crear un segundo verificador: outcome y readiness
+vienen de las evaluaciones de WI-078/WI-079.
+
+**Qué funcionó bien**
+
+- **El diseño fue, sobre todo, agregación.** Core ya calculaba todo (progreso, outcome por evidencia,
+  findings de grafo); el WI fue combinarlo con tipos explícitos. El §6.5 (inventario + procedencia por
+  indicador) hecho *antes* de codificar evitó reinventar reglas y ancló cada número a su función.
+- **Deduplicación por enumeración, no por resta de subtotales (AC-03).** La clave fue enumerar los Work
+  Items una sola vez (`discoverWorkItems`) y clasificarlos, en vez de sumar los subtotales de Epic +
+  Initiative (que doble-contarían un WI compartido). Hizo el conteo correcto por construcción.
+- **Señales estructuradas, no strings.** Derivar la Attention Queue de los campos de las evaluaciones
+  (`outcome`, `pendingCandidates`, `provenanceIssues`) y de `validatePlanningGraph`, en lugar de parsear
+  los `reasons` de texto, dio tipo/severidad/enlace limpios y consolidación determinista.
+
+**Fricciones y decisiones**
+
+- **Ruta separada vs. engordar el overview (D8).** Insights lee evidencia por entidad (más caro que el
+  overview, que ya usa el Explorer), así que se expuso en `/planning/insights` aparte. El §6.2 lo
+  permitía por costo; evita penalizar la vista existente.
+- **Idioma de las razones.** Las razones de las señales se dejaron en **inglés** para ser coherentes con
+  el resto de la UI de Admin (toda en inglés); el WI y este Learning van en español, según la regla del
+  proyecto (artefactos de conocimiento en español, código/UI en inglés).
+
+**E2E en suite compartida mutable (lección recurrente)**
+
+- La aserción de `pending-candidates` falló en la suite completa porque un spec serial anterior (el E2E de
+  WI-080) **consume** el único candidate pendiente del fixture (lo elimina). Se quitó esa aserción del E2E
+  y se dejó cubierta determinísticamente en los tests de Core/admin-server. Regla: en una suite E2E serial
+  con fixture mutable, asertar solo sobre hechos que ningún spec previo altera (p. ej. la dependencia
+  EP-001→EP-002 o el milestone RM-08), y empujar lo mutable a tests unitarios aislados.
+
+**Infra**
+
+- El primer CI de integración quedó **atascado en `queued`** (0 pasos, fallo del runner de GitHub), no un
+  fallo de código; se reprodujeron los 5 pasos localmente en verde y un re-run quedó success. Distinguir
+  "run failure sin pasos ejecutados" (infra) de un fallo real de build/test.
+
+**Validación de referencia**
+
+- `pnpm vitest run` → 2169 passed (176 files); E2E completa 53/53; `tsc -b` de admin limpio; docs astro
+  build OK. `kaddo verify WI-081` → READY (26/26). CI del release en verde; npm publish con provenance
+  (cli + mcp) y GitHub Release v3.137.0.
