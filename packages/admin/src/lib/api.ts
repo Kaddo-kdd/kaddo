@@ -835,6 +835,37 @@ export type EvidenceInput = {
 export async function getPlanningOverview(): Promise<PlanningOverview> {
   return fetchApi<PlanningOverview>('/planning')
 }
+
+// --- Planning Progress & Execution Insights (WI-081) — read-only projection ---
+export type InsightArtifactKind = 'plan' | 'epic' | 'initiative' | 'work-item'
+export type AttentionType = 'dependency' | 'incomplete-delivery' | 'pending-candidates' | 'unverified-outcome' | 'provenance' | 'declared-risk'
+export type AttentionSeverity = 'blocking' | 'warning' | 'info'
+export type AttentionItem = {
+  type: AttentionType; severity: AttentionSeverity; artifactId: string; artifactKind: InsightArtifactKind
+  title: string; reason: string; link?: string
+}
+export type OutcomeRollup = { total: number; passed: number; failed: number; notVerified: number; manualReview: number; ambiguous: number; stale: number }
+export type MilestoneInsight = { id: string; title: string; planId: string; planTitle: string; epics: number; outcome: OutcomeVerification; needsReview: boolean }
+export type EntityInsight = {
+  id: string; kind: InsightArtifactKind; title: string; status: string
+  readiness: 'READY_TO_COMPLETE' | 'READY_WITH_EXCEPTIONS' | 'NEEDS_WORK' | 'BLOCKED'
+  delivery: { total: number; completed: number; blocked: number }
+  outcome: { total: number; passed: number; needsVerification: number }
+  link: string
+}
+export type PlanningInsights = {
+  counts: { plans: Record<string, number>; epics: Record<string, number>; initiatives: Record<string, number> }
+  coverage: { totalCandidates: number; materialized: number; pending: number }
+  delivery: { associated: PlanningDelivery; independent: PlanningDelivery }
+  outcome: OutcomeRollup
+  indicators: { blockingIssues: number; outcomeNeedsVerification: number; milestonesNeedingReview: number }
+  attention: AttentionItem[]
+  milestones: MilestoneInsight[]
+  entities: EntityInsight[]
+}
+export async function getPlanningInsights(): Promise<PlanningInsights> {
+  return fetchApi<PlanningInsights>('/planning/insights')
+}
 export async function getPlanDetail(id: string): Promise<PlanDetail> {
   return fetchApi<PlanDetail>(`/planning/plans/${encodeURIComponent(id)}`)
 }

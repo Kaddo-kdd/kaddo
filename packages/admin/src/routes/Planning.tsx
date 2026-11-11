@@ -14,6 +14,8 @@ import {
   CreateEpicDrawer, EditEpicDrawer, AssociateInitiativeDrawer,
 } from '../components/PlanningManage'
 import { PlanningCompletion } from '../components/PlanningCompletion'
+import { PlanningInsights } from '../components/PlanningInsights'
+import type { InsightArtifactKind } from '../lib/api'
 import { Initiatives } from './Initiatives'
 import { CollaborationOverview } from '../components/CollaborationOverview'
 
@@ -58,6 +60,12 @@ export function Planning({ initialTab = 'overview' }: { initialTab?: PlanningTab
   const q = useQuery({ queryKey: ['planning'], queryFn: getPlanningOverview, retry: false })
   const openPlan = (id: string) => router.navigate({ to: '/planning/plans/$id', params: { id } })
   const openEpic = (id: string) => router.navigate({ to: '/planning/epics/$id', params: { id } })
+  const openInsight = (kind: InsightArtifactKind, id: string) => {
+    if (kind === 'plan') openPlan(id)
+    else if (kind === 'epic') openEpic(id)
+    else if (kind === 'initiative') router.navigate({ to: '/initiatives/$initiativeId', params: { initiativeId: id } })
+    else router.navigate({ to: '/work-items/$workItemId', params: { workItemId: id } })
+  }
 
   const tabs: { id: PlanningTab; label: string }[] = [
     { id: 'overview', label: 'Overview' },
@@ -166,6 +174,7 @@ export function Planning({ initialTab = 'overview' }: { initialTab?: PlanningTab
                 <Metric label="Initiatives without Epic" value={t.unassignedInitiatives} />
               </section>
               <Findings findings={data.findings} />
+              <PlanningInsights onOpen={openInsight} />
               {t.plans === 0 && t.epics === 0 && t.initiatives > 0 && (
                 <p style={mutedSmall}>This project organizes work with Initiatives. You can optionally group them into Epics and Delivery Plans — nothing is required or migrated.</p>
               )}

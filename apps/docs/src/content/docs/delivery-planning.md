@@ -149,6 +149,40 @@ detected via a revision fingerprint so a stale form is never saved silently.
 > Associating an Initiative with an Epic is also available from the CLI (`kaddo epic associate`) and
 > MCP (`kaddo_associate_initiative_epic`).
 
+## Execution Insights
+
+The Planning **Overview** also presents a **read-only** execution view that turns the signals Core
+already computes into decisions, without inventing metrics or duplicating domain rules. It answers
+*how are we doing?, what needs attention?, what outcomes have we demonstrated?* — and never writes
+anything.
+
+It keeps the three dimensions **separate** (there is no single project percentage or health score):
+
+- **Planning Coverage** — Initiative candidates materialized vs total.
+- **Delivery Progress** — **distinct** Work Items by lifecycle state (deduplicated by id across
+  Initiative/Epic/Plan associations; independent Work Items are counted separately, never forced into a
+  hierarchy).
+- **Outcome Verification** — declared success criteria vs recorded evidence (reusing the WI-078/WI-079
+  verification engine — no parallel verifier), with `passed` / `failed` / `not-verified` /
+  `manual-review` / `ambiguous` / `stale` kept distinct. A completed delivery whose outcome is
+  unverified is **not** done.
+
+Three attention **indicators** summarize distinct families (never summed together): **blocking issues**
+(blocked dependencies, broken relations and provenance), **outcome needs verification**, and
+**milestones needing review** (exit criteria pending, failed or ambiguous — never inferred from the
+Epic's status).
+
+A **Needs attention** queue lists deterministic, explained signals — `dependency`,
+`incomplete-delivery`, `pending-candidates` (a coverage signal, not an execution blocker),
+`unverified-outcome`, `provenance` and declared `risk` (declared risks are a separate category from
+detected blockers; there is no invented risk score). Each entry carries its artifact, a concrete
+reason and a link to the canonical detail, and is filterable by signal type and artifact type.
+**Completion readiness** (`READY_TO_COMPLETE` / `READY_WITH_EXCEPTIONS` / `NEEDS_WORK` / `BLOCKED`) is
+shown **distinct** from lifecycle `completed` — "ready" means human approval can be requested, not that
+the entity is closed. When a denominator is zero, the view shows "no data" instead of a fabricated 0%.
+
+The projection is served read-only at `GET /api/v1/admin/planning/insights`.
+
 ## Knowledge Graph
 
 Plans, milestones and Epics appear as graph nodes; declared relations become `belongs_to` edges

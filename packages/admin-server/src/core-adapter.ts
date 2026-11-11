@@ -131,6 +131,7 @@ import {
   computePlanProgress,
   computeEpicProgress,
   validatePlanningGraph,
+  computePlanningInsights,
   revisionOf,
   createDeliveryPlan as coreCreateDeliveryPlan,
   updateDeliveryPlan as coreUpdateDeliveryPlan,
@@ -378,6 +379,12 @@ export function getPlanningOverviewAdmin(dir: string) {
     unassignedInitiatives: initiatives.filter((i) => !i.epic).length,
   }
   return { plans, epics, initiatives, findings, totals }
+}
+
+/** Read-only Planning Insights projection (WI-081). Pure delegation to Core — no mutation, heavier than
+ * the overview because it reads evidence per entity, hence its own route. */
+export function getPlanningInsightsAdmin(dir: string) {
+  return computePlanningInsights(dir)
 }
 
 export function getPlanDetailAdmin(dir: string, id: string) {

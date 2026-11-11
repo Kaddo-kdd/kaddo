@@ -270,6 +270,13 @@ function deliveryOf(wis: KnowledgeArtifact[], dir: string): DeliveryProgress {
   return { total: wis.length, byState, blocked, completed: byState.completed }
 }
 
+/** Public delivery roll-up over an arbitrary Work Item set (same rule as per-entity progress). Used by
+ * the read-only Planning Insights projection (WI-081) to count a DEDUPED universe without re-deriving
+ * the lifecycle/blocked rule. */
+export function computeDeliveryProgress(wis: KnowledgeArtifact[], dir: string): DeliveryProgress {
+  return deliveryOf(wis, dir)
+}
+
 export type EpicProgress = {
   epic: string
   status: EpicStatus

@@ -78,6 +78,7 @@ import {
   generateConsolidationPlanAdmin,
   exportConsolidationAdmin,
   getPlanningOverviewAdmin,
+  getPlanningInsightsAdmin,
   getPlanDetailAdmin,
   getEpicDetailAdmin,
   createPlanAdmin,
@@ -272,6 +273,8 @@ export async function createAdminServer(opts: AdminServerOptions) {
 
   // --- Delivery Planning Explorer (WI-074) + Management (WI-076) ---
   app.get('/api/v1/admin/planning', coreRoute(getPlanningOverviewAdmin))
+  // Read-only Planning Insights (WI-081): execution overview, attention queue, milestone/outcome signals.
+  app.get('/api/v1/admin/planning/insights', coreRoute(getPlanningInsightsAdmin))
   app.get<{ Params: { id: string } }>('/api/v1/admin/planning/plans/:id', async (request, reply) =>
     writeHandler(reply, () => getPlanDetailAdmin(projectDir, request.params.id)))
   app.get<{ Params: { id: string } }>('/api/v1/admin/planning/epics/:id', async (request, reply) =>

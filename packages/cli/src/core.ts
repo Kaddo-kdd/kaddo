@@ -398,6 +398,17 @@ export {
   type InitiativeCompletionEvaluation,
 } from './core/initiative-verification.js'
 export {
+  computePlanningInsights,
+  type PlanningInsights,
+  type AttentionItem,
+  type AttentionType,
+  type AttentionSeverity,
+  type OutcomeRollup,
+  type MilestoneInsight,
+  type EntityInsight,
+  type ArtifactKind,
+} from './core/planning-insights.js'
+export {
   getDeprecationPlans,
   getDeprecationPlan,
   parseTarget,
