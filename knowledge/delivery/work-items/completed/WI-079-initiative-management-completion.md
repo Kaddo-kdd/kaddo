@@ -2,7 +2,7 @@
 type: feature
 id: WI-079
 title: Initiative Management Completion
-status: in-progress
+status: completed
 work_type: feature
 created_at: '2026-11-10'
 source:
@@ -64,6 +64,307 @@ original_snapshot:
   type: feature
   status: draft
 ready_at: '2026-11-10'
+implementation_status: completed
+validation_status: passed
+released_in: v3.136.0
+implementation_evidence:
+  repositories:
+    cli:
+      role: core
+      status: completed
+      changed_paths:
+        - packages/cli/src/core/initiative-verification.ts
+        - packages/cli/src/core/initiative-write.ts
+        - packages/cli/src/core/initiative-analysis.ts
+        - packages/cli/src/core.ts
+        - packages/cli/src/commands/initiative.ts
+        - packages/cli/tests/initiative-management.test.ts
+        - packages/cli/tests/initiative.test.ts
+        - packages/cli/tests/initiative-analysis.test.ts
+      validations:
+        - command: >-
+            pnpm vitest run packages/cli/tests/initiative-management.test.ts
+            packages/cli/tests/initiative.test.ts
+            packages/cli/tests/initiative-analysis.test.ts
+          status: passed
+        - command: pnpm --filter @kaddo/cli build
+          status: passed
+    mcp:
+      role: module
+      status: completed
+      changed_paths:
+        - packages/mcp/src/initiatives.ts
+        - packages/mcp/src/server.ts
+        - packages/mcp/tests/initiative.test.ts
+      validations:
+        - command: pnpm vitest run packages/mcp/tests/initiative.test.ts
+          status: passed
+    admin-server:
+      role: module
+      status: completed
+      changed_paths:
+        - packages/admin-server/src/core-adapter.ts
+        - packages/admin-server/src/server.ts
+        - packages/admin-server/src/contracts/schemas.ts
+        - packages/admin-server/tests/initiative-management.test.ts
+      validations:
+        - command: >-
+            pnpm vitest run
+            packages/admin-server/tests/initiative-management.test.ts
+          status: passed
+    admin:
+      role: module
+      status: completed
+      changed_paths:
+        - packages/admin/src/components/InitiativeCompletion.tsx
+        - packages/admin/src/components/InitiativeCandidates.tsx
+        - packages/admin/src/routes/InitiativeDetail.tsx
+        - packages/admin/src/lib/api.ts
+        - packages/admin/e2e/initiative-management.spec.ts
+        - packages/admin/e2e/fixtures/project/knowledge/delivery/initiatives/INI-900.md
+        - >-
+          packages/admin/e2e/fixtures/project/knowledge/delivery/work-items/completed/WI-900-sso-delivery.md
+      validations:
+        - command: >-
+            pnpm --filter @kaddo/admin exec playwright test
+            initiative-management.spec.ts collaboration.spec.ts planning.spec.ts
+          status: passed
+        - command: pnpm --filter @kaddo/admin build
+          status: passed
+    docs:
+      role: module
+      status: completed
+      changed_paths:
+        - apps/docs/src/content/docs/initiatives.md
+        - apps/docs/src/content/docs/es/initiatives.md
+      validations:
+        - command: documentation review (EN/ES)
+          status: passed
+  ac_verifications:
+    - criterion: '**AC-01:** Admin permite crear Initiatives con atributos de planificación relevantes.'
+      status: passed
+      evidence: >-
+        createInitiativeAdmin + POST /initiatives con InitiativeCreateSchema
+        (title, domains, horizon, priority); capacidad conservada de WI-022.
+      reference: packages/admin-server/src/core-adapter.ts
+      method: manual
+    - criterion: '**AC-02:** Admin permite editar metadatos y secciones de intención sin destruir contenido existente.'
+      status: passed
+      evidence: >-
+        updateInitiativeAdmin acepta sections (edición estructurada) + diálogo
+        Edit initiative; test edita título y sección Goal preservando el resto.
+      reference: packages/admin-server/tests/initiative-management.test.ts
+      method: automated
+    - criterion: '**AC-03:** Se preservan IDs, provenance, relaciones y campos desconocidos.'
+      status: passed
+      evidence: >-
+        El test de edición conserva la sección Success Criteria y el título; el
+        test D4/D5 de Core conserva custom_field y secciones no tocadas.
+      reference: packages/cli/tests/initiative-management.test.ts
+      method: automated
+    - criterion: '**AC-04:** La edición rechaza revisiones obsoletas y no sobrescribe cambios concurrentes.'
+      status: passed
+      evidence: >-
+        expectedRevision en updateInitiative; endpoint PUT devuelve 409
+        INITIATIVE_CONFLICT ante un formulario obsoleto (test dedicado).
+      reference: packages/admin-server/tests/initiative-management.test.ts
+      method: automated
+    - criterion: '**AC-05:** Owners, Contributors y asociaciones con Epics reutilizan los mecanismos existentes.'
+      status: passed
+      evidence: >-
+        AssignmentDialog e InitiativePlanningContext (WI-074/WI-076) reutilizados
+        sin cambios; e2e de colaboración edita asignaciones de la Initiative.
+      reference: packages/admin/src/routes/InitiativeDetail.tsx
+      method: manual
+    - criterion: '**AC-06:** Admin presenta candidatos pendientes y materializados con su información relevante.'
+      status: passed
+      evidence: >-
+        InitiativeCandidates lista cada candidate con id, título, tipo/valor y
+        enlace al Work Item materializado o estado pendiente.
+      reference: packages/admin/src/components/InitiativeCandidates.tsx
+      method: manual
+    - criterion: '**AC-07:** Admin permite crear candidatos mediante Core.'
+      status: passed
+      evidence: >-
+        addInitiativeCandidateAdmin + POST /candidates delega en Core addCandidate
+        (preview/confirm en MCP); addCandidate cubierto por tests de Core.
+      reference: packages/cli/tests/initiative-management.test.ts
+      method: automated
+    - criterion: '**AC-08:** Admin permite editar candidatos pendientes sin cambiar su identidad.'
+      status: passed
+      evidence: >-
+        PUT /candidates/:id (updateCandidate) conserva el id; test de endpoint
+        verifica id estable tras editar título y expected value.
+      reference: packages/admin-server/tests/initiative-management.test.ts
+      method: automated
+    - criterion: '**AC-09:** El retiro de un candidato pendiente exige confirmación y conserva la justificación.'
+      status: passed
+      evidence: >-
+        DELETE /candidates/:id exige reason (400 sin justificación); el motivo
+        queda en removed_candidates (test de endpoint + D2 de Core).
+      reference: packages/admin-server/tests/initiative-management.test.ts
+      method: automated
+    - criterion: '**AC-10:** No es posible eliminar o alterar silenciosamente la asociación de un candidato materializado.'
+      status: passed
+      evidence: >-
+        updateCandidate/removeCandidate rechazan un candidate materializado
+        (test D2 "cannot edit or remove a materialized candidate").
+      reference: packages/cli/tests/initiative-management.test.ts
+      method: automated
+    - criterion: '**AC-11:** Los identificadores de candidatos permanecen únicos dentro de la Initiative.'
+      status: passed
+      evidence: >-
+        nextCandidateId considera candidates vivos y removed_candidates; test D1
+        "never reuses a candidate id after a removal".
+      reference: packages/cli/tests/initiative-management.test.ts
+      method: automated
+    - criterion: '**AC-12:** Admin permite previsualizar la materialización antes de confirmarla.'
+      status: passed
+      evidence: >-
+        MaterializeDialog muestra el efecto (crea un Work Item draft asociado,
+        idempotente) antes de "Confirm & materialize".
+      reference: packages/admin/src/components/InitiativeCandidates.tsx
+      method: manual
+    - criterion: '**AC-13:** La materialización crea un único Work Item en `draft`.'
+      status: passed
+      evidence: >-
+        materializeCandidate crea un WI draft con status draft; test verifica un
+        único archivo en work-items/draft (wiCount === 1).
+      reference: packages/cli/tests/initiative.test.ts
+      method: automated
+    - criterion: '**AC-14:** El Work Item conserva Initiative, Candidate ID y Source Signals.'
+      status: passed
+      evidence: >-
+        El WI materializado lleva initiative, source=initiative y source_id del
+        candidate; test asserts initiative/source/source_id.
+      reference: packages/cli/tests/initiative.test.ts
+      method: automated
+    - criterion: '**AC-15:** La Initiative registra correctamente `materialized_as`.'
+      status: passed
+      evidence: >-
+        setCandidateMaterialized escribe materialized_as; test asserts
+        cand.materializedAs === WI id tras materializar.
+      reference: packages/cli/tests/initiative.test.ts
+      method: automated
+    - criterion: '**AC-16:** Fallos parciales y operaciones concurrentes no dejan referencias inconsistentes.'
+      status: passed
+      evidence: >-
+        Recuperación por provenance cuando falta el puntero (test D3 partial
+        failure) y rechazo de expectedRevision obsoleto en materialize.
+      reference: packages/cli/tests/initiative-management.test.ts
+      method: automated
+    - criterion: '**AC-17:** La repetición de una materialización no crea Work Items duplicados.'
+      status: passed
+      evidence: >-
+        materializeCandidate es idempotente (alreadyMaterialized=true, mismo
+        workItemId); endpoint de materialize verifica no duplicación.
+      reference: packages/admin-server/tests/initiative-management.test.ts
+      method: automated
+    - criterion: '**AC-18:** La UI permite navegar al Work Item materializado y actualiza Planning Coverage.'
+      status: passed
+      evidence: >-
+        MaterializeDialog ofrece "Open WI" y onDone invalida la Initiative,
+        refrescando Planning Coverage.
+      reference: packages/admin/src/components/InitiativeCandidates.tsx
+      method: manual
+    - criterion: '**AC-19:** Admin distingue Planning Coverage, Delivery Progress y Outcome Verification.'
+      status: passed
+      evidence: >-
+        InitiativeCompletion separa Delivery y Outcome criteria verified; sección
+        Progress separa coverage y delivery; test GET /completion.
+      reference: packages/admin-server/tests/initiative-management.test.ts
+      method: automated
+    - criterion: '**AC-20:** El análisis muestra candidatos pendientes, trabajo incompleto y dependencias relevantes.'
+      status: passed
+      evidence: >-
+        analyzeInitiative emite findings (pending-candidates, incomplete-delivery,
+        uncovered); InitiativeCompletion muestra reasons/blockers.
+      reference: packages/cli/tests/initiative-analysis.test.ts
+      method: automated
+    - criterion: '**AC-21:** Los Success Criteria pueden verificarse con evidencia estructurada reutilizando los contratos existentes.'
+      status: passed
+      evidence: >-
+        initiativeOutcomeVerification reutiliza buildOutcomeVerification de WI-078;
+        POST /evidence registra evidencia por criterio (test).
+      reference: packages/admin-server/tests/initiative-management.test.ts
+      method: automated
+    - criterion: '**AC-22:** Checkboxes, actividad Git o Work Items completados no aprueban automáticamente resultados.'
+      status: passed
+      evidence: >-
+        Un checkbox no es evidencia (Scenario J: criterios not-verified); delivery
+        completo con outcome sin verificar permanece en NEEDS_WORK.
+      reference: packages/cli/tests/initiative-management.test.ts
+      method: automated
+    - criterion: '**AC-23:** La evidencia permanece asociada al criterio correcto y detecta duplicados o cambios que la vuelvan obsoleta.'
+      status: passed
+      evidence: >-
+        recordInitiativeOutcomeVerification rechaza criterios no declarados;
+        buildOutcomeVerification marca ambiguous (duplicados) y stale (editados).
+      reference: packages/cli/tests/initiative-management.test.ts
+      method: automated
+    - criterion: '**AC-24:** Core evalúa conservadoramente el completion de Initiatives.'
+      status: passed
+      evidence: >-
+        evaluateInitiativeCompletion bloquea por unverified/failed/ambiguous,
+        pending candidates, delivery incompleto y provenance rota (Scenario G).
+      reference: packages/cli/tests/initiative-management.test.ts
+      method: automated
+    - criterion: '**AC-25:** Una actualización genérica de estado no puede eludir el mecanismo canónico de completion.'
+      status: passed
+      evidence: >-
+        transitionInitiative rechaza -> completed; completeInitiative es la única
+        ruta (Scenario I + test de initiative.test + endpoint complete).
+      reference: packages/cli/tests/initiative.test.ts
+      method: automated
+    - criterion: '**AC-26:** Admin presenta Completion Review con razones y bloqueos.'
+      status: passed
+      evidence: >-
+        InitiativeCompletion muestra readiness, blockers, provenanceIssues,
+        pendingCandidates, reasons y warnings.
+      reference: packages/admin/src/components/InitiativeCompletion.tsx
+      method: manual
+    - criterion: '**AC-27:** El cierre exige confirmación humana explícita y registra la decisión.'
+      status: passed
+      evidence: >-
+        completeInitiative registra completion_decision (readiness, decided_by);
+        Scenario I verifica la decisión tras registrar evidencia.
+      reference: packages/cli/tests/initiative-management.test.ts
+      method: automated
+    - criterion: '**AC-28:** La evaluación no cambia automáticamente el estado ni el de sus Work Items, Epic o Plan.'
+      status: passed
+      evidence: >-
+        evaluateInitiativeCompletion es read-only; test "never transitions the
+        initiative (reports only)".
+      reference: packages/cli/tests/initiative-analysis.test.ts
+      method: automated
+    - criterion: '**AC-29:** CLI, MCP y Admin utilizan la misma lógica canónica de Core.'
+      status: passed
+      evidence: >-
+        CLI, tools MCP y adaptadores de admin-server delegan en las mismas
+        funciones de Core; suites de MCP y admin-server en verde.
+      reference: packages/mcp/tests/initiative.test.ts
+      method: automated
+    - criterion: '**AC-30:** Initiatives históricas y Work Items independientes mantienen compatibilidad sin migración obligatoria.'
+      status: passed
+      evidence: >-
+        Scenario J lee una Initiative histórica (checkbox) sin crash; WI
+        independientes y suites previas sin regresión (2160 tests en verde).
+      reference: packages/cli/tests/initiative-management.test.ts
+      method: automated
+    - criterion: '**AC-31:** Las pruebas unitarias, de integración y E2E cubren creación, edición, concurrencia, materialización, verificación y cierre.'
+      status: passed
+      evidence: >-
+        Tests de Core/CLI/MCP/admin-server + E2E initiative-management.spec.ts
+        (edit -> remove -> NEEDS_WORK -> evidence -> READY -> complete).
+      reference: packages/admin/e2e/initiative-management.spec.ts
+      method: automated
+    - criterion: '**AC-32:** Admin funciona correctamente en Light/Dark y móvil a 375px; builds y documentación EN/ES aprobados.'
+      status: passed
+      evidence: >-
+        E2E de colaboración valida la Initiative a 375px en light y dark; builds
+        de cli/mcp/admin-server/admin en verde; docs EN/ES actualizadas.
+      reference: packages/admin/e2e/collaboration.spec.ts
+      method: manual
 ---
 
 # WI-079 — Initiative Management Completion
@@ -358,4 +659,41 @@ Gate A — Integration; Gate B — Publication; Gate C — Canonical Closure. No
 
 ## 19. Learning
 
-_Pendiente de registrar al concluir la implementación._
+Publicado en **v3.136.0**. La gestión completa de Initiatives quedó cerrada reutilizando el contrato de
+evidencia de WI-078 (`buildOutcomeVerification`) en lugar de crear un segundo motor de verificación —
+Initiatives, Epics y Plans comparten ahora una sola lógica de readiness.
+
+**Qué funcionó bien**
+
+- **Reutilizar el motor de WI-078.** `initiative-verification.ts` solo parsea los Success Criteria del
+  cuerpo y delega en `buildOutcomeVerification`; la detección de ambiguos (duplicados) y stale
+  (editados) vino gratis. Confirma el principio de "Core es la única fuente de lógica".
+- **Integridad por diseño, no por reintentos.** La idempotencia de materialización con recuperación por
+  provenance (clave: `source_initiative` + `source_id`) convirtió "fallo parcial" en una operación
+  segura de repetir, y un `materialized_as` colgante se reporta como error en vez de recrearse.
+- **Anti-bypass en un solo punto.** Hacer que `transitionInitiative(-> completed)` se rechace y que
+  `completeInitiative` sea la única ruta cerró las 5 vías previas (CLI/MCP/Admin) con un cambio pequeño.
+
+**Fricciones y decisiones**
+
+- **Un checkbox no es evidencia (AC-22).** El mayor cambio de contrato: Initiatives históricas con
+  `- [x]` ahora leen `not-verified`. Se preservó compatibilidad de lectura (Scenario J, sin crash) y no
+  se forzó migración; el cierre exige evidencia registrada explícitamente.
+- **Alcance de CLI acotado.** Siguiendo §10.2, no se añadieron subcomandos nuevos de CLI: la superficie
+  rica de gestión vive en Admin y MCP, y la CLI solo redirigió `complete` al flujo gated. Evita
+  ambigüedad y mantiene la CLI estable.
+- **Concurrencia donde importa.** Se enhebró `expectedRevision` en la edición de metadatos/secciones
+  (el escenario real de "formulario obsoleto", 409 `INITIATIVE_CONFLICT`); las mutaciones de candidate
+  se apoyan en las comprobaciones de integridad de Core (idempotencia, guard de materializado).
+
+**Deuda independiente**
+
+- `integrations.spec.ts:17` (import de external work item) es un flaky preexistente, no relacionado con
+  WI-079; falla incluso aislado (~30s timeout) y **no** se enmascaró con reintentos. Candidato a su
+  propio Work Item de estabilización de E2E.
+
+**Para la próxima**
+
+- El `tsup` de la CLI no emite `.d.ts` para `@kaddo/cli/core`, así que `admin-server` no se puede
+  typechequear con `tsc` estricto contra ese import (todo llega como `any`). El gate real es tsup +
+  tests. Emitir dts del core sería una mejora transversal de DX.
