@@ -18,7 +18,10 @@ test('browse external work items and import one as a Draft, then detect the dupl
   await page.goto('/integrations')
   const main = page.locator('main')
 
-  await main.getByRole('button', { name: /Browse work items/ }).click()
+  // The card's browse toggle is labelled "Browse" (it becomes "Hide items" once open); VS-103 shortened
+  // it from "Browse work items" and this E2E selector was never updated — the cause of the stale-locator
+  // 30s timeout. Match the real, current accessible name.
+  await main.getByRole('button', { name: 'Browse', exact: true }).click()
   await expect(main.getByText('Open public registration to everyone')).toBeVisible()
 
   // Open the import preview for EXT-001 (the first listed item).
@@ -36,7 +39,7 @@ test('browse external work items and import one as a Draft, then detect the dupl
 
   // A second import attempt detects the existing link (no duplicate).
   await page.goto('/integrations')
-  await main.getByRole('button', { name: /Browse work items/ }).click()
+  await main.getByRole('button', { name: 'Browse', exact: true }).click()
   await main.getByRole('button', { name: 'Import', exact: true }).first().click()
   await expect(main.getByText(/Already imported as/)).toBeVisible()
 })
