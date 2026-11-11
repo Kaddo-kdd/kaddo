@@ -2,7 +2,7 @@
 type: bugfix
 id: WI-080
 title: E2E Test Reliability & Isolation
-status: in-progress
+status: completed
 work_type: bugfix
 created_at: '2026-11-11'
 source:
@@ -49,6 +49,145 @@ original_snapshot:
   type: bug
   status: draft
 ready_at: '2026-11-11'
+implementation_status: completed
+validation_status: passed
+release_decision:
+  published: false
+  reason: >-
+    Cambio exclusivamente de test E2E (packages/admin/e2e/integrations.spec.ts),
+    sin producto distribuido. Gate B omite bump/tag/publicación npm por §13 del
+    WI; no se inventa released_in. Entregado en main sobre v3.136.0.
+  decided_by: human
+  decided_at: '2026-11-11'
+implementation_evidence:
+  repositories:
+    admin:
+      role: core
+      status: completed
+      changed_paths:
+        - packages/admin/e2e/integrations.spec.ts
+      validations:
+        - command: >-
+            CI=1 npx playwright test integrations.spec.ts (x10, servidor fresco,
+            retries:0)
+          status: passed
+        - command: 'CI=1 npx playwright test (suite completa x3, retries:0)'
+          status: passed
+        - command: pnpm vitest run packages/admin/tests
+          status: passed
+        - command: pnpm --filter @kaddo/admin exec tsc -b
+          status: passed
+  ac_verifications:
+    - criterion: '**AC-01:** El fallo histórico de `integrations.spec.ts:17` está documentado con referencias a WI-076/WI-079 y al escenario exacto.'
+      status: passed
+      evidence: >-
+        §1-§2 del WI documentan el timeout histórico citando WI-076 y WI-079 y el
+        caso exacto (browse -> preview -> import -> duplicate).
+      reference: knowledge/delivery/work-items/completed/WI-080-e2e-test-reliability-isolation.md
+      method: manual
+    - criterion: '**AC-02:** Se identifica una causa raíz sustentada por trazas, logs, reproducción controlada o evidencia técnica equivalente; no se presenta una hipótesis como hecho.'
+      status: passed
+      evidence: >-
+        Reproducción 2/2 con timeout idéntico en el locator /Browse work items/;
+        git -S confirma que VS-103 (34d37ff) renombró el botón a "Browse".
+      reference: packages/admin/e2e/integrations.spec.ts
+      method: automated
+    - criterion: '**AC-03:** Se distingue si el defecto está en el test/harness o en el comportamiento funcional de Admin, server o adapter, y se justifica la capa de corrección.'
+      status: passed
+      evidence: >-
+        Defecto en el test/harness: el producto renderiza el botón "Browse" y el
+        test 1 de la misma spec aprueba; la corrección va en el selector del test.
+      reference: packages/admin/src/routes/Integrations.tsx
+      method: manual
+    - criterion: '**AC-04:** La corrección resuelve la causa diagnosticada con un diff acotado y sin refactorización ajena al problema.'
+      status: passed
+      evidence: >-
+        Diff de 2 selectores (líneas 21 y 39) al nombre real del botón con
+        exact:true; sin otros cambios ni refactor.
+      reference: packages/admin/e2e/integrations.spec.ts
+      method: manual
+    - criterion: '**AC-05:** El escenario puede abrir Integrations, consultar Work Items externos y mostrar el resultado esperado mediante esperas basadas en condiciones observables.'
+      status: passed
+      evidence: >-
+        Tras el fix, browse carga los items y expect() espera el texto observable
+        "Open public registration to everyone"; test en verde.
+      reference: packages/admin/e2e/integrations.spec.ts
+      method: automated
+    - criterion: '**AC-06:** El preview sigue siendo no mutante y la confirmación crea exactamente un Work Item en `draft`.'
+      status: passed
+      evidence: >-
+        El test verifica "No project files have been modified yet" antes de
+        confirmar y luego aterriza en /work-items/WI- con estado draft.
+      reference: packages/admin/e2e/integrations.spec.ts
+      method: automated
+    - criterion: '**AC-07:** Un segundo intento de importar el mismo Work Item externo detecta la asociación previa y no crea duplicados.'
+      status: passed
+      evidence: >-
+        El segundo browse+import verifica el texto "Already imported as"; no se
+        crea un segundo Work Item.
+      reference: packages/admin/e2e/integrations.spec.ts
+      method: automated
+    - criterion: '**AC-08:** Los artifacts canónicos y la provenance del Work Item importado mantienen sus contratos existentes; los tests no alteran proyectos reales.'
+      status: passed
+      evidence: >-
+        server.mjs ensambla un proyecto temporal desechable por ejecución; el
+        repositorio real no se modifica (contratos de import intactos).
+      reference: packages/admin/e2e/server.mjs
+      method: manual
+    - criterion: '**AC-09:** No se añaden retries, skips, esperas fijas injustificadas, aumentos arbitrarios de timeout ni aserciones debilitadas para ocultar el defecto.'
+      status: passed
+      evidence: >-
+        El diff no introduce waitForTimeout, retries ni skips; playwright.config
+        mantiene retries por defecto (0) y timeouts sin cambios.
+      reference: packages/admin/playwright.config.ts
+      method: manual
+    - criterion: '**AC-10:** El escenario afectado aprueba **10 ejecuciones consecutivas** de manera aislada con `retries: 0`.'
+      status: passed
+      evidence: >-
+        10/10 corridas aisladas de integrations.spec, cada una sobre servidor y
+        proyecto temporal fresco (CI=1), sin retries.
+      reference: packages/admin/e2e/integrations.spec.ts
+      method: automated
+    - criterion: '**AC-11:** La suite E2E completa aprueba **3 ejecuciones consecutivas** con `retries: 0`.'
+      status: passed
+      evidence: '3/3 suites E2E completas en verde (51 passed cada una), sin retries.'
+      reference: packages/admin/e2e/integrations.spec.ts
+      method: automated
+    - criterion: '**AC-12:** El bootstrap y los fixtures dejan cada ejecución en estado conocido; no hay contaminación verificable entre casos o ejecuciones ni restos temporales sin limpiar.'
+      status: passed
+      evidence: >-
+        server.mjs crea mkdtemp por arranque y lo elimina en shutdown; las 10
+        aisladas (import mutante) pasan todas por partir de estado limpio.
+      reference: packages/admin/e2e/server.mjs
+      method: manual
+    - criterion: '**AC-13:** Los fallos futuros exponen suficiente información diagnóstica útil, sin filtrar secretos ni introducir una infraestructura de observabilidad innecesaria.'
+      status: passed
+      evidence: >-
+        playwright.config conserva trace on-first-retry y screenshots/errores por
+        defecto; no se registran secretos ni se añade observabilidad extra.
+      reference: packages/admin/playwright.config.ts
+      method: manual
+    - criterion: '**AC-14:** Tests unitarios/integración relevantes y builds/typechecks de los módulos modificados aprueban sin regresiones.'
+      status: passed
+      evidence: >-
+        admin unit 69/69 en verde; tsc -b de admin exit 0; suite E2E completa sin
+        regresiones (51 passed).
+      reference: packages/admin/tests
+      method: automated
+    - criterion: '**AC-15:** La CI del commit de integración aprueba, y los resultados locales y de CI quedan enlazados como evidencia verificable.'
+      status: passed
+      evidence: >-
+        CI run 43071845815 (push e1b50c9) success en 1m12s; resultados locales en
+        el log de estabilidad enlazado en el Learning.
+      reference: https://github.com/Kaddo-kdd/kaddo/actions/runs/43071845815
+      method: manual
+    - criterion: '**AC-16:** El WI registra causa raíz, corrección, límites, comandos de validación y Learning en español; los AC se verifican antes del cierre canónico.'
+      status: passed
+      evidence: >-
+        Este cierre registra causa raíz, diff, límites, comandos y Learning en
+        español; kaddo verify WI-080 -> READY (16/16) antes de mover a completed.
+      reference: knowledge/delivery/work-items/completed/WI-080-e2e-test-reliability-isolation.md
+      method: manual
 ---
 
 # WI-080 — E2E Test Reliability & Isolation
@@ -327,4 +466,41 @@ Registrar evidencia de los 16 AC, ejecutar `kaddo verify WI-080`, registrar Lear
 
 ## 14. Learning
 
-*Pendiente de completar al demostrar la causa raíz y validar la corrección.*
+Entregado en `main` sobre **v3.136.0** (sin nueva versión: Gate B omitido por ser un cambio
+exclusivamente de test — ver `release_decision`).
+
+**Qué fallaba y por qué.** El escenario `integrations.spec.ts:17` esperaba un botón
+`/Browse work items/`, pero **VS-103 (`34d37ff`, v3.83.0)** acortó el rótulo del toggle a **"Browse"**
+sin actualizar el test. Playwright esperaba 30 s un locator inexistente y reportaba un "timeout" que se
+leía como *flakiness*. No era intermitente: reproducido **2/2** de forma determinista. El producto nunca
+estuvo roto — el test 1 de la misma spec (que no usa ese botón) siempre aprobó.
+
+**Qué funcionó bien**
+
+- **Reproducir antes de teorizar (AC-02).** Dos corridas aisladas con servidor fresco dieron el mismo
+  punto de fallo exacto; `git log -S "Browse work items"` fijó el commit que cambió el rótulo. La causa
+  quedó demostrada, no supuesta.
+- **Corregir en la capa correcta (AC-03/AC-04).** El defecto era del test/harness, así que el diff fue de
+  2 selectores; no se tocó producto para "acomodar" un test obsoleto, que habría sido arreglar lo que no
+  estaba roto.
+- **Aislamiento real para la estabilidad (AC-10/AC-12).** Como el escenario muta el proyecto temporal
+  (importa un WI), `--repeat-each` habría contaminado la detección de duplicados. Se usaron **10
+  invocaciones separadas** con `CI=1` (proyecto temporal nuevo por corrida) → 10/10, y 3/3 suites
+  completas (51 passed), sin retries ni cambios de timeout.
+
+**Lecciones / cómo evitar la recurrencia**
+
+- Un "timeout" de Playwright casi siempre significa *locator que no aparece*, no *backend lento*: leer el
+  `waiting for ...` del error antes de atribuirlo a concurrencia o rendimiento.
+- Rótulos de UI como texto de botón son selectores frágiles. Para toggles con dos estados ("Browse" /
+  "Hide items"), un `data-testid` estable sería más robusto; se deja anotado como mejora opcional de DX
+  fuera del alcance de este WI (diff acotado).
+- Antigüedad de la deuda: el fallo venía deterministamente desde v3.83.0 pero se arrastró como "flaky
+  intermitente" en WI-076/WI-079. Reproducir pronto habría ahorrado el arrastre.
+
+**Validación de referencia**
+
+- `CI=1 npx playwright test integrations.spec.ts` ×10 (aisladas) → 10/10.
+- `CI=1 npx playwright test` ×3 (suite completa) → 3/3 (51 passed).
+- `pnpm vitest run packages/admin/tests` → 69/69; `tsc -b` de admin → exit 0.
+- CI del commit de integración (`e1b50c9`): run 43071845815 → success (1m12s).
