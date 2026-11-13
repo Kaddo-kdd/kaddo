@@ -90,7 +90,8 @@ describe('computePlanningInsights (WI-081)', () => {
   it('keeps coverage, delivery and outcome separate (AC-02); coverage counts candidates', () => {
     seed()
     const ins = computePlanningInsights(tmp)
-    expect(ins.coverage).toEqual({ totalCandidates: 3, materialized: 2, pending: 1 })
+    // WI-082: coverage is additive — materialized (declared) 2, of which WI-900 validates and WI-999 does not.
+    expect(ins.coverage).toEqual({ totalCandidates: 3, materialized: 2, pending: 1, validated: 1, unresolved: 1 })
     // Outcome is evidence-based and distinct from delivery: no criterion has recorded evidence yet.
     expect(ins.outcome.passed).toBe(0)
     expect(ins.outcome.notVerified).toBeGreaterThanOrEqual(3) // PLAN + EP-001 + INI-001 criteria

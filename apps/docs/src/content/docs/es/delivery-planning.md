@@ -180,6 +180,37 @@ muestra **distinta** del lifecycle `completed` — "ready" significa que puede p
 no que la entidad esté cerrada. Cuando un denominador es cero, la vista muestra "sin datos" en lugar de
 un 0% fabricado.
 
+En el Overview la cola es un **resumen compacto** — como máximo cinco hallazgos o grupos al inicio, con
+el total honesto de hallazgos y de artifacts afectados — de modo que Delivery Plans, Epics e Initiatives
+permanecen visibles. **View all findings** abre un **explorador de atención** de solo lectura (un drawer
+in situ, sin nueva navegación) que filtra por tipo de señal, tipo de artifact y severidad, agrupa por
+artifact sin perder los hallazgos individuales y mantiene los conteos honestos al filtrar. Cada hallazgo
+muestra su artifact, un diagnóstico, un `impact` y un **siguiente paso** concreto (`Review Initiative`,
+`Inspect reference`, `Review outcome evidence`…) — una acción de revisión, nunca una reparación
+automática. No hay dismiss, resolver ni cambio de estado.
+
+### Diagnóstico de provenance
+
+El `materialized_as` de un candidate es una referencia **1:1** — exactamente un Work Item id canónico.
+Core clasifica cada una (reutilizando el motor de WI-078/WI-079, sin verificador paralelo) en lugar de
+comparar la cadena completa:
+
+- **válida** — resuelve a un Work Item existente y asociado de forma consistente;
+- **faltante** — un id canónico único que no existe → defecto de integridad **bloqueante**;
+- **mismatch** — el Work Item existe pero pertenece a otra Initiative → **bloqueante**;
+- **ambigua (histórica)** — un valor que no es un único id canónico (p. ej. una cadena compuesta como
+  `AN-005, AN-006, AN-007`) → una **advertencia**, nunca presentada como un Work Item faltante.
+
+Una referencia ambigua **no se reescribe, divide ni migra**, y reconocer su forma no la marca como
+validada: no cuenta como cobertura validada y mantiene la Initiative fuera de `READY` (`NEEDS_WORK`)
+hasta inspeccionarla. Los defectos reales de faltante/mismatch siguen bloqueando. `materialized_as`
+permanece 1:1 — esto es un diagnóstico, no un cambio de contrato.
+
+**Cobertura honesta.** Planning Coverage distingue la materialización **declarada** (`materialized`, el
+campo está puesto) de las referencias **validadas** (`validated`, la referencia resuelve). Cuando
+difieren, el Overview muestra ambas ("41 declared · 38 validated") con `unresolved = materialized −
+validated`; una referencia declarada nunca se presenta como integridad verificada.
+
 La proyección se sirve de solo lectura en `GET /api/v1/admin/planning/insights`.
 
 ## Knowledge Graph

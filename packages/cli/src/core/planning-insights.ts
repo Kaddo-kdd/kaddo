@@ -44,6 +44,12 @@ export type AttentionItem = {
   artifactKind: ArtifactKind
   title: string
   reason: string
+  /** Deterministic sub-classification (e.g. a provenance category), when one applies. */
+  category?: string
+  /** Deterministic consequence for planning/completion — context for a decision, never a verdict. */
+  impact?: string
+  /** A concrete review step (never an auto-fix), e.g. "Review Initiative" or "Inspect reference". */
+  nextStep?: string
   /** Relative Admin route to the canonical artifact detail, when a destination exists. */
   link?: string
 }
@@ -86,8 +92,13 @@ export type PlanningInsights = {
     epics: Record<string, number>
     initiatives: Record<string, number>
   }
-  /** Planning Coverage across Initiatives (candidates). Denominator is totalCandidates. */
-  coverage: { totalCandidates: number; materialized: number; pending: number }
+  /**
+   * Planning Coverage across Initiatives (candidates). `materialized` is DECLARED (the field is set);
+   * `validated` is the subset whose reference resolves to exactly one existing, consistently-associated
+   * Work Item; `unresolved` is declared-but-not-validated (missing / mismatch / ambiguous). Denominator
+   * is totalCandidates. Declared ≠ validated — the UI must not present a declared reference as integrity.
+   */
+  coverage: { totalCandidates: number; materialized: number; pending: number; validated: number; unresolved: number }
   /** Delivery Progress over DISTINCT Work Items (deduped by id); planning-associated vs independent. */
   delivery: { associated: DeliveryProgress; independent: DeliveryProgress }
   /** Outcome Verification rolled up across all entities (kept distinct from delivery). */
@@ -123,6 +134,27 @@ function linkFor(id: string, kind: ArtifactKind): string {
   }
 }
 
+const KIND_LABEL: Record<ArtifactKind, string> = { plan: 'Plan', epic: 'Epic', initiative: 'Initiative', 'work-item': 'Work Item' }
+
+/** A concrete review step for an artifact (never an auto-fix) — "Review Initiative" etc. (WI-082 AC-08). */
+function reviewStep(kind: ArtifactKind): string {
+  return `Review ${KIND_LABEL[kind]}`
+}
+
+/** Deterministic impact + next step for a provenance category (Core owns the guidance — AC-08/§4.3). */
+function provenanceGuidance(category: string, kind: ArtifactKind): { impact: string; nextStep: string } {
+  switch (category) {
+    case 'missing_reference':
+      return { impact: 'Breaks planning integrity — the materialized Work Item does not exist. Keeps the Initiative blocked.', nextStep: 'Inspect reference' }
+    case 'association_mismatch':
+      return { impact: 'The referenced Work Item belongs to another Initiative — the relation is inconsistent. Keeps the Initiative blocked.', nextStep: 'Review Work Item' }
+    case 'ambiguous_legacy_reference':
+      return { impact: 'Cannot be confirmed as materialized — not counted as validated coverage and keeps the Initiative out of ready. Not auto-resolved.', nextStep: 'Inspect reference' }
+    default:
+      return { impact: 'Relation needs review.', nextStep: reviewStep(kind) }
+  }
+}
+
 function tally(ids: string[]): Record<string, number> {
   const out: Record<string, number> = {}
   for (const s of ids) out[s] = (out[s] ?? 0) + 1
@@ -154,15 +186,18 @@ export function computePlanningInsights(dir: string): PlanningInsights {
     independent: computeDeliveryProgress(independentWis, dir),
   }
 
-  // --- Planning Coverage (candidates) across Initiatives. ---
-  const totalCandidates = initiatives.reduce((n, i) => n + i.candidates.length, 0)
-  const materialized = initiatives.reduce((n, i) => n + i.candidates.filter((c) => c.materializedAs).length, 0)
-  const coverage = { totalCandidates, materialized, pending: totalCandidates - materialized }
-
   // --- Per-entity evidence-based evaluations (reused from WI-078/WI-079; no parallel verifier). ---
   const planEvals = plans.map((p) => ({ p, ev: evaluatePlanCompletion(dir, p) }))
   const epicEvals = epics.map((e) => ({ e, ev: evaluateEpicCompletion(dir, e) }))
   const iniEvals = initiatives.map((i) => ({ i, ev: evaluateInitiativeCompletion(dir, i) }))
+
+  // --- Planning Coverage (candidates) across Initiatives. `materialized` stays DECLARED (field set, as
+  //     WI-081); `validated` is the subset whose reference resolves to one consistent Work Item (WI-082
+  //     AC-16). Declared and validated differ exactly when a reference is missing, mismatched or ambiguous. ---
+  const totalCandidates = initiatives.reduce((n, i) => n + i.candidates.length, 0)
+  const materialized = initiatives.reduce((n, i) => n + i.candidates.filter((c) => c.materializedAs).length, 0)
+  const validated = iniEvals.reduce((n, { ev }) => n + ev.provenanceDiagnostics.filter((d) => d.category === 'valid_single_reference').length, 0)
+  const coverage = { totalCandidates, materialized, pending: totalCandidates - materialized, validated, unresolved: materialized - validated }
 
   // --- Outcome roll-up (criteria owned by their entity). ---
   const outcome: OutcomeRollup = { total: 0, passed: 0, failed: 0, notVerified: 0, manualReview: 0, ambiguous: 0, stale: 0 }
@@ -182,7 +217,8 @@ export function computePlanningInsights(dir: string): PlanningInsights {
   // Graph findings: dependencies (cycle/pending) and relation/consistency (invalid_reference/duplicate).
   for (const f of findings) {
     const kind = kindOf(f.subject)
-    const type: AttentionType = f.kind === 'dependency_cycle' || f.kind === 'pending_dependency' ? 'dependency' : 'provenance'
+    const isDep = f.kind === 'dependency_cycle' || f.kind === 'pending_dependency'
+    const type: AttentionType = isDep ? 'dependency' : 'provenance'
     push({
       type,
       severity: f.level === 'error' ? 'blocking' : 'warning',
@@ -190,24 +226,27 @@ export function computePlanningInsights(dir: string): PlanningInsights {
       artifactKind: kind,
       title: f.subject,
       reason: f.message,
+      category: f.kind,
+      impact: isDep ? 'Dependent work stays blocked until the dependency is resolved.' : 'A declared relation does not resolve — the planning graph is inconsistent.',
+      nextStep: reviewStep(kind),
       link: linkFor(f.subject, kind),
     })
   }
 
   // Declared risks (separate from detected blockers — AC-15; no invented risk score).
   for (const p of plans) for (const r of p.risks) {
-    push({ type: 'declared-risk', severity: 'info', artifactId: p.id, artifactKind: 'plan', title: p.title, reason: r, link: linkFor(p.id, 'plan') })
+    push({ type: 'declared-risk', severity: 'info', artifactId: p.id, artifactKind: 'plan', title: p.title, reason: r, category: 'declared-risk', impact: 'A risk the Plan declares — tracked, not a detected blocker.', nextStep: reviewStep('plan'), link: linkFor(p.id, 'plan') })
   }
 
   // Outcome/delivery signals from each entity's evaluation.
   const outcomeSignal = (id: string, kind: ArtifactKind, title: string, o: OutcomeVerification) => {
     const n = unverified(o)
-    if (n > 0) push({ type: 'unverified-outcome', severity: 'warning', artifactId: id, artifactKind: kind, title, reason: `${n} success criterion(s) without valid evidence (failed/not-verified/manual-review/ambiguous).`, link: linkFor(id, kind) })
-    if (o.stale.length > 0) push({ type: 'unverified-outcome', severity: 'warning', artifactId: id, artifactKind: kind, title, reason: `${o.stale.length} evidence record(s) stale: the criterion changed and is not reattributed.`, link: linkFor(id, kind) })
+    if (n > 0) push({ type: 'unverified-outcome', severity: 'warning', artifactId: id, artifactKind: kind, title, reason: `${n} success criterion(s) without valid evidence (failed/not-verified/manual-review/ambiguous).`, category: 'unverified-outcome', impact: 'The declared outcome is not demonstrated — a completed delivery with an unverified outcome is not done.', nextStep: 'Review outcome evidence', link: linkFor(id, kind) })
+    if (o.stale.length > 0) push({ type: 'unverified-outcome', severity: 'warning', artifactId: id, artifactKind: kind, title, reason: `${o.stale.length} evidence record(s) stale: the criterion changed and is not reattributed.`, category: 'stale-evidence', impact: 'Evidence no longer matches its criterion — the outcome is effectively unverified.', nextStep: 'Review outcome evidence', link: linkFor(id, kind) })
   }
   const incompleteSignal = (id: string, kind: ArtifactKind, title: string, status: string, total: number, completed: number) => {
     if (status === 'in-progress' && total > 0 && completed < total) {
-      push({ type: 'incomplete-delivery', severity: 'info', artifactId: id, artifactKind: kind, title, reason: `${total - completed} of ${total} committed Work Item(s) not completed.`, link: linkFor(id, kind) })
+      push({ type: 'incomplete-delivery', severity: 'info', artifactId: id, artifactKind: kind, title, reason: `${total - completed} of ${total} committed Work Item(s) not completed.`, category: 'incomplete-delivery', impact: 'Committed scope is still in progress.', nextStep: reviewStep(kind), link: linkFor(id, kind) })
     }
   }
 
@@ -216,8 +255,14 @@ export function computePlanningInsights(dir: string): PlanningInsights {
   iniEvals.forEach(({ i, ev }) => {
     outcomeSignal(i.id, 'initiative', i.title, ev.outcome)
     incompleteSignal(i.id, 'initiative', i.title, i.status, ev.delivery.total, ev.delivery.completed)
-    if (ev.pendingCandidates.length > 0) push({ type: 'pending-candidates', severity: 'info', artifactId: i.id, artifactKind: 'initiative', title: i.title, reason: `${ev.pendingCandidates.length} committed candidate(s) not yet materialized (coverage signal, not an execution blocker).`, link: linkFor(i.id, 'initiative') })
-    for (const pv of ev.provenanceIssues) push({ type: 'provenance', severity: 'blocking', artifactId: i.id, artifactKind: 'initiative', title: i.title, reason: pv, link: linkFor(i.id, 'initiative') })
+    if (ev.pendingCandidates.length > 0) push({ type: 'pending-candidates', severity: 'info', artifactId: i.id, artifactKind: 'initiative', title: i.title, reason: `${ev.pendingCandidates.length} committed candidate(s) not yet materialized (coverage signal, not an execution blocker).`, category: 'pending-candidates', impact: 'A coverage gap — committed candidates are not yet materialized. Not an execution blocker.', nextStep: reviewStep('initiative'), link: linkFor(i.id, 'initiative') })
+    // Provenance: classified diagnostics (WI-082). missing/mismatch stay blocking; ambiguous is a warning,
+    // never claimed missing. valid references produce no signal.
+    for (const d of ev.provenanceDiagnostics) {
+      if (d.category === 'valid_single_reference') continue
+      const g = provenanceGuidance(d.category, 'initiative')
+      push({ type: 'provenance', severity: d.severity, artifactId: i.id, artifactKind: 'initiative', title: i.title, reason: d.message, category: d.category, impact: g.impact, nextStep: g.nextStep, link: linkFor(i.id, 'initiative') })
+    }
   })
 
   // Consolidate identical (type, artifact, reason); keep distinct reasons. Deterministic order.

@@ -181,6 +181,36 @@ reason and a link to the canonical detail, and is filterable by signal type and 
 shown **distinct** from lifecycle `completed` — "ready" means human approval can be requested, not that
 the entity is closed. When a denominator is zero, the view shows "no data" instead of a fabricated 0%.
 
+On the Overview the queue is a **compact summary** — at most five findings or groups up front, with the
+honest total of findings and affected artifacts — so Delivery Plans, Epics and Initiatives stay visible.
+**View all findings** opens a read-only **attention explorer** (an in-place drawer, no new route) that
+filters by signal type, artifact type and severity, groups by artifact without losing individual
+findings, and keeps the counts honest when filtered. Each finding shows its artifact, a diagnostic, an
+`impact` and a concrete **next step** (`Review Initiative`, `Inspect reference`, `Review outcome
+evidence`…) — a review action, never an auto-fix. There is no dismiss, resolve or state change.
+
+### Provenance diagnostics
+
+A candidate's `materialized_as` is a **1:1** reference — exactly one canonical Work Item id. Core
+classifies each one (reusing the WI-078/WI-079 engine, no parallel verifier) rather than string-matching
+the whole value:
+
+- **valid** — resolves to one existing, consistently-associated Work Item;
+- **missing** — a single canonical id that does not exist → **blocking** integrity defect;
+- **mismatch** — the Work Item exists but belongs to another Initiative → **blocking**;
+- **ambiguous (legacy)** — a value that is not a single canonical id (e.g. a historical composite like
+  `AN-005, AN-006, AN-007`) → a **warning**, never claimed as a missing Work Item.
+
+An ambiguous reference is **never rewritten, split or migrated**, and recognizing its shape never marks
+it validated: it is not counted as validated coverage and keeps the Initiative out of `READY`
+(`NEEDS_WORK`) until inspected. Genuine missing/mismatch defects stay blocking. `materialized_as` stays
+1:1 — this is a diagnosis, not a contract change.
+
+**Honest coverage.** Planning Coverage distinguishes **declared** materialization (`materialized`, the
+field is set) from **validated** references (`validated`, the reference resolves). When they differ the
+Overview shows both ("41 declared · 38 validated") with `unresolved = materialized − validated`; a
+declared reference is never presented as verified integrity.
+
 The projection is served read-only at `GET /api/v1/admin/planning/insights`.
 
 ## Knowledge Graph

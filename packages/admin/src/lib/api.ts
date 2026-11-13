@@ -842,7 +842,7 @@ export type AttentionType = 'dependency' | 'incomplete-delivery' | 'pending-cand
 export type AttentionSeverity = 'blocking' | 'warning' | 'info'
 export type AttentionItem = {
   type: AttentionType; severity: AttentionSeverity; artifactId: string; artifactKind: InsightArtifactKind
-  title: string; reason: string; link?: string
+  title: string; reason: string; category?: string; impact?: string; nextStep?: string; link?: string
 }
 export type OutcomeRollup = { total: number; passed: number; failed: number; notVerified: number; manualReview: number; ambiguous: number; stale: number }
 export type MilestoneInsight = { id: string; title: string; planId: string; planTitle: string; epics: number; outcome: OutcomeVerification; needsReview: boolean }
@@ -855,7 +855,7 @@ export type EntityInsight = {
 }
 export type PlanningInsights = {
   counts: { plans: Record<string, number>; epics: Record<string, number>; initiatives: Record<string, number> }
-  coverage: { totalCandidates: number; materialized: number; pending: number }
+  coverage: { totalCandidates: number; materialized: number; pending: number; validated: number; unresolved: number }
   delivery: { associated: PlanningDelivery; independent: PlanningDelivery }
   outcome: OutcomeRollup
   indicators: { blockingIssues: number; outcomeNeedsVerification: number; milestonesNeedingReview: number }

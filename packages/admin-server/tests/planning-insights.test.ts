@@ -47,7 +47,7 @@ describe('admin-server — Planning Insights API (WI-081)', () => {
     expect(res.statusCode).toBe(200)
     const j = res.json()
     // Three dimensions present and distinct.
-    expect(j.coverage).toEqual({ totalCandidates: 1, materialized: 0, pending: 1 })
+    expect(j.coverage).toEqual({ totalCandidates: 1, materialized: 0, pending: 1, validated: 0, unresolved: 0 })
     expect(j.delivery.associated.total).toBe(0)
     expect(j.outcome.notVerified).toBeGreaterThanOrEqual(2) // EP-001 + INI-001 criteria
     expect(j.indicators.outcomeNeedsVerification).toBeGreaterThan(0)

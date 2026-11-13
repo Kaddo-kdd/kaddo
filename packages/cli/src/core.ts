@@ -395,7 +395,10 @@ export {
   evaluateInitiativeById,
   initiativeOutcomeVerification,
   initiativeProvenanceIssues,
+  initiativeProvenanceDiagnostics,
   type InitiativeCompletionEvaluation,
+  type ProvenanceCategory,
+  type ProvenanceDiagnostic,
 } from './core/initiative-verification.js'
 export {
   computePlanningInsights,
