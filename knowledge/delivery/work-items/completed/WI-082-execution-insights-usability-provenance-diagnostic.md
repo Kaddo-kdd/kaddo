@@ -2,7 +2,7 @@
 type: feature
 id: WI-082
 title: Execution Insights Usability & Provenance Diagnostics
-status: in-progress
+status: completed
 work_type: feature
 created_at: '2026-11-11'
 source:
@@ -76,6 +76,246 @@ original_snapshot:
   type: feature
   status: draft
 ready_at: '2026-11-11'
+implementation_status: completed
+validation_status: passed
+released_in: v3.138.0
+implementation_evidence:
+  repositories:
+    cli:
+      role: core
+      status: completed
+      changed_paths:
+        - packages/cli/src/core/initiative-verification.ts
+        - packages/cli/src/core/planning-insights.ts
+        - packages/cli/src/core.ts
+        - packages/cli/tests/provenance-diagnostics.test.ts
+        - packages/cli/tests/planning-insights.test.ts
+      validations:
+        - command: npx vitest run packages/cli/tests/provenance-diagnostics.test.ts packages/cli/tests/planning-insights.test.ts
+          status: passed
+        - command: pnpm --filter @kaddo/cli build
+          status: passed
+    admin-server:
+      role: module
+      status: completed
+      changed_paths:
+        - packages/admin-server/tests/planning-insights.test.ts
+      validations:
+        - command: npx vitest run packages/admin-server/tests/planning-insights.test.ts
+          status: passed
+        - command: pnpm --filter @kaddo/admin-server build
+          status: passed
+    admin:
+      role: module
+      status: completed
+      changed_paths:
+        - packages/admin/src/components/PlanningInsights.tsx
+        - packages/admin/src/lib/api.ts
+        - packages/admin/e2e/planning-insights-usability.spec.ts
+        - packages/admin/e2e/fixtures/project/knowledge/delivery/initiatives/INI-055.md
+      validations:
+        - command: pnpm --filter @kaddo/admin exec playwright test (suite completa, 55/55)
+          status: passed
+        - command: pnpm --filter @kaddo/admin build
+          status: passed
+    docs:
+      role: module
+      status: completed
+      changed_paths:
+        - apps/docs/src/content/docs/delivery-planning.md
+        - apps/docs/src/content/docs/es/delivery-planning.md
+      validations:
+        - command: pnpm -r build (incluye apps/docs astro)
+          status: passed
+  ac_verifications:
+    - criterion: '**AC-01:** Planning Overview muestra un resumen de Needs Attention con un máximo de cinco hallazgos o grupos iniciales, independientemente del volumen total.'
+      status: passed
+      evidence: >-
+        COMPACT_LIMIT=5 en PlanningInsights; el E2E asserta que las filas visibles
+        son ≤5 sobre la cola completa del fixture.
+      reference: packages/admin/e2e/planning-insights-usability.spec.ts
+      method: automated
+    - criterion: '**AC-02:** Los bloques Delivery Plans, Epics e Initiatives siguen siendo descubribles y útiles sin recorrer toda la cola de alertas.'
+      status: passed
+      evidence: >-
+        El E2E verifica que las pestañas Delivery Plans y Epics siguen visibles en
+        el Overview con la cola compacta; revisión visual local lo confirma.
+      reference: packages/admin/e2e/planning-insights-usability.spec.ts
+      method: automated
+    - criterion: '**AC-03:** Los tres indicadores y las tres dimensiones de WI-081 permanecen independientes y semánticamente correctos.'
+      status: passed
+      evidence: >-
+        El E2E de WI-081 sigue en verde (indicadores y dimensiones separados) y el
+        test de Core mantiene coverage/delivery/outcome distintos.
+      reference: packages/admin/e2e/planning-insights.spec.ts
+      method: automated
+    - criterion: '**AC-04:** El resumen diferencia claramente total de hallazgos, total de artifacts afectados y cantidad visible cuando aplique.'
+      status: passed
+      evidence: >-
+        La línea "N findings · M artifacts · showing K" se renderiza y el E2E
+        asserta el patrón de totales.
+      reference: packages/admin/e2e/planning-insights-usability.spec.ts
+      method: automated
+    - criterion: '**AC-05:** Existe una acción funcional para abrir la exploración completa y regresar al Overview sin perder contexto innecesariamente.'
+      status: passed
+      evidence: >-
+        "View all findings" abre el drawer; Escape lo cierra y devuelve el foco al
+        trigger (E2E asserta dialog visible y foco de retorno).
+      reference: packages/admin/e2e/planning-insights-usability.spec.ts
+      method: automated
+    - criterion: '**AC-06:** El explorador permite filtrar por tipo de señal, tipo de artifact y severidad.'
+      status: passed
+      evidence: >-
+        El drawer expone selects de signal/artifact/severity; el E2E asserta los
+        tres labels.
+      reference: packages/admin/e2e/planning-insights-usability.spec.ts
+      method: automated
+    - criterion: '**AC-07:** Los hallazgos pueden agruparse por artifact preservando cada motivo individual y sin alterar sus conteos.'
+      status: passed
+      evidence: >-
+        El selector "Group by artifact" agrupa conservando el orden determinista de
+        Core; la cabecera muestra "N finding(s)" por artifact y el total honesto al
+        filtrar (revisión visual local).
+      reference: packages/admin/src/components/PlanningInsights.tsx
+      method: manual
+    - criterion: '**AC-08:** Cada hallazgo presenta origen, descripción comprensible, severidad, impacto y siguiente acción recomendada.'
+      status: passed
+      evidence: >-
+        Core adjunta category/impact/nextStep deterministas; test "provenance signals
+        carry structured impact and next-step guidance"; FindingDetail los renderiza.
+      reference: packages/cli/tests/provenance-diagnostics.test.ts
+      method: automated
+    - criterion: '**AC-09:** La navegación contextual abre el artifact correcto; no existen acciones de UI aparentes sin comportamiento real.'
+      status: passed
+      evidence: >-
+        El E2E abre el detalle canónico de INI-055 desde la acción de la señal; sin
+        link se muestra texto de revisión manual en vez de un botón inerte.
+      reference: packages/admin/e2e/planning-insights-usability.spec.ts
+      method: automated
+    - criterion: '**AC-10:** La cola mantiene orden determinista y estados vacíos/errores comprensibles, incluso con muchas señales.'
+      status: passed
+      evidence: >-
+        Core ordena por severidad/kind/id/tipo/razón; el componente cubre
+        loading/error/empty/"no findings match"; test de orden determinista en Core.
+      reference: packages/cli/src/core/planning-insights.ts
+      method: automated
+    - criterion: '**AC-11:** Se documenta la causa raíz, con evidencia, de los mensajes de provenance observados en `agent-native`.'
+      status: passed
+      evidence: >-
+        El §15 (Learning) documenta la causa raíz: initiativeProvenanceIssues hacía
+        match de la cadena completa, por lo que un compuesto histórico producía un
+        falso "missing Work Item"; reproducido con harness aislado.
+      reference: knowledge/delivery/work-items/completed/WI-082-execution-insights-usability-provenance-diagnostic.md
+      method: manual
+    - criterion: '**AC-12:** Core diferencia una referencia canónica inequívoca faltante de una referencia histórica ambigua o no canónica.'
+      status: passed
+      evidence: >-
+        initiativeProvenanceDiagnostics clasifica missing_reference (blocking) vs
+        ambiguous_legacy_reference (warning); Scenarios D y E.
+      reference: packages/cli/tests/provenance-diagnostics.test.ts
+      method: automated
+    - criterion: '**AC-13:** Las relaciones 1:1 válidas siguen comprobándose correctamente; las referencias genuinamente rotas siguen señalándose.'
+      status: passed
+      evidence: >-
+        Scenario C (valid_single_reference, sin issue), Scenario D (missing, blocking)
+        y Scenario F (association_mismatch, blocking) verifican el comportamiento.
+      reference: packages/cli/tests/provenance-diagnostics.test.ts
+      method: automated
+    - criterion: '**AC-14:** Los valores históricos ambiguos se diagnostican sin reescribir artifacts, inventar Work Items ni inferir asociaciones.'
+      status: passed
+      evidence: >-
+        Scenario E asserta que el mensaje no afirma "missing Work Item <compuesto>" y
+        que el artifact no cambia tras ejecutar el diagnóstico (read-only).
+      reference: packages/cli/tests/provenance-diagnostics.test.ts
+      method: automated
+    - criterion: '**AC-15:** Una ambigüedad no habilita completion ni pasa a validada por un cambio cosmético de severidad; las políticas de readiness requieren aprobación explícita.'
+      status: passed
+      evidence: >-
+        Una referencia ambigua es soft-block (NEEDS_WORK, nunca READY ni BLOCKED) y no
+        cuenta como validada; la política D2 se aprobó explícitamente en el checkpoint
+        de Fase 1 antes de implementarla.
+      reference: packages/cli/tests/provenance-diagnostics.test.ts
+      method: automated
+    - criterion: '**AC-16:** El Overview explica la diferencia entre materialización declarada y relaciones realmente verificadas cuando ambas cifras difieran.'
+      status: passed
+      evidence: >-
+        coverage añade validated/unresolved; la UI muestra "declared vs validated
+        references" cuando difieren; Scenario G verifica las cifras.
+      reference: packages/cli/tests/provenance-diagnostics.test.ts
+      method: automated
+    - criterion: '**AC-17:** La proyección conserva compatibilidad con los consumidores existentes y no duplica Work Items ni verificaciones.'
+      status: passed
+      evidence: >-
+        Campos de coverage y attention son aditivos; initiativeProvenanceIssues
+        conserva su firma (subconjunto blocking); las 2176 pruebas pasan sin regresión.
+      reference: packages/cli/src/core/initiative-verification.ts
+      method: automated
+    - criterion: '**AC-18:** Todos los insights y filtros son read-only y no alteran artifacts canónicos, evidencia ni lifecycle.'
+      status: passed
+      evidence: >-
+        computePlanningInsights es puro; test "is read-only: computing twice does not
+        change artifacts" y Scenario E (no reescritura) lo confirman.
+      reference: packages/cli/tests/planning-insights.test.ts
+      method: automated
+    - criterion: '**AC-19:** No se introduce auto-fix, dismiss silencioso, migración masiva ni un nuevo verificador de resultados.'
+      status: passed
+      evidence: >-
+        El explorador no tiene dismiss/resolve/auto-fix; se reutiliza el motor de
+        evidencia WI-078/WI-079 (sin verificador paralelo) y no se migra Markdown.
+      reference: packages/admin/src/components/PlanningInsights.tsx
+      method: manual
+    - criterion: '**AC-20:** Las Initiatives sin Epic y los Work Items independientes siguen funcionando correctamente.'
+      status: passed
+      evidence: >-
+        delivery.independent separa los WI independientes; el test de dimensiones
+        valida el WI standalone contado aparte sin forzar jerarquía.
+      reference: packages/cli/tests/planning-insights.test.ts
+      method: automated
+    - criterion: '**AC-21:** Los hallazgos existentes de dependencias, evidencia y riesgos continúan presentes y su semántica no se degrada.'
+      status: passed
+      evidence: >-
+        El E2E de WI-081 sigue verde (dependency, unverified-outcome, declared-risk) y
+        el test de señales estructuradas de Core se mantiene.
+      reference: packages/cli/tests/planning-insights.test.ts
+      method: automated
+    - criterion: '**AC-22:** Pruebas unitarias de Core cubren referencia válida, faltante, mismatch, ambigüedad histórica y efectos en agregados/readiness.'
+      status: passed
+      evidence: >-
+        provenance-diagnostics.test.ts (7 tests) cubre Scenarios C–G, el soft-block de
+        readiness y los agregados de coverage/indicadores.
+      reference: packages/cli/tests/provenance-diagnostics.test.ts
+      method: automated
+    - criterion: '**AC-23:** Pruebas de integración/Admin y E2E cubren cola extensa, filtros, agrupación, navegación, empty/error y límites del Overview.'
+      status: passed
+      evidence: >-
+        El test del endpoint admin-server valida la proyección aditiva; el E2E de
+        usabilidad cubre compacto/≤5, filtros, agrupación, navegación, Escape y 375px.
+      reference: packages/admin/e2e/planning-insights-usability.spec.ts
+      method: automated
+    - criterion: '**AC-24:** Validación visual local a resolución de escritorio y 375px, en Light/Dark, confirma legibilidad, jerarquía, interacción y ausencia de overflow.'
+      status: passed
+      evidence: >-
+        Revisión visual en el servidor local sobre el fixture (Gate A): escritorio
+        dark, modo light y 375px (overflow medido = 0) del Overview compacto y el
+        explorador con diagnóstico/impacto/acción.
+      reference: packages/admin/src/components/PlanningInsights.tsx
+      method: manual
+    - criterion: '**AC-25:** Builds, typecheck y suites relevantes pasan sin retries/skips añadidos ni regresiones; las decisiones y límites quedan documentados en inglés y español.'
+      status: passed
+      evidence: >-
+        2176 pruebas en verde, pnpm -r build (incl. docs) limpio, tsc del admin sin
+        errores; docs EN/ES actualizadas con la sección de provenance diagnostics.
+      reference: apps/docs/src/content/docs/delivery-planning.md
+      method: automated
+    - criterion: '**AC-26:** El WI registra evidencia por AC y se somete a Gate A, B y C independientes, sin commit/push/bump/tag/publicación/cierre antes de la autorización correspondiente.'
+      status: passed
+      evidence: >-
+        Gate A (commits 7d9f4f9/c9079bf, CI verde), Gate B (v3.138.0: bump 9dd2450,
+        CI verde, tag sobre HEAD validado, publish cli+mcp con provenance, GitHub
+        Release) y Gate C (este cierre) se ejecutaron por separado, cada uno con
+        autorización humana explícita.
+      reference: knowledge/delivery/work-items/completed/WI-082-execution-insights-usability-provenance-diagnostic.md
+      method: manual
 ---
 
 # WI-082 — Execution Insights Usability & Provenance Diagnostics
@@ -466,4 +706,60 @@ WI-082 estará listo para cierre cuando:
 
 ## 14. Learning
 
-*Pendiente de registrar después de la implementación y validación.*
+### Diagnóstico (causa raíz, AC-11)
+
+Toda la verificación de provenance de `materialized_as` vivía en una sola función,
+`initiativeProvenanceIssues` (`packages/cli/src/core/initiative-verification.ts`), que comparaba la
+**cadena completa** del campo contra un id de Work Item por igualdad exacta. Con un valor histórico
+compuesto como `AN-005, AN-006, AN-007`, ningún Work Item tiene ese id literal de 19 caracteres, de modo
+que se reportaba "missing Work Item AN-005, AN-006, AN-007" y se empujaba como **blocker** de integridad.
+Varios candidates así en una misma Initiative producían la cola repetitiva de `PROVENANCE` observada en
+`agent-native`. Lo reproduje con un harness aislado (sin tocar artifacts reales) que ejercitó cada caso
+—válido, faltante, compuesto y mismatch— y confirmó que **solo el compuesto estaba mal clasificado**;
+faltante y mismatch eran correctos. En paralelo, la cobertura contaba `materialized` por campo no vacío,
+por lo que mostraba `41/41` aunque la provenance estuviera rota: medía lo *declarado*, nunca lo *resuelto*.
+
+### Decisiones (D1–D7, aprobadas en el checkpoint de Fase 1)
+
+- **D1 Clasificación aditiva.** `initiativeProvenanceDiagnostics` tokeniza el valor; >1 token →
+  `ambiguous_legacy_reference`; exactamente 1 id canónico → valid / missing / mismatch como antes. Se
+  conservó `initiativeProvenanceIssues` como el subconjunto *blocking* (retrocompatibilidad).
+- **D2 Readiness (política, aprobación explícita).** La referencia ambigua es **soft-block →
+  `NEEDS_WORK`**, no `BLOCKED`: ya no fabrica un falso "missing", pero tampoco habilita `READY_TO_COMPLETE`
+  ni cuenta como validada. Reconocer la forma no la da por resuelta.
+- **D3 Cobertura honesta.** Campos aditivos `validated`/`unresolved` junto a `materialized`/`pending`; la
+  UI muestra "declared vs validated" solo cuando difieren.
+- **D4/D5 Señales estructuradas.** Los AttentionItem llevan `category`/`impact`/`nextStep` deterministas
+  desde Core; la UI no infiere reglas de negocio a partir de texto libre.
+- **D6 UI.** Resumen compacto (≤5, totales honestos, "View all findings") + explorador in situ (drawer,
+  sin ruta nueva) con filtros signal/artifact/severity, agrupación por artifact y contexto por hallazgo.
+- **D7 Sin cambio de cardinalidad.** `materialized_as` sigue 1:1. Sin migración, reescritura ni Work Items
+  inventados. Todo lo nuevo es aditivo y reutiliza el motor de evidencia de WI-078/WI-079 (sin verificador
+  paralelo).
+
+### Resultado visual
+
+En el fixture local: **0 Blocking issues** (el compuesto ya no infla el indicador), cobertura
+`2/3 · 1 validated · 1 declared but unresolved`, resumen `7 findings · 5 artifacts · showing 5`, y el
+explorador mostrando el hallazgo ambiguo de INI-055 con "not a single canonical Work Item id" (nunca
+"missing"). Verificado en escritorio dark, modo light y 375px (overflow = 0).
+
+### Límites honestos
+
+- El contrato `materialized_as` **no** se amplió a 1:N: una ambigüedad se diagnostica, no se "arregla".
+  Resolverla sigue siendo una acción humana (registrar la materialización canónica).
+- La detección de "id canónico único" usa una tokenización por separadores comunes (`, ; / espacio`); un id
+  con un prefijo inusual pero de un solo token se trata como canónico (correcto para faltante real).
+- El proyecto real `agent-native` no está en este repo; se validó con un fixture equivalente (INI-055) y el
+  harness de diagnóstico. La causa raíz, al ser determinista en el código, aplica igual.
+
+### Prevención de recurrencia
+
+- `provenance-diagnostics.test.ts` fija los Scenarios C–G, el soft-block de readiness y los agregados, de
+  modo que un regreso al match de cadena completa (o a marcar la ambigüedad como validada/BLOCKED) rompe el
+  suite.
+- La separación declared/validated en coverage queda cubierta por Scenario G; la línea de la UI solo aparece
+  cuando difieren, evitando presentar una referencia declarada como integridad verificada.
+- Lección de proceso: el checkpoint de Fase 1 (diagnóstico read-only + aprobación de D2/D3 y del wireframe
+  antes de tocar Core o UI) evitó cambiar semántica canónica por inercia; conviene mantenerlo para cualquier
+  WI que toque readiness, cardinalidad o integridad.
