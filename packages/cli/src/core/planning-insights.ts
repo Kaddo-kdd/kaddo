@@ -83,8 +83,19 @@ export type EntityInsight = {
   readiness: CompletionReadiness
   delivery: { total: number; completed: number; blocked: number }
   outcome: { total: number; passed: number; needsVerification: number }
+  /**
+   * The persisted lifecycle says `completed` but the current evidence-based readiness is not ready
+   * (WI-083). It describes a gap between a historical completion and today's checks — it never means the
+   * artifact was reopened, recomputed or that the original decision was wrong.
+   */
+  historicalEvidenceGap: boolean
   link: string
 }
+
+/** Delivery over DISTINCT Work Items, split planning-associated vs independent (WI-081/WI-083). The ONE
+ * delivery projection the Overview and Execution Insights both consume, so their Work-Item and blocked
+ * counts cannot diverge. Deduped by enumerating Work Items once; a Plan/Epic relation is optional. */
+export type PlanningDelivery = { associated: DeliveryProgress; independent: DeliveryProgress }
 
 export type PlanningInsights = {
   counts: {
@@ -171,20 +182,30 @@ function isPlanningAssociated(wi: KnowledgeArtifact): boolean {
   return Boolean(wi.initiative) || Boolean(optStr(wi.rawFrontmatter?.epic))
 }
 
+/**
+ * The single delivery projection over DISTINCT Work Items (WI-083). Enumerates Work Items once and splits
+ * them into the planning-associated universe (tied to an Initiative or Epic — a Plan/Epic is optional) and
+ * the independent universe; a Work Item reachable through several relations is still counted once by id.
+ * Both the Planning Overview totals and Execution Insights consume THIS, so their Work-Item and blocked
+ * counts are identical for the same universe. Read-only and pure.
+ */
+export function computePlanningDelivery(dir: string): PlanningDelivery {
+  const allWis = discoverWorkItems(dir)
+  return {
+    associated: computeDeliveryProgress(allWis.filter(isPlanningAssociated), dir),
+    independent: computeDeliveryProgress(allWis.filter((w) => !isPlanningAssociated(w)), dir),
+  }
+}
+
 export function computePlanningInsights(dir: string): PlanningInsights {
   const plans = discoverDeliveryPlans(dir)
   const epics = discoverEpics(dir)
   const initiatives = discoverInitiatives(dir)
   const findings = validatePlanningGraph(dir)
 
-  // --- Delivery over DISTINCT Work Items (AC-03: enumerate once; never sum per-entity subtotals). ---
-  const allWis = discoverWorkItems(dir)
-  const associatedWis = allWis.filter(isPlanningAssociated)
-  const independentWis = allWis.filter((w) => !isPlanningAssociated(w))
-  const delivery = {
-    associated: computeDeliveryProgress(associatedWis, dir),
-    independent: computeDeliveryProgress(independentWis, dir),
-  }
+  // --- Delivery over DISTINCT Work Items (AC-03: enumerate once; never sum per-entity subtotals).
+  //     Shared with the Planning Overview via computePlanningDelivery, so the two can never diverge. ---
+  const delivery = computePlanningDelivery(dir)
 
   // --- Per-entity evidence-based evaluations (reused from WI-078/WI-079; no parallel verifier). ---
   const planEvals = plans.map((p) => ({ p, ev: evaluatePlanCompletion(dir, p) }))
@@ -292,11 +313,15 @@ export function computePlanningInsights(dir: string): PlanningInsights {
   }
 
   // --- Entity readiness table (delivery vs outcome vs readiness, kept distinct from lifecycle). ---
+  // A persisted `completed` whose CURRENT readiness is not ready is a historical evidence gap (WI-083):
+  // surfaced as context, never a reopen or a recompute of the original decision.
+  const histGap = (status: string, readiness: CompletionReadiness) =>
+    status === 'completed' && readiness !== 'READY_TO_COMPLETE' && readiness !== 'READY_WITH_EXCEPTIONS'
   const entities: EntityInsight[] = [
-    ...planEvals.map(({ p, ev }) => ({ id: p.id, kind: 'plan' as const, title: p.title, status: p.status, readiness: ev.readiness, delivery: { total: ev.delivery.total, completed: ev.delivery.completed, blocked: ev.delivery.blocked }, outcome: { total: ev.outcome.total, passed: ev.outcome.passed, needsVerification: unverified(ev.outcome) }, link: linkFor(p.id, 'plan') })),
-    ...epicEvals.map(({ e, ev }) => ({ id: e.id, kind: 'epic' as const, title: e.title, status: e.status, readiness: ev.readiness, delivery: { total: ev.delivery.total, completed: ev.delivery.completed, blocked: ev.delivery.blocked }, outcome: { total: ev.outcome.total, passed: ev.outcome.passed, needsVerification: unverified(ev.outcome) }, link: linkFor(e.id, 'epic') })),
+    ...planEvals.map(({ p, ev }) => ({ id: p.id, kind: 'plan' as const, title: p.title, status: p.status, readiness: ev.readiness, delivery: { total: ev.delivery.total, completed: ev.delivery.completed, blocked: ev.delivery.blocked }, outcome: { total: ev.outcome.total, passed: ev.outcome.passed, needsVerification: unverified(ev.outcome) }, historicalEvidenceGap: histGap(p.status, ev.readiness), link: linkFor(p.id, 'plan') })),
+    ...epicEvals.map(({ e, ev }) => ({ id: e.id, kind: 'epic' as const, title: e.title, status: e.status, readiness: ev.readiness, delivery: { total: ev.delivery.total, completed: ev.delivery.completed, blocked: ev.delivery.blocked }, outcome: { total: ev.outcome.total, passed: ev.outcome.passed, needsVerification: unverified(ev.outcome) }, historicalEvidenceGap: histGap(e.status, ev.readiness), link: linkFor(e.id, 'epic') })),
     // Initiatives do not track blocked Work Items here (consistent with the Planning overview), so blocked is 0.
-    ...iniEvals.map(({ i, ev }) => ({ id: i.id, kind: 'initiative' as const, title: i.title, status: i.status, readiness: ev.readiness, delivery: { total: ev.delivery.total, completed: ev.delivery.completed, blocked: 0 }, outcome: { total: ev.outcome.total, passed: ev.outcome.passed, needsVerification: unverified(ev.outcome) }, link: linkFor(i.id, 'initiative') })),
+    ...iniEvals.map(({ i, ev }) => ({ id: i.id, kind: 'initiative' as const, title: i.title, status: i.status, readiness: ev.readiness, delivery: { total: ev.delivery.total, completed: ev.delivery.completed, blocked: 0 }, outcome: { total: ev.outcome.total, passed: ev.outcome.passed, needsVerification: unverified(ev.outcome) }, historicalEvidenceGap: histGap(i.status, ev.readiness), link: linkFor(i.id, 'initiative') })),
   ]
 
   return {

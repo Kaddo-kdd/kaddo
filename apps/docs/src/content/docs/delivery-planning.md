@@ -213,6 +213,26 @@ declared reference is never presented as verified integrity.
 
 The projection is served read-only at `GET /api/v1/admin/planning/insights`.
 
+### Consistent metrics and Initiative-first hierarchy
+
+The Planning **Overview** and Execution Insights read **one** deduped delivery projection
+(`computePlanningDelivery`), so a Work Item is counted once per id across overlapping relations and the two
+views cannot disagree. `Blocked Work Items` counts Work Items with an unfinished dependency **including
+those tied directly to an Initiative with no Epic** (the earlier Epic-only sum reported 0 in
+Initiative-first projects); it stays distinct from `Blocking issues`, which are integrity and dependency
+*findings*. Independent Work Items are a separate universe, surfaced distinctly and never forced into a
+hierarchy.
+
+When declared references are unresolved, coverage leads with the **validated** figure
+(`validated / totalCandidates`) and keeps the declared count visible as detail — a declared reference is
+never shown as verified integrity. `Lifecycle` (the persisted state, e.g. `completed`) and `Current
+evidence review` (today's readiness) are shown as **distinct** facts; a persisted `completed` whose current
+checks are not satisfied is labelled a *historical evidence gap* — context, never a reopen or a recompute.
+The Needs-attention summary groups by **artifact** (at most five distinct artifacts, each with its finding
+count) while the global totals stay exact, and the readiness detail collapses behind a compact summary so
+Initiatives stay in view. When a project has no Plans or Epics, their empty sections become one-line
+invites (the create actions stay available) and the Initiatives render first.
+
 ## Knowledge Graph
 
 Plans, milestones and Epics appear as graph nodes; declared relations become `belongs_to` edges

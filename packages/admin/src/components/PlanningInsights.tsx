@@ -49,8 +49,17 @@ export function PlanningInsights({ onOpen }: { onOpen: (kind: InsightArtifactKin
   const cov = ins.coverage
   const totalFindings = ins.attention.length
   const distinctArtifacts = new Set(ins.attention.map((a) => a.artifactId)).size
-  const compact = filtered.slice(0, COMPACT_LIMIT)
-  const hiddenCount = filtered.length - compact.length
+  // WI-083: the compact summary shows up to five DISTINCT artifacts (not five findings), each with its
+  // own finding count. Core already sorts attention deterministically, so first-occurrence order is
+  // stable and severity-first.
+  const groups = groupByArtifact(filtered)
+  const topGroups = groups.slice(0, COMPACT_LIMIT)
+  const hiddenArtifacts = groups.length - topGroups.length
+  const isReady = (r: string) => r === 'READY_TO_COMPLETE' || r === 'READY_WITH_EXCEPTIONS'
+  const readyCount = ins.entities.filter((e) => isReady(e.readiness)).length
+  const needsWorkCount = ins.entities.filter((e) => e.readiness === 'NEEDS_WORK').length
+  const blockedCount = ins.entities.filter((e) => e.readiness === 'BLOCKED').length
+  const historicalGaps = ins.entities.filter((e) => e.historicalEvidenceGap).length
 
   return (
     <section style={section}>
@@ -65,12 +74,19 @@ export function PlanningInsights({ onOpen }: { onOpen: (kind: InsightArtifactKin
 
       {/* The three dimensions, kept separate (AC-03). */}
       <div style={dims}>
-        <Dim title="Planning Coverage" sub={cov.unresolved > 0 ? 'declared vs validated references' : 'candidates materialized / total'}>
-          {cov.totalCandidates === 0 ? <Big>—</Big> : <Big>{cov.materialized}/{cov.totalCandidates}</Big>}
-          {cov.unresolved > 0
-            ? <small style={{ color: 'var(--warning, #b7791f)' }}>{cov.validated} validated · {cov.unresolved} declared but unresolved</small>
-            : (cov.pending > 0 && <small style={muted}>{cov.pending} pending to materialize</small>)}
-        </Dim>
+        {cov.unresolved > 0 ? (
+          // Validated coverage leads when declarations are unresolved — a declared reference is not
+          // integrity (WI-083 AC-07). The declared figure stays visible as detail, never hidden.
+          <Dim title="Validated Coverage" sub="resolved references / candidates">
+            {cov.totalCandidates === 0 ? <Big>—</Big> : <Big>{cov.validated}/{cov.totalCandidates}</Big>}
+            <small style={{ color: 'var(--warning, #b7791f)' }}>{cov.materialized}/{cov.totalCandidates} declared · {cov.unresolved} unresolved{cov.pending > 0 ? ` · ${cov.pending} pending` : ''}</small>
+          </Dim>
+        ) : (
+          <Dim title="Planning Coverage" sub="candidates materialized / total">
+            {cov.totalCandidates === 0 ? <Big>—</Big> : <Big>{cov.materialized}/{cov.totalCandidates}</Big>}
+            {cov.totalCandidates === 0 ? <small style={muted}>No candidates</small> : (cov.pending > 0 && <small style={muted}>{cov.pending} pending to materialize</small>)}
+          </Dim>
+        )}
         <Dim title="Delivery Progress" sub="distinct Work Items, deduped">
           <Big>{ins.delivery.associated.byState?.completed ?? 0}/{ins.delivery.associated.total}</Big>
           <small style={muted}>{ins.delivery.associated.blocked} blocked · {ins.delivery.independent.total} independent</small>
@@ -99,18 +115,18 @@ export function PlanningInsights({ onOpen }: { onOpen: (kind: InsightArtifactKin
         <p style={{ ...muted, fontSize: 12, margin: '0 0 8px' }}>
           {totalFindings} finding{totalFindings === 1 ? '' : 's'} · {distinctArtifacts} artifact{distinctArtifacts === 1 ? '' : 's'}
           {filtered.length !== totalFindings ? ` · ${filtered.length} match filters` : ''}
-          {compact.length > 0 ? ` · showing ${compact.length}` : ''}
+          {topGroups.length > 0 ? ` · top ${topGroups.length} artifact${topGroups.length === 1 ? '' : 's'}` : ''}
         </p>
         {filtered.length === 0 ? (
           <p style={muted}>{totalFindings === 0 ? 'Nothing needs attention right now.' : 'No signals match these filters.'}</p>
         ) : (
           <>
             <ul style={list}>
-              {compact.map((a, i) => <CompactRow key={i} a={a} onOpen={onOpen} />)}
+              {topGroups.map((g) => <ArtifactSummaryRow key={g.id} g={g} onOpen={onOpen} />)}
             </ul>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 8 }}>
               <button style={viewAllBtn} onClick={() => setExplorerOpen(true)}>View all findings</button>
-              {hiddenCount > 0 && <span style={{ ...muted, fontSize: 12 }}>{hiddenCount} more not shown here</span>}
+              {hiddenArtifacts > 0 && <span style={{ ...muted, fontSize: 12 }}>+ {hiddenArtifacts} more artifact{hiddenArtifacts === 1 ? '' : 's'} · total stays {filtered.length}</span>}
             </div>
           </>
         )}
@@ -135,29 +151,41 @@ export function PlanningInsights({ onOpen }: { onOpen: (kind: InsightArtifactKin
         </div>
       )}
 
-      {/* Readiness vs delivery vs outcome — readiness is NOT lifecycle completed (AC-10). */}
+      {/* Readiness — a compact summary that expands on demand (WI-083 AC-13). Lifecycle (persisted) and
+          current evidence review (readiness) are shown as distinct facts; a historical evidence gap is
+          context, never a reopen (AC-11). */}
       {ins.entities.length > 0 && (
-        <div style={{ marginTop: 18 }}>
-          <h4 style={h4}>Readiness</h4>
-          <ul style={list}>
+        <details style={{ marginTop: 18 }}>
+          <summary style={readinessSummary}>
+            <span style={{ fontSize: 14, fontWeight: 600 }}>Readiness</span>
+            <span style={{ ...muted, fontSize: 13 }}>
+              {readyCount} ready · {needsWorkCount} needs work · {blockedCount} blocked
+              {historicalGaps > 0 ? <> · <span style={{ color: 'var(--warning, #b7791f)' }}>{historicalGaps} historical evidence gap{historicalGaps === 1 ? '' : 's'}</span></> : null}
+            </span>
+          </summary>
+          <ul style={{ ...list, marginTop: 8 }}>
             {ins.entities.map((e) => (
               <li key={e.id} style={rowItem}>
                 <div style={{ display: 'grid', gap: 2 }}>
                   <span>
                     <button style={linkBtn} onClick={() => onOpen(e.kind, e.id)}>{e.id}</button> {e.title}
-                    <span style={muted}> · {KIND_LABEL[e.kind]} · status {e.status}</span>
+                    <span style={muted}> · {KIND_LABEL[e.kind]}</span>
                   </span>
                   <small style={muted}>
-                    <span style={{ color: READINESS_COLOR[e.readiness] }}>{e.readiness.replace(/_/g, ' ')}</span>
+                    Lifecycle: <span style={{ color: 'var(--foreground)' }}>{titleCase(e.status)}</span>
+                    {' · '}Current evidence review: <span style={{ color: READINESS_COLOR[e.readiness] }}>{e.readiness.replace(/_/g, ' ').toLowerCase()}</span>
                     {' · '}delivery {e.delivery.completed}/{e.delivery.total}{e.delivery.blocked > 0 ? ` (${e.delivery.blocked} blocked)` : ''}
                     {' · '}outcome {e.outcome.passed}/{e.outcome.total}{e.outcome.needsVerification > 0 ? ` (${e.outcome.needsVerification} to verify)` : ''}
                   </small>
+                  {e.historicalEvidenceGap && (
+                    <small style={{ color: 'var(--warning, #b7791f)' }}>Historical completion; current checks may require evidence not recorded at the time.</small>
+                  )}
                 </div>
               </li>
             ))}
           </ul>
           <p style={{ ...muted, fontSize: 12, marginTop: 6 }}>“Ready” means human approval can be requested — it is not the same as a <code>completed</code> lifecycle status.</p>
-        </div>
+        </details>
       )}
 
       {explorerOpen && <AttentionExplorer items={ins.attention} onOpen={onOpen} onClose={() => setExplorerOpen(false)} />}
@@ -165,19 +193,35 @@ export function PlanningInsights({ onOpen }: { onOpen: (kind: InsightArtifactKin
   )
 }
 
-/** Compact row — severity, type, artifact link and the one-line reason. Full context lives in the explorer. */
-function CompactRow({ a, onOpen }: { a: AttentionItem; onOpen: (kind: InsightArtifactKind, id: string) => void }) {
+type ArtifactGroup = { id: string; kind: InsightArtifactKind; title: string; items: AttentionItem[] }
+
+/** Group findings by artifact, preserving Core's deterministic order. The first time an artifact appears
+ * is its highest-severity finding (Core sorts severity-first), so first-occurrence order is a stable,
+ * severity-first artifact order and `items[0]` is the artifact's top signal (WI-083 AC-17/AC-18). */
+function groupByArtifact(items: AttentionItem[]): ArtifactGroup[] {
+  const order: string[] = []
+  const byId = new Map<string, ArtifactGroup>()
+  for (const a of items) {
+    const g = byId.get(a.artifactId)
+    if (g) { g.items.push(a) } else { byId.set(a.artifactId, { id: a.artifactId, kind: a.artifactKind, title: a.title, items: [a] }); order.push(a.artifactId) }
+  }
+  return order.map((id) => byId.get(id)!)
+}
+
+/** Compact summary row for ONE artifact — top severity, its signal types, finding count and top reason. */
+function ArtifactSummaryRow({ g, onOpen }: { g: ArtifactGroup; onOpen: (kind: InsightArtifactKind, id: string) => void }) {
+  const top = g.items[0]
+  const types = Array.from(new Set(g.items.map((a) => TYPE_LABEL[a.type])))
   return (
     <li style={rowItem}>
       <div style={{ display: 'grid', gap: 2 }}>
-        <span>
-          <SevTag severity={a.severity} />
-          {' '}<span style={{ color: SEV_COLOR[a.severity], fontWeight: 600, fontSize: 12, textTransform: 'uppercase', letterSpacing: 0.3 }}>{TYPE_LABEL[a.type]}</span>
-          {' · '}
-          {a.link ? <button style={linkBtn} onClick={() => onOpen(a.artifactKind, a.artifactId)}>{a.artifactId}</button> : <span className="font-mono">{a.artifactId}</span>}
-          {' '}<span style={muted}>{a.title}</span>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+          <SevTag severity={top.severity} />
+          {top.link ? <button style={linkBtn} onClick={() => onOpen(g.kind, g.id)}>{g.id}</button> : <span className="font-mono">{g.id}</span>}
+          <span style={muted}>{g.title}</span>
+          <span style={{ ...muted, fontSize: 12 }}>· {g.items.length} finding{g.items.length === 1 ? '' : 's'} · {types.join(', ')}</span>
         </span>
-        <small style={muted}>{a.reason}</small>
+        <small style={muted}>{top.reason}</small>
       </div>
     </li>
   )
@@ -303,6 +347,7 @@ function SevTag({ severity }: { severity: AttentionSeverity }) {
   return <span style={{ fontSize: 11, fontWeight: 600, padding: '1px 7px', borderRadius: 999, color: SEV_COLOR[severity], border: `1px solid ${SEV_COLOR[severity]}` }}>{SEV_LABEL[severity]}</span>
 }
 function Label({ children }: { children: React.ReactNode }) { return <strong style={{ fontWeight: 600 }}>{children}:</strong> }
+function titleCase(s: string): string { return s ? s.replace(/[-_]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()) : s }
 
 function Indicator({ label, value, tone, hint }: { label: string; value: number; tone: 'blocking' | 'warning' | 'muted'; hint: string }) {
   return (
@@ -334,6 +379,7 @@ const attnHead: CSSProperties = { display: 'flex', justifyContent: 'space-betwee
 const h4: CSSProperties = { margin: 0, fontSize: 14 }
 const list: CSSProperties = { listStyle: 'none', margin: 0, padding: 0 }
 const rowItem: CSSProperties = { padding: '8px 0', borderBottom: '1px solid var(--border)', fontSize: 14 }
+const readinessSummary: CSSProperties = { cursor: 'pointer', display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap', listStyle: 'none' }
 const muted: CSSProperties = { color: 'var(--foreground-muted)', fontSize: 13 }
 const linkBtn: CSSProperties = { background: 'none', border: 'none', padding: 0, color: 'var(--primary)', cursor: 'pointer', fontFamily: 'inherit', fontSize: 'inherit' }
 const select: CSSProperties = { padding: '6px 8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', background: 'var(--background)', color: 'var(--foreground)', fontSize: 13, fontFamily: 'inherit' }

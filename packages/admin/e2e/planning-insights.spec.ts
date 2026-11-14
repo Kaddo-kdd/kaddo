@@ -17,8 +17,9 @@ test.describe('Planning Execution Insights (WI-081)', () => {
     await expect(insights.getByText('Outcome needs verification')).toBeVisible()
     await expect(insights.getByText('Milestones needing review')).toBeVisible()
 
-    // Three separated dimensions (AC-02).
-    await expect(insights.getByText('Planning Coverage')).toBeVisible()
+    // Three separated dimensions (AC-02). The coverage dimension leads with validated coverage when
+    // declarations are unresolved (WI-083), so match on the stable "Coverage" label.
+    await expect(insights.getByText(/Coverage/)).toBeVisible()
     await expect(insights.getByText('Delivery Progress')).toBeVisible()
     await expect(insights.getByText('Outcome Verification')).toBeVisible()
 
@@ -41,8 +42,9 @@ test.describe('Planning Execution Insights (WI-081)', () => {
     await expect(insights.getByText(/needs review/).first()).toBeVisible()
     void milestones
 
-    // Readiness is shown distinct from lifecycle completed (AC-10).
-    await expect(insights.getByRole('heading', { name: 'Readiness' })).toBeVisible()
+    // Readiness is a collapsible summary (WI-083) shown distinct from lifecycle completed (AC-10).
+    await expect(insights.getByText('Readiness')).toBeVisible()
+    await insights.getByText('Readiness').click() // expand the <details>
     await expect(insights.getByText(/not the same as a .*completed.* lifecycle status/)).toBeVisible()
 
     // Navigation from a signal/insight opens the canonical detail (AC-17).

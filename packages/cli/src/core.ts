@@ -402,7 +402,9 @@ export {
 } from './core/initiative-verification.js'
 export {
   computePlanningInsights,
+  computePlanningDelivery,
   type PlanningInsights,
+  type PlanningDelivery,
   type AttentionItem,
   type AttentionType,
   type AttentionSeverity,

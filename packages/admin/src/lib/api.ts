@@ -776,7 +776,7 @@ export type InitiativeInPlanning = {
   delivery: PlanningDelivery
   hasWorkItems: boolean
 }
-export type PlanningTotals = { plans: number; epics: number; initiatives: number; workItems: number; blockedWorkItems: number; epicsWithPendingDependencies: number; unassignedInitiatives: number }
+export type PlanningTotals = { plans: number; epics: number; initiatives: number; workItems: number; independentWorkItems: number; blockedWorkItems: number; independentBlockedWorkItems: number; epicsWithPendingDependencies: number; unassignedInitiatives: number }
 export type PlanningOverview = { plans: PlanSummary[]; epics: EpicSummary[]; initiatives: InitiativeInPlanning[]; findings: PlanningFinding[]; totals: PlanningTotals }
 export type Milestone = { id: string; title: string; exitCriteria: string[] }
 export type PlanningProgress = {
@@ -851,6 +851,7 @@ export type EntityInsight = {
   readiness: 'READY_TO_COMPLETE' | 'READY_WITH_EXCEPTIONS' | 'NEEDS_WORK' | 'BLOCKED'
   delivery: { total: number; completed: number; blocked: number }
   outcome: { total: number; passed: number; needsVerification: number }
+  historicalEvidenceGap: boolean
   link: string
 }
 export type PlanningInsights = {

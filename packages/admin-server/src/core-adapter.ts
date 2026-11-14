@@ -132,6 +132,7 @@ import {
   computeEpicProgress,
   validatePlanningGraph,
   computePlanningInsights,
+  computePlanningDelivery,
   revisionOf,
   createDeliveryPlan as coreCreateDeliveryPlan,
   updateDeliveryPlan as coreUpdateDeliveryPlan,
@@ -367,14 +368,23 @@ export function getPlanningOverviewAdmin(dir: string) {
     }
   })
   const findings = validatePlanningGraph(dir)
+  // WI-083: Work Item counts come from the SINGLE deduped delivery projection shared with Execution
+  // Insights, so the Overview and Insights can never diverge. `workItems`/`blockedWorkItems` are the
+  // planning-associated universe (includes Work Items tied directly to Initiatives with no Epic — the
+  // old Epic-only sum reported 0 blocked in Initiative-first projects). Independent Work Items are a
+  // separate universe, surfaced distinctly, never forced into a hierarchy.
+  const delivery = computePlanningDelivery(dir)
   const totals = {
     plans: plans.length,
     epics: epics.length,
     initiatives: initiatives.length,
-    workItems: initiatives.reduce((n, i) => n + i.delivery.total, 0),
-    // Blocked WORK ITEMS (a WI with an unfinished dependency) — distinct from an Epic-level pending
-    // dependency, which is a planning signal and never changes the Epic's lifecycle state.
-    blockedWorkItems: epics.reduce((n, e) => n + e.delivery.blocked, 0),
+    workItems: delivery.associated.total,
+    independentWorkItems: delivery.independent.total,
+    // Blocked WORK ITEMS (a WI with an unfinished dependency), deduped across the associated universe.
+    // Distinct from `Blocking issues` (integrity/dependency findings) and from an Epic-level pending
+    // dependency — a planning signal that never changes an Epic's lifecycle state.
+    blockedWorkItems: delivery.associated.blocked,
+    independentBlockedWorkItems: delivery.independent.blocked,
     epicsWithPendingDependencies: new Set(findings.filter((f) => f.kind === 'pending_dependency').map((f) => f.subject)).size,
     unassignedInitiatives: initiatives.filter((i) => !i.epic).length,
   }

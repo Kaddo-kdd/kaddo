@@ -95,6 +95,8 @@ export function Planning({ initialTab = 'overview' }: { initialTab?: PlanningTab
   const data = q.data!
   const t = data.totals
   const hasAny = t.plans + t.epics + t.initiatives > 0
+  // Initiative-first project: no Plans/Epics but Initiatives exist — order the Overview around them.
+  const initiativeFirst = t.plans === 0 && t.epics === 0 && t.initiatives > 0
 
   const Plans = (
     <section style={section}>
@@ -168,19 +170,35 @@ export function Planning({ initialTab = 'overview' }: { initialTab?: PlanningTab
                 <Metric label="Delivery Plans" value={t.plans} />
                 <Metric label="Epics" value={t.epics} />
                 <Metric label="Initiatives" value={t.initiatives} />
-                <Metric label="Work Items linked" value={t.workItems} />
-                <Metric label="Blocked Work Items" value={t.blockedWorkItems} />
+                <Metric label="Work Items linked" value={t.workItems} hint={t.independentWorkItems > 0 ? `+${t.independentWorkItems} independent` : 'associated to planning'} />
+                <Metric label="Blocked Work Items" value={t.blockedWorkItems} danger hint="with an unfinished dependency" />
                 {t.epicsWithPendingDependencies > 0 && <Metric label="Epics with pending dependencies" value={t.epicsWithPendingDependencies} />}
                 <Metric label="Initiatives without Epic" value={t.unassignedInitiatives} />
               </section>
               <Findings findings={data.findings} />
               <PlanningInsights onOpen={openInsight} />
-              {t.plans === 0 && t.epics === 0 && t.initiatives > 0 && (
-                <p style={mutedSmall}>This project organizes work with Initiatives. You can optionally group them into Epics and Delivery Plans — nothing is required or migrated.</p>
+              {initiativeFirst ? (
+                // Initiative-first: surface the Initiatives the user actually works with before the
+                // (empty) Plan/Epic invites, so empty blocks never push them out of view (WI-083).
+                <>
+                  <p style={mutedSmall}>This project organizes work with Initiatives. You can optionally group them into Epics and Delivery Plans — nothing is required or migrated.</p>
+                  {InitiativesOverview}
+                  <div style={compactEmptyRow}>
+                    <CompactEmpty label="No Delivery Plans" cta="+ Create Plan" onClick={() => setCreating('plan')} />
+                    <CompactEmpty label="No Epics" cta="+ Create Epic" onClick={() => setCreating('epic')} />
+                  </div>
+                </>
+              ) : (
+                <>
+                  {t.plans > 0 && Plans}
+                  {t.epics > 0 && Epics}
+                  <div style={compactEmptyRow}>
+                    {t.plans === 0 && <CompactEmpty label="No Delivery Plans" cta="+ Create Plan" onClick={() => setCreating('plan')} />}
+                    {t.epics === 0 && <CompactEmpty label="No Epics" cta="+ Create Epic" onClick={() => setCreating('epic')} />}
+                  </div>
+                  {InitiativesOverview}
+                </>
               )}
-              {Plans}
-              {Epics}
-              {InitiativesOverview}
             </>
           )}
         </>
@@ -348,8 +366,19 @@ export function EpicDetail({ id }: { id: string }) {
   )
 }
 
-function Metric({ label, value }: { label: string; value: string | number }) {
-  return <div style={metricCard}><span>{label}</span><strong>{String(value)}</strong></div>
+function Metric({ label, value, hint, danger }: { label: string; value: string | number; hint?: string; danger?: boolean }) {
+  const strong = danger && Number(value) > 0 ? { color: 'var(--danger)' } : undefined
+  return <div style={metricCard}><span>{label}</span><strong style={strong}>{String(value)}</strong>{hint && <span style={{ fontSize: 11, fontWeight: 400 }}>{hint}</span>}</div>
+}
+
+/** A one-line invite that replaces a tall empty Plan/Epic section, keeping the create CTA accessible. */
+function CompactEmpty({ label, cta, onClick }: { label: string; cta: string; onClick: () => void }) {
+  return (
+    <div style={compactEmpty}>
+      <span style={{ color: 'var(--foreground-muted)', fontSize: 13 }}>{label}</span>
+      <Btn onClick={onClick}>{cta}</Btn>
+    </div>
+  )
 }
 
 const page: React.CSSProperties = { padding: '24px 32px', maxWidth: 1180, margin: '0 auto' }
@@ -370,6 +399,8 @@ const cardGrid: React.CSSProperties = { display: 'grid', gridTemplateColumns: 'r
 const card: React.CSSProperties = { textAlign: 'left', display: 'grid', gap: 6, padding: 14, border: '1px solid var(--border)', borderRadius: 'var(--radius)', background: 'var(--surface)', cursor: 'pointer', font: 'inherit', color: 'var(--foreground)' }
 const cardTop: React.CSSProperties = { display: 'flex', justifyContent: 'space-between', alignItems: 'center' }
 const metricCard: React.CSSProperties = { padding: 14, border: '1px solid var(--border)', borderRadius: 'var(--radius)', background: 'var(--surface)', display: 'grid', gap: 6, color: 'var(--foreground-muted)', fontSize: 13 }
+const compactEmptyRow: React.CSSProperties = { display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 16 }
+const compactEmpty: React.CSSProperties = { flex: '1 1 220px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, padding: '10px 14px', border: '1px dashed var(--border)', borderRadius: 'var(--radius)', background: 'var(--surface)' }
 const muted: React.CSSProperties = { color: 'var(--foreground-muted)', fontSize: 13 }
 const mutedSmall: React.CSSProperties = { color: 'var(--foreground-muted)', fontSize: 12, margin: '4px 0 0' }
 const mono: React.CSSProperties = { fontFamily: 'var(--font-mono, monospace)', fontSize: 13 }

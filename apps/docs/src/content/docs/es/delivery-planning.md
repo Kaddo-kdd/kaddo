@@ -213,6 +213,27 @@ validated`; una referencia declarada nunca se presenta como integridad verificad
 
 La proyección se sirve de solo lectura en `GET /api/v1/admin/planning/insights`.
 
+### Métricas consistentes y jerarquía Initiative-first
+
+El **Overview** de Planning y Execution Insights leen **una** proyección de entrega deduplicada
+(`computePlanningDelivery`), de modo que un Work Item se cuenta una sola vez por id entre relaciones
+solapadas y las dos vistas no pueden contradecirse. `Blocked Work Items` cuenta Work Items con una
+dependencia sin terminar **incluidos los asociados directamente a una Initiative sin Epic** (la suma
+anterior, solo por Epics, informaba 0 en proyectos Initiative-first); permanece distinto de `Blocking
+issues`, que son *hallazgos* de integridad y dependencia. Los Work Items independientes son un universo
+aparte, mostrado de forma distinta y nunca forzado a una jerarquía.
+
+Cuando hay referencias declaradas no resueltas, la cobertura destaca la cifra **validada**
+(`validated / totalCandidates`) y mantiene visible la declarada como detalle — una referencia declarada
+nunca se presenta como integridad verificada. `Lifecycle` (el estado persistido, p. ej. `completed`) y
+`Current evidence review` (la readiness actual) se muestran como hechos **distintos**; un `completed`
+persistido cuyas comprobaciones actuales no se satisfacen se etiqueta como *historical evidence gap* —
+contexto, nunca una reapertura ni un recálculo. El resumen de Needs Attention agrupa por **artifact** (como
+máximo cinco artifacts distintos, cada uno con su conteo de hallazgos) mientras los totales globales siguen
+exactos, y el detalle de readiness se pliega tras un resumen compacto para que las Initiatives permanezcan
+a la vista. Cuando un proyecto no tiene Plans ni Epics, sus secciones vacías se vuelven invitaciones de una
+línea (las acciones de crear siguen disponibles) y las Initiatives se muestran primero.
+
 ## Knowledge Graph
 
 Plans, milestones y Epics aparecen como nodos del grafo; las relaciones declaradas se vuelven aristas
