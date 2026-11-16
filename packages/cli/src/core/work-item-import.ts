@@ -10,6 +10,7 @@ import fs from 'node:fs'
 import matter from 'gray-matter'
 import { normalizeType } from './knowledge-levels.js'
 import { createWorkItem, type WorkItemSourceInput, type ExternalSnapshot } from './work-item-write.js'
+import type { TelemetryInterface } from './telemetry-events.js'
 import { buildRefinementHandoff, type RefinementHandoff } from './work-item-refinement.js'
 import { discoverWorkItems } from '../services/knowledge-artifacts.js'
 import { readFile } from '../utils/fs.js'
@@ -33,6 +34,7 @@ export type ParsedContent = {
 export type ImportWorkItemOpts = {
   content: string
   source: 'chat' | 'cli' | 'admin'
+  telemetrySource?: TelemetryInterface
   type?: string
   filePath?: string
   onConflict?: 'replace' | 'new-id'
@@ -342,6 +344,7 @@ export function importWorkItem(dir: string, opts: ImportWorkItemOpts): ImportWor
     body: normalized.body,
     source: normalized.source,
     originalSnapshot: normalized.snapshot,
+    telemetrySource: opts.telemetrySource,
   })
 
   let refinementHandoff: RefinementHandoff | undefined

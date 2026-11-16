@@ -4,6 +4,7 @@ import matter from 'gray-matter'
 import { readArtifacts, type Artifact } from '../services/artifact-reader.js'
 import { exists, join, cwd, readFile, writeFile, ensureDir } from '../utils/fs.js'
 import { intro, outro, log, text, select } from '../utils/ui.js'
+import { completeWorkItem } from '../core/work-item-write.js'
 
 const ARCH_DIR = 'knowledge'
 const WORK_ITEMS_DIR = 'knowledge/delivery/work-items'
@@ -182,7 +183,7 @@ export async function runLearn(artifactId?: string, opts: { force?: boolean } = 
     enrichedLearning += '\n\n> ' + notes.join(' ')
   }
 
-  const finalPath = updateWorkItemFile(filePath, enrichedLearning)
+  const finalPath = completeWorkItem(dir, targetId, enrichedLearning).path
 
   log.success(`${targetId} marked as completed`)
   log.success(`Learning recorded in ${finalPath.replace(dir + path.sep, '').replace(/\\/g, '/')}`)

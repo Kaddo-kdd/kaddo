@@ -710,7 +710,7 @@ export function getRefinementHandoff(dir: string, workItemId: string): ReturnTyp
 
 export function createWorkItemAdmin(dir: string, body: { intent: string; type: string; answers?: Record<string, string> }): WorkItemWriteResult {
   try {
-    const res = coreCreateWorkItem(dir, { intent: body.intent, type: body.type, answers: body.answers })
+    const res = coreCreateWorkItem(dir, { intent: body.intent, type: body.type, answers: body.answers, telemetrySource: 'adapter' })
     return { id: res.id, path: res.path, revision: res.revision, status: 'draft' }
   } catch (err) { mapWriteError(err) }
 }
@@ -725,7 +725,7 @@ export function getWorkItemEdit(dir: string, workItemId: string): WorkItemEditMo
 export function updateWorkItemAdmin(dir: string, workItemId: string, body: { model: WorkItemInput; expectedRevision: string }): WorkItemWriteResult {
   assertValidWorkItemId(workItemId)
   try {
-    const res = coreUpdateWorkItem(dir, workItemId, body.model as CoreWorkItemInput, body.expectedRevision)
+    const res = coreUpdateWorkItem(dir, workItemId, body.model as CoreWorkItemInput, body.expectedRevision, 'adapter')
     return { id: workItemId, path: res.path, revision: res.revision }
   } catch (err) { mapWriteError(err) }
 }

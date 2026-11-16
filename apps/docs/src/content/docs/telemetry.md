@@ -13,6 +13,34 @@ separate from **website analytics** on `kaddo.org`, which uses Google Analytics 
 systems share no identity and are never correlated.
 :::
 
+## Product telemetry coverage
+
+Contract 1.1 events are emitted only after successful canonical operations. They
+never include paths, source content, prompts or command arguments. Eligible
+events include `kaddoVersion`; project-context events include the opaque
+`projectId` persisted in `.kaddo/config.yml`; Work Item events include opaque
+`workItemIdAnon`, type and knowledge level. A clone that versions this config is
+the same logical project, while each installation has its own installation ID.
+
+After deployment, inspect the protected collector aggregation for the desired
+UTC period: `kaddo_version_coverage`, `project_id_coverage` and
+`work_item_id_anon_coverage`. Always interpret each percentage with its
+denominator/sample size. Use the approved IAM workflow to query the metrics
+table; never export raw identifiers.
+
+Languages and frameworks come only from the normalized scanner result. AI
+provider, model and token dimensions remain absent until an explicit observable
+integration supplies them.
+
+The full signed HTTP client-to-collector test depends on an isolated
+`kaddo-telemetry` HTTP and DynamoDB Local harness. It must never use production
+telemetry.
+
+Kaddo CI pins that harness to a reviewed telemetry commit, starts DynamoDB Local
+and injects its loopback origin only into the integration test. The job uses
+fake local AWS credentials and has no OIDC, deployment permissions or production
+telemetry endpoint.
+
 ## Consent model
 
 Kaddo uses a three-state consent model:
