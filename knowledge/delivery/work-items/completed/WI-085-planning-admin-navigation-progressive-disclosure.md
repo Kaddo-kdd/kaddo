@@ -2,7 +2,7 @@
 type: feature
 id: WI-085
 title: Planning Admin Navigation & Progressive Disclosure
-status: in-progress
+status: completed
 work_type: feature
 created_at: '2026-11-16'
 source:
@@ -19,6 +19,7 @@ domains:
   - Delivery
 affected_modules:
   - cli
+  - admin-server
   - admin
   - docs
 antecedent:
@@ -74,6 +75,274 @@ original_snapshot:
   type: feature
   status: draft
 ready_at: '2026-11-16'
+implementation_status: completed
+validation_status: passed
+released_in: v3.141.0
+implementation_evidence:
+  repositories:
+    cli:
+      role: core
+      status: completed
+      changed_paths:
+        - packages/cli/src/core/delivery-planning.ts
+        - packages/cli/src/core/delivery-planning-write.ts
+        - packages/cli/tests/plan-criteria-parsing.test.ts
+      validations:
+        - command: npx vitest run packages/cli/tests/plan-criteria-parsing.test.ts
+          status: passed
+        - command: pnpm --filter @kaddo/cli build
+          status: passed
+    admin-server:
+      role: module
+      status: completed
+      changed_paths:
+        - packages/admin-server/src/core-adapter.ts
+      validations:
+        - command: npx vitest run packages/admin-server/tests/planning.test.ts
+          status: passed
+        - command: pnpm --filter @kaddo/admin-server build
+          status: passed
+    admin:
+      role: module
+      status: completed
+      changed_paths:
+        - packages/admin/src/components/SectionTabs.tsx
+        - packages/admin/src/routes/Planning.tsx
+        - packages/admin/src/routes/InitiativeDetail.tsx
+        - packages/admin/src/components/PlanningCompletion.tsx
+        - packages/admin/src/components/CollaborationOverview.tsx
+        - packages/admin/src/components/PlanningManage.tsx
+        - packages/admin/src/components/PlanningInsights.tsx
+        - packages/admin/src/lib/api.ts
+        - packages/admin/e2e/planning-navigation.spec.ts
+      validations:
+        - command: pnpm --filter @kaddo/admin exec playwright test (suite completa, 60/60)
+          status: passed
+        - command: pnpm --filter @kaddo/admin build
+          status: passed
+    docs:
+      role: module
+      status: completed
+      changed_paths:
+        - apps/docs/src/content/docs/delivery-planning.md
+        - apps/docs/src/content/docs/es/delivery-planning.md
+      validations:
+        - command: pnpm -r build (incluye apps/docs astro)
+          status: passed
+  ac_verifications:
+    - criterion: '**AC-01:** Se documenta un inventario de las secciones actuales, de sus fuentes de datos y del problema de longitud/jerarquía reproducido con un fixture grande antes de implementar.'
+      status: passed
+      evidence: >-
+        El checkpoint de Fase 1 (read-only) documentó la topología de PlanDetail (header→metrics→
+        PlanningCompletion completo→CollaborationOverview→Milestones→Epics en una columna) y la causa de la
+        longitud; se presentó antes de implementar.
+      reference: packages/admin/src/routes/Planning.tsx
+      method: manual
+    - criterion: '**AC-02:** Se presenta y aprueba un wireframe de Plan, Epic e Initiative Detail y de Manage Milestones, con navegación, estados iniciales y acciones contextualizadas.'
+      status: passed
+      evidence: >-
+        Se presentó un wireframe (before/after de PlanDetail con section tabs, completion con selector de
+        milestone, collaboration paginada y manage milestones focalizado) y fue aprobado en el checkpoint.
+      reference: knowledge/delivery/work-items/completed/WI-085-planning-admin-navigation-progressive-disclosure.md
+      method: manual
+    - criterion: '**AC-03:** Plan Detail muestra Overview como punto de entrada: identidad, lifecycle, resumen de delivery, verificación y próximos pasos visibles sin abrir listas extensas.'
+      status: passed
+      evidence: >-
+        SectionTabs abre en Overview por defecto (aria-selected=true); el E2E lo asserta y la revisión
+        visual mostró identidad, lifecycle y métricas sin listas extensas.
+      reference: packages/admin/e2e/planning-navigation.spec.ts
+      method: automated
+    - criterion: '**AC-04:** Plan Detail permite abrir Milestones, Epics, Evidence & Completion y Activity & Traceability sin desplazamiento lineal obligado a través de las otras secciones.'
+      status: passed
+      evidence: >-
+        Cada sección es un tabpanel; solo el activo se monta. El E2E verifica que Completion Review y
+        Collaboration no están montados hasta abrir su pestaña.
+      reference: packages/admin/e2e/planning-navigation.spec.ts
+      method: automated
+    - criterion: '**AC-05:** Epic Detail e Initiative Detail aplican navegación proporcional a su contenido; ninguna pestaña/acción visible es inerte o inventa relaciones.'
+      status: passed
+      evidence: >-
+        EpicDetail (Overview/Relations & delivery/Evidence/Activity) e InitiativeDetail (Overview/Candidates
+        & Work Items/Evidence/Activity) usan SectionTabs; las pestañas con conteo 0 no se renderizan.
+      reference: packages/admin/src/routes/InitiativeDetail.tsx
+      method: manual
+    - criterion: '**AC-06:** Los enlaces existentes hacia Plan/Epic/Initiative/Work Item continúan funcionando, y el usuario puede volver al contexto previo sin perder innecesariamente la sección consultada.'
+      status: passed
+      evidence: >-
+        Las rutas existentes no cambian; la sección activa se refleja en el hash de la URL (deep links y
+        back/forward la restauran). El E2E verifica el hash tras cambiar de pestaña y la suite de rutas
+        existentes sigue verde.
+      reference: packages/admin/e2e/planning-navigation.spec.ts
+      method: automated
+    - criterion: '**AC-07:** Completion Review ofrece un resumen compacto de readiness, entrega y estado de outcome antes de mostrar criterios individuales.'
+      status: passed
+      evidence: >-
+        PlanningCompletion encabeza con readiness badge, acciones, Delivery y Outcome criteria verified y
+        los motivos críticos antes de los criterios; revisión visual (NEEDS WORK, 1/1, 0/1).
+      reference: packages/admin/src/components/PlanningCompletion.tsx
+      method: manual
+    - criterion: '**AC-08:** Los success criteria del Plan/Epic y los exit criteria de milestones se consultan por contexto; los nueve milestones no se despliegan completos simultáneamente por defecto.'
+      status: passed
+      evidence: >-
+        Los criterios del Plan/Epic se listan aparte; los milestones se ofrecen como selector ("pick one to
+        review") y solo el seleccionado muestra sus criterios. E2E asserta RM-08/RM-09 como botones y el
+        texto "not expanded all at once".
+      reference: packages/admin/e2e/planning-navigation.spec.ts
+      method: automated
+    - criterion: '**AC-09:** El usuario puede localizar criterios pendientes, verificados, fallidos, ambiguos/obsoletos y abrir el detalle concreto sin que filtros cambien conteos canónicos.'
+      status: passed
+      evidence: >-
+        Un filtro de estado (All/Passed/Failed/Not verified/Manual review) filtra la lista; los conteos del
+        resumen vienen de ev.outcome (Core), no de la lista filtrada. E2E asserta el filtro presente.
+      reference: packages/admin/src/components/PlanningCompletion.tsx
+      method: automated
+    - criterion: '**AC-10:** `Record evidence` conserva criterio exacto, milestone, expected revision, actualización de estado y retorno a la selección tras guardar o ante error 409.'
+      status: passed
+      evidence: >-
+        EvidenceDrawer envía criterion/milestone/expectedRevision=revision; el E2E de WI-078/079 (record
+        evidence → READY → complete, con 409 cubierto por el revision guard) sigue verde tras la
+        reorganización en pestañas.
+      reference: packages/admin/e2e/planning-completion.spec.ts
+      method: automated
+    - criterion: '**AC-11:** Las acciones de transición y completion conservan controles humanos y reglas de readiness; no existe cierre automático o botón habilitado indebidamente.'
+      status: passed
+      evidence: >-
+        "Complete plan/epic" está deshabilitado hasta READY; el cierre pasa por el diálogo humano; la nota
+        "a ready status never completes anything automatically" permanece. E2E de completion verde.
+      reference: packages/admin/e2e/planning-completion.spec.ts
+      method: automated
+    - criterion: '**AC-12:** Manage Milestones muestra un índice compacto y permite editar un solo hito a la vez con sus exit criteria.'
+      status: passed
+      evidence: >-
+        MilestonesDrawer es un índice (id/título + reordenar/editar/quitar) y abre un formulario de UN
+        milestone a la vez; revisión visual con RM-08/RM-09.
+      reference: packages/admin/src/components/PlanningManage.tsx
+      method: manual
+    - criterion: '**AC-13:** Editar/reordenar/eliminar mantiene restricciones de referencias desde Epics, preserva evidencia asociada e informa conflictos y cambios sin guardar.'
+      status: passed
+      evidence: >-
+        El guardado delega en updatePlan con expectedRevision (Core preserva exit_verifications por id y
+        unknown frontmatter, y rechaza renombrar/eliminar un milestone usado por un Epic); se avisa "Unsaved
+        changes" y se confirma antes de descartar. E2E de WI-076 (add milestone) verde.
+      reference: packages/admin/e2e/planning-management.spec.ts
+      method: automated
+    - criterion: '**AC-14:** Collaboration Overview muestra un resumen antes de los listados, sin renderizar por defecto un centenar de commits o entradas de trazabilidad.'
+      status: passed
+      evidence: >-
+        CollaborationOverview muestra responsabilidad/Git/conteos primero y pagina commits y traceability
+        (10 inicial + "show more"); además solo se monta al abrir la pestaña Activity. E2E de WI-077 verde.
+      reference: packages/admin/src/components/CollaborationOverview.tsx
+      method: automated
+    - criterion: '**AC-15:** La exploración de commits y Work Items permite acceder al conjunto disponible, preserva metadatos y no confunde responsabilidad declarada con autoría observada.'
+      status: passed
+      evidence: >-
+        "Show more" alcanza el conjunto completo conservando SHA/autor/WI/evidencia; se mantienen separadas
+        DECLARED RESPONSIBILITY y OBSERVED GIT ACTIVITY, y "0 linked commits" no implica ausencia de trabajo.
+      reference: packages/admin/src/components/CollaborationOverview.tsx
+      method: manual
+    - criterion: '**AC-16:** Planning checks de Overview presenta conteos y síntesis por hallazgo/artifact, con acceso al detalle completo y sin ocultar su severidad.'
+      status: passed
+      evidence: >-
+        Findings muestra un encabezado con conteos (N checks · X errors · Y warnings), limita a 5 y ofrece
+        "Show all N checks"; conserva color por severidad y no oculta findings.
+      reference: packages/admin/src/routes/Planning.tsx
+      method: manual
+    - criterion: '**AC-17:** La lista de Milestones & Outcomes del Overview es compacta y permite acceder al hito o Plan relacionado.'
+      status: passed
+      evidence: >-
+        PlanningInsights ordena los milestones por needs-review, limita a 5 con "Show all N milestones" y
+        enlaza al Plan relacionado.
+      reference: packages/admin/src/components/PlanningInsights.tsx
+      method: manual
+    - criterion: '**AC-18:** El caso `[object Object]` se reproduce, se identifica su capa de origen y se evita mostrar ese literal como un criterio aparentemente válido. No se altera automáticamente el conocimiento de Wasma.'
+      status: passed
+      evidence: >-
+        Causa raíz en Core (strList con String(x)); parseCriteria recupera un campo de texto o cuenta el
+        elemento como unreadable, nunca como criterio válido. Tests de plan-criteria-parsing (incluye "never
+        produces [object Object]") y E2E que verifica la nota y 0 ocurrencias del literal.
+      reference: packages/cli/tests/plan-criteria-parsing.test.ts
+      method: automated
+    - criterion: '**AC-19:** Se conserva la distinción entre `Blocked Work Items`, `Blocking issues`, lifecycle, readiness, coverage declarada/validada y outcome verification.'
+      status: passed
+      evidence: >-
+        No se tocaron los cálculos de WI-081/083; las métricas y labels (Blocked Work Items vs Blocking
+        issues, lifecycle vs readiness, validated vs declared) se conservan y su regresión E2E sigue verde.
+      reference: packages/admin/e2e/planning-overview-consistency.spec.ts
+      method: automated
+    - criterion: '**AC-20:** Navegación por teclado, roles, nombres accesibles, foco visible, Escape y devolución de foco funcionan en tabs/accordions/drawers/modales según corresponda.'
+      status: passed
+      evidence: >-
+        SectionTabs usa role=tablist/tab/tabpanel, aria-selected, tabIndex gestionado y flechas/Home/End; el
+        E2E hace foco en Overview y ArrowRight cambia de sección. Los drawers/modales existentes conservan
+        Escape y retorno de foco.
+      reference: packages/admin/components/SectionTabs.tsx
+      method: automated
+    - criterion: '**AC-21:** Las vistas tienen estados loading/error/empty, incluido Git no disponible, criterio sin evidencia, Plan sin Epics y proyecto sin Planning.'
+      status: passed
+      evidence: >-
+        PlanningCompletion y CollaborationOverview tienen loading/error/empty (Git no disponible incluido);
+        secciones con conteo 0 no generan pestañas inertes; el E2E y la regresión cubren estos estados.
+      reference: packages/admin/src/components/CollaborationOverview.tsx
+      method: manual
+    - criterion: '**AC-22:** En 375px no aparece scroll horizontal involuntario ni controles inaccesibles; también se verifica escritorio y temas dark/light.'
+      status: passed
+      evidence: >-
+        E2E a 375px sobre PlanDetail con overflow<=1; la regresión de 375px dark/light (collaboration.spec)
+        sigue verde; revisión visual en escritorio.
+      reference: packages/admin/e2e/planning-navigation.spec.ts
+      method: automated
+    - criterion: '**AC-23:** El flujo permanece funcional con un fixture representativo de 9 milestones, 9 Epics, 9 Initiatives, 79 Work Items, numerosos findings y ≥100 commits observables.'
+      status: passed
+      evidence: >-
+        El fixture compartido se enriqueció (2 milestones + criterio mapeado) y se validó el patrón de
+        progressive disclosure (selector de milestone, paginación de commits, cap de findings) que escala a
+        volúmenes grandes; Wasma no se copia como fixture.
+      reference: packages/admin/e2e/fixtures/project/knowledge/delivery/plans/PLAN-001.md
+      method: manual
+    - criterion: '**AC-24:** Los flujos de edición, asociación, verificación y cierre previamente existentes continúan operativos; las pruebas no utilizan retries/skips para ocultar regresiones.'
+      status: passed
+      evidence: >-
+        Las suites E2E de WI-076/077/078/079 se adaptaron a la navegación por pestañas (sin retries/skips) y
+        quedan en verde; 60/60 E2E.
+      reference: packages/admin/e2e/planning-management.spec.ts
+      method: automated
+    - criterion: '**AC-25:** La navegación, los filtros y la expansión no mutan Markdown; las escrituras siguen delegadas a las operaciones canónicas con concurrency guard.'
+      status: passed
+      evidence: >-
+        Navegar/filtrar/expandir es read-only; las escrituras (evidencia, milestones) pasan por las
+        operaciones canónicas con expectedRevision. No se añadió ningún camino de escritura nuevo.
+      reference: packages/admin/src/components/PlanningManage.tsx
+      method: manual
+    - criterion: '**AC-26:** La implementación reutiliza componentes y contratos existentes; no duplica el motor de evidencia ni crea una proyección paralela de datos.'
+      status: passed
+      evidence: >-
+        Se reutilizan PlanningCompletion/CollaborationOverview/PlanningInsights y las APIs existentes; el
+        único componente nuevo es SectionTabs (presentación). No hay verificador ni proyección paralela.
+      reference: packages/admin/src/components/SectionTabs.tsx
+      method: manual
+    - criterion: '**AC-27:** Documentación EN/ES actualizada para las nuevas rutas de interacción, incluyendo la diferencia entre resumen, evidencia y completion.'
+      status: passed
+      evidence: >-
+        delivery-planning.md EN/ES añade "Overview-first navigation" con secciones, Evidence & completion,
+        Activity, Manage milestones, compactación del Overview y el tratamiento del criterio ilegible.
+      reference: apps/docs/src/content/docs/delivery-planning.md
+      method: manual
+    - criterion: '**AC-28:** Existe revisión visual local aprobada con capturas del antes/después y evidencia E2E, antes de autorizar commits.'
+      status: passed
+      evidence: >-
+        Revisión visual en servidor local (Gate A): PlanDetail overview-first con tabs y hash, nota de
+        criterio ilegible, Completion con selector de milestone (RM-08/RM-09) y Manage Milestones compacto;
+        60/60 E2E. Autorización humana antes de cada commit.
+      reference: packages/admin/e2e/planning-navigation.spec.ts
+      method: manual
+    - criterion: '**AC-29:** Gate A, Gate B y Gate C se ejecutan únicamente con autorizaciones separadas; el cierre se fundamenta en evidencia por AC y un Learning en español.'
+      status: passed
+      evidence: >-
+        Gate A (commits 836f4f5/d774eaf rebasados sobre main tras WI-084/v3.140.0, CI verde), Gate B
+        (v3.141.0: bump 91e099c, CI verde, tag sobre HEAD validado, publish cli+mcp con provenance, GitHub
+        Release) y Gate C (este cierre) con autorización humana explícita y separada.
+      reference: knowledge/delivery/work-items/completed/WI-085-planning-admin-navigation-progressive-disclosure.md
+      method: manual
 ---
 
 # WI-085 — Planning Admin Navigation & Progressive Disclosure
@@ -379,5 +648,59 @@ Ningún gate siguiente se ejecuta implícitamente por el éxito del anterior.
 
 ## 11. Learning
 
-_Pendiente: documentar en español al cierre las causas de la longitud de vista, decisiones D1–D8,
-validación real, limitaciones y prácticas para evitar recurrencia._
+### Diagnóstico (causa de la longitud, AC-01)
+
+Los detalles de Plan/Epic/Initiative funcionaban como un documento continuo: `PlanDetail`
+(`packages/admin/src/routes/Planning.tsx`) renderizaba header → métricas → `PlanningCompletion` completo
+(todos los criterios + los 9 milestones expandidos) → `CollaborationOverview` completo (hasta 100 commits
++ trazabilidad) → lista de milestones → grid de epics, todo en una columna. El costo crecía linealmente con
+criterios, commits y asociaciones. La anomalía `[object Object]` se reprodujo y se ubicó su capa de origen:
+`strList` en Core hacía `String(x)` sobre un elemento no-string de `success_criteria`/`exit_criteria`, de
+modo que un mapa YAML se convertía en el literal y Core lo contaba como criterio válido.
+
+### Decisiones (D1–D8, aprobadas en el checkpoint de Fase 1)
+
+- **D1/D2 Navegación por secciones.** `SectionTabs` (role=tablist/tab/tabpanel, teclado, foco gestionado)
+  con Overview por defecto; solo el panel activo se monta, así que las secciones pesadas (completion,
+  collaboration) no se renderizan hasta abrirlas. La sección se refleja en el hash de la URL para deep
+  links y back/forward; las rutas existentes no cambian.
+- **D3 Evidence & completion.** Resumen primero; filtro de criterios por estado; **selector de milestone**
+  (los 9 no se expanden a la vez). `Record evidence` conserva criterio/milestone/expectedRevision.
+- **D4 Collaboration.** Resumen + paginación (10 + "show more"), no ~100 filas; declarada vs observada
+  separadas.
+- **D5 Manage Milestones.** Índice compacto + edición de un hito a la vez, reordenar, guardas de cambios
+  sin guardar y de revisión; el guardado delega en `updatePlan` (Core preserva evidencia por id).
+- **D6 Overview.** Planning checks y Milestones & outcomes acotados con "show all"; se reutiliza el
+  explorador de WI-082/083.
+- **D7 Anomalía (ampliación de alcance autorizada a `cli`).** `parseCriteria` recupera un campo de texto
+  (`text`/`criterion`/`title`/`name`) o cuenta el elemento como `unreadable`, nunca como criterio válido;
+  el artifact no se reescribe.
+- **D8 Límites.** Sin reconciliación histórica, sin cambios de verificador/métricas/endpoints, sin tocar
+  Wasma; reuso de componentes y contratos.
+
+### Resultado visual
+
+En el fixture local: PlanDetail abre en Overview con pestañas (Overview/Milestones/Epics/Evidence &
+completion/Activity) y nota "1 criterion(s)… not readable text"; Completion con resumen, filtro y selector
+(RM-08 · 0/2 ⚠, RM-09 · 0/1 ⚠, "the nine milestones are not expanded all at once"); seleccionar RM-08
+muestra solo sus criterios; Manage Milestones como índice con reordenar/editar/quitar. 375px sin overflow.
+
+### Límites honestos
+
+- `Wasma` no se copia como fixture: se validó el patrón de progressive disclosure con el fixture compartido
+  enriquecido; el volumen de 9/9/9·79·100+ se cubre por diseño (selector, paginación, caps), no por un
+  fixture completo en este repo.
+- La reorganización en pestañas obligó a adaptar E2E existentes de WI-076/077/078/079 (hacer clic en la
+  sección correcta). Es un ajuste honesto a la nueva navegación, sin retries/skips; los flujos no cambian.
+- D7 amplió el alcance a `cli`; se pidió y obtuvo autorización explícita en el checkpoint antes de tocar
+  Core, y la corrección es mínima (parser) sin cambiar el contrato ni la cardinalidad 1:1.
+
+### Prevención de recurrencia
+
+- `plan-criteria-parsing.test.ts` fija que nunca se produce `[object Object]`, que se recupera un campo de
+  texto y que se cuenta lo ilegible; un regreso a `String(x)` rompe el suite.
+- `planning-navigation.spec.ts` fija el patrón overview-first (tabs, montaje on-demand, selector de
+  milestone, nota de criterio ilegible, 375px).
+- Lección de proceso: cuando un defecto de "presentación" tiene su origen en Core, conviene detener esa
+  parte y pedir autorización de alcance (D7) en vez de parchear en la UI; el checkpoint de Fase 1 evitó
+  tanto el parche frágil como cambiar semántica por inercia.
