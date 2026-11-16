@@ -1,0 +1,63 @@
+name: Telemetry HTTP Integration
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "packages/cli/src/core/telemetry*.ts"
+      - "packages/cli/src/core/work-item-*.ts"
+      - "packages/cli/tests/telemetry-http-harness.test.ts"
+      - ".github/workflows/telemetry-http-integration.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  telemetry-http:
+    name: Kaddo client with isolated telemetry collector
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      dynamodb:
+        image: amazon/dynamodb-local:2.5.3
+        ports:
+          - 8000:8000
+    env:
+      DYNAMODB_LOCAL_ENDPOINT: http://127.0.0.1:8000
+      AWS_ACCESS_KEY_ID: fakeMyKeyId
+      AWS_SECRET_ACCESS_KEY: fakeSecretAccessKey
+      AWS_REGION: local
+      KADDO_TELEMETRY_HARNESS_PATH: ${{ github.workspace }}/telemetry
+
+    steps:
+      - name: Checkout Kaddo
+        uses: actions/checkout@v4
+
+      - name: Checkout pinned telemetry harness
+        uses: actions/checkout@v4
+        with:
+          repository: Kaddo-kdd/telemetry
+          ref: d1c42aa9d49666c7e4193bcd422c11bd43759aba
+          path: telemetry
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: pnpm
+
+      - name: Install Kaddo dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install telemetry harness dependencies
+        working-directory: telemetry
+        run: npm ci
+
+      - name: Run signed Kaddo client integration
+        run: pnpm --filter @kaddo/cli exec vitest run tests/telemetry-http-harness.test.ts

@@ -1,5 +1,6 @@
 import crypto from 'node:crypto'
 import { exists, readFile, writeFile, ensureDir, join } from '../utils/fs.js'
+import { parse as parseYaml, stringify as stringifyYaml } from 'yaml'
 
 const TELEMETRY_DIR = '.kaddo/telemetry'
 const IDENTITY_FILE = 'identity.json'
@@ -11,6 +12,30 @@ export type TelemetryIdentity = {
   keyAlgorithm: 'Ed25519'
   registrationVersion: '1.0'
   registered: boolean
+}
+
+/**
+ * Opaque project identity deliberately lives in canonical project metadata, not
+ * in an installation. It therefore survives restarts, path changes and clones.
+ */
+export function ensureProjectId(dir: string): string | null {
+  const configPath = join(dir, '.kaddo', 'config.yml')
+  if (!exists(configPath)) return null
+  try {
+    const raw = (parseYaml(readFile(configPath)) ?? {}) as Record<string, unknown>
+    const telemetry = raw.telemetry && typeof raw.telemetry === 'object' && !Array.isArray(raw.telemetry)
+      ? raw.telemetry as Record<string, unknown>
+      : {}
+    if (typeof telemetry.projectId === 'string' && /^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i.test(telemetry.projectId)) {
+      return telemetry.projectId
+    }
+    const projectId = crypto.randomUUID()
+    raw.telemetry = { ...telemetry, projectId }
+    writeFile(configPath, stringifyYaml(raw))
+    return projectId
+  } catch {
+    return null
+  }
 }
 
 function identityPath(dir: string): string {

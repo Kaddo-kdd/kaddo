@@ -22,7 +22,10 @@ import { lifecycleStateOf, type LifecycleState } from './lifecycle.js'
 // Validate against the canonical Work Item type catalog (feature/bugfix/hotfix/spike/chore) — the
 // same list the capture definition offers — not the artifact-discovery classifier set.
 import { isValidType, normalizeType } from './knowledge-levels.js'
+import { getLevelForType } from './knowledge-levels.js'
 import { loadSystemTopology } from './system-topology.js'
+import { emit } from './telemetry.js'
+import type { TelemetryInterface } from './telemetry-events.js'
 
 const WORK_ITEMS_DIR = 'knowledge/delivery/work-items'
 
@@ -465,6 +468,8 @@ export function createWorkItem(
      * body instead of being collapsed into the `summary` frontmatter field.
      */
     body?: string
+    /** Adapter provenance; the shared Core path emits exactly once after persistence. */
+    telemetrySource?: TelemetryInterface
   },
 ): { id: string; path: string; revision: string } {
   const intent = opts.intent.trim()
@@ -485,11 +490,13 @@ export function createWorkItem(
     title,
     status: 'draft',
     work_type: type,
+    knowledge_level: getLevelForType(type),
     created_at: today,
     source,
     generated_by: 'kaddo-admin',
     affected_modules: [],
     summary,
+    telemetry_work_item_id: crypto.randomUUID(),
   }
   if (opts.originalSnapshot) data.original_snapshot = opts.originalSnapshot
   const answers = opts.answers ?? {}
@@ -509,7 +516,45 @@ export function createWorkItem(
   if (exists(filePath)) throw new WorkItemWriteError('INVALID_INPUT', `Work Item file already exists: ${relPath}`)
   const raw = serialize(data, body)
   atomicWrite(filePath, raw)
+  void emit(dir, 'work_item_created', opts.telemetrySource ?? 'cli', {
+    workItemIdAnon: String(data.telemetry_work_item_id), workItemType: type, knowledgeLevel: getLevelForType(type),
+  })
   return { id, path: relPath, revision: revisionOf(raw) }
+}
+
+/** Return the durable opaque telemetry identity for a Work Item, creating it once when absent. */
+export function ensureWorkItemTelemetryId(dir: string, id: string): string {
+  const { filePath } = findArtifact(dir, id)
+  const raw = readFile(filePath)
+  const { data, content } = matter(raw)
+  const current = (data as Record<string, unknown>).telemetry_work_item_id
+  if (typeof current === 'string' && /^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i.test(current)) return current
+  const next = { ...(data as Record<string, unknown>), telemetry_work_item_id: crypto.randomUUID() }
+  const nextRaw = serialize(next, content)
+  atomicWrite(filePath, nextRaw)
+  return String(next.telemetry_work_item_id)
+}
+
+/** Complete a Work Item without a UI dependency; callers provide the human learning text. */
+export function completeWorkItem(dir: string, id: string, learning: string, telemetrySource: TelemetryInterface = 'cli'): { path: string } {
+  const { filePath } = findArtifact(dir, id)
+  const raw = readFile(filePath)
+  const { data, content } = matter(raw)
+  const status = lifecycleStateOf({ status: String((data as Record<string, unknown>).status ?? ''), filePath })
+  if (status !== 'in-progress') throw new WorkItemWriteError('INVALID_TRANSITION', `Cannot complete a ${status} Work Item.`)
+  const nextData = { ...(data as Record<string, unknown>), status: 'completed', completed_at: new Date().toISOString().split('T')[0] }
+  let nextContent = content
+  if (content.includes('_What did we learn from this change? Update after completion._')) nextContent = content.replace('_What did we learn from this change? Update after completion._', learning.trim())
+  else if (content.includes('## Learning')) nextContent = content.replace(/## Learning[\s\S]*$/, `## Learning\n\n${learning.trim()}\n`)
+  else nextContent = content.trimEnd() + `\n\n## Learning\n\n${learning.trim()}\n`
+  const nextRaw = serialize(nextData, nextContent)
+  const targetPath = join(dir, `${WORK_ITEMS_DIR}/completed/${path.basename(filePath)}`)
+  atomicWrite(targetPath, nextRaw)
+  if (path.resolve(targetPath) !== path.resolve(filePath)) fs.rmSync(filePath, { force: true })
+  const type = typeof nextData.work_type === 'string' ? nextData.work_type : typeof nextData.type === 'string' ? nextData.type : undefined
+  const level = typeof nextData.knowledge_level === 'string' ? nextData.knowledge_level : undefined
+  if (type && level) void emit(dir, 'work_item_completed', telemetrySource, { workItemIdAnon: ensureWorkItemTelemetryId(dir, id), workItemType: type, knowledgeLevel: level })
+  return { path: targetPath }
 }
 
 // --- Update ------------------------------------------------------------------
@@ -519,7 +564,7 @@ function validateInput(input: WorkItemInput): void {
   if (!isValidType(input.type)) throw new WorkItemWriteError('INVALID_INPUT', `Unknown Work Item type "${input.type}".`)
 }
 
-export function updateWorkItem(dir: string, id: string, input: WorkItemInput, expectedRevision: string): { revision: string; path: string } {
+export function updateWorkItem(dir: string, id: string, input: WorkItemInput, expectedRevision: string, telemetrySource: TelemetryInterface = 'adapter'): { revision: string; path: string } {
   validateInput(input)
   const { filePath, relPath } = findArtifact(dir, id)
   const raw = readFile(filePath)
@@ -535,6 +580,10 @@ export function updateWorkItem(dir: string, id: string, input: WorkItemInput, ex
   const nextBody = mergeBody(content, input)
   const nextRaw = serialize(nextData, nextBody)
   atomicWrite(filePath, nextRaw)
+  if (nextRaw !== raw) {
+    const telemetryId = ensureWorkItemTelemetryId(dir, id)
+    void emit(dir, 'work_item_refined', telemetrySource, { workItemIdAnon: telemetryId, workItemType: input.type, knowledgeLevel: getLevelForType(input.type as import('./knowledge-levels.js').WorkItemType) })
+  }
   return { revision: revisionOf(nextRaw), path: relPath }
 }
 

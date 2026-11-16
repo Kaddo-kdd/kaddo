@@ -314,6 +314,7 @@ export function importWorkItemTool(
       source,
       type: args.type,
       onConflict,
+      telemetrySource: 'mcp',
     })
 
     if (result.conflict) {

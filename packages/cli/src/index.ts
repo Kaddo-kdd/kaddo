@@ -85,6 +85,7 @@ import { emit, flush } from './core/telemetry.js'
 import type { TelemetryInterface, KnownTelemetryEvent } from './core/telemetry-events.js'
 import { ensureTelemetryConsent } from './core/telemetry-consent.js'
 import { loadConfig } from './core/config.js'
+import { scan as scanProject } from './services/scanner.js'
 
 // Single source of truth for the version: read it from package.json at runtime so the CLI
 // `--version` can never drift from the published package version. `../package.json` resolves
@@ -933,10 +934,6 @@ telemetryCmd
   .action(() => { runTelemetryDisable() })
 
 const LIFECYCLE_EVENTS: Record<string, KnownTelemetryEvent> = {
-  create: 'work_item_created',
-  ready: 'work_item_ready',
-  learn: 'work_item_completed',
-  verify: 'verification_completed',
   context: 'knowledge_generated',
   explain: 'knowledge_generated',
   understand: 'knowledge_generated',
@@ -975,14 +972,28 @@ program.hook('postAction', (_thisCommand, actionCommand) => {
 
   const lifecycleEvent = LIFECYCLE_EVENTS[name]
   if (lifecycleEvent) {
-    void emit(cwd(), lifecycleEvent, iface, { interface: iface }).catch(() => {})
+    void emit(cwd(), lifecycleEvent, iface, {}).catch(() => {})
   }
 
   if (parent === 'capsule' && CAPSULE_EVENTS[name]) {
     void emit(cwd(), CAPSULE_EVENTS[name], iface, { interface: iface }).catch(() => {})
   }
 
-  void emit(cwd(), 'command_executed', iface, { command: parent ? `${parent} ${name}` : name, durationMs, interface: iface }).catch(() => {})
+  if (name === 'scan') {
+    // Reuse the scanner's normalized public labels; never send paths or package names.
+    const detected = scanProject(cwd())
+    const properties = {
+      ...(detected.language !== 'unknown' ? { languages: [detected.language] } : {}),
+      ...(detected.framework !== 'unknown' && detected.framework !== 'none'
+        ? { frameworks: [detected.framework === 'next' ? 'next.js' : detected.framework] }
+        : {}),
+    }
+    if (Object.keys(properties).length > 0) void emit(cwd(), 'project_technologies_detected', iface, properties).catch(() => {})
+  }
+
+  // The 1.1 contract accepts a catalogued command name, never its arguments or
+  // compound invocation (which could accidentally expose user input).
+  void emit(cwd(), 'command_executed', iface, { command: parent ?? name, durationMs }).catch(() => {})
   void flush(cwd()).catch(() => {})
 })
 

@@ -2,6 +2,7 @@ import crypto from 'node:crypto'
 import { loadConfig, type KaddoConfig } from './config.js'
 import {
   ensureIdentity,
+  ensureProjectId,
   loadIdentity,
   markRegistered,
   signPayload,
@@ -11,8 +12,9 @@ import {
   createEvent,
   type KnownTelemetryEvent,
   type TelemetryInterface,
-  type AllowlistedProperties,
+  type TelemetryProperties,
   type TelemetryEvent,
+  validateEvent,
 } from './telemetry-events.js'
 import { enqueue, readBuffer, clearBuffer, bufferSize } from './telemetry-buffer.js'
 
@@ -31,6 +33,35 @@ export type TelemetryStatus = {
   pendingEvents: number
   lastError: string | null
 }
+
+let eventObserver: ((event: TelemetryEvent) => void) | undefined
+let diagnosticObserver: ((result: 'accepted' | 'skipped' | 'rejected' | 'error') => void) | undefined
+let endpointOverride: string | undefined
+const pendingEmissions = new Set<Promise<void>>()
+/** Test seam: observes already-validated events without changing delivery behavior. */
+export function setTelemetryEventObserver(observer?: (event: TelemetryEvent) => void): void {
+  eventObserver = observer
+}
+export function setTelemetryDiagnosticObserver(observer?: (result: 'accepted' | 'skipped' | 'rejected' | 'error') => void): void { diagnosticObserver = observer }
+function diagnose(result: 'accepted' | 'skipped' | 'rejected' | 'error'): void { try { diagnosticObserver?.(result) } catch { /* observers are best-effort too */ } }
+
+/** Test-only transport seam. It deliberately accepts only an explicit loopback origin. */
+export function setTelemetryEndpointForTesting(origin?: string): void {
+  if (origin === undefined) { endpointOverride = undefined; return }
+  const url = new URL(origin)
+  if (url.protocol !== 'http:' || !['127.0.0.1', 'localhost', '::1'].includes(url.hostname) || url.username || url.password || url.pathname !== '/' || url.search || url.hash) {
+    throw new Error('Telemetry test endpoint must be an unauthenticated loopback HTTP origin.')
+  }
+  endpointOverride = url.origin
+}
+
+/** Wait for emissions already started by canonical Core operations, then flush retries. */
+export async function drainTelemetry(dir: string): Promise<number> {
+  while (pendingEmissions.size > 0) await Promise.all([...pendingEmissions])
+  return flush(dir)
+}
+
+function telemetryEndpoint(): string { return endpointOverride ?? TELEMETRY_ENDPOINT }
 
 export function isEnabled(config: KaddoConfig | null): boolean {
   return getConsentState(config) === 'enabled'
@@ -79,7 +110,7 @@ async function registerInstallation(identity: TelemetryIdentity): Promise<boolea
     registrationVersion: identity.registrationVersion,
   })
   try {
-    const res = await httpPost(`${TELEMETRY_ENDPOINT}${REGISTRATION_PATH}`, payload, {})
+    const res = await httpPost(`${telemetryEndpoint()}${REGISTRATION_PATH}`, payload, {})
     return res.status === 201 || res.status === 200
   } catch {
     return false
@@ -108,39 +139,44 @@ async function deliverBatch(
   identity: TelemetryIdentity,
   events: TelemetryEvent[],
 ): Promise<boolean> {
-  const bodyStr = JSON.stringify({ events })
+  const deliverable = events.filter((event) => validateEvent(event) === null)
+  if (deliverable.length === 0) return true
+  const bodyStr = JSON.stringify({ events: deliverable })
   const headers = buildSignedHeaders(identity, bodyStr)
   try {
-    const res = await httpPost(`${TELEMETRY_ENDPOINT}${EVENTS_PATH}`, bodyStr, headers)
+    const res = await httpPost(`${telemetryEndpoint()}${EVENTS_PATH}`, bodyStr, headers)
     return res.status === 202
   } catch {
     return false
   }
 }
 
-export async function emit(
+async function emitInternal(
   dir: string,
   name: KnownTelemetryEvent,
   source: TelemetryInterface,
-  properties: AllowlistedProperties,
+  properties: TelemetryProperties,
 ): Promise<void> {
   try {
     const config = loadConfig(dir)
-    if (!isEnabled(config)) return
+    if (!isEnabled(config)) { diagnose('skipped'); return }
 
     const identity = ensureIdentity(dir)
+    // Construct and observe once, before any best-effort delivery attempt. This
+    // gives tests a deterministic boundary without changing queue semantics.
+    const event = createEvent(name, identity.installationId, source, properties, { projectId: ensureProjectId(dir) ?? undefined })
+    try { eventObserver?.(event) } catch { /* observers are best-effort too */ }
+    diagnose('accepted')
 
     if (!identity.registered) {
       const ok = await registerInstallation(identity)
       if (ok) markRegistered(dir, identity)
       else {
-        const event = createEvent(name, identity.installationId, source, properties)
         enqueue(dir, [event])
         return
       }
     }
 
-    const event = createEvent(name, identity.installationId, source, properties)
     const buffered = readBuffer(dir)
     const batch = [...buffered, event].slice(0, MAX_BATCH_SIZE)
 
@@ -154,8 +190,21 @@ export async function emit(
       enqueue(dir, [event])
     }
   } catch {
+    diagnose('error')
     // Best-effort: never fail the caller
   }
+}
+
+export function emit(
+  dir: string,
+  name: KnownTelemetryEvent,
+  source: TelemetryInterface,
+  properties: TelemetryProperties,
+): Promise<void> {
+  const task = emitInternal(dir, name, source, properties)
+  pendingEmissions.add(task)
+  void task.then(() => pendingEmissions.delete(task), () => pendingEmissions.delete(task))
+  return task
 }
 
 export async function flush(dir: string): Promise<number> {

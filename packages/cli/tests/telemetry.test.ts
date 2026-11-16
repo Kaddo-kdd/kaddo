@@ -3,7 +3,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import os from 'node:os'
 import crypto from 'node:crypto'
-import { ensureIdentity, loadIdentity, signPayload } from '../src/core/telemetry-identity.js'
+import { ensureIdentity, ensureProjectId, loadIdentity, signPayload } from '../src/core/telemetry-identity.js'
 import { createEvent } from '../src/core/telemetry-events.js'
 import { enqueue, readBuffer, clearBuffer, bufferSize } from '../src/core/telemetry-buffer.js'
 import { isEnabled, getStatus } from '../src/core/telemetry.js'
@@ -61,19 +61,58 @@ describe('telemetry-identity', () => {
   })
 })
 
+describe('project telemetry identity', () => {
+  let dir: string
+  beforeEach(() => { dir = makeTempDir() })
+  afterEach(() => { cleanup(dir) })
+
+  it('persists through restart and a path move without deriving from either path', () => {
+    const first = ensureProjectId(dir)
+    expect(first).toMatch(/^[0-9a-f-]{36}$/)
+    expect(ensureProjectId(dir)).toBe(first)
+    const moved = `${dir}-moved`
+    fs.renameSync(dir, moved)
+    dir = moved
+    expect(ensureProjectId(dir)).toBe(first)
+  })
+
+  it('keeps a versioned clone as the same logical project and separates a new project', () => {
+    const projectId = ensureProjectId(dir)
+    const clone = fs.mkdtempSync(path.join(os.tmpdir(), 'kaddo-telemetry-clone-'))
+    fs.cpSync(dir, clone, { recursive: true })
+    const other = makeTempDir()
+    try {
+      expect(ensureProjectId(clone)).toBe(projectId)
+      expect(ensureProjectId(other)).not.toBe(projectId)
+    } finally { cleanup(clone); cleanup(other) }
+  })
+
+  it('keeps installation identities separate for two installations of one project', () => {
+    const a = ensureIdentity(dir)
+    const projectId = ensureProjectId(dir)
+    const secondInstallation = makeTempDir()
+    try {
+      const projectConfig = fs.readFileSync(path.join(dir, '.kaddo', 'config.yml'))
+      fs.writeFileSync(path.join(secondInstallation, '.kaddo', 'config.yml'), projectConfig)
+      expect(ensureProjectId(secondInstallation)).toBe(projectId)
+      expect(ensureIdentity(secondInstallation).installationId).not.toBe(a.installationId)
+    } finally { cleanup(secondInstallation) }
+  })
+})
+
 describe('telemetry-events', () => {
   it('creates a well-formed event', () => {
     const event = createEvent('command_executed', 'test-id', 'cli', {
       command: 'guard',
       durationMs: 150,
-      interface: 'cli',
     })
-    expect(event.schemaVersion).toBe('1.0')
+    expect(event.schemaVersion).toBe('1.1')
     expect(event.id).toMatch(/^[0-9a-f-]{36}$/)
     expect(event.event).toBe('command_executed')
     expect(event.installationId).toBe('test-id')
     expect(event.source).toBe('cli')
-    expect(event.properties).toEqual({ command: 'guard', durationMs: 150, interface: 'cli' })
+    expect(event.kaddoVersion).toMatch(/^\d+\.\d+\.\d+/)
+    expect(event.properties).toEqual({ command: 'guard', durationMs: 150 })
   })
 })
 
@@ -108,13 +147,27 @@ describe('telemetry-buffer', () => {
   it('bounds the buffer at 100 events', () => {
     const events = Array.from({ length: 120 }, (_, i) =>
       createEvent('command_executed', 'id', 'cli', {
-        command: `cmd-${i}`,
+        command: 'scan',
         durationMs: i,
         interface: 'cli',
       }),
     )
     enqueue(dir, events)
     expect(bufferSize(dir)).toBe(100)
+  })
+})
+
+describe('telemetry 1.1 privacy boundary', () => {
+  it('rejects command arguments before they can enter the queue', () => {
+    expect(() => createEvent('command_executed', 'id', 'cli', { command: 'scan --path private' }))
+      .toThrow('catalogued')
+  })
+
+  it('keeps zero token usage instead of treating it as absent', () => {
+    const event = createEvent('ai_interaction', 'id', 'agent', {
+      provider: 'openai', model: 'gpt-5', totalTokens: 0, usageSource: 'provider',
+    })
+    expect(event.properties.totalTokens).toBe(0)
   })
 })
 

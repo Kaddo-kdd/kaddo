@@ -170,6 +170,7 @@ export {
 export {
   createWorkItem,
   updateWorkItem,
+  completeWorkItem,
   updateWorkItemAssignments,
   getWorkItemForEdit,
   validateWorkItem,
