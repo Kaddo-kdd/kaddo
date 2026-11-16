@@ -409,6 +409,7 @@ export function getPlanDetailAdmin(dir: string, id: string) {
   return {
     id: plan.id, title: plan.title, status: plan.status, objective: plan.objective,
     milestones: plan.milestones, dependsOn: plan.dependsOn, successCriteria: plan.successCriteria,
+    unreadableCriteria: plan.unreadableCriteria,
     risks: plan.risks, references: plan.references, body: plan.body,
     // Concurrency fingerprint (WI-076): the UI echoes it back on PATCH to detect stale edits.
     revision: revisionOf(readFile(plan.filePath)),
@@ -428,7 +429,8 @@ export function getEpicDetailAdmin(dir: string, id: string) {
   return {
     id: epic.id, title: epic.title, status: epic.status, outcome: epic.outcome,
     plan: epic.plan, milestone: epic.milestone, dependsOn: epic.dependsOn,
-    successCriteria: epic.successCriteria, relatedCapabilities: epic.relatedCapabilities,
+    successCriteria: epic.successCriteria, unreadableCriteria: epic.unreadableCriteria,
+    relatedCapabilities: epic.relatedCapabilities,
     decisions: epic.decisions, body: epic.body,
     // Concurrency fingerprint (WI-076): the UI echoes it back on PATCH to detect stale edits.
     revision: revisionOf(readFile(epic.filePath)),

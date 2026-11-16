@@ -11,6 +11,7 @@ import type { AttentionItem, AttentionSeverity, AttentionType, InsightArtifactKi
 // validated one. All numbers come from Core's projection — nothing is invented here.
 
 const COMPACT_LIMIT = 5
+const MILESTONE_CAP = 5
 
 const SEV_COLOR: Record<string, string> = { blocking: 'var(--danger)', warning: 'var(--warning, #b7791f)', info: 'var(--foreground-muted)' }
 const TYPE_LABEL: Record<AttentionType, string> = {
@@ -29,6 +30,7 @@ export function PlanningInsights({ onOpen }: { onOpen: (kind: InsightArtifactKin
   const [typeFilter, setTypeFilter] = useState<AttentionType | 'all'>('all')
   const [kindFilter, setKindFilter] = useState<InsightArtifactKind | 'all'>('all')
   const [explorerOpen, setExplorerOpen] = useState(false)
+  const [milestonesExpanded, setMilestonesExpanded] = useState(false)
 
   const ins = q.data
   const filtered = useMemo(() => {
@@ -132,24 +134,33 @@ export function PlanningInsights({ onOpen }: { onOpen: (kind: InsightArtifactKin
         )}
       </div>
 
-      {/* Milestone & outcome insights. */}
-      {ins.milestones.length > 0 && (
-        <div style={{ marginTop: 18 }}>
-          <h4 style={h4}>Milestones & outcomes</h4>
-          <ul style={list}>
-            {ins.milestones.map((m) => (
-              <li key={`${m.planId}:${m.id}`} style={rowItem}>
-                <div style={{ display: 'grid', gap: 2 }}>
-                  <span><button style={linkBtn} onClick={() => onOpen('plan', m.planId)}>{m.planId}</button> · <strong>{m.id}</strong> {m.title} <span style={muted}>({m.epics} epic{m.epics === 1 ? '' : 's'})</span></span>
-                  <small style={{ color: m.needsReview ? 'var(--warning, #b7791f)' : 'var(--foreground-muted)' }}>
-                    Exit criteria {m.outcome.passed}/{m.outcome.total} verified{m.needsReview ? ' · needs review' : ''}
-                  </small>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+      {/* Milestone & outcome insights — compact by default (WI-085): the ones needing review lead, the
+          full list expands on demand so it never pushes Plans/Epics/Initiatives down. */}
+      {ins.milestones.length > 0 && (() => {
+        const needReview = ins.milestones.filter((m) => m.needsReview).length
+        const ordered = [...ins.milestones].sort((a, b) => Number(b.needsReview) - Number(a.needsReview))
+        const shown = milestonesExpanded ? ordered : ordered.slice(0, MILESTONE_CAP)
+        return (
+          <div style={{ marginTop: 18 }}>
+            <h4 style={h4}>Milestones & outcomes <span style={{ ...muted, fontWeight: 400, fontSize: 13 }}>· {ins.milestones.length} total{needReview > 0 ? ` · ${needReview} need review` : ''}</span></h4>
+            <ul style={list}>
+              {shown.map((m) => (
+                <li key={`${m.planId}:${m.id}`} style={rowItem}>
+                  <div style={{ display: 'grid', gap: 2 }}>
+                    <span><button style={linkBtn} onClick={() => onOpen('plan', m.planId)}>{m.planId}</button> · <strong>{m.id}</strong> {m.title} <span style={muted}>({m.epics} epic{m.epics === 1 ? '' : 's'})</span></span>
+                    <small style={{ color: m.needsReview ? 'var(--warning, #b7791f)' : 'var(--foreground-muted)' }}>
+                      Exit criteria {m.outcome.passed}/{m.outcome.total} verified{m.needsReview ? ' · needs review' : ''}
+                    </small>
+                  </div>
+                </li>
+              ))}
+            </ul>
+            {ins.milestones.length > MILESTONE_CAP && (
+              <button onClick={() => setMilestonesExpanded((v) => !v)} style={viewAllBtn}>{milestonesExpanded ? 'Show fewer' : `Show all ${ins.milestones.length} milestones`}</button>
+            )}
+          </div>
+        )
+      })()}
 
       {/* Readiness — a compact summary that expands on demand (WI-083 AC-13). Lifecycle (persisted) and
           current evidence review (readiness) are shown as distinct facts; a historical evidence gap is

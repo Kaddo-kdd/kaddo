@@ -118,12 +118,25 @@ export function EditPlanDrawer({ plan, onClose }: { plan: PlanDetail; onClose: (
 
 type MsRow = { id: string; title: string; exitCriteria: string }
 
+// WI-085 — Manage Milestones: a compact index plus focused editing of ONE milestone at a time, instead of
+// a column of open forms. Add, select, edit, reorder and remove all operate on the working set and save
+// together via the existing updatePlan contract (Core preserves per-id exit_verifications and unknown
+// frontmatter). Unsaved changes are flagged and confirmed before discarding.
 export function MilestonesDrawer({ plan, onClose }: { plan: PlanDetail; onClose: () => void }) {
   const qc = useQueryClient()
-  const [rows, setRows] = useState<MsRow[]>(plan.milestones.map((m) => ({ id: m.id, title: m.title, exitCriteria: listToText(m.exitCriteria) })))
+  const initialRows = plan.milestones.map((m) => ({ id: m.id, title: m.title, exitCriteria: listToText(m.exitCriteria) }))
+  const [rows, setRows] = useState<MsRow[]>(initialRows)
+  const [editing, setEditing] = useState<number | null>(null)
+  const [initial] = useState(() => JSON.stringify(initialRows))
+  const dirty = JSON.stringify(rows) !== initial
   const set = (i: number, patch: Partial<MsRow>) => setRows((r) => r.map((row, idx) => idx === i ? { ...row, ...patch } : row))
-  const add = () => setRows((r) => [...r, { id: '', title: '', exitCriteria: '' }])
-  const remove = (i: number) => setRows((r) => r.filter((_, idx) => idx !== i))
+  const add = () => { setRows((r) => [...r, { id: '', title: '', exitCriteria: '' }]); setEditing(rows.length) }
+  const remove = (i: number) => { setRows((r) => r.filter((_, idx) => idx !== i)); setEditing(null) }
+  const move = (i: number, dir: -1 | 1) => setRows((r) => {
+    const j = i + dir
+    if (j < 0 || j >= r.length) return r
+    const copy = [...r]; const [it] = copy.splice(i, 1); copy.splice(j, 0, it); return copy
+  })
   const m = useMutation({
     mutationFn: () => api.updatePlan(plan.id, {
       milestones: rows.map((row) => ({ id: row.id.trim(), title: row.title.trim() || undefined, exitCriteria: textToList(row.exitCriteria) })),
@@ -132,21 +145,43 @@ export function MilestonesDrawer({ plan, onClose }: { plan: PlanDetail; onClose:
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['planning'] }); qc.invalidateQueries({ queryKey: ['planning', 'plan', plan.id] }); onClose() },
   })
   const valid = rows.every((r) => /^[A-Za-z0-9._-]+$/.test(r.id.trim()))
+  const requestClose = () => { if (dirty && !window.confirm('Discard unsaved milestone changes?')) return; onClose() }
+
   return (
-    <Drawer title="Manage Milestones" subtitle={`${plan.id} · ids are unique within the plan. A milestone used by an Epic can't be removed or renamed here.`} onClose={onClose} wide
-      footer={<><ErrorText error={m.error} /><Ghost onClick={onClose}>Cancel</Ghost><Primary disabled={!valid || m.isPending} onClick={() => m.mutate()}>{m.isPending ? 'Saving…' : 'Save milestones'}</Primary></>}>
-      {rows.length === 0 && <p style={muted}>No milestones yet.</p>}
-      {rows.map((row, i) => (
-        <div key={i} style={{ display: 'grid', gap: 8, padding: 12, border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <input value={row.id} placeholder="RM-01" onChange={(e) => set(i, { id: e.target.value })} style={{ ...input, flex: '0 0 120px', fontFamily: 'var(--font-mono, monospace)' }} />
-            <input value={row.title} placeholder="Milestone title" onChange={(e) => set(i, { title: e.target.value })} style={{ ...input, flex: 1 }} />
-            <button onClick={() => remove(i)} aria-label="Remove milestone" style={{ ...btn, ...btnGhost, color: 'var(--danger)' }}>Remove</button>
+    <Drawer title="Manage Milestones" subtitle={`${plan.id} · ids are unique within the plan. A milestone used by an Epic can't be removed or renamed here.`} onClose={requestClose} wide
+      footer={<>{dirty && <span style={{ ...muted, color: 'var(--warning)', flex: 1 }}>Unsaved changes</span>}<ErrorText error={m.error} /><Ghost onClick={requestClose}>Cancel</Ghost><Primary disabled={!valid || !dirty || m.isPending} onClick={() => m.mutate()}>{m.isPending ? 'Saving…' : 'Save milestones'}</Primary></>}>
+      {editing === null ? (
+        <>
+          {rows.length === 0 && <p style={muted}>No milestones yet.</p>}
+          {rows.map((row, i) => (
+            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', marginBottom: 6 }}>
+              <span style={{ fontFamily: 'var(--font-mono, monospace)', fontSize: 13, flex: '0 0 auto' }}>{row.id.trim() || '(new)'}</span>
+              <span style={{ flex: 1, fontSize: 14, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{row.title || '—'}</span>
+              <button aria-label="Move up" disabled={i === 0} onClick={() => move(i, -1)} style={{ ...btn, ...btnGhost, opacity: i === 0 ? 0.4 : 1 }}>↑</button>
+              <button aria-label="Move down" disabled={i === rows.length - 1} onClick={() => move(i, 1)} style={{ ...btn, ...btnGhost, opacity: i === rows.length - 1 ? 0.4 : 1 }}>↓</button>
+              <button onClick={() => setEditing(i)} style={{ ...btn, ...btnGhost }}>Edit</button>
+              <button onClick={() => remove(i)} aria-label="Remove milestone" style={{ ...btn, ...btnGhost, color: 'var(--danger)' }}>Remove</button>
+            </div>
+          ))}
+          <Ghost onClick={add}>+ Add Milestone</Ghost>
+        </>
+      ) : (() => {
+        const i = editing
+        const row = rows[i]
+        if (!row) { setEditing(null); return null }
+        return (
+          <div style={{ display: 'grid', gap: 10 }}>
+            <button onClick={() => setEditing(null)} style={{ ...btn, ...btnGhost, justifySelf: 'start' }}>← All milestones</button>
+            <label style={{ display: 'grid', gap: 4 }}><span style={{ fontSize: 13, fontWeight: 600 }}>ID</span>
+              <input value={row.id} placeholder="RM-01" onChange={(e) => set(i, { id: e.target.value })} style={{ ...input, fontFamily: 'var(--font-mono, monospace)' }} /></label>
+            <label style={{ display: 'grid', gap: 4 }}><span style={{ fontSize: 13, fontWeight: 600 }}>Title</span>
+              <input value={row.title} placeholder="Milestone title" onChange={(e) => set(i, { title: e.target.value })} style={input} /></label>
+            <label style={{ display: 'grid', gap: 4 }}><span style={{ fontSize: 13, fontWeight: 600 }}>Exit criteria</span>
+              <textarea value={row.exitCriteria} placeholder="Exit criteria, one per line" rows={4} onChange={(e) => set(i, { exitCriteria: e.target.value })} style={{ ...input, resize: 'vertical', fontFamily: 'inherit' }} /></label>
+            <p style={muted}>Recorded exit-criteria evidence is preserved by id on save. Save applies all milestones together.</p>
           </div>
-          <textarea value={row.exitCriteria} placeholder="Exit criteria, one per line" rows={2} onChange={(e) => set(i, { exitCriteria: e.target.value })} style={{ ...input, resize: 'vertical', fontFamily: 'inherit' }} />
-        </div>
-      ))}
-      <Ghost onClick={add}>+ Add Milestone</Ghost>
+        )
+      })()}
     </Drawer>
   )
 }

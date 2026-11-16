@@ -35,7 +35,7 @@ export const EPIC_TRANSITIONS: Record<EpicStatus, EpicStatus[]> = {
   cancelled: [],
 }
 
-export type Milestone = { id: string; title: string; exitCriteria: string[] }
+export type Milestone = { id: string; title: string; exitCriteria: string[]; unreadableExitCriteria: number }
 
 export type DeliveryPlan = {
   id: string
@@ -45,6 +45,7 @@ export type DeliveryPlan = {
   milestones: Milestone[]
   dependsOn: string[]
   successCriteria: string[]
+  unreadableCriteria: number
   risks: string[]
   references: string[]
   filePath: string
@@ -62,6 +63,7 @@ export type Epic = {
   milestone: string | null
   dependsOn: string[]
   successCriteria: string[]
+  unreadableCriteria: number
   relatedCapabilities: string[]
   decisions: string[]
   filePath: string
@@ -82,6 +84,31 @@ function strList(v: unknown): string[] {
   if (!Array.isArray(v)) return []
   return v.map((x) => (typeof x === 'string' ? x.trim() : String(x))).filter(Boolean)
 }
+
+/**
+ * Parse a list of criteria (success criteria, exit criteria) safely (WI-085). A criterion is canonically a
+ * string. Historical artifacts sometimes hold a YAML map; `String(x)` on it produces the literal
+ * "[object Object]", which must NOT become a criterion. For a non-string element we recover a text field
+ * when one is present (`text`/`criterion`/`title`/`name`), otherwise we skip it — never coercing an
+ * arbitrary object into a criterion. The count of skipped (unreadable) elements is returned so the UI can
+ * surface it honestly. Read-only: the source artifact is never rewritten.
+ */
+function parseCriteria(v: unknown): { criteria: string[]; unreadable: number } {
+  if (!Array.isArray(v)) return { criteria: [], unreadable: 0 }
+  const criteria: string[] = []
+  let unreadable = 0
+  const TEXT_KEYS = ['text', 'criterion', 'title', 'name'] as const
+  for (const x of v) {
+    if (typeof x === 'string') { const t = x.trim(); if (t) criteria.push(t); continue }
+    if (x && typeof x === 'object' && !Array.isArray(x)) {
+      const o = x as Record<string, unknown>
+      const found = TEXT_KEYS.map((k) => o[k]).find((val) => typeof val === 'string' && val.trim())
+      if (typeof found === 'string') { criteria.push(found.trim()); continue }
+    }
+    unreadable++
+  }
+  return { criteria, unreadable }
+}
 function relFrom(dir: string, filePath: string): string {
   const d = toPosix(dir)
   const f = toPosix(filePath)
@@ -97,7 +124,8 @@ function parseMilestones(data: Record<string, unknown>): Milestone[] {
     const o = entry as Record<string, unknown>
     const id = optStr(o.id)
     if (!id) continue
-    out.push({ id, title: optStr(o.title) ?? id, exitCriteria: strList(o.exit_criteria) })
+    const { criteria, unreadable } = parseCriteria(o.exit_criteria)
+    out.push({ id, title: optStr(o.title) ?? id, exitCriteria: criteria, unreadableExitCriteria: unreadable })
   }
   return out
 }
@@ -122,7 +150,8 @@ export function parseDeliveryPlan(dir: string, filePath: string, raw: string): D
     objective: optStr(data.objective) ?? null,
     milestones: parseMilestones(data),
     dependsOn: strList(data.depends_on),
-    successCriteria: strList(data.success_criteria),
+    successCriteria: parseCriteria(data.success_criteria).criteria,
+    unreadableCriteria: parseCriteria(data.success_criteria).unreadable,
     risks: strList(data.risks),
     references: strList(data.references),
     filePath,
@@ -153,7 +182,8 @@ export function parseEpic(dir: string, filePath: string, raw: string): Epic | nu
     plan: optStr(data.plan) ?? null,
     milestone: optStr(data.milestone) ?? null,
     dependsOn: strList(data.depends_on),
-    successCriteria: strList(data.success_criteria),
+    successCriteria: parseCriteria(data.success_criteria).criteria,
+    unreadableCriteria: parseCriteria(data.success_criteria).unreadable,
     relatedCapabilities: strList(data.related_capabilities),
     decisions: strList(data.decisions),
     filePath,

@@ -148,6 +148,38 @@ formulario obsoleto.
 > Asociar una Initiative con una Epic también está disponible desde la CLI (`kaddo epic associate`) y
 > MCP (`kaddo_associate_initiative_epic`).
 
+### Navegación overview-first
+
+Los detalles de Plan, Epic e Initiative son **overview-first, detail-on-demand**. En lugar de una columna
+larga, cada página abre en un Overview (identidad, lifecycle, métricas clave y las alertas relevantes) con
+**secciones por pestañas** para el resto — Milestones, Epics / Relaciones, Evidence & completion y
+Activity. Solo la sección activa se renderiza, y la sección se refleja en la URL para que los enlaces
+profundos y back/forward la restauren. Las pestañas se navegan por teclado (flechas, Home/End) con roles y
+gestión de foco; nada se oculta — cada sección queda a un clic.
+
+Dentro de esas secciones los datos extensos se revelan de forma progresiva, sin escribir ni recalcular por
+consultarlos:
+
+- **Evidence & completion** encabeza con un resumen (readiness, entrega, conteos de criterios, motivos
+  críticos) y luego permite filtrar criterios por estado y **seleccionar un milestone a la vez** — los
+  milestones no se despliegan todos a la vez. `Record evidence` se mantiene sobre el criterio exacto y
+  conserva su milestone, revision guard y estado; completar es siempre una acción humana explícita.
+- **Activity (colaboración)** muestra primero responsabilidad declarada, disponibilidad Git y conteos, y
+  luego una lista acotada de commits y trazabilidad con "show more" — nunca ~100 filas al abrir.
+  Responsabilidad declarada y actividad Git observada se mantienen separadas; "0 linked commits" nunca
+  implica que no hubo trabajo.
+- **Manage milestones** es un índice compacto con edición focalizada de un milestone a la vez (agregar,
+  seleccionar, editar, reordenar, quitar), preservando ids, orden y la evidencia de exit criteria
+  registrada, con avisos de cambios sin guardar y de conflicto de revisión.
+- En el **Overview** de Planning, Planning checks y Milestones & outcomes muestran un resumen acotado con
+  "show all", de modo que nunca empujan a Plans/Epics/Initiatives fuera de vista; se reutiliza el
+  explorador de findings de WI-082/083, sin duplicarlo.
+
+Un success o exit criterion es canónicamente una cadena. Un artifact histórico que guarda un valor no
+textual se **diagnostica como ilegible** (se cuenta, se muestra aparte) en lugar de renderizarse como el
+literal `[object Object]` o tratarse como criterio verificado — un valor estructurado con un campo de texto
+reconocible se recupera, cualquier otro se omite, y el origen nunca se reescribe.
+
 ## Execution Insights
 
 El **Overview** de Planning presenta además una vista **de solo lectura** de ejecución que convierte las

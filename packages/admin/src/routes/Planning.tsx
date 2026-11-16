@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useRouter } from '@tanstack/react-router'
-import { Map as MapIcon, Milestone as MilestoneIcon, Boxes, AlertTriangle, ArrowRight, Target } from 'lucide-react'
+import { Map as MapIcon, Boxes, AlertTriangle, ArrowRight, Target } from 'lucide-react'
 import {
   api, getPlanningOverview, getPlanDetail, getEpicDetail, disassociateInitiative,
   type PlanningDelivery, type PlanningFinding, type InitiativeInPlanning,
@@ -18,6 +18,7 @@ import { PlanningInsights } from '../components/PlanningInsights'
 import type { InsightArtifactKind } from '../lib/api'
 import { Initiatives } from './Initiatives'
 import { CollaborationOverview } from '../components/CollaborationOverview'
+import { SectionTabs, type Section } from '../components/SectionTabs'
 
 function Btn({ onClick, children, primary }: { onClick: () => void; children: React.ReactNode; primary?: boolean }) {
   return <button onClick={onClick} style={primary ? actionPrimary : actionGhost}>{children}</button>
@@ -26,12 +27,24 @@ function Btn({ onClick, children, primary }: { onClick: () => void; children: Re
 function DeliveryBar({ d }: { d: PlanningDelivery }) {
   return <span style={muted}>delivery {d.completed}/{d.total} completed{d.blocked ? ` · ${d.blocked} blocked` : ''}</span>
 }
+// WI-085 — Planning checks: a compact summary by severity, capped by default so a long list of pending
+// dependencies never dominates the Overview; "Show all" reveals the rest. No finding is hidden or recolored.
+const FINDINGS_CAP = 5
 function Findings({ findings }: { findings: PlanningFinding[] }) {
+  const [showAll, setShowAll] = useState(false)
   if (findings.length === 0) return null
+  const errors = findings.filter((f) => f.level === 'error').length
+  const warnings = findings.length - errors
+  const shown = showAll ? findings : findings.slice(0, FINDINGS_CAP)
   return (
     <div style={findingsBox}>
-      <strong style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}><AlertTriangle size={15} /> Planning checks</strong>
-      {findings.map((f, i) => <div key={i} style={{ ...muted, color: f.level === 'error' ? 'var(--danger)' : 'var(--warning)' }}>{f.message}</div>)}
+      <strong style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}><AlertTriangle size={15} /> Planning checks <span style={{ ...muted, fontWeight: 400 }}>· {findings.length} check{findings.length === 1 ? '' : 's'}{errors > 0 ? ` · ${errors} error${errors === 1 ? '' : 's'}` : ''}{warnings > 0 ? ` · ${warnings} warning${warnings === 1 ? '' : 's'}` : ''}</span></strong>
+      {shown.map((f, i) => <div key={i} style={{ ...muted, color: f.level === 'error' ? 'var(--danger)' : 'var(--warning)' }}>{f.message}</div>)}
+      {findings.length > FINDINGS_CAP && (
+        <button onClick={() => setShowAll((v) => !v)} style={{ marginTop: 6, background: 'none', border: 'none', padding: 0, color: 'var(--primary)', cursor: 'pointer', font: 'inherit', fontSize: 13 }}>
+          {showAll ? 'Show fewer' : `Show all ${findings.length} checks`}
+        </button>
+      )}
     </div>
   )
 }
@@ -244,28 +257,32 @@ export function PlanDetail({ id }: { id: string }) {
       {open === 'milestones' && <MilestonesDrawer plan={p} onClose={() => setOpen(null)} />}
       {open === 'epic' && <CreateEpicDrawer defaultPlan={p.id} onClose={() => setOpen(null)} onCreated={(eid) => { setOpen(null); router.navigate({ to: '/planning/epics/$id', params: { id: eid } }) }} />}
 
-      <section style={grid}>
-        <Metric label="Epics" value={p.progress.epics.total} />
-        <Metric label="Initiatives" value={p.progress.planning.initiatives} />
-        <Metric label="Work Items" value={p.progress.delivery.total} />
-        <Metric label="Completed" value={p.progress.delivery.completed} />
-        <Metric label="Blocked" value={p.progress.delivery.blocked} />
-      </section>
-      <PlanningCompletion kind="plan" id={p.id} status={p.status} revision={p.revision} completionDecision={p.completionDecision} />
-      <CollaborationOverview data={collaboration.data} loading={collaboration.isLoading} error={Boolean(collaboration.error)} onOpenWorkItem={(workItemId) => router.navigate({ to: '/work-items/$workItemId', params: { workItemId } })} />
-
-      <section style={section}>
-        <h3 style={h3}><MilestoneIcon size={16} style={{ verticalAlign: 'middle', marginRight: 6 }} />Milestones</h3>
-        {p.milestones.length === 0 ? <p style={muted}>No milestones defined.</p> : p.milestones.map((m) => (
-          <div key={m.id} style={row}><strong style={mono}>{m.id}</strong> {m.title}{m.exitCriteria.length > 0 && <ul style={list}>{m.exitCriteria.map((c, i) => <li key={i}>{c}</li>)}</ul>}</div>
-        ))}
-      </section>
-
-      <section style={section}>
-        <h3 style={h3}><Boxes size={16} style={{ verticalAlign: 'middle', marginRight: 6 }} />Epics</h3>
-        {p.epics.length === 0 ? <p style={muted}>No epics in this plan yet.</p> : (
-          <div style={cardGrid}>
-            {p.epics.map((e) => (
+      {(() => {
+        const unreadable = p.milestones.reduce((n, m) => n + (m.unreadableExitCriteria ?? 0), 0) + (p.unreadableCriteria ?? 0)
+        const Overview = (
+          <>
+            <section style={grid}>
+              <Metric label="Epics" value={p.progress.epics.total} />
+              <Metric label="Initiatives" value={p.progress.planning.initiatives} />
+              <Metric label="Work Items" value={p.progress.delivery.total} />
+              <Metric label="Completed" value={p.progress.delivery.completed} />
+              <Metric label="Blocked" value={p.progress.delivery.blocked} danger />
+            </section>
+            {unreadable > 0 && <p style={{ ...mutedSmall, color: 'var(--warning)' }}>{unreadable} criterion(s) in the source are not readable text and are shown separately in Evidence &amp; completion — they are not counted as verified.</p>}
+          </>
+        )
+        const sections: Section[] = [
+          { id: 'overview', label: 'Overview', render: () => Overview },
+          ...(p.milestones.length > 0 ? [{ id: 'milestones', label: 'Milestones', count: p.milestones.length, render: () => (
+            <div>{p.milestones.map((m) => (
+              <div key={m.id} style={row}><strong style={mono}>{m.id}</strong> {m.title}
+                {m.exitCriteria.length > 0 && <ul style={list}>{m.exitCriteria.map((c, i) => <li key={i}>{c}</li>)}</ul>}
+                {(m.unreadableExitCriteria ?? 0) > 0 && <span style={{ ...mutedSmall, color: 'var(--warning)' }}>{m.unreadableExitCriteria} unreadable exit criterion(s) in source</span>}
+              </div>
+            ))}</div>
+          ) }] : []),
+          ...(p.epics.length > 0 ? [{ id: 'epics', label: 'Epics', count: p.epics.length, render: () => (
+            <div style={cardGrid}>{p.epics.map((e) => (
               <button key={e.id} style={card} onClick={() => router.navigate({ to: '/planning/epics/$id', params: { id: e.id } })}>
                 <div style={cardTop}><StatusBadge variant={e.blocked.length ? 'warning' : 'info'}>{e.status}</StatusBadge><span style={mono}>{e.id}</span></div>
                 <strong>{e.title}</strong>
@@ -273,10 +290,17 @@ export function PlanDetail({ id }: { id: string }) {
                 <DeliveryBar d={e.delivery} />
                 {e.blocked.length > 0 && <span style={{ ...mutedSmall, color: 'var(--warning)' }}>blocked by {e.blocked.join(', ')}</span>}
               </button>
-            ))}
-          </div>
-        )}
-      </section>
+            ))}</div>
+          ) }] : []),
+          { id: 'evidence', label: 'Evidence & completion', render: () => (
+            <PlanningCompletion kind="plan" id={p.id} status={p.status} revision={p.revision} completionDecision={p.completionDecision} />
+          ) },
+          { id: 'activity', label: 'Activity', render: () => (
+            <CollaborationOverview data={collaboration.data} loading={collaboration.isLoading} error={Boolean(collaboration.error)} onOpenWorkItem={(workItemId) => router.navigate({ to: '/work-items/$workItemId', params: { workItemId } })} />
+          ) },
+        ]
+        return <SectionTabs sections={sections} ariaLabel="Plan sections" />
+      })()}
     </div>
   )
 }
@@ -328,40 +352,50 @@ export function EpicDetail({ id }: { id: string }) {
         </ConfirmDialog>
       )}
 
-      {/* Execution progress only — outcome verification and completion readiness are canonical below. */}
-      <section style={grid}>
-        <Metric label="Work Items" value={e.progress.delivery.total} />
-        <Metric label="Completed" value={e.progress.delivery.completed} />
-        <Metric label="Blocked" value={e.progress.delivery.blocked} />
-        <Metric label="Success criteria (declared)" value={r.successCriteria} />
-      </section>
-      <PlanningCompletion kind="epic" id={e.id} status={e.status} revision={e.revision} completionDecision={e.completionDecision} />
-      <CollaborationOverview data={collaboration.data} loading={collaboration.isLoading} error={Boolean(collaboration.error)} onOpenWorkItem={(workItemId) => router.navigate({ to: '/work-items/$workItemId', params: { workItemId } })} />
-      {r.blockingDependencies.length > 0 && <p style={{ ...muted, color: 'var(--warning)' }}>Blocking dependencies: {r.blockingDependencies.join(', ')}</p>}
-
-      <section style={section}>
-        <h3 style={h3}>Initiatives & responsibilities</h3>
-        {e.initiatives.length === 0 ? (
-          <EmptyState title="No Initiatives associated" description="Associate an existing Initiative to organize its Work Items under this Epic." action={{ label: '+ Associate Initiative', onClick: () => setOpen('associate') }} />
-        ) : e.initiatives.map((i) => (
-          <div key={i.id} style={{ ...row, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10 }}>
-            <div>
-              <a style={link} onClick={() => router.navigate({ to: '/initiatives/$initiativeId', params: { initiativeId: i.id } })}><span style={mono}>{i.id}</span> {i.title}</a> <StatusBadge variant="muted">{i.status}</StatusBadge>
-              <div style={mutedSmall}>{i.owners.length ? <>owner(s): {i.owners.join(', ')}</> : 'unassigned'}{i.contributors.length ? ` · contributors: ${i.contributors.join(', ')}` : ''}</div>
-            </div>
-            <button onClick={() => setRemoving(i.id)} style={{ ...actionGhost, color: 'var(--danger)', flex: '0 0 auto' }}>Remove</button>
-          </div>
-        ))}
-      </section>
-
-      <section style={section}>
-        <h3 style={h3}>Work Items</h3>
-        {e.workItems.length === 0 ? <p style={muted}>No work items yet.</p> : e.workItems.map((w) => (
-          <div key={w.id} style={row}>
-            <a style={link} onClick={() => router.navigate({ to: '/work-items/$workItemId', params: { workItemId: w.id } })}><span style={mono}>{w.id}</span> {w.title}</a> <StatusBadge variant="muted">{w.status}</StatusBadge> <ArrowRight size={13} color="var(--foreground-muted)" />
-          </div>
-        ))}
-      </section>
+      {(() => {
+        const unreadable = e.unreadableCriteria ?? 0
+        const Overview = (
+          <>
+            <section style={grid}>
+              <Metric label="Work Items" value={e.progress.delivery.total} />
+              <Metric label="Completed" value={e.progress.delivery.completed} />
+              <Metric label="Blocked" value={e.progress.delivery.blocked} danger />
+              <Metric label="Success criteria (declared)" value={r.successCriteria} />
+            </section>
+            {r.blockingDependencies.length > 0 && <p style={{ ...muted, color: 'var(--warning)' }}>Blocking dependencies: {r.blockingDependencies.join(', ')}</p>}
+            {unreadable > 0 && <p style={{ ...mutedSmall, color: 'var(--warning)' }}>{unreadable} criterion(s) in the source are not readable text (see Evidence &amp; completion) — not counted as verified.</p>}
+          </>
+        )
+        const Relations = (
+          <>
+            <h4 style={h4}>Initiatives &amp; responsibilities</h4>
+            {e.initiatives.length === 0 ? (
+              <EmptyState title="No Initiatives associated" description="Associate an existing Initiative to organize its Work Items under this Epic." action={{ label: '+ Associate Initiative', onClick: () => setOpen('associate') }} />
+            ) : e.initiatives.map((i) => (
+              <div key={i.id} style={{ ...row, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10 }}>
+                <div>
+                  <a style={link} onClick={() => router.navigate({ to: '/initiatives/$initiativeId', params: { initiativeId: i.id } })}><span style={mono}>{i.id}</span> {i.title}</a> <StatusBadge variant="muted">{i.status}</StatusBadge>
+                  <div style={mutedSmall}>{i.owners.length ? <>owner(s): {i.owners.join(', ')}</> : 'unassigned'}{i.contributors.length ? ` · contributors: ${i.contributors.join(', ')}` : ''}</div>
+                </div>
+                <button onClick={() => setRemoving(i.id)} style={{ ...actionGhost, color: 'var(--danger)', flex: '0 0 auto' }}>Remove</button>
+              </div>
+            ))}
+            <h4 style={{ ...h4, marginTop: 14 }}>Work Items</h4>
+            {e.workItems.length === 0 ? <p style={muted}>No work items yet.</p> : e.workItems.map((w) => (
+              <div key={w.id} style={row}>
+                <a style={link} onClick={() => router.navigate({ to: '/work-items/$workItemId', params: { workItemId: w.id } })}><span style={mono}>{w.id}</span> {w.title}</a> <StatusBadge variant="muted">{w.status}</StatusBadge> <ArrowRight size={13} color="var(--foreground-muted)" />
+              </div>
+            ))}
+          </>
+        )
+        const sections: Section[] = [
+          { id: 'overview', label: 'Overview', render: () => Overview },
+          { id: 'relations', label: 'Relations & delivery', count: e.initiatives.length + e.workItems.length, render: () => Relations },
+          { id: 'evidence', label: 'Evidence & completion', render: () => <PlanningCompletion kind="epic" id={e.id} status={e.status} revision={e.revision} completionDecision={e.completionDecision} /> },
+          { id: 'activity', label: 'Activity', render: () => <CollaborationOverview data={collaboration.data} loading={collaboration.isLoading} error={Boolean(collaboration.error)} onOpenWorkItem={(workItemId) => router.navigate({ to: '/work-items/$workItemId', params: { workItemId } })} /> },
+        ]
+        return <SectionTabs sections={sections} ariaLabel="Epic sections" />
+      })()}
     </div>
   )
 }
@@ -384,6 +418,7 @@ function CompactEmpty({ label, cta, onClick }: { label: string; cta: string; onC
 const page: React.CSSProperties = { padding: '24px 32px', maxWidth: 1180, margin: '0 auto' }
 const heading: React.CSSProperties = { margin: 0, fontSize: 24 }
 const h3: React.CSSProperties = { margin: '0 0 8px' }
+const h4: React.CSSProperties = { margin: '0 0 8px', fontSize: 15 }
 const subheading: React.CSSProperties = { color: 'var(--foreground-muted)', margin: '6px 0 0', maxWidth: 820 }
 const header: React.CSSProperties = { marginBottom: 12 }
 const sectionHead: React.CSSProperties = { display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, marginBottom: 4, flexWrap: 'wrap' }

@@ -23,7 +23,7 @@ test.describe('Unified Planning Explorer', () => {
     // Indicators, including initiatives without an epic.
     await expect(page.getByText('Initiatives without Epic')).toBeVisible()
     // Initiatives appear in the overview (standalone one is shown, not treated as an error).
-    await expect(page.getByText('Standalone Initiative')).toBeVisible()
+    await expect(page.getByText('Standalone Initiative').first()).toBeVisible()
     await expect(page.getByText('independent (no epic)').first()).toBeVisible()
   })
 
@@ -44,16 +44,23 @@ test.describe('Unified Planning Explorer', () => {
     await page.goto('/planning')
     await page.getByText('Wasma Technical Roadmap').click()
     await expect(page.getByRole('heading', { name: 'Wasma Technical Roadmap' })).toBeVisible()
+    // WI-085: detail pages are overview-first with section tabs — milestone exit criteria live under the
+    // Milestones section, and the Completion Review under Evidence & completion.
+    await page.getByRole('tab', { name: /Milestones/ }).click()
     await expect(page.getByText('Benchmark evidence reviewed').first()).toBeVisible()
-    // Completion is human-gated via the canonical Completion Review (WI-078).
+    await page.getByRole('tab', { name: /Evidence & completion/ }).click()
     await expect(page.getByRole('heading', { name: 'Completion Review' })).toBeVisible()
     await expect(page.getByText(/never completes anything automatically/)).toBeVisible()
 
+    // Open the Epic from the Epics section.
+    await page.getByRole('tab', { name: /Epics/ }).click()
     await page.getByText('Runtime Performance & Concurrency').click()
     await expect(page.getByRole('heading', { name: 'Runtime Performance & Concurrency' })).toBeVisible()
+    // Blocking dependencies are on the Epic Overview; initiatives and owners under Relations & delivery.
+    await expect(page.getByText('Blocking dependencies: EP-002')).toBeVisible()
+    await page.getByRole('tab', { name: /Relations & delivery/ }).click()
     await expect(page.getByText('Host-side Workers')).toBeVisible()
     await expect(page.getByText('owner(s): developer-a')).toBeVisible()
-    await expect(page.getByText('Blocking dependencies: EP-002')).toBeVisible()
   })
 
   test('surfaces the EP-001 → EP-002 dependency block', async ({ page }) => {

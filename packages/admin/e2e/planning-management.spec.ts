@@ -27,7 +27,8 @@ test.describe('Planning Management (WI-076)', () => {
     await page.getByPlaceholder('RM-01').fill('RM-10')
     await page.getByPlaceholder('Milestone title').fill('E2E Milestone')
     await page.getByRole('button', { name: 'Save milestones' }).click()
-    // RM-10 appears both in the Milestones section and the Completion Review (WI-078) — assert at least one.
+    // WI-085: the saved milestone appears under the Milestones section.
+    await page.getByRole('tab', { name: /Milestones/ }).click()
     await expect(page.getByText('RM-10').first()).toBeVisible()
     await expect(page.getByText('E2E Milestone').first()).toBeVisible()
 
@@ -58,7 +59,8 @@ test.describe('Planning Management (WI-076)', () => {
     await dialog.getByRole('button', { name: /^(Associate|Confirm reassignment)$/ }).click()
     await expect(page.getByRole('dialog')).toBeHidden()
 
-    // Epic side now lists the Initiative with a Remove action.
+    // Epic side now lists the Initiative with a Remove action (WI-085: under Relations & delivery).
+    await page.getByRole('tab', { name: /Relations & delivery/ }).click()
     await expect(page.getByText('INI-052')).toBeVisible()
     await expect(page.getByRole('button', { name: 'Remove' })).toBeVisible()
 

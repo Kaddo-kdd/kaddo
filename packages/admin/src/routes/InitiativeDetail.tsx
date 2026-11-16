@@ -8,6 +8,7 @@ import { CollaborationOverview } from '../components/CollaborationOverview'
 import { AssignmentDialog } from '../components/AssignmentDialog'
 import { InitiativeCompletion } from '../components/InitiativeCompletion'
 import { InitiativeCandidates } from '../components/InitiativeCandidates'
+import { SectionTabs, type Section as TabSection } from '../components/SectionTabs'
 
 const card = {
   border: '1px solid var(--border)', borderRadius: 'var(--radius)', background: 'var(--surface)',
@@ -128,84 +129,82 @@ export function InitiativeDetail() {
         </div>
       )}
 
-      <Section title="Declared responsibility">
-        <p style={{ marginTop: 0, fontSize: 13, color: 'var(--foreground-muted)' }}>Initiative responsibility is declared metadata and is not inherited by Work Items.</p>
-        <div style={{ fontSize: 14 }}>Owners: {data.owners.length ? data.owners.join(', ') : 'Unassigned'}</div>
-        <div style={{ fontSize: 14, marginTop: 6 }}>Contributors: {data.contributors.length ? data.contributors.join(', ') : 'None declared'}</div>
-        <button disabled={updateMut.isPending} onClick={() => setAssignmentDialog(true)} style={{ marginTop: 12, padding: '6px 12px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', background: 'var(--surface)', color: 'var(--foreground)', cursor: 'pointer', fontFamily: 'inherit', fontSize: 13 }}>Edit assignments</button>
-      </Section>
       {assignmentDialog && <AssignmentDialog title={`Edit assignments — ${data.id}`} owners={data.owners} contributors={data.contributors} saving={updateMut.isPending} error={updateMut.error ? (updateMut.error as Error).message : null} onCancel={() => setAssignmentDialog(false)} onSave={(owners, contributors) => updateMut.mutate({ owners, contributors })} />}
 
-      <Section title="Planning Context">
-        <InitiativePlanningContext
-          initiativeId={data.id}
-          epic={data.epic}
-          onOpenEpic={(epicId) => router.navigate({ to: '/planning/epics/$id', params: { id: epicId } })}
-        />
-      </Section>
-      <CollaborationOverview data={collaboration.data} loading={collaboration.isLoading} error={Boolean(collaboration.error)} onOpenWorkItem={(id) => router.navigate({ to: '/work-items/$workItemId', params: { workItemId: id } })} />
-
-      <Section title="Progress">
-        <div style={{ display: 'flex', gap: 40, fontSize: 14 }}>
-          <div>
-            <div style={{ color: 'var(--foreground-muted)', fontSize: 12, marginBottom: 4 }}>Planning coverage</div>
-            <div style={{ fontSize: 20, fontWeight: 700 }}>{data.progress.planning.materialized}/{data.progress.planning.totalCandidates}</div>
-            <div style={{ color: 'var(--foreground-muted)', fontSize: 12 }}>candidates materialized</div>
-          </div>
-          <div>
-            <div style={{ color: 'var(--foreground-muted)', fontSize: 12, marginBottom: 4 }}>Delivery</div>
-            <div style={{ fontSize: 20, fontWeight: 700 }}>{data.progress.delivery.byState.completed ?? 0}/{data.progress.delivery.total}</div>
-            <div style={{ color: 'var(--foreground-muted)', fontSize: 12 }}>Work Items completed</div>
-          </div>
-        </div>
-      </Section>
-
-      <InitiativeCompletion id={data.id} status={data.status} />
-
-      <Section title="Analysis">
-        {data.analysis.findings.length === 0
-          ? <div style={{ fontSize: 14, color: 'var(--foreground-muted)' }}>No gaps detected.</div>
-          : data.analysis.findings.map((f, i) => <FindingRow key={i} f={f} />)}
-      </Section>
-
-      <Section title={`Candidates (${data.candidates.length})`}>
-        <InitiativeCandidates
-          id={data.id}
-          candidates={data.candidates}
-          onOpenWorkItem={(wiId) => router.navigate({ to: '/work-items/$workItemId', params: { workItemId: wiId } })}
-        />
-      </Section>
-
-      <Section title={`Associated Work Items (${data.workItems.length})`}>
-        {data.workItems.length === 0
-          ? <div style={{ fontSize: 14, color: 'var(--foreground-muted)' }}>No Work Items associated yet.</div>
-          : (
-            <ul style={{ margin: 0, paddingLeft: 18, fontSize: 14 }}>
-              {data.workItems.map((w) => (
-                <li key={w.id} style={{ marginBottom: 4 }}>
-                  <button onClick={() => router.navigate({ to: '/work-items/$workItemId', params: { workItemId: w.id } })}
-                    style={{ background: 'none', border: 'none', padding: 0, color: 'var(--primary)', cursor: 'pointer', fontFamily: 'inherit', fontSize: 14 }}>
-                    {w.id}
-                  </button>
-                  {' '}{w.title} <span style={{ color: 'var(--foreground-muted)' }}>[{w.status}]</span>
-                </li>
-              ))}
-            </ul>
-          )}
-      </Section>
-
-      {data.externalLinks.length > 0 && (
-        <Section title="External links">
-          <ul style={{ margin: 0, paddingLeft: 18, fontSize: 14 }}>
-            {data.externalLinks.map((l, i) => (
-              <li key={i} style={{ marginBottom: 4 }}>
-                {l.integration}:{l.externalId}{l.externalType ? ` (${l.externalType})` : ''}
-                {l.externalStatus ? <span style={{ color: 'var(--foreground-muted)' }}> — signal: {l.externalStatus}</span> : null}
-              </li>
-            ))}
-          </ul>
-        </Section>
-      )}
+      {(() => {
+        const Overview = (
+          <>
+            <Section title="Progress">
+              <div style={{ display: 'flex', gap: 40, fontSize: 14 }}>
+                <div>
+                  <div style={{ color: 'var(--foreground-muted)', fontSize: 12, marginBottom: 4 }}>Planning coverage</div>
+                  <div style={{ fontSize: 20, fontWeight: 700 }}>{data.progress.planning.materialized}/{data.progress.planning.totalCandidates}</div>
+                  <div style={{ color: 'var(--foreground-muted)', fontSize: 12 }}>candidates materialized</div>
+                </div>
+                <div>
+                  <div style={{ color: 'var(--foreground-muted)', fontSize: 12, marginBottom: 4 }}>Delivery</div>
+                  <div style={{ fontSize: 20, fontWeight: 700 }}>{data.progress.delivery.byState.completed ?? 0}/{data.progress.delivery.total}</div>
+                  <div style={{ color: 'var(--foreground-muted)', fontSize: 12 }}>Work Items completed</div>
+                </div>
+              </div>
+            </Section>
+            <Section title="Planning Context">
+              <InitiativePlanningContext initiativeId={data.id} epic={data.epic} onOpenEpic={(epicId) => router.navigate({ to: '/planning/epics/$id', params: { id: epicId } })} />
+            </Section>
+            <Section title="Declared responsibility">
+              <p style={{ marginTop: 0, fontSize: 13, color: 'var(--foreground-muted)' }}>Initiative responsibility is declared metadata and is not inherited by Work Items.</p>
+              <div style={{ fontSize: 14 }}>Owners: {data.owners.length ? data.owners.join(', ') : 'Unassigned'}</div>
+              <div style={{ fontSize: 14, marginTop: 6 }}>Contributors: {data.contributors.length ? data.contributors.join(', ') : 'None declared'}</div>
+              <button disabled={updateMut.isPending} onClick={() => setAssignmentDialog(true)} style={{ marginTop: 12, padding: '6px 12px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', background: 'var(--surface)', color: 'var(--foreground)', cursor: 'pointer', fontFamily: 'inherit', fontSize: 13 }}>Edit assignments</button>
+            </Section>
+            <Section title="Analysis">
+              {data.analysis.findings.length === 0
+                ? <div style={{ fontSize: 14, color: 'var(--foreground-muted)' }}>No gaps detected.</div>
+                : data.analysis.findings.map((f, i) => <FindingRow key={i} f={f} />)}
+            </Section>
+          </>
+        )
+        const Relations = (
+          <>
+            <Section title={`Candidates (${data.candidates.length})`}>
+              <InitiativeCandidates id={data.id} candidates={data.candidates} onOpenWorkItem={(wiId) => router.navigate({ to: '/work-items/$workItemId', params: { workItemId: wiId } })} />
+            </Section>
+            <Section title={`Associated Work Items (${data.workItems.length})`}>
+              {data.workItems.length === 0
+                ? <div style={{ fontSize: 14, color: 'var(--foreground-muted)' }}>No Work Items associated yet.</div>
+                : (
+                  <ul style={{ margin: 0, paddingLeft: 18, fontSize: 14 }}>
+                    {data.workItems.map((w) => (
+                      <li key={w.id} style={{ marginBottom: 4 }}>
+                        <button onClick={() => router.navigate({ to: '/work-items/$workItemId', params: { workItemId: w.id } })} style={{ background: 'none', border: 'none', padding: 0, color: 'var(--primary)', cursor: 'pointer', fontFamily: 'inherit', fontSize: 14 }}>{w.id}</button>
+                        {' '}{w.title} <span style={{ color: 'var(--foreground-muted)' }}>[{w.status}]</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+            </Section>
+            {data.externalLinks.length > 0 && (
+              <Section title="External links">
+                <ul style={{ margin: 0, paddingLeft: 18, fontSize: 14 }}>
+                  {data.externalLinks.map((l, i) => (
+                    <li key={i} style={{ marginBottom: 4 }}>
+                      {l.integration}:{l.externalId}{l.externalType ? ` (${l.externalType})` : ''}
+                      {l.externalStatus ? <span style={{ color: 'var(--foreground-muted)' }}> — signal: {l.externalStatus}</span> : null}
+                    </li>
+                  ))}
+                </ul>
+              </Section>
+            )}
+          </>
+        )
+        const sections: TabSection[] = [
+          { id: 'overview', label: 'Overview', render: () => Overview },
+          { id: 'relations', label: 'Candidates & Work Items', count: data.candidates.length + data.workItems.length, render: () => Relations },
+          { id: 'evidence', label: 'Evidence & completion', render: () => <InitiativeCompletion id={data.id} status={data.status} /> },
+          { id: 'activity', label: 'Activity', render: () => <CollaborationOverview data={collaboration.data} loading={collaboration.isLoading} error={Boolean(collaboration.error)} onOpenWorkItem={(id) => router.navigate({ to: '/work-items/$workItemId', params: { workItemId: id } })} /> },
+        ]
+        return <SectionTabs sections={sections} ariaLabel="Initiative sections" />
+      })()}
     </div>
   )
 }

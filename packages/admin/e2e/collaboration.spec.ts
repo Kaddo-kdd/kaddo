@@ -38,11 +38,15 @@ test.describe('Collaboration and assignment management (WI-077)', () => {
     await expect(page.getByRole('heading', { name: 'COLLABORATION' })).toBeVisible()
     await expect(page.getByText('Git availability')).toBeVisible()
 
+    // WI-085: Collaboration lives under the Activity section on each detail page.
     await page.goto('/initiatives/INI-050')
+    await page.getByRole('tab', { name: 'Activity' }).click()
     await expect(page.getByRole('heading', { name: 'Collaboration overview' })).toBeVisible()
     await page.goto('/planning/epics/EP-001')
+    await page.getByRole('tab', { name: 'Activity' }).click()
     await expect(page.getByRole('heading', { name: 'Collaboration overview' })).toBeVisible()
     await page.goto('/planning/plans/PLAN-001')
+    await page.getByRole('tab', { name: 'Activity' }).click()
     await expect(page.getByRole('heading', { name: 'Collaboration overview' })).toBeVisible()
 
     await page.goto('/work-items')

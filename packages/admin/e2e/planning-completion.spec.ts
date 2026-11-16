@@ -9,6 +9,8 @@ test.describe('Planning completion (WI-078)', () => {
 
   test('an Epic is NEEDS_WORK until its outcome is verified, then human-completes with a decision', async ({ page }) => {
     await page.goto('/planning/epics/EP-900')
+    // WI-085: Completion Review lives under the Evidence & completion section.
+    await page.getByRole('tab', { name: /Evidence & completion/ }).click()
     const review = page.locator('section').filter({ hasText: 'Completion Review' })
     await expect(review).toBeVisible()
     // Canonical, evidence-based readiness — not the old structural "preconditions" flag.
@@ -28,7 +30,7 @@ test.describe('Planning completion (WI-078)', () => {
 
     // Now READY, and the criterion shows as passed.
     await expect(review.getByText('READY TO COMPLETE')).toBeVisible()
-    await expect(review.getByText('passed')).toBeVisible()
+    await expect(review.getByText('passed', { exact: true })).toBeVisible()
 
     // Complete through the human-gated dialog.
     await review.getByRole('button', { name: 'Complete epic' }).click()

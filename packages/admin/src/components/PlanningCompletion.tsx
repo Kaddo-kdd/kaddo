@@ -35,6 +35,8 @@ export function PlanningCompletion({ kind, id, status, revision, completionDecis
   })
   const [evidenceFor, setEvidenceFor] = useState<{ criterion: string; milestone?: string } | null>(null)
   const [completing, setCompleting] = useState(false)
+  const [critFilter, setCritFilter] = useState<CritFilter>('all')
+  const [selMilestone, setSelMilestone] = useState<string | null>(null)
 
   const transition = useMutation({
     mutationFn: (to: 'in-progress' | 'cancelled'): Promise<api.PlanDetail | api.EpicDetail> => (kind === 'plan' ? api.transitionPlan(id, to, revision) : api.transitionEpic(id, to, revision)),
@@ -82,16 +84,36 @@ export function PlanningCompletion({ kind, id, status, revision, completionDecis
       {ev.reasons.length > 0 && <ul style={list}>{ev.reasons.map((r, i) => <li key={i}>{r}</li>)}</ul>}
       {ev.warnings.map((w, i) => <p key={i} style={{ ...muted, color: 'var(--warning)' }}>⚠ {w}</p>)}
 
-      <OutcomeList title="Outcome Verification" outcome={ev.outcome} terminal={terminal}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 12, flexWrap: 'wrap' }}>
+        <h4 style={{ ...h4, margin: 0 }}>Outcome verification</h4>
+        <select aria-label="Filter criteria by status" value={critFilter} onChange={(e) => setCritFilter(e.target.value as CritFilter)} style={filterSel}>
+          <option value="all">All criteria</option>
+          <option value="passed">Passed</option>
+          <option value="failed">Failed</option>
+          <option value="not-verified">Not verified</option>
+          <option value="manual-review-required">Manual review</option>
+        </select>
+      </div>
+      <OutcomeList outcome={ev.outcome} terminal={terminal} filter={critFilter}
         onRecord={(criterion) => setEvidenceFor({ criterion })} />
 
       {ev.milestones && ev.milestones.length > 0 && (
-        <div style={{ marginTop: 12 }}>
-          <h4 style={h4}>Milestone exit criteria</h4>
-          {ev.milestones.map((m) => (
-            <OutcomeList key={m.id} title={`${m.id} — ${m.title}`} outcome={m.outcome} terminal={terminal}
-              onRecord={(criterion) => setEvidenceFor({ criterion, milestone: m.id })} />
-          ))}
+        <div style={{ marginTop: 16 }}>
+          <h4 style={h4}>Milestone exit criteria <span style={{ ...muted, fontWeight: 400 }}>· pick one to review ({ev.milestones.length})</span></h4>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 8 }}>
+            {ev.milestones.map((m) => {
+              const review = m.outcome.failed + m.outcome.notVerified + m.outcome.manualReview + m.outcome.ambiguous > 0 || m.outcome.stale.length > 0
+              const sel = selMilestone === m.id
+              return (
+                <button key={m.id} aria-pressed={sel} onClick={() => setSelMilestone(sel ? null : m.id)} style={{ ...msBtn, ...(sel ? msBtnActive : null), ...(review ? { color: 'var(--warning)' } : null) }}>
+                  {m.id} · {m.outcome.passed}/{m.outcome.total}{review ? ' ⚠' : ''}
+                </button>
+              )
+            })}
+          </div>
+          {selMilestone
+            ? (() => { const m = ev.milestones!.find((x) => x.id === selMilestone); return m ? <OutcomeList title={`${m.id} — ${m.title}`} outcome={m.outcome} terminal={terminal} filter={critFilter} onRecord={(criterion) => setEvidenceFor({ criterion, milestone: m.id })} /> : null })()
+            : <p style={muted}>Select a milestone to see its exit criteria. The nine milestones are not expanded all at once.</p>}
         </div>
       )}
 
@@ -109,12 +131,17 @@ export function PlanningCompletion({ kind, id, status, revision, completionDecis
   )
 }
 
-function OutcomeList({ title, outcome, terminal, onRecord }: { title: string; outcome: OutcomeVerification; terminal: boolean; onRecord: (criterion: string) => void }) {
+type CritFilter = 'all' | 'passed' | 'failed' | 'not-verified' | 'manual-review-required'
+
+function OutcomeList({ title, outcome, terminal, filter = 'all', onRecord }: { title?: string; outcome: OutcomeVerification; terminal: boolean; filter?: CritFilter; onRecord: (criterion: string) => void }) {
+  // Filtering is presentational only — it never changes the canonical counts shown in the summary (AC-09).
+  const criteria = filter === 'all' ? outcome.criteria : outcome.criteria.filter((c) => c.status === filter)
   return (
     <div style={{ marginTop: 10 }}>
-      <h4 style={h4}>{title}</h4>
+      {title && <h4 style={h4}>{title}</h4>}
       {outcome.total === 0 && <p style={muted}>No criteria declared.</p>}
-      {outcome.criteria.map((c, i) => (
+      {outcome.total > 0 && criteria.length === 0 && <p style={muted}>No criteria match this filter.</p>}
+      {criteria.map((c, i) => (
         <div key={i} style={critRow}>
           <div style={{ display: 'grid', gap: 2 }}>
             <span><StatusBadge variant={STATUS_TONE[c.status] ?? 'muted'}>{c.status}</StatusBadge>{c.waived ? ' · waived' : ''}{c.ambiguous ? ' · ambiguous' : ''} {c.criterion}</span>
@@ -227,6 +254,9 @@ const primary: CSSProperties = { ...btn, border: '1px solid var(--primary)', bac
 const primaryDisabled: CSSProperties = { ...primary, opacity: 0.5, cursor: 'not-allowed' }
 const ghost: CSSProperties = { ...btn, border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--foreground)', fontWeight: 500 }
 const ghostSm: CSSProperties = { ...ghost, padding: '5px 10px', fontSize: 12, flex: '0 0 auto' }
+const filterSel: CSSProperties = { padding: '5px 8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', background: 'var(--background)', color: 'var(--foreground)', fontSize: 13, fontFamily: 'inherit' }
+const msBtn: CSSProperties = { padding: '4px 10px', border: '1px solid var(--border)', borderRadius: 999, background: 'var(--background)', color: 'var(--foreground)', cursor: 'pointer', fontSize: 12, fontFamily: 'inherit' }
+const msBtnActive: CSSProperties = { borderColor: 'var(--primary)', color: 'var(--primary)', fontWeight: 600 }
 const ghostDanger: CSSProperties = { ...ghost, color: 'var(--danger)' }
 const overlay: CSSProperties = { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 16 }
 const drawer: CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg, 12px)', width: '100%', maxWidth: 480, maxHeight: '90vh', overflowY: 'auto', color: 'var(--foreground)' }

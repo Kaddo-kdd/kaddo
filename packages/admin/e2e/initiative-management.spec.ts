@@ -12,10 +12,12 @@ test.describe('Initiative management & completion (WI-079)', () => {
   test('edit a pending candidate, remove it with a justification, then human-complete once verified', async ({ page }) => {
     await page.goto('/initiatives/INI-900')
 
-    await expect(page.getByRole('heading', { name: /Candidates/ })).toBeVisible()
-
     // Completion must NOT be reachable through a plain status transition (AC-22 bypass prevention).
     await expect(page.getByRole('button', { name: 'completed', exact: true })).toHaveCount(0)
+
+    // WI-085: Candidates live under the Candidates & Work Items section.
+    await page.getByRole('tab', { name: /Candidates & Work Items/ }).click()
+    await expect(page.getByRole('heading', { name: /Candidates/ })).toBeVisible()
 
     // Scenario A — edit the pending candidate; its id is preserved. ('Edit', not 'Edit assignments'.)
     await page.getByRole('button', { name: 'Edit', exact: true }).click()
@@ -35,6 +37,8 @@ test.describe('Initiative management & completion (WI-079)', () => {
     await expect(page.getByText('Pending SSO task (refined)')).toHaveCount(0)
 
     // Scenario D — with scope delivered but the outcome unverified, the Initiative is NEEDS_WORK.
+    // WI-085: Completion Review lives under the Evidence & completion section.
+    await page.getByRole('tab', { name: /Evidence & completion/ }).click()
     const review = page.locator('section').filter({ hasText: 'Completion Review' })
     await expect(review.getByText('NEEDS WORK')).toBeVisible()
     await expect(review.getByText('not-verified')).toBeVisible()
@@ -49,7 +53,7 @@ test.describe('Initiative management & completion (WI-079)', () => {
     await drawer.getByRole('button', { name: 'Save evidence' }).click()
     await expect(page.getByRole('dialog')).toBeHidden()
     await expect(review.getByText('READY TO COMPLETE')).toBeVisible()
-    await expect(review.getByText('passed')).toBeVisible()
+    await expect(review.getByText('passed', { exact: true })).toBeVisible()
 
     // Scenario F — complete through the human-gated dialog (an explicit decision, never automatic).
     await review.getByRole('button', { name: 'Complete initiative' }).click()

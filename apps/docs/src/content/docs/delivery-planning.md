@@ -149,6 +149,36 @@ detected via a revision fingerprint so a stale form is never saved silently.
 > Associating an Initiative with an Epic is also available from the CLI (`kaddo epic associate`) and
 > MCP (`kaddo_associate_initiative_epic`).
 
+### Overview-first navigation
+
+Plan, Epic and Initiative detail pages are **overview-first, detail-on-demand**. Instead of one long
+column, each page opens on an Overview (identity, lifecycle, key metrics and the relevant alerts) with
+**section tabs** for the rest — Milestones, Epics / Relations, Evidence & completion, and Activity. Only
+the active section is rendered, and the section is mirrored to the URL so deep links and back/forward
+restore it. The tabs are keyboard-navigable (arrows, Home/End) with roles and focus management; nothing is
+hidden — every section stays one click away.
+
+Within those sections the heavy data is disclosed progressively, never written or recomputed by viewing:
+
+- **Evidence & completion** leads with a summary (readiness, delivery, criteria counts, critical reasons),
+  then lets you filter criteria by status and **select one milestone at a time** — the milestones are not
+  all expanded at once. `Record evidence` stays on the exact criterion and keeps its milestone, revision
+  guard and status; completion is always an explicit human action.
+- **Activity (collaboration)** shows declared responsibility, Git availability and counts first, then a
+  bounded list of commits and traceability with "show more" — never ~100 rows on open. Declared
+  responsibility and observed Git activity stay separate; "0 linked commits" never implies no work.
+- **Manage milestones** is a compact index with focused editing of one milestone at a time (add, select,
+  edit, reorder, remove), preserving ids, order and recorded exit-criteria evidence, with unsaved-change
+  and revision-conflict guards.
+- On the Planning **Overview**, Planning checks and Milestones & outcomes show a capped summary with a
+  "show all", so they never push the Plans/Epics/Initiatives below the fold; the WI-082/083 findings
+  explorer is reused, not duplicated.
+
+A success or exit criterion is canonically a string. A historical artifact that stores a non-string value
+is **diagnosed as unreadable** (counted, surfaced separately) rather than rendered as the literal
+`[object Object]` or treated as a verified criterion — a structured value with a recognizable text field is
+recovered, anything else is skipped, and the source is never rewritten.
+
 ## Execution Insights
 
 The Planning **Overview** also presents a **read-only** execution view that turns the signals Core

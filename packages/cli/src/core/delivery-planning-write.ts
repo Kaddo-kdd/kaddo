@@ -206,7 +206,7 @@ function normalizeMilestones(
     if (exit.length > 0) entry.exit_criteria = exit
     else delete entry.exit_criteria
     data.push(entry)
-    model.push({ id, title, exitCriteria: exit })
+    model.push({ id, title, exitCriteria: exit, unreadableExitCriteria: 0 })
   }
   return { data, model }
 }

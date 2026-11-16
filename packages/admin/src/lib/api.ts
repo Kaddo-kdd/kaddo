@@ -778,7 +778,7 @@ export type InitiativeInPlanning = {
 }
 export type PlanningTotals = { plans: number; epics: number; initiatives: number; workItems: number; independentWorkItems: number; blockedWorkItems: number; independentBlockedWorkItems: number; epicsWithPendingDependencies: number; unassignedInitiatives: number }
 export type PlanningOverview = { plans: PlanSummary[]; epics: EpicSummary[]; initiatives: InitiativeInPlanning[]; findings: PlanningFinding[]; totals: PlanningTotals }
-export type Milestone = { id: string; title: string; exitCriteria: string[] }
+export type Milestone = { id: string; title: string; exitCriteria: string[]; unreadableExitCriteria: number }
 export type PlanningProgress = {
   planning: { initiatives: number; candidates: number; materialized: number; remaining: number }
   delivery: PlanningDelivery
@@ -787,7 +787,7 @@ export type PlanningProgress = {
 export type CompletionDecision = { readiness: string; decided_at: string; decided_by?: string; note?: string; reasons?: string[] }
 export type PlanDetail = {
   id: string; title: string; status: string; objective: string | null
-  milestones: Milestone[]; dependsOn: string[]; successCriteria: string[]; risks: string[]; references: string[]; body: string
+  milestones: Milestone[]; dependsOn: string[]; successCriteria: string[]; unreadableCriteria: number; risks: string[]; references: string[]; body: string
   revision: string
   completionDecision: CompletionDecision | null
   progress: PlanningProgress & { epics: { total: number; byStatus: Record<string, number> } }
@@ -796,7 +796,7 @@ export type PlanDetail = {
 }
 export type EpicDetail = {
   id: string; title: string; status: string; outcome: string | null; plan: string | null; milestone: string | null
-  dependsOn: string[]; successCriteria: string[]; relatedCapabilities: string[]; decisions: string[]; body: string
+  dependsOn: string[]; successCriteria: string[]; unreadableCriteria: number; relatedCapabilities: string[]; decisions: string[]; body: string
   revision: string
   completionDecision: CompletionDecision | null
   progress: PlanningProgress

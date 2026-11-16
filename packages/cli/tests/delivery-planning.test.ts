@@ -179,8 +179,9 @@ describe('Delivery Planning Core (WI-074)', () => {
     write('knowledge/delivery/epics/EP-001.md', '---\ntype: epic\nid: EP-001\ntitle: E\nstatus: in-progress\nplan: PLAN-001\nmilestone: RM-08\n---\n# E\n')
     const plan = getPlan(tmp, 'PLAN-001')!
     const m = plan.milestones[0]
-    // Milestone is a checkpoint: id/title/exit_criteria only, no status field.
-    expect(Object.keys(m).sort()).toEqual(['exitCriteria', 'id', 'title'])
+    // Milestone is a checkpoint: id/title/exit_criteria (+ WI-085 unreadable count), no status field.
+    expect(Object.keys(m).sort()).toEqual(['exitCriteria', 'id', 'title', 'unreadableExitCriteria'])
+    expect(m.unreadableExitCriteria).toBe(0)
     // Valid RM reference from the Epic produces no validation error.
     expect(validatePlanningGraph(tmp).filter((f) => f.level === 'error')).toEqual([])
   })
