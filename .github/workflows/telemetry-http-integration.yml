@@ -40,6 +40,7 @@ jobs:
           repository: Kaddo-kdd/telemetry
           ref: d1c42aa9d49666c7e4193bcd422c11bd43759aba
           path: telemetry
+          token: ${{ secrets.TELEMETRY_READ_TOKEN }}
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
