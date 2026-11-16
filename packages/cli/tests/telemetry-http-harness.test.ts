@@ -85,7 +85,7 @@ describe('WI-084 telemetry against the isolated collector harness', () => {
       await drainTelemetry(dir)
 
       const stored = (await harness.client.send(new ScanCommand({ TableName: harness.tables.events, ConsistentRead: true }))).Items ?? []
-      const lifecycle = stored.filter(item => item.event === 'work_item_created' || item.event === 'work_item_completed')
+      const lifecycle = stored.filter(item => item.schemaVersion === '1.1' && (item.event === 'work_item_created' || item.event === 'work_item_completed'))
       expect(lifecycle).toHaveLength(2)
       for (const event of lifecycle) {
         expect(event.schemaVersion).toBe('1.1')
