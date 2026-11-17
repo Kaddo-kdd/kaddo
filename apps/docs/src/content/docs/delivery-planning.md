@@ -179,6 +179,39 @@ is **diagnosed as unreadable** (counted, surfaced separately) rather than render
 `[object Object]` or treated as a verified criterion — a structured value with a recognizable text field is
 recovered, anything else is skipped, and the source is never rewritten.
 
+### Milestone tracking and data-quality diagnostics
+
+On a Plan the **Milestones** section is a compact, decision-oriented index: one row per milestone with its
+id, title, linked Epics (when an Epic declares `milestone:`) and **verified / total** taken from the *same*
+completion evaluator the Evidence & completion tab uses — never a second engine and never a progress
+percentage. Selecting a milestone expands **one at a time** to show its exit criteria with the status Core
+emits (`passed`, `failed`, `not-verified`, `manual-review-required`, ambiguous, stale), the recorded
+evidence, and the linked Epics. A milestone with no exit criteria is shown as an explicit empty state — it
+is never read as `0/0` complete.
+
+From a criterion, `Record evidence` opens the **single shared** evidence drawer carrying the plan,
+milestone and exact criterion; saving refreshes the result in place and keeps you on the same milestone,
+preserving the revision guard and `409` conflict handling. A `Review in Evidence & completion →` link
+reaches the full completion review through the existing section hash. The milestone index is read-only:
+viewing, expanding or filtering never writes Markdown or records evidence.
+
+The unreadable diagnostic is **actionable and distinct** from a legitimate `not-verified`: an unreadable
+element names the source field (`milestones[].exit_criteria` or `success_criteria`) and its count, and asks
+for a Markdown fix — it is excluded from verification, never shown as the raw object, and never silently
+converted into a valid criterion.
+
+**Association provenance (read-only).** A Work Item belongs to an Epic through one canonical resolution,
+`workItemsInEpic`: **directly** when the Work Item declares `epic:`, or **indirectly** when it declares an
+`initiative:` whose Initiative declares that `epic:`. The union is **deduplicated by id**, so a Work Item
+reachable by both paths is counted once. Independent Work Items (no `epic` and no `initiative`) and
+ambiguous historical `materialized_as` references keep their honest classification and are **never**
+auto-linked, and a relation is never inferred from `source`, titles, roadmap order or annotations. To audit
+an Epic's exact set, read its Relations list (already deduped) or inspect the canonical fields; a count
+difference between a roadmap and the view is reconciled by **comparing ids and provenance**, not by
+assuming either number is correct. For a project such as Wasma this reconciliation is a separate,
+read-only step in that repository — Kaddo diagnoses and explains, it does not rewrite historical
+associations.
+
 ## Execution Insights
 
 The Planning **Overview** also presents a **read-only** execution view that turns the signals Core

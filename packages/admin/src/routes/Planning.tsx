@@ -14,6 +14,7 @@ import {
   CreateEpicDrawer, EditEpicDrawer, AssociateInitiativeDrawer,
 } from '../components/PlanningManage'
 import { PlanningCompletion } from '../components/PlanningCompletion'
+import { MilestonesTracking } from '../components/MilestonesTracking'
 import { PlanningInsights } from '../components/PlanningInsights'
 import type { InsightArtifactKind } from '../lib/api'
 import { Initiatives } from './Initiatives'
@@ -274,12 +275,7 @@ export function PlanDetail({ id }: { id: string }) {
         const sections: Section[] = [
           { id: 'overview', label: 'Overview', render: () => Overview },
           ...(p.milestones.length > 0 ? [{ id: 'milestones', label: 'Milestones', count: p.milestones.length, render: () => (
-            <div>{p.milestones.map((m) => (
-              <div key={m.id} style={row}><strong style={mono}>{m.id}</strong> {m.title}
-                {m.exitCriteria.length > 0 && <ul style={list}>{m.exitCriteria.map((c, i) => <li key={i}>{c}</li>)}</ul>}
-                {(m.unreadableExitCriteria ?? 0) > 0 && <span style={{ ...mutedSmall, color: 'var(--warning)' }}>{m.unreadableExitCriteria} unreadable exit criterion(s) in source</span>}
-              </div>
-            ))}</div>
+            <MilestonesTracking plan={p} onOpenEpic={(eid) => router.navigate({ to: '/planning/epics/$id', params: { id: eid } })} />
           ) }] : []),
           ...(p.epics.length > 0 ? [{ id: 'epics', label: 'Epics', count: p.epics.length, render: () => (
             <div style={cardGrid}>{p.epics.map((e) => (
@@ -440,7 +436,6 @@ const muted: React.CSSProperties = { color: 'var(--foreground-muted)', fontSize:
 const mutedSmall: React.CSSProperties = { color: 'var(--foreground-muted)', fontSize: 12, margin: '4px 0 0' }
 const mono: React.CSSProperties = { fontFamily: 'var(--font-mono, monospace)', fontSize: 13 }
 const row: React.CSSProperties = { padding: '8px 0', borderBottom: '1px solid var(--border)', fontSize: 14 }
-const list: React.CSSProperties = { margin: '4px 0 0', paddingLeft: 18, color: 'var(--foreground-muted)', fontSize: 13 }
 const back: React.CSSProperties = { background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer', font: 'inherit', padding: 0, marginBottom: 10 }
 const link: React.CSSProperties = { color: 'var(--primary)', cursor: 'pointer', textDecoration: 'none' }
 const findingsBox: React.CSSProperties = { margin: '14px 0', padding: 12, border: '1px solid var(--border)', borderRadius: 'var(--radius)', background: 'var(--surface-muted)', display: 'grid', gap: 4 }

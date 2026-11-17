@@ -180,6 +180,40 @@ textual se **diagnostica como ilegible** (se cuenta, se muestra aparte) en lugar
 literal `[object Object]` o tratarse como criterio verificado — un valor estructurado con un campo de texto
 reconocible se recupera, cualquier otro se omite, y el origen nunca se reescribe.
 
+### Seguimiento de milestones y diagnóstico de calidad de datos
+
+En un Plan, la sección **Milestones** es un índice compacto orientado a decisiones: una fila por hito con su
+id, título, Epics vinculadas (cuando una Epic declara `milestone:`) y **verificados / total** tomado del
+*mismo* evaluador de completion que usa la pestaña Evidence & completion — nunca un segundo motor ni un
+porcentaje de avance. Al seleccionar un hito se expande **uno a la vez** para mostrar sus exit criteria con
+el estado que emite Core (`passed`, `failed`, `not-verified`, `manual-review-required`, ambiguo, stale), la
+evidencia registrada y las Epics vinculadas. Un hito sin exit criteria se muestra como estado vacío
+explícito — nunca se interpreta como `0/0` completo.
+
+Desde un criterio, `Record evidence` abre el **único** drawer de evidencia compartido llevando el plan, el
+milestone y el criterio exacto; al guardar, el resultado se actualiza en su lugar y se conserva el mismo
+hito, preservando el guard de revisión y el manejo de conflictos `409`. Un enlace
+`Review in Evidence & completion →` lleva a la revisión completa mediante el hash de sección existente. El
+índice de milestones es de solo lectura: consultar, expandir o filtrar nunca escribe Markdown ni registra
+evidencia.
+
+El diagnóstico de ilegibles es **accionable y distinto** de un `not-verified` legítimo: un elemento
+ilegible nombra el campo de origen (`milestones[].exit_criteria` o `success_criteria`) y su cantidad, y
+pide una corrección en Markdown — se excluye de la verificación, nunca se muestra el objeto crudo y nunca
+se convierte en silencio en un criterio válido.
+
+**Procedencia de asociaciones (solo lectura).** Un Work Item pertenece a una Epic por una única resolución
+canónica, `workItemsInEpic`: **directa** cuando el Work Item declara `epic:`, o **indirecta** cuando declara
+un `initiative:` cuya Initiative declara ese `epic:`. La unión se **deduplica por id**, de modo que un Work
+Item alcanzable por ambas rutas se cuenta una sola vez. Los Work Items independientes (sin `epic` ni
+`initiative`) y las referencias históricas `materialized_as` ambiguas conservan su clasificación honesta y
+**nunca** se vinculan automáticamente, y una relación nunca se infiere de `source`, títulos, orden de un
+roadmap ni anotaciones. Para auditar el conjunto exacto de una Epic, se consulta su lista de Relations (ya
+deduplicada) o se inspeccionan los campos canónicos; una diferencia de conteo entre un roadmap y la vista
+se reconcilia **comparando ids y procedencia**, no asumiendo que un número es el correcto. Para un proyecto
+como Wasma esa reconciliación es un paso separado y de solo lectura en ese repositorio — Kaddo diagnostica
+y explica, no reescribe asociaciones históricas.
+
 ## Execution Insights
 
 El **Overview** de Planning presenta además una vista **de solo lectura** de ejecución que convierte las

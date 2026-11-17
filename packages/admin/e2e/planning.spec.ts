@@ -44,9 +44,10 @@ test.describe('Unified Planning Explorer', () => {
     await page.goto('/planning')
     await page.getByText('Wasma Technical Roadmap').click()
     await expect(page.getByRole('heading', { name: 'Wasma Technical Roadmap' })).toBeVisible()
-    // WI-085: detail pages are overview-first with section tabs — milestone exit criteria live under the
-    // Milestones section, and the Completion Review under Evidence & completion.
+    // WI-085/086: detail pages are overview-first with section tabs. The Milestones section is a compact
+    // index — select one milestone to reveal its exit criteria; the Completion Review is under Evidence.
     await page.getByRole('tab', { name: /Milestones/ }).click()
+    await page.getByRole('button', { name: /RM-08/ }).click()
     await expect(page.getByText('Benchmark evidence reviewed').first()).toBeVisible()
     await page.getByRole('tab', { name: /Evidence & completion/ }).click()
     await expect(page.getByRole('heading', { name: 'Completion Review' })).toBeVisible()
