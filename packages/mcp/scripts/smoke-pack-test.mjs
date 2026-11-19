@@ -20,7 +20,23 @@ import { execFileSync } from 'node:child_process'
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
+import zlib from 'node:zlib'
 import { fileURLToPath } from 'node:url'
+
+// Minimal, dependency-free reader for one file out of a gzipped tar (npm/pnpm pack output). Portable
+// across Windows and Linux without shelling out to `tar` (whose arg/path handling differs per platform).
+function readTarEntry(tgzPath, entryName) {
+  const buf = zlib.gunzipSync(fs.readFileSync(tgzPath))
+  for (let off = 0; off + 512 <= buf.length;) {
+    const name = buf.toString('utf8', off, off + 100).replace(/\0.*$/, '')
+    if (!name) break // two zero blocks mark the end
+    const size = parseInt(buf.toString('utf8', off + 124, off + 136).replace(/\0.*$/, '').trim() || '0', 8)
+    const start = off + 512
+    if (name === entryName) return buf.toString('utf8', start, start + size)
+    off = start + Math.ceil(size / 512) * 512
+  }
+  throw new Error(`entry not found in tarball: ${entryName}`)
+}
 
 const here = path.dirname(fileURLToPath(import.meta.url))
 const repoRoot = path.resolve(here, '..', '..', '..')
@@ -51,6 +67,17 @@ try {
   const cliTgz = find(/^kaddo-cli-.*\.tgz$/)
   const mcpTgz = find(/^kaddo-mcp-.*\.tgz$/)
   log(`packed: ${path.basename(cliTgz)}, ${path.basename(mcpTgz)}`)
+
+  // Guard the publish invariant: the packed manifest must carry CONCRETE dependency versions. A literal
+  // `workspace:*` would publish an uninstallable package (EUNSUPPORTEDPROTOCOL) — this is exactly what
+  // `npm publish` (vs `pnpm publish`) would have shipped for the @kaddo/cli dependency (WI-087).
+  const packedManifest = readTarEntry(mcpTgz, 'package/package.json')
+  const deps = JSON.parse(packedManifest).dependencies ?? {}
+  const unresolved = Object.entries(deps).filter(([, v]) => String(v).includes('workspace:'))
+  if (unresolved.length) {
+    throw new Error(`packed @kaddo/mcp manifest has unresolved workspace deps: ${unresolved.map(([k, v]) => `${k}@${v}`).join(', ')}`)
+  }
+  log(`manifest deps resolved ✓ (@kaddo/cli@${deps['@kaddo/cli'] ?? '—'})`)
 
   // 3. Install the tarballs into an isolated app OUTSIDE the monorepo — no workspace node_modules in scope.
   //    The CLI tarball satisfies the MCP's pinned `@kaddo/cli` version; other deps come from the registry.

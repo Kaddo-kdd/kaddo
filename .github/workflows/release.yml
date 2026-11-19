@@ -77,15 +77,18 @@ jobs:
       - name: MCP packaged-artifact smoke test
         run: pnpm --filter @kaddo/mcp smoke
 
+      # Publish with pnpm, not npm: @kaddo/mcp depends on @kaddo/cli via `workspace:*`, and only
+      # pnpm rewrites the workspace protocol to the concrete version on publish. `npm publish` would
+      # ship the literal `workspace:*`, which no consumer can install (EUNSUPPORTEDPROTOCOL) — WI-087.
       - name: Publish @kaddo/cli to npm
         working-directory: packages/cli
-        run: npm publish --provenance --access public
+        run: pnpm publish --no-git-checks --provenance --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Publish @kaddo/mcp to npm
         working-directory: packages/mcp
-        run: npm publish --provenance --access public
+        run: pnpm publish --no-git-checks --provenance --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 

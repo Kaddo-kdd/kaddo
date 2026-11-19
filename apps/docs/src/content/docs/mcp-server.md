@@ -104,7 +104,7 @@ available to the agent.
 
 - **`Dynamic require of "child_process" is not supported`** (or `kaddo failed` / `MCP error -32000:
   Connection closed` in the client): a packaging regression in which a CommonJS dependency was inlined into
-  the ESM bundle. Fixed in `@kaddo/mcp` **≥ 3.143.0**; upgrade with `npx -y @kaddo/mcp@latest`. If you pin a
+  the ESM bundle. Fixed in `@kaddo/mcp` **≥ 3.143.1**; upgrade with `npx -y @kaddo/mcp@latest`. If you pin a
   version, use a corrected one. A CI smoke gate now blocks this class of regression before release.
 - **`Connection closed` right after start:** the server process exited. Run `npx -y @kaddo/mcp` directly in a
   terminal to see the real error on stderr — a client only reports the closed connection, not the cause.
