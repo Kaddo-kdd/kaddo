@@ -44,3 +44,29 @@ jobs:
             echo "::error::@kaddo/cli ($CLI) and @kaddo/mcp ($MCP) versions are out of sync"
             exit 1
           fi
+
+  # WI-087 — a green build is NOT proof the PUBLISHED package runs. This job packs the real tarballs,
+  # installs them outside the monorepo and opens a real MCP stdio session, on every supported Node version,
+  # so a packaging regression (e.g. a CommonJS dep inlined into the ESM bundle) blocks the merge.
+  mcp-smoke:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [22, 24]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: MCP packaged-artifact smoke test (Node ${{ matrix.node }})
+        run: pnpm --filter @kaddo/mcp smoke

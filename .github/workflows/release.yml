@@ -71,6 +71,12 @@ jobs:
             exit 1
           fi
 
+      # WI-087 — pack the real tarballs, install them outside the monorepo and open a real MCP stdio
+      # session before publishing. A broken packaged artifact (e.g. a CommonJS dep inlined into the ESM
+      # bundle) fails here and blocks the release — a green build is not sufficient evidence to publish.
+      - name: MCP packaged-artifact smoke test
+        run: pnpm --filter @kaddo/mcp smoke
+
       - name: Publish @kaddo/cli to npm
         working-directory: packages/cli
         run: npm publish --provenance --access public

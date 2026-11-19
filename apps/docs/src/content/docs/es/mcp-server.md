@@ -56,6 +56,67 @@ la variable de entorno `KADDO_PROJECT_DIR`). Comparte versión con
 Hay un ejemplo listo para copiar en
 [`examples/mcp/`](https://github.com/Kaddo-kdd/kaddo/tree/main/examples/mcp).
 
+## Versiones de Node.js soportadas
+
+`@kaddo/mcp` requiere **Node.js ≥ 22.5.0** (el mismo mínimo que `@kaddo/cli`, del que depende). Se verifica
+en **Node.js 22 LTS y Node.js 24** en cada cambio mediante un smoke test del artefacto empaquetado que corre
+en CI: se instala el tarball real fuera del monorepo y se recorre una sesión MCP completa, de modo que un
+paquete que compila pero no arranca nunca se publica. Las versiones mayores anteriores no están soportadas.
+
+## Verificar que se ejecuta
+
+Antes de registrar el servidor en un cliente, confirma que el paquete arranca:
+
+```bash
+npx -y @kaddo/mcp
+```
+
+Si todo va bien imprime una sola línea en **stderr** — `[kaddo-mcp] read-only server ready (project: …)` — y
+queda esperando mensajes MCP en stdin. `stdout` está reservado para el protocolo MCP; todos los logs y
+diagnósticos van a stderr, así que un cliente nunca ve salida espuria. Usa `Ctrl+C` para detenerlo. Si en su
+lugar termina de inmediato con un error, consulta [Solución de problemas](#solución-de-problemas).
+
+## Ejecutar vs registrar
+
+- **Ejecutar** el servidor es solo `npx @kaddo/mcp` en (o apuntando a) tu proyecto — útil para verificar que
+  funciona.
+- **Registrar** significa añadir el bloque `command` / `args` / `cwd` de arriba a la configuración MCP de un
+  cliente para que el cliente lo lance por ti. El cliente gestiona el ciclo de vida del proceso; no lo
+  ejecutas tú.
+
+### OpenCode (stdio)
+
+OpenCode lanza el servidor por stdio. Añádelo a tu configuración MCP de OpenCode:
+
+```json
+{
+  "mcp": {
+    "kaddo": {
+      "type": "local",
+      "command": ["npx", "-y", "@kaddo/mcp"],
+      "enabled": true
+    }
+  }
+}
+```
+
+Ejecuta OpenCode desde el directorio de tu proyecto Kaddo (para que el directorio de trabajo del servidor
+sea el proyecto), o define `KADDO_PROJECT_DIR`. Entonces `opencode mcp list` muestra `kaddo` conectado, y sus
+herramientas y recursos quedan disponibles para el agente.
+
+## Solución de problemas
+
+- **`Dynamic require of "child_process" is not supported`** (o `kaddo failed` / `MCP error -32000:
+  Connection closed` en el cliente): una regresión de empaquetado que incrustó una dependencia CommonJS en el
+  bundle ESM. Corregido en `@kaddo/mcp` **≥ 3.143.0**; actualiza con `npx -y @kaddo/mcp@latest`. Si fijas una
+  versión, usa una corregida. Un gate de smoke en CI ahora bloquea esta clase de regresión antes de publicar.
+- **`Connection closed` justo tras arrancar:** el proceso del servidor terminó. Ejecuta `npx -y @kaddo/mcp`
+  directamente en una terminal para ver el error real en stderr — un cliente solo reporta la conexión
+  cerrada, no la causa.
+- **Sin recursos ni herramientas:** el directorio de trabajo no es un proyecto Kaddo. Apunta `cwd` (o
+  `KADDO_PROJECT_DIR`) al directorio que contiene `.kaddo/` y `knowledge/`.
+- **Node.js no soportado:** actualiza a Node.js 22 LTS o 24.
+
 ## Resources
 
 | URI | Lee | Propósito |
