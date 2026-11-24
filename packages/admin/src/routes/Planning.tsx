@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { useRouter } from '@tanstack/react-router'
-import { Map as MapIcon, Boxes, AlertTriangle, ArrowRight, Target } from 'lucide-react'
+import { useRouter, useSearch } from '@tanstack/react-router'
+import { Map as MapIcon, Boxes, AlertTriangle, ArrowRight } from 'lucide-react'
 import {
   api, getPlanningOverview, getPlanDetail, getEpicDetail, disassociateInitiative,
-  type PlanningDelivery, type PlanningFinding, type InitiativeInPlanning,
+  type PlanningDelivery, type PlanningFinding,
 } from '../lib/api'
 import { EmptyState } from '../components/EmptyState'
 import { StatusBadge } from '../components/StatusBadge'
@@ -16,10 +16,27 @@ import {
 import { PlanningCompletion } from '../components/PlanningCompletion'
 import { MilestonesTracking } from '../components/MilestonesTracking'
 import { PlanningInsights } from '../components/PlanningInsights'
+import { NextActions } from '../components/NextActions'
+import { PlanningBreadcrumb, type Crumb } from '../components/PlanningBreadcrumb'
+import { originFrom, type FromContext } from '../lib/planning-nav'
 import type { InsightArtifactKind } from '../lib/api'
 import { Initiatives } from './Initiatives'
 import { CollaborationOverview } from '../components/CollaborationOverview'
 import { SectionTabs, type Section } from '../components/SectionTabs'
+
+// WI-088 — open a Planning entity carrying a return path (and optional target section) so the detail can
+// restore the origin tab/filter on Back. Global routes still resolve with no context.
+function useOpenWithContext() {
+  const router = useRouter()
+  return (kind: InsightArtifactKind, id: string, section?: string) => {
+    const search = { from: originFrom('/planning'), fromLabel: 'Planning' }
+    const hash = section
+    if (kind === 'plan') router.navigate({ to: '/planning/plans/$id', params: { id }, hash, search })
+    else if (kind === 'epic') router.navigate({ to: '/planning/epics/$id', params: { id }, hash, search })
+    else if (kind === 'initiative') router.navigate({ to: '/initiatives/$initiativeId', params: { initiativeId: id }, hash, search })
+    else router.navigate({ to: '/work-items/$workItemId', params: { workItemId: id }, hash, search })
+  }
+}
 
 function Btn({ onClick, children, primary }: { onClick: () => void; children: React.ReactNode; primary?: boolean }) {
   return <button onClick={onClick} style={primary ? actionPrimary : actionGhost}>{children}</button>
@@ -54,32 +71,13 @@ function Findings({ findings }: { findings: PlanningFinding[] }) {
 
 type PlanningTab = 'overview' | 'plans' | 'epics' | 'initiatives'
 
-function InitiativeCard({ i, onOpen }: { i: InitiativeInPlanning; onOpen: (id: string) => void }) {
-  return (
-    <button style={card} onClick={() => onOpen(i.id)}>
-      <div style={cardTop}><StatusBadge variant="info">{i.status}</StatusBadge><span style={mono}>{i.id}</span></div>
-      <strong>{i.title}</strong>
-      <span style={muted}>{i.epic ? `in ${i.epic}` : 'independent (no epic)'}{i.owners.length ? ` · owner(s): ${i.owners.join(', ')}` : ''}</span>
-      {/* Planning Coverage (materialized candidates) is distinct from Delivery (linked Work Items). */}
-      <span style={muted}>coverage {i.planning.materialized}/{i.planning.totalCandidates} materialized</span>
-      <span style={muted}>{i.hasWorkItems ? `delivery ${i.delivery.completed ?? 0}/${i.delivery.total} completed` : 'No Work Items linked'}</span>
-    </button>
-  )
-}
-
 export function Planning({ initialTab = 'overview' }: { initialTab?: PlanningTab }) {
   const router = useRouter()
   const [tab, setTab] = useState<PlanningTab>(initialTab)
   const [creating, setCreating] = useState<null | 'plan' | 'epic'>(null)
+  const [showDiagnostics, setShowDiagnostics] = useState(false)
   const q = useQuery({ queryKey: ['planning'], queryFn: getPlanningOverview, retry: false })
-  const openPlan = (id: string) => router.navigate({ to: '/planning/plans/$id', params: { id } })
-  const openEpic = (id: string) => router.navigate({ to: '/planning/epics/$id', params: { id } })
-  const openInsight = (kind: InsightArtifactKind, id: string) => {
-    if (kind === 'plan') openPlan(id)
-    else if (kind === 'epic') openEpic(id)
-    else if (kind === 'initiative') router.navigate({ to: '/initiatives/$initiativeId', params: { initiativeId: id } })
-    else router.navigate({ to: '/work-items/$workItemId', params: { workItemId: id } })
-  }
+  const openInsight = useOpenWithContext()
 
   const tabs: { id: PlanningTab; label: string }[] = [
     { id: 'overview', label: 'Overview' },
@@ -156,62 +154,54 @@ export function Planning({ initialTab = 'overview' }: { initialTab?: PlanningTab
       )}
     </section>
   )
-  const InitiativesOverview = (
-    <section style={section}>
-      <h3 style={h3}><Target size={16} style={{ verticalAlign: 'middle', marginRight: 6 }} />Initiatives</h3>
-      {data.initiatives.length === 0 ? <p style={muted}>No initiatives yet.</p> : (
-        <div style={cardGrid}>
-          {data.initiatives.map((i) => <InitiativeCard key={i.id} i={i} onOpen={(id) => router.navigate({ to: '/initiatives/$initiativeId', params: { initiativeId: id } })} />)}
-        </div>
-      )}
-    </section>
-  )
 
   return (
     <div style={page}>
       {Header}
       {tab === 'overview' && (
         <>
-          <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 8 }}>
-            <Btn onClick={() => setCreating('plan')}>+ Create Plan</Btn>
-            <Btn primary onClick={() => setCreating('epic')}>+ Create Epic</Btn>
-          </div>
           {!hasAny ? (
             <EmptyState title="Planning is optional" description="This project has no Plans, Epics or Initiatives yet. Start with an Initiative to group outcomes, add an Epic when work spans several Work Items, and a Delivery Plan to organize milestones. Work Items work on their own too." action={{ label: 'Create Plan', onClick: () => setCreating('plan') }} />
           ) : (
             <>
-              <section style={grid}>
-                <Metric label="Delivery Plans" value={t.plans} />
-                <Metric label="Epics" value={t.epics} />
-                <Metric label="Initiatives" value={t.initiatives} />
-                <Metric label="Work Items linked" value={t.workItems} hint={t.independentWorkItems > 0 ? `+${t.independentWorkItems} independent` : 'associated to planning'} />
-                <Metric label="Blocked Work Items" value={t.blockedWorkItems} danger hint="with an unfinished dependency" />
-                {t.epicsWithPendingDependencies > 0 && <Metric label="Epics with pending dependencies" value={t.epicsWithPendingDependencies} />}
-                <Metric label="Initiatives without Epic" value={t.unassignedInitiatives} />
+              {/* Status header — where am I (AC-01). One primary create action, not competing CTAs (AC-07). */}
+              <section style={statusHeader}>
+                <div style={{ display: 'grid', gap: 2, minWidth: 0 }}>
+                  <strong style={{ fontSize: 15 }}>Project planning status</strong>
+                  <span style={muted}>
+                    {t.plans} plan{t.plans === 1 ? '' : 's'} · {t.epics} epic{t.epics === 1 ? '' : 's'} · {t.initiatives} initiative{t.initiatives === 1 ? '' : 's'} · {t.workItems} work item{t.workItems === 1 ? '' : 's'} linked{t.independentWorkItems > 0 ? ` (+${t.independentWorkItems} independent)` : ''}{t.blockedWorkItems > 0 ? ` · ${t.blockedWorkItems} blocked by dependencies` : ''}
+                  </span>
+                </div>
+                <Btn primary onClick={() => setCreating(t.plans === 0 && t.epics === 0 ? 'plan' : 'epic')}>+ Create {t.plans === 0 && t.epics === 0 ? 'Plan' : 'Epic'}</Btn>
               </section>
-              <Findings findings={data.findings} />
-              <PlanningInsights onOpen={openInsight} />
-              {initiativeFirst ? (
-                // Initiative-first: surface the Initiatives the user actually works with before the
-                // (empty) Plan/Epic invites, so empty blocks never push them out of view (WI-083).
-                <>
-                  <p style={mutedSmall}>This project organizes work with Initiatives. You can optionally group them into Epics and Delivery Plans — nothing is required or migrated.</p>
-                  {InitiativesOverview}
-                  <div style={compactEmptyRow}>
-                    <CompactEmpty label="No Delivery Plans" cta="+ Create Plan" onClick={() => setCreating('plan')} />
-                    <CompactEmpty label="No Epics" cta="+ Create Epic" onClick={() => setCreating('epic')} />
+
+              {/* Action-first — what's next & what needs my decision (AC-01..05). */}
+              <NextActions onOpen={openInsight} onOpenDiagnostics={() => setShowDiagnostics(true)} />
+
+              {/* Compact structure summary — links to the full lists, never duplicating them here (AC-06). */}
+              <section style={structureRow}>
+                <span style={{ ...muted, fontWeight: 600 }}>Structure</span>
+                <button style={structLink} onClick={() => setTab('plans')}>{t.plans} Plan{t.plans === 1 ? '' : 's'}</button>
+                <button style={structLink} onClick={() => setTab('epics')}>{t.epics} Epic{t.epics === 1 ? '' : 's'}</button>
+                <button style={structLink} onClick={() => setTab('initiatives')}>{t.initiatives} Initiative{t.initiatives === 1 ? '' : 's'}</button>
+                {initiativeFirst && <span style={mutedSmall}>Organized with Initiatives — Plans and Epics are optional.</span>}
+              </section>
+
+              {/* Diagnostics on demand — the full findings, insights and explorer, nothing hidden (AC-08). */}
+              {showDiagnostics ? (
+                <div style={{ marginTop: 16 }}>
+                  <div style={sectionHead}>
+                    <h3 style={h3}><AlertTriangle size={16} style={{ verticalAlign: 'middle', marginRight: 6 }} />Diagnostics</h3>
+                    <Btn onClick={() => setShowDiagnostics(false)}>Hide diagnostics</Btn>
                   </div>
-                </>
+                  <Findings findings={data.findings} />
+                  <PlanningInsights onOpen={openInsight} />
+                </div>
               ) : (
-                <>
-                  {t.plans > 0 && Plans}
-                  {t.epics > 0 && Epics}
-                  <div style={compactEmptyRow}>
-                    {t.plans === 0 && <CompactEmpty label="No Delivery Plans" cta="+ Create Plan" onClick={() => setCreating('plan')} />}
-                    {t.epics === 0 && <CompactEmpty label="No Epics" cta="+ Create Epic" onClick={() => setCreating('epic')} />}
-                  </div>
-                  {InitiativesOverview}
-                </>
+                <button style={diagOpenBtn} onClick={() => setShowDiagnostics(true)}>
+                  <AlertTriangle size={15} style={{ verticalAlign: 'middle', marginRight: 6 }} />
+                  Open Diagnostics{data.findings.length > 0 ? ` · ${data.findings.length} finding${data.findings.length === 1 ? '' : 's'}` : ''}
+                </button>
               )}
             </>
           )}
@@ -221,8 +211,8 @@ export function Planning({ initialTab = 'overview' }: { initialTab?: PlanningTab
       {tab === 'epics' && Epics}
       {tab === 'initiatives' && <div style={{ marginTop: 8 }}><Initiatives /></div>}
 
-      {creating === 'plan' && <CreatePlanDrawer onClose={() => setCreating(null)} onCreated={(id) => { setCreating(null); openPlan(id) }} />}
-      {creating === 'epic' && <CreateEpicDrawer onClose={() => setCreating(null)} onCreated={(id) => { setCreating(null); openEpic(id) }} />}
+      {creating === 'plan' && <CreatePlanDrawer onClose={() => setCreating(null)} onCreated={(id) => { setCreating(null); openInsight('plan', id) }} />}
+      {creating === 'epic' && <CreateEpicDrawer onClose={() => setCreating(null)} onCreated={(id) => { setCreating(null); openInsight('epic', id) }} />}
     </div>
   )
 }
@@ -231,15 +221,17 @@ export function Planning({ initialTab = 'overview' }: { initialTab?: PlanningTab
 
 export function PlanDetail({ id }: { id: string }) {
   const router = useRouter()
+  const ctx = useSearch({ strict: false }) as FromContext
   const [open, setOpen] = useState<null | 'edit' | 'milestones' | 'epic'>(null)
   const q = useQuery({ queryKey: ['planning', 'plan', id], queryFn: () => getPlanDetail(id), retry: false })
   const collaboration = useQuery({ queryKey: ['planning', 'plan', id, 'collaboration'], queryFn: () => api.getPlanCollaboration(id), retry: false })
   if (q.isLoading) return <div style={page}>Loading plan…</div>
   if (q.error) return <div style={page}><EmptyState title="Plan not found" description={(q.error as Error).message} action={{ label: 'Back to Planning', onClick: () => router.navigate({ to: '/planning' }) }} /></div>
   const p = q.data!
+  const crumbs: Crumb[] = [{ label: 'Planning', to: '/planning' }, { label: p.id, current: true }]
   return (
     <div style={page}>
-      <button style={back} onClick={() => router.navigate({ to: '/planning' })}>← Planning</button>
+      <PlanningBreadcrumb crumbs={crumbs} back={ctx.from ? { from: ctx.from, label: ctx.fromLabel } : undefined} />
       <div style={detailHead}>
         <div>
           <h2 style={heading}>{p.title}</h2>
@@ -305,6 +297,7 @@ export function PlanDetail({ id }: { id: string }) {
 
 export function EpicDetail({ id }: { id: string }) {
   const router = useRouter()
+  const ctx = useSearch({ strict: false }) as FromContext
   const qc = useQueryClient()
   const [open, setOpen] = useState<null | 'edit' | 'associate'>(null)
   const [removing, setRemoving] = useState<string | null>(null)
@@ -323,9 +316,15 @@ export function EpicDetail({ id }: { id: string }) {
   if (q.error) return <div style={page}><EmptyState title="Epic not found" description={(q.error as Error).message} action={{ label: 'Back to Planning', onClick: () => router.navigate({ to: '/planning' }) }} /></div>
   const e = q.data!
   const r = e.progress.readiness
+  const crumbs: Crumb[] = [
+    { label: 'Planning', to: '/planning' },
+    ...(e.plan ? [{ label: e.plan, to: `/planning/plans/${e.plan}` } as Crumb] : []),
+    ...(e.plan && e.milestone ? [{ label: e.milestone, hint: '(milestone, in plan)' } as Crumb] : []),
+    { label: e.id, current: true },
+  ]
   return (
     <div style={page}>
-      <button style={back} onClick={() => (e.plan ? router.navigate({ to: '/planning/plans/$id', params: { id: e.plan } }) : router.navigate({ to: '/planning' }))}>← {e.plan ?? 'Planning'}</button>
+      <PlanningBreadcrumb crumbs={crumbs} back={ctx.from ? { from: ctx.from, label: ctx.fromLabel } : undefined} />
       <div style={detailHead}>
         <div>
           <h2 style={heading}>{e.title}</h2>
@@ -401,17 +400,11 @@ function Metric({ label, value, hint, danger }: { label: string; value: string |
   return <div style={metricCard}><span>{label}</span><strong style={strong}>{String(value)}</strong>{hint && <span style={{ fontSize: 11, fontWeight: 400 }}>{hint}</span>}</div>
 }
 
-/** A one-line invite that replaces a tall empty Plan/Epic section, keeping the create CTA accessible. */
-function CompactEmpty({ label, cta, onClick }: { label: string; cta: string; onClick: () => void }) {
-  return (
-    <div style={compactEmpty}>
-      <span style={{ color: 'var(--foreground-muted)', fontSize: 13 }}>{label}</span>
-      <Btn onClick={onClick}>{cta}</Btn>
-    </div>
-  )
-}
-
 const page: React.CSSProperties = { padding: '24px 32px', maxWidth: 1180, margin: '0 auto' }
+const statusHeader: React.CSSProperties = { display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginTop: 8, padding: '12px 14px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', background: 'var(--surface)' }
+const structureRow: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap', marginTop: 16, padding: '10px 14px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', background: 'var(--surface)' }
+const structLink: React.CSSProperties = { background: 'none', border: 'none', padding: 0, color: 'var(--primary)', cursor: 'pointer', font: 'inherit', fontSize: 13 }
+const diagOpenBtn: React.CSSProperties = { marginTop: 16, padding: '10px 14px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', background: 'var(--surface)', color: 'var(--foreground)', cursor: 'pointer', fontSize: 13, fontFamily: 'inherit', width: '100%', textAlign: 'left' }
 const heading: React.CSSProperties = { margin: 0, fontSize: 24 }
 const h3: React.CSSProperties = { margin: '0 0 8px' }
 const h4: React.CSSProperties = { margin: '0 0 8px', fontSize: 15 }
@@ -430,12 +423,9 @@ const cardGrid: React.CSSProperties = { display: 'grid', gridTemplateColumns: 'r
 const card: React.CSSProperties = { textAlign: 'left', display: 'grid', gap: 6, padding: 14, border: '1px solid var(--border)', borderRadius: 'var(--radius)', background: 'var(--surface)', cursor: 'pointer', font: 'inherit', color: 'var(--foreground)' }
 const cardTop: React.CSSProperties = { display: 'flex', justifyContent: 'space-between', alignItems: 'center' }
 const metricCard: React.CSSProperties = { padding: 14, border: '1px solid var(--border)', borderRadius: 'var(--radius)', background: 'var(--surface)', display: 'grid', gap: 6, color: 'var(--foreground-muted)', fontSize: 13 }
-const compactEmptyRow: React.CSSProperties = { display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 16 }
-const compactEmpty: React.CSSProperties = { flex: '1 1 220px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, padding: '10px 14px', border: '1px dashed var(--border)', borderRadius: 'var(--radius)', background: 'var(--surface)' }
 const muted: React.CSSProperties = { color: 'var(--foreground-muted)', fontSize: 13 }
 const mutedSmall: React.CSSProperties = { color: 'var(--foreground-muted)', fontSize: 12, margin: '4px 0 0' }
 const mono: React.CSSProperties = { fontFamily: 'var(--font-mono, monospace)', fontSize: 13 }
 const row: React.CSSProperties = { padding: '8px 0', borderBottom: '1px solid var(--border)', fontSize: 14 }
-const back: React.CSSProperties = { background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer', font: 'inherit', padding: 0, marginBottom: 10 }
 const link: React.CSSProperties = { color: 'var(--primary)', cursor: 'pointer', textDecoration: 'none' }
 const findingsBox: React.CSSProperties = { margin: '14px 0', padding: 12, border: '1px solid var(--border)', borderRadius: 'var(--radius)', background: 'var(--surface-muted)', display: 'grid', gap: 4 }

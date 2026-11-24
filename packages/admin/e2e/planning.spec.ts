@@ -12,7 +12,7 @@ test.describe('Unified Planning Explorer', () => {
     await expect(nav.getByText('Initiatives', { exact: true })).toHaveCount(0)
   })
 
-  test('WI-075: overview shows indicators, sections and initiatives (incl. unassigned)', async ({ page }) => {
+  test('WI-075/088: overview shows action-first status and sections; initiatives live in their tab', async ({ page }) => {
     await page.goto('/planning')
     await expect(page.getByRole('heading', { name: 'Planning', exact: true })).toBeVisible()
     // Secondary navigation.
@@ -20,11 +20,11 @@ test.describe('Unified Planning Explorer', () => {
     await expect(page.getByRole('tab', { name: 'Delivery Plans' })).toBeVisible()
     await expect(page.getByRole('tab', { name: 'Epics' })).toBeVisible()
     await expect(page.getByRole('tab', { name: 'Initiatives' })).toBeVisible()
-    // Indicators, including initiatives without an epic.
-    await expect(page.getByText('Initiatives without Epic')).toBeVisible()
-    // Initiatives appear in the overview (standalone one is shown, not treated as an error).
+    // WI-088: the Overview leads with a compact status, not duplicated full lists.
+    await expect(page.getByText('Project planning status')).toBeVisible()
+    // The standalone initiative is shown (not treated as an error) in the Initiatives tab.
+    await page.getByRole('tab', { name: 'Initiatives' }).click()
     await expect(page.getByText('Standalone Initiative').first()).toBeVisible()
-    await expect(page.getByText('independent (no epic)').first()).toBeVisible()
   })
 
   test('WI-075: the Initiatives tab reuses the existing Initiatives screen', async ({ page }) => {
@@ -42,6 +42,8 @@ test.describe('Unified Planning Explorer', () => {
 
   test('navigates Plan → milestones → Epic → initiatives/work items with human-gated readiness', async ({ page }) => {
     await page.goto('/planning')
+    // WI-088: full Plan list lives in the Delivery Plans tab (not duplicated on the Overview).
+    await page.getByRole('tab', { name: 'Delivery Plans' }).click()
     await page.getByText('Wasma Technical Roadmap').click()
     await expect(page.getByRole('heading', { name: 'Wasma Technical Roadmap' })).toBeVisible()
     // WI-085/086: detail pages are overview-first with section tabs. The Milestones section is a compact
@@ -66,6 +68,8 @@ test.describe('Unified Planning Explorer', () => {
 
   test('surfaces the EP-001 → EP-002 dependency block', async ({ page }) => {
     await page.goto('/planning')
+    // WI-088: the full Planning checks live under Diagnostics (on demand), nothing hidden.
+    await page.getByRole('button', { name: /Open Diagnostics/ }).click()
     await expect(page.getByText('blocked by unfinished dependency EP-002')).toBeVisible()
   })
 })

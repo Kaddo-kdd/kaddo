@@ -9,6 +9,8 @@ import { test, expect } from '@playwright/test'
 test.describe('Planning Execution Insights usability (WI-082)', () => {
   test('Overview keeps a compact summary; the explorer opens with filters, grouping, context and navigation', async ({ page }) => {
     await page.goto('/planning')
+    // WI-088: the Execution Insights summary + explorer are the on-demand Diagnostics view.
+    await page.getByRole('button', { name: /Open Diagnostics/ }).click()
     const insights = page.locator('section').filter({ hasText: 'Execution Insights' })
     await expect(insights).toBeVisible()
 
@@ -52,6 +54,7 @@ test.describe('Planning Execution Insights usability (WI-082)', () => {
   test('the explorer closes on Escape and returns focus; usable at 375px without overflow (AC-10, AC-24)', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 800 })
     await page.goto('/planning')
+    await page.getByRole('button', { name: /Open Diagnostics/ }).click()
     const insights = page.locator('section').filter({ hasText: 'Execution Insights' })
     await expect(insights).toBeVisible()
 

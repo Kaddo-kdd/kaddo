@@ -11,8 +11,10 @@ test.describe('Planning Management (WI-076)', () => {
   test('creates a Plan, adds a milestone, creates an Epic and shows it on the plan', async ({ page }) => {
     await page.goto('/planning')
 
-    // Create a Delivery Plan from the overview (review → confirm two-step). The generated id is read
-    // from the URL so the test is robust to a reused server where ids already advanced.
+    // Create a Delivery Plan from the Delivery Plans tab (review → confirm two-step). The generated id is
+    // read from the URL so the test is robust to a reused server where ids already advanced. (WI-088: the
+    // Overview keeps a single primary create action; the per-type create lives in each tab.)
+    await page.getByRole('tab', { name: 'Delivery Plans' }).click()
     await page.getByRole('button', { name: '+ Create Plan' }).first().click()
     await page.getByPlaceholder('e.g. Technical Roadmap').fill('E2E Roadmap')
     await page.getByRole('button', { name: 'Review' }).click()

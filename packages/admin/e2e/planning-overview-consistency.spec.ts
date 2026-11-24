@@ -11,13 +11,16 @@ test.describe('Planning Overview consistency (WI-083)', () => {
   test('validated coverage leads; needs attention groups by artifact; readiness collapses', async ({ page }) => {
     await page.goto('/planning')
 
-    // Overview metric row distinguishes the Work-Item count from blocking findings (AC-04). Exact match —
-    // Initiative cards also say "No Work Items linked".
-    await expect(page.getByText('Work Items linked', { exact: true })).toBeVisible()
-    await expect(page.getByText('Blocked Work Items', { exact: true })).toBeVisible()
+    // WI-088: the compact Overview header distinguishes linked Work Items from dependency-blocked ones,
+    // without a metric wall. The full dimensions live under Diagnostics.
+    await expect(page.getByText(/work items? linked/)).toBeVisible()
 
+    await page.getByRole('button', { name: /Open Diagnostics/ }).click()
     const insights = page.locator('section').filter({ hasText: 'Execution Insights' })
     await expect(insights).toBeVisible()
+
+    // Delivery Progress stays distinct from blocking findings (AC-04): the dimension shows blocked count.
+    await expect(insights.getByText('Delivery Progress')).toBeVisible()
 
     // Coverage leads with the validated figure when declarations are unresolved (the fixture's INI-055
     // carries a historical composite reference) — declared stays visible as detail (AC-07, AC-08).
@@ -43,6 +46,7 @@ test.describe('Planning Overview consistency (WI-083)', () => {
   test('is usable at 375px without horizontal overflow (AC-21)', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 800 })
     await page.goto('/planning')
+    await page.getByRole('button', { name: /Open Diagnostics/ }).click()
     await expect(page.locator('section').filter({ hasText: 'Execution Insights' })).toBeVisible()
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)
     expect(overflow).toBeLessThanOrEqual(1)

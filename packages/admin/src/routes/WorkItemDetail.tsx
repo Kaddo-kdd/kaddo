@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { useParams, useRouter } from '@tanstack/react-router'
+import { useParams, useRouter, useSearch } from '@tanstack/react-router'
+import { PlanningBreadcrumb } from '../components/PlanningBreadcrumb'
+import type { FromContext } from '../lib/planning-nav'
 import { api } from '../lib/api'
 import type { WorkItemDetail as WorkItemDetailData } from '../lib/api'
 import { Breadcrumbs } from '../components/Breadcrumbs'
@@ -32,6 +34,7 @@ function Skeleton() {
 
 export function WorkItemDetail() {
   const { workItemId } = useParams({ from: '/work-items/$workItemId' })
+  const ctx = useSearch({ strict: false }) as FromContext
   const queryClient = useQueryClient()
   const router = useRouter()
   // Two reading modes over the same canonical artifact (WI-025): the structured projection, and the
@@ -110,6 +113,12 @@ export function WorkItemDetail() {
 
   return (
     <div style={{ padding: '24px 32px', maxWidth: 900, margin: '0 auto' }}>
+      {ctx.from && (
+        <PlanningBreadcrumb
+          crumbs={[{ label: 'Planning', to: '/planning' }, { label: wi.id, current: true }]}
+          back={{ from: ctx.from, label: ctx.fromLabel }}
+        />
+      )}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
         <Breadcrumbs crumbs={[{ label: 'Work Items', path: '/work-items' }, { label: wi.id }]} />
         <div style={{ display: 'flex', gap: 8 }}>

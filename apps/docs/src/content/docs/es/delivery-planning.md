@@ -214,6 +214,30 @@ se reconcilia **comparando ids y procedencia**, no asumiendo que un número es e
 como Wasma esa reconciliación es un paso separado y de solo lectura en ese repositorio — Kaddo diagnostica
 y explica, no reescribe asociaciones históricas.
 
+### Overview orientado a acciones y navegación contextual
+
+El **Overview** de Planning encabeza con una línea de estado compacta y un bloque **What's next** —hasta tres
+acciones canónicas— antes del diagnóstico completo. Cada acción se deriva **solo** de una señal verificable
+(un finding de atención o la readiness basada en evidencia de una entidad), muestra un verbo, el artefacto de
+destino, una razón canónica y un CTA contextual, y no inventa nada: si ninguna señal es accionable, el bloque
+queda honestamente vacío. La prioridad es determinista: **(1)** problemas estructurales resolubles
+(referencias rotas o ambiguas), **(2)** revisión de evidencia o de milestone cuando las precondiciones se
+cumplen, **(3)** una decisión humana de completion para la que una entidad está lista, **(4)** trabajo activo.
+Una **dependencia pendiente legítima se muestra como contexto de bloqueo, nunca como un incidente a
+“arreglar”** —una cadena de epics bloqueadas por dependencias se lee como secuenciación, no como una lista de
+errores—. Aparece como máximo una acción por artefacto, de modo que un artefacto ruidoso nunca llena la lista.
+
+Los findings completos, las dimensiones separadas, los filtros, la agrupación y el explorador de atención
+siguen a un clic bajo **Diagnostics** —nada se oculta ni se suma en un único puntaje—.
+
+Abrir una Epic, Initiative o Work Item **desde Planning** conserva un camino de retorno en la URL (un
+parámetro de búsqueda `from`), de modo que un breadcrumb muestra la ubicación canónica —con un **milestone
+embebido en su Plan**, no como ruta propia— y un enlace Atrás restaura la pestaña y el filtro de origen
+exactos. Como el contexto vive en la URL, los deep links, la recarga y Atrás/Adelante del navegador funcionan,
+y las rutas globales `/initiatives/:id` y `/work-items/:id` siguen resolviendo sin contexto de Planning. Un
+proyecto sin Plans ni Epics, o un Work Item independiente, muestra su cadena real (más corta) —nunca un padre
+inventado—.
+
 ## Execution Insights
 
 El **Overview** de Planning presenta además una vista **de solo lectura** de ejecución que convierte las

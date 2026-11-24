@@ -212,6 +212,28 @@ assuming either number is correct. For a project such as Wasma this reconciliati
 read-only step in that repository — Kaddo diagnoses and explains, it does not rewrite historical
 associations.
 
+### Action-first Overview and contextual navigation
+
+The Planning **Overview** leads with a compact status line and a **What's next** block — up to three canonical
+actions — before the full diagnostics. Each action is derived **only** from a verifiable signal (an attention
+finding or an entity's evidence-based readiness), shows a verb, the target artifact, a canonical reason and a
+contextual CTA, and nothing is invented: when no signal is actionable the block is honestly empty. Priority is
+deterministic: **(1)** resolvable structural problems (broken/ambiguous references), **(2)** evidence or
+milestone review when preconditions are met, **(3)** a human completion decision an entity is ready for, **(4)**
+active work. A legitimate pending **dependency is shown as blocking context, never as an incident to fix** — a
+chain of dependency-blocked epics reads as sequencing, not as a list of errors. At most one action per artifact
+appears, so a single noisy artifact never fills the list.
+
+The full findings, separated dimensions, filters, grouping and the attention explorer remain one click away
+under **Diagnostics** — nothing is hidden or summed into a single score.
+
+Opening an Epic, Initiative or Work Item **from Planning** keeps a return path in the URL (a `from` search
+param), so a breadcrumb shows the canonical location — with a **milestone embedded in its Plan**, not as its
+own route — and a Back link restores the exact origin tab and filter. Because the context lives in the URL,
+deep links, reload and browser back/forward all work, and the global `/initiatives/:id` and `/work-items/:id`
+routes still resolve with no Planning context. A project with no Plans or Epics, or an independent Work Item,
+shows its real (shorter) chain — never an invented parent.
+
 ## Execution Insights
 
 The Planning **Overview** also presents a **read-only** execution view that turns the signals Core

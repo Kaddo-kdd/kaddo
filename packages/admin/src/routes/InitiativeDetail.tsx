@@ -1,6 +1,8 @@
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query'
 import { useState } from 'react'
-import { useParams, useRouter } from '@tanstack/react-router'
+import { useParams, useRouter, useSearch } from '@tanstack/react-router'
+import { PlanningBreadcrumb, type Crumb } from '../components/PlanningBreadcrumb'
+import type { FromContext } from '../lib/planning-nav'
 import { api } from '../lib/api'
 import type { InitiativeFinding, InitiativeDetail as InitiativeDetailData } from '../lib/api'
 import { InitiativePlanningContext } from '../components/PlanningManage'
@@ -51,6 +53,7 @@ function FindingRow({ f }: { f: InitiativeFinding }) {
 
 export function InitiativeDetail() {
   const { initiativeId } = useParams({ from: '/initiatives/$initiativeId' })
+  const ctx = useSearch({ strict: false }) as FromContext
   const queryClient = useQueryClient()
   const router = useRouter()
   const [assignmentDialog, setAssignmentDialog] = useState(false)
@@ -90,7 +93,18 @@ export function InitiativeDetail() {
 
   return (
     <div style={{ padding: '24px 32px', maxWidth: 900, margin: '0 auto' }}>
-      <button onClick={() => router.navigate({ to: '/initiatives' })} style={{ background: 'none', border: 'none', color: 'var(--foreground-muted)', cursor: 'pointer', fontSize: 13, fontFamily: 'inherit', marginBottom: 12, padding: 0 }}>← Initiatives</button>
+      {ctx.from ? (
+        <PlanningBreadcrumb
+          crumbs={[
+            { label: 'Planning', to: '/planning' },
+            ...(data.epic ? [{ label: data.epic, to: `/planning/epics/${data.epic}` } as Crumb] : []),
+            { label: data.id, current: true },
+          ]}
+          back={{ from: ctx.from, label: ctx.fromLabel }}
+        />
+      ) : (
+        <button onClick={() => router.navigate({ to: '/initiatives' })} style={{ background: 'none', border: 'none', color: 'var(--foreground-muted)', cursor: 'pointer', fontSize: 13, fontFamily: 'inherit', marginBottom: 12, padding: 0 }}>← Initiatives</button>
+      )}
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 6 }}>
         <span className="font-mono" style={{ fontSize: 13, color: 'var(--foreground-muted)' }}>{data.id}</span>

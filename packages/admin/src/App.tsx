@@ -22,6 +22,7 @@ import { DeprecationDetail } from './routes/DeprecationDetail'
 import { Reports } from './routes/Reports'
 import { ConsolidationReport } from './routes/ConsolidationReport'
 import { Planning, PlanDetail, EpicDetail } from './routes/Planning'
+import { validateFromSearch } from './lib/planning-nav'
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 30_000, retry: 1 } },
@@ -37,7 +38,7 @@ const knowledgeArtifactRoute = createRoute({ getParentRoute: () => rootRoute, pa
 
 const workItemsRoute = createRoute({ getParentRoute: () => rootRoute, path: '/work-items', component: WorkItems, errorComponent: RouteErrorFallback })
 const workItemNewRoute = createRoute({ getParentRoute: () => rootRoute, path: '/work-items/new', component: WorkItemNew, errorComponent: RouteErrorFallback })
-const workItemDetailRoute = createRoute({ getParentRoute: () => rootRoute, path: '/work-items/$workItemId', component: WorkItemDetail, errorComponent: RouteErrorFallback })
+const workItemDetailRoute = createRoute({ getParentRoute: () => rootRoute, path: '/work-items/$workItemId', component: WorkItemDetail, errorComponent: RouteErrorFallback, validateSearch: validateFromSearch })
 const workItemEditRoute = createRoute({ getParentRoute: () => rootRoute, path: '/work-items/$workItemId/edit', component: WorkItemEditor, errorComponent: RouteErrorFallback })
 const systemRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -54,7 +55,7 @@ const integrationsRoute = createRoute({ getParentRoute: () => rootRoute, path: '
 const externalWorkItemsRoute = createRoute({ getParentRoute: () => rootRoute, path: '/external-items', component: ExternalWorkItems, errorComponent: RouteErrorFallback })
 
 const initiativesRoute = createRoute({ getParentRoute: () => rootRoute, path: '/initiatives', component: Initiatives, errorComponent: RouteErrorFallback })
-const initiativeDetailRoute = createRoute({ getParentRoute: () => rootRoute, path: '/initiatives/$initiativeId', component: InitiativeDetail, errorComponent: RouteErrorFallback })
+const initiativeDetailRoute = createRoute({ getParentRoute: () => rootRoute, path: '/initiatives/$initiativeId', component: InitiativeDetail, errorComponent: RouteErrorFallback, validateSearch: validateFromSearch })
 const resourcesRoute = createRoute({ getParentRoute: () => rootRoute, path: '/resources', component: Resources, errorComponent: RouteErrorFallback })
 const resourceDetailRoute = createRoute({ getParentRoute: () => rootRoute, path: '/resources/$resourceId', component: ResourceDetail, errorComponent: RouteErrorFallback })
 const deprecationsRoute = createRoute({ getParentRoute: () => rootRoute, path: '/deprecations', component: Deprecations, errorComponent: RouteErrorFallback })
@@ -65,8 +66,8 @@ const driftReportRoute = createRoute({ getParentRoute: () => rootRoute, path: '/
 const savingsReportRoute = createRoute({ getParentRoute: () => rootRoute, path: '/reports/savings', component: () => <Reports kind="savings" />, errorComponent: RouteErrorFallback })
 const consolidationReportRoute = createRoute({ getParentRoute: () => rootRoute, path: '/reports/consolidation', component: ConsolidationReport, errorComponent: RouteErrorFallback })
 const planningRoute = createRoute({ getParentRoute: () => rootRoute, path: '/planning', component: Planning, errorComponent: RouteErrorFallback })
-const planDetailRoute = createRoute({ getParentRoute: () => rootRoute, path: '/planning/plans/$id', component: () => <PlanDetail id={planDetailRoute.useParams().id} />, errorComponent: RouteErrorFallback })
-const epicDetailRoute = createRoute({ getParentRoute: () => rootRoute, path: '/planning/epics/$id', component: () => <EpicDetail id={epicDetailRoute.useParams().id} />, errorComponent: RouteErrorFallback })
+const planDetailRoute = createRoute({ getParentRoute: () => rootRoute, path: '/planning/plans/$id', component: () => <PlanDetail id={planDetailRoute.useParams().id} />, errorComponent: RouteErrorFallback, validateSearch: validateFromSearch })
+const epicDetailRoute = createRoute({ getParentRoute: () => rootRoute, path: '/planning/epics/$id', component: () => <EpicDetail id={epicDetailRoute.useParams().id} />, errorComponent: RouteErrorFallback, validateSearch: validateFromSearch })
 
 const routeTree = rootRoute.addChildren([indexRoute, overviewRoute, knowledgeRoute, knowledgeLayerRoute, knowledgeArtifactRoute, workItemsRoute, workItemNewRoute, workItemDetailRoute, workItemEditRoute, systemRoute, integrationsRoute, externalWorkItemsRoute, initiativesRoute, initiativeDetailRoute, resourcesRoute, resourceDetailRoute, deprecationsRoute, deprecationDetailRoute, reportsRoute, impactReportRoute, driftReportRoute, savingsReportRoute, consolidationReportRoute, planningRoute, planDetailRoute, epicDetailRoute])
 const router = createRouter({ routeTree })

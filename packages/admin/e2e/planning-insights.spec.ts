@@ -9,6 +9,8 @@ import { test, expect } from '@playwright/test'
 test.describe('Planning Execution Insights (WI-081)', () => {
   test('Overview shows separated dimensions, attention queue with filters, milestones and navigation', async ({ page }) => {
     await page.goto('/planning')
+    // WI-088: Execution Insights is the on-demand Diagnostics view — nothing is removed, it opens here.
+    await page.getByRole('button', { name: /Open Diagnostics/ }).click()
     const insights = page.locator('section').filter({ hasText: 'Execution Insights' })
     await expect(insights).toBeVisible()
 
@@ -55,6 +57,7 @@ test.describe('Planning Execution Insights (WI-081)', () => {
   test('is usable at 375px without horizontal overflow (AC-21)', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 800 })
     await page.goto('/planning')
+    await page.getByRole('button', { name: /Open Diagnostics/ }).click()
     const insights = page.locator('section').filter({ hasText: 'Execution Insights' })
     await expect(insights).toBeVisible()
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)
