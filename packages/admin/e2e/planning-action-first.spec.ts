@@ -11,11 +11,20 @@ test.describe('Planning action-first experience (WI-088)', () => {
     await expect(page.getByText('Project planning status')).toBeVisible()
     await expect(page.getByRole('heading', { name: /What's next/ })).toBeVisible()
     // An action shows a verb, a target artifact and a functional CTA.
-    await expect(page.getByText('Inspect reference').first()).toBeVisible()
+    await expect(page.getByText('Review evidence').first()).toBeVisible()
     await expect(page.getByRole('button', { name: /Inspect →|Review →|Open →/ }).first()).toBeVisible()
     // Diagnostics are not rendered up front — they open on demand.
     await expect(page.getByRole('heading', { name: 'Execution Insights' })).toHaveCount(0)
     await expect(page.getByRole('button', { name: /Open Diagnostics/ })).toBeVisible()
+  })
+
+  test('an ambiguous historical reference is a data-quality note, not a critical block (feedback #1/#3)', async ({ page }) => {
+    await page.goto('/planning')
+    // The composite materialized_as reference (a warning) is surfaced as a quiet data-quality note that
+    // points to Diagnostics — it is NOT shown as a red Tier-1 blocking action.
+    await expect(page.getByText(/provenance \/ data-quality note/)).toBeVisible()
+    const whatsNext = page.locator('section').filter({ hasText: "What's next" })
+    await expect(whatsNext.getByText('1 · blocking')).toHaveCount(0)
   })
 
   test('pending dependencies are blocking context, not actions to fix (AC-04/05)', async ({ page }) => {
@@ -71,6 +80,20 @@ test.describe('Planning action-first experience (WI-088)', () => {
     await expect(back).toBeVisible()
     await back.click()
     await expect(page).toHaveURL(/\/planning\/epics\/EP-001/)
+  })
+
+  test('the full chain carries context: Epic → Initiative → back restores the Epic tab (AC-14/15)', async ({ page }) => {
+    await page.goto('/planning/epics/EP-001?from=%2Fplanning&fromLabel=Planning#relations')
+    // Open an associated Initiative from the Epic's Relations tab — it carries the Epic as origin.
+    await page.getByText('INI-050').first().click()
+    await expect(page).toHaveURL(/\/initiatives\/INI-050/)
+    await expect(page.getByRole('navigation', { name: 'Planning location' }).getByRole('button', { name: 'EP-001', exact: true })).toBeVisible()
+    const back = page.getByRole('button', { name: /Back to EP-001/ })
+    await expect(back).toBeVisible()
+    // Back returns to the Epic on its Relations tab, which still keeps its own return to Planning.
+    await back.click()
+    await expect(page).toHaveURL(/\/planning\/epics\/EP-001.*#relations/)
+    await expect(page.getByRole('button', { name: /Back to Planning/ })).toBeVisible()
   })
 
   test('navigating Planning never writes to the project (AC-23)', async ({ page }) => {

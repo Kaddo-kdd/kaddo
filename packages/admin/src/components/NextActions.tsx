@@ -9,11 +9,14 @@ import { prioritizeActions, DEFAULT_ACTION_CAP, type NextAction, type ActionTier
 // /planning/insights projection the Diagnostics view uses. Legit pending dependencies are shown as blocking
 // CONTEXT, not incidents. When a signal has no navigable destination the CTA inspects, never promising a fix.
 
+// Colour follows canonical severity, so the card never contradicts the indicators: only a real block (tier
+// 1) is red; "needs review / decision" is amber; active work is accent; a data-quality note is muted — never
+// red, never shown as a critical block (WI-088 feedback #1/#3).
 const TIER_META: Record<ActionTier, { label: string; color: string; bg: string; border: string }> = {
-  1: { label: 'structural', color: 'var(--danger)', bg: 'var(--danger-bg, rgba(197,48,48,0.08))', border: 'var(--danger)' },
-  2: { label: 'evidence', color: 'var(--warning, #b7791f)', bg: 'var(--warning-bg, rgba(183,121,31,0.08))', border: 'var(--border)' },
-  3: { label: 'decision', color: 'var(--primary)', bg: 'var(--surface)', border: 'var(--primary)' },
-  4: { label: 'active', color: 'var(--foreground-muted)', bg: 'var(--surface)', border: 'var(--border)' },
+  1: { label: 'blocking', color: 'var(--danger)', bg: 'var(--danger-bg, rgba(197,48,48,0.08))', border: 'var(--danger)' },
+  2: { label: 'needs review', color: 'var(--warning, #b7791f)', bg: 'var(--surface)', border: 'var(--warning, #b7791f)' },
+  3: { label: 'active', color: 'var(--primary)', bg: 'var(--surface)', border: 'var(--border)' },
+  4: { label: 'data quality', color: 'var(--foreground-muted)', bg: 'var(--surface)', border: 'var(--border)' },
 }
 const KIND_LABEL: Record<InsightArtifactKind, string> = { plan: 'Plan', epic: 'Epic', initiative: 'Initiative', 'work-item': 'Work Item' }
 
@@ -28,8 +31,11 @@ export function NextActions({ onOpen, onOpenDiagnostics }: {
   const ins = q.data
   if (!ins) return null
 
-  const { actions, blocking, totalFindings } = prioritizeActions(ins)
+  const { actions, blocking, dataQuality, totalFindings } = prioritizeActions(ins)
   const shown = actions.slice(0, DEFAULT_ACTION_CAP)
+  // Data-quality notes not already shown as a card — surfaced quietly, never as a critical block.
+  const shownIds = new Set(shown.map((a) => a.artifactId))
+  const dqRest = dataQuality.filter((a) => !shownIds.has(a.artifactId)).length
 
   return (
     <section style={card}>
@@ -49,8 +55,18 @@ export function NextActions({ onOpen, onOpenDiagnostics }: {
         </div>
       )}
 
+      {dqRest > 0 && (
+        <div style={note}>
+          <span aria-hidden="true">◦</span>
+          <span>
+            {dqRest} provenance / data-quality note{dqRest === 1 ? '' : 's'} — historical references and coverage, not operational blocks.{' '}
+            <button style={linkBtnInline} onClick={onOpenDiagnostics}>Review in Diagnostics</button>
+          </span>
+        </div>
+      )}
+
       {blocking.length > 0 && (
-        <div style={blockingNote}>
+        <div style={note}>
           <span aria-hidden="true">🔗</span>
           <span>
             {blocking.length} item{blocking.length === 1 ? '' : 's'} blocked by pending dependencies — normal sequencing, not errors.{' '}
@@ -88,6 +104,6 @@ const mono: CSSProperties = { fontFamily: 'var(--font-mono, monospace)', fontSiz
 const row: CSSProperties = { display: 'flex', gap: 10, padding: '10px 12px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', alignItems: 'flex-start' }
 const tierTag: CSSProperties = { fontSize: 11, fontWeight: 600, background: 'var(--surface)', borderRadius: 999, padding: '1px 8px', height: 'fit-content', whiteSpace: 'nowrap' }
 const cta: CSSProperties = { padding: '5px 10px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', background: 'var(--surface)', color: 'var(--primary)', fontSize: 12, fontFamily: 'inherit', cursor: 'pointer', alignSelf: 'center', whiteSpace: 'nowrap', flex: '0 0 auto' }
-const blockingNote: CSSProperties = { display: 'flex', gap: 8, alignItems: 'flex-start', marginTop: 12, padding: '8px 12px', borderLeft: '3px solid var(--border-strong, var(--border))', background: 'var(--background)', fontSize: 12, color: 'var(--foreground-muted)' }
+const note: CSSProperties = { display: 'flex', gap: 8, alignItems: 'flex-start', marginTop: 10, padding: '8px 12px', borderLeft: '3px solid var(--border-strong, var(--border))', background: 'var(--background)', fontSize: 12, color: 'var(--foreground-muted)' }
 const linkBtn: CSSProperties = { marginTop: 8, padding: '6px 12px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', background: 'var(--background)', color: 'var(--foreground)', fontSize: 13, fontFamily: 'inherit', cursor: 'pointer' }
 const linkBtnInline: CSSProperties = { background: 'none', border: 'none', padding: 0, color: 'var(--primary)', cursor: 'pointer', fontFamily: 'inherit', fontSize: 'inherit' }

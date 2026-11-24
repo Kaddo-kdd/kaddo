@@ -2,8 +2,17 @@ import type { PlanningInsights, AttentionItem, InsightArtifactKind } from './api
 
 // WI-088 — derive the action-first "What's next" feed from the SAME canonical projection the Diagnostics
 // view uses (/planning/insights). Pure and deterministic: no telemetry, heuristics, ranking model or
-// invented work. Every action traces to a canonical signal (an attention finding or a verifiable entity
-// readiness). Legitimate pending dependencies are NOT actions — they are blocking context. Core stays the
+// invented work. Every action traces to a canonical signal, and its priority follows the signal's REAL
+// impact on the ability to make progress — not just finding order:
+//
+//   1 blocking    a real, fixable block (a broken/mismatched reference Core marks `blocking`)
+//   2 decision    evidence to review or a human completion decision whose preconditions are met
+//   3 active      committed work still in progress that needs attention
+//   4 data-quality a provenance/quality note that is NOT an operational block (an ambiguous historical
+//                  `materialized_as` reference, stale evidence, a coverage gap, a declared risk)
+//
+// A legitimate pending DEPENDENCY is context, not an action. A `warning`-level provenance note never
+// outranks a real block and is never shown as a critical error. No project-specific logic. Core stays the
 // source of truth; this only re-presents and prioritizes.
 
 export type ActionTier = 1 | 2 | 3 | 4
@@ -11,7 +20,7 @@ export type ActionSection = 'evidence' | 'relations' | 'milestones' | 'overview'
 
 export type NextAction = {
   tier: ActionTier
-  /** Imperative label, e.g. "Review evidence". */
+  /** Imperative label — what the person can do, e.g. "Review evidence". */
   verb: string
   /** Short CTA on the button, e.g. "Review". */
   cta: string
@@ -31,6 +40,8 @@ export type NextActionsResult = {
   actions: NextAction[]
   /** Pending-dependency findings — shown as blocking CONTEXT, never as incidents to fix. */
   blocking: AttentionItem[]
+  /** Tier-4 provenance / data-quality notes — surfaced quietly, never as critical blocks. */
+  dataQuality: NextAction[]
   /** Total canonical findings, so "N of M" stays honest. */
   totalFindings: number
 }
@@ -39,23 +50,33 @@ export const DEFAULT_ACTION_CAP = 3
 
 const KIND_RANK: Record<InsightArtifactKind, number> = { plan: 0, epic: 1, initiative: 2, 'work-item': 3 }
 
-// Attention signal → action tier. `dependency` is intentionally absent: it is context, not an action.
-const ATTENTION_TIER: Partial<Record<AttentionItem['type'], ActionTier>> = {
-  provenance: 1,
-  'unverified-outcome': 2,
-  'incomplete-delivery': 4,
-  'pending-candidates': 4,
-  'declared-risk': 4,
-}
+type Mapped = { tier: ActionTier; verb: string; cta: string; section?: ActionSection }
 
-function verbFor(type: AttentionItem['type']): { verb: string; cta: string; section?: ActionSection } {
-  switch (type) {
-    case 'provenance': return { verb: 'Inspect reference', cta: 'Inspect', section: 'relations' }
-    case 'unverified-outcome': return { verb: 'Review evidence', cta: 'Review', section: 'evidence' }
-    case 'incomplete-delivery': return { verb: 'Review progress', cta: 'Review' }
-    case 'pending-candidates': return { verb: 'Review coverage', cta: 'Review', section: 'relations' }
-    case 'declared-risk': return { verb: 'Review declared risk', cta: 'Review' }
-    default: return { verb: 'Review', cta: 'Review' }
+// Map an attention finding to a tier by its MEANING and canonical severity. `dependency` returns null — it
+// is blocking context, not an action.
+function mapAttention(a: AttentionItem): Mapped | null {
+  switch (a.type) {
+    case 'provenance':
+      // A broken/mismatched reference Core marks `blocking` is a real, fixable structural block. An
+      // `ambiguous` historical reference is only a warning — a data-quality note, never a critical error.
+      return a.severity === 'blocking'
+        ? { tier: 1, verb: 'Inspect broken reference', cta: 'Inspect', section: 'relations' }
+        : { tier: 4, verb: 'Review provenance note', cta: 'Review', section: 'relations' }
+    case 'unverified-outcome':
+      // Stale evidence is a data-quality note; a declared criterion without evidence is a review to do.
+      return a.category === 'stale-evidence'
+        ? { tier: 4, verb: 'Review stale evidence', cta: 'Review', section: 'evidence' }
+        : { tier: 2, verb: 'Review evidence', cta: 'Review', section: 'evidence' }
+    case 'incomplete-delivery':
+      return { tier: 3, verb: 'Review progress', cta: 'Review' }
+    case 'pending-candidates':
+      return { tier: 4, verb: 'Review coverage gap', cta: 'Review', section: 'relations' }
+    case 'declared-risk':
+      return { tier: 4, verb: 'Review declared risk', cta: 'Review' }
+    case 'dependency':
+      return null
+    default:
+      return null
   }
 }
 
@@ -63,8 +84,8 @@ const TERMINAL = new Set(['completed', 'cancelled'])
 
 /**
  * Deterministic prioritization (WI-088 AC-04). One action per artifact (its highest-priority signal), so a
- * single noisy artifact never fills the list and nine dependency-blocked epics never read as nine incidents.
- * Order: tier asc → artifact-kind rank → id → verb. Fully stable, independent of input order.
+ * single noisy artifact never fills the list and a chain of dependency-blocked epics never reads as a list
+ * of incidents. Order: tier asc → artifact-kind rank → id → verb. Stable, independent of input order.
  */
 export function prioritizeActions(ins: PlanningInsights): NextActionsResult {
   const byArtifact = new Map<string, NextAction>()
@@ -73,12 +94,12 @@ export function prioritizeActions(ins: PlanningInsights): NextActionsResult {
     if (!prev || a.tier < prev.tier) byArtifact.set(a.artifactId, a)
   }
 
-  // Tier 3 — a verifiable human decision: preconditions met (READY_*), not yet closed. Never inferred.
+  // Tier 2 — a verifiable human decision: preconditions met (READY_*), not yet closed. Never inferred.
   for (const e of ins.entities) {
     const ready = e.readiness === 'READY_TO_COMPLETE' || e.readiness === 'READY_WITH_EXCEPTIONS'
     if (ready && !TERMINAL.has(e.status.toLowerCase())) {
       consider({
-        tier: 3, verb: 'Ready for your completion decision', cta: 'Open',
+        tier: 2, verb: 'Ready for your completion decision', cta: 'Open',
         artifactId: e.id, artifactKind: e.kind, artifactTitle: e.title,
         reason: `Preconditions met (${e.readiness.replace(/_/g, ' ').toLowerCase()}); human approval is still required to close.`,
         section: 'evidence', hasDestination: Boolean(e.link),
@@ -86,14 +107,13 @@ export function prioritizeActions(ins: PlanningInsights): NextActionsResult {
     }
   }
 
-  // Tiers 1/2/4 — from attention findings (dependency excluded).
+  // Tiers 1/2/3/4 — from attention findings (dependency excluded, handled as context below).
   for (const a of ins.attention) {
-    const tier = ATTENTION_TIER[a.type]
-    if (!tier) continue
-    const { verb, cta, section } = verbFor(a.type)
+    const m = mapAttention(a)
+    if (!m) continue
     consider({
-      tier, verb, cta, artifactId: a.artifactId, artifactKind: a.artifactKind, artifactTitle: a.title,
-      reason: a.reason, section, hasDestination: Boolean(a.link),
+      tier: m.tier, verb: m.verb, cta: m.cta, artifactId: a.artifactId, artifactKind: a.artifactKind,
+      artifactTitle: a.title, reason: a.reason, section: m.section, hasDestination: Boolean(a.link),
     })
   }
 
@@ -115,7 +135,10 @@ export function prioritizeActions(ins: PlanningInsights): NextActionsResult {
     x.verb.localeCompare(y.verb),
   )
 
-  const blocking = ins.attention.filter((a) => a.type === 'dependency')
-
-  return { actions, blocking, totalFindings: ins.attention.length }
+  return {
+    actions,
+    blocking: ins.attention.filter((a) => a.type === 'dependency'),
+    dataQuality: actions.filter((a) => a.tier === 4),
+    totalFindings: ins.attention.length,
+  }
 }

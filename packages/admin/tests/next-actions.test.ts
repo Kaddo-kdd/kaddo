@@ -24,19 +24,36 @@ const entity = (o: Partial<EntityInsight> & Pick<EntityInsight, 'id' | 'kind' | 
 })
 
 describe('prioritizeActions (WI-088 AC-04)', () => {
-  it('orders structural → evidence → decision → active, deterministically', () => {
+  it('orders by real impact: blocking → review/decision → active → data-quality, deterministically', () => {
     const data = ins({
       attention: [
         att({ type: 'incomplete-delivery', severity: 'info', artifactId: 'EP-ACTIVE', artifactKind: 'epic' }),
         att({ type: 'unverified-outcome', severity: 'warning', artifactId: 'EP-EVID', artifactKind: 'epic' }),
-        att({ type: 'provenance', severity: 'blocking', artifactId: 'INI-STRUCT', artifactKind: 'initiative' }),
+        att({ type: 'provenance', severity: 'blocking', artifactId: 'INI-BROKEN', artifactKind: 'initiative' }),
       ],
       entities: [entity({ id: 'EP-READY', kind: 'epic', status: 'in-progress', readiness: 'READY_TO_COMPLETE' })],
     })
     const { actions } = prioritizeActions(data)
+    // A blocking broken reference leads; evidence and the ready-for-decision entity are both tier 2
+    // (ordered by kind then id); active work is tier 3.
     expect(actions.map((a) => [a.tier, a.artifactId])).toEqual([
-      [1, 'INI-STRUCT'], [2, 'EP-EVID'], [3, 'EP-READY'], [4, 'EP-ACTIVE'],
+      [1, 'INI-BROKEN'], [2, 'EP-EVID'], [2, 'EP-READY'], [3, 'EP-ACTIVE'],
     ])
+  })
+
+  it('a warning-level (ambiguous) provenance note is data-quality, never a critical block (feedback #1)', () => {
+    const data = ins({
+      attention: [
+        att({ type: 'provenance', severity: 'warning', artifactId: 'INI-055', artifactKind: 'initiative', reason: 'AN-005, AN-006, AN-007 is not a single canonical Work Item id' }),
+        att({ type: 'unverified-outcome', severity: 'warning', artifactId: 'EP-EVID', artifactKind: 'epic' }),
+      ],
+    })
+    const { actions, dataQuality } = prioritizeActions(data)
+    // The real review (evidence) outranks the historical ambiguous reference, which is tier 4 data-quality.
+    expect(actions[0].artifactId).toBe('EP-EVID')
+    const ini = actions.find((a) => a.artifactId === 'INI-055')!
+    expect(ini.tier).toBe(4)
+    expect(dataQuality.map((a) => a.artifactId)).toEqual(['INI-055'])
   })
 
   it('treats pending dependencies as blocking context, never as actions', () => {

@@ -34,3 +34,10 @@ export function navTargetFor(kind: InsightArtifactKind, id: string): NavTarget {
 export function originFrom(path: string, section?: string): string {
   return section ? `${path}#${section}` : path
 }
+
+/** The current location (path + search + active-section hash) to return to — used when navigating deeper
+ * from a detail page (Epic → Initiative → Work Item). Keeping the search means each level's OWN return
+ * context survives, so the whole chain unwinds one step at a time. */
+export function currentOrigin(): string {
+  try { return window.location.pathname + window.location.search + window.location.hash } catch { return '' }
+}

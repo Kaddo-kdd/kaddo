@@ -18,7 +18,7 @@ import { MilestonesTracking } from '../components/MilestonesTracking'
 import { PlanningInsights } from '../components/PlanningInsights'
 import { NextActions } from '../components/NextActions'
 import { PlanningBreadcrumb, type Crumb } from '../components/PlanningBreadcrumb'
-import { originFrom, type FromContext } from '../lib/planning-nav'
+import { originFrom, currentOrigin, type FromContext } from '../lib/planning-nav'
 import type { InsightArtifactKind } from '../lib/api'
 import { Initiatives } from './Initiatives'
 import { CollaborationOverview } from '../components/CollaborationOverview'
@@ -369,7 +369,7 @@ export function EpicDetail({ id }: { id: string }) {
             ) : e.initiatives.map((i) => (
               <div key={i.id} style={{ ...row, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10 }}>
                 <div>
-                  <a style={link} onClick={() => router.navigate({ to: '/initiatives/$initiativeId', params: { initiativeId: i.id } })}><span style={mono}>{i.id}</span> {i.title}</a> <StatusBadge variant="muted">{i.status}</StatusBadge>
+                  <a style={link} onClick={() => router.navigate({ to: '/initiatives/$initiativeId', params: { initiativeId: i.id }, search: { from: currentOrigin(), fromLabel: e.id } })}><span style={mono}>{i.id}</span> {i.title}</a> <StatusBadge variant="muted">{i.status}</StatusBadge>
                   <div style={mutedSmall}>{i.owners.length ? <>owner(s): {i.owners.join(', ')}</> : 'unassigned'}{i.contributors.length ? ` · contributors: ${i.contributors.join(', ')}` : ''}</div>
                 </div>
                 <button onClick={() => setRemoving(i.id)} style={{ ...actionGhost, color: 'var(--danger)', flex: '0 0 auto' }}>Remove</button>
@@ -378,7 +378,7 @@ export function EpicDetail({ id }: { id: string }) {
             <h4 style={{ ...h4, marginTop: 14 }}>Work Items</h4>
             {e.workItems.length === 0 ? <p style={muted}>No work items yet.</p> : e.workItems.map((w) => (
               <div key={w.id} style={row}>
-                <a style={link} onClick={() => router.navigate({ to: '/work-items/$workItemId', params: { workItemId: w.id } })}><span style={mono}>{w.id}</span> {w.title}</a> <StatusBadge variant="muted">{w.status}</StatusBadge> <ArrowRight size={13} color="var(--foreground-muted)" />
+                <a style={link} onClick={() => router.navigate({ to: '/work-items/$workItemId', params: { workItemId: w.id }, search: { from: currentOrigin(), fromLabel: e.id } })}><span style={mono}>{w.id}</span> {w.title}</a> <StatusBadge variant="muted">{w.status}</StatusBadge> <ArrowRight size={13} color="var(--foreground-muted)" />
               </div>
             ))}
           </>

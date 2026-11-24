@@ -2,7 +2,7 @@ import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query'
 import { useState } from 'react'
 import { useParams, useRouter, useSearch } from '@tanstack/react-router'
 import { PlanningBreadcrumb, type Crumb } from '../components/PlanningBreadcrumb'
-import type { FromContext } from '../lib/planning-nav'
+import { currentOrigin, type FromContext } from '../lib/planning-nav'
 import { api } from '../lib/api'
 import type { InitiativeFinding, InitiativeDetail as InitiativeDetailData } from '../lib/api'
 import { InitiativePlanningContext } from '../components/PlanningManage'
@@ -181,7 +181,7 @@ export function InitiativeDetail() {
         const Relations = (
           <>
             <Section title={`Candidates (${data.candidates.length})`}>
-              <InitiativeCandidates id={data.id} candidates={data.candidates} onOpenWorkItem={(wiId) => router.navigate({ to: '/work-items/$workItemId', params: { workItemId: wiId } })} />
+              <InitiativeCandidates id={data.id} candidates={data.candidates} onOpenWorkItem={(wiId) => router.navigate({ to: '/work-items/$workItemId', params: { workItemId: wiId }, search: { from: currentOrigin(), fromLabel: data.id } })} />
             </Section>
             <Section title={`Associated Work Items (${data.workItems.length})`}>
               {data.workItems.length === 0
@@ -190,7 +190,7 @@ export function InitiativeDetail() {
                   <ul style={{ margin: 0, paddingLeft: 18, fontSize: 14 }}>
                     {data.workItems.map((w) => (
                       <li key={w.id} style={{ marginBottom: 4 }}>
-                        <button onClick={() => router.navigate({ to: '/work-items/$workItemId', params: { workItemId: w.id } })} style={{ background: 'none', border: 'none', padding: 0, color: 'var(--primary)', cursor: 'pointer', fontFamily: 'inherit', fontSize: 14 }}>{w.id}</button>
+                        <button onClick={() => router.navigate({ to: '/work-items/$workItemId', params: { workItemId: w.id }, search: { from: currentOrigin(), fromLabel: data.id } })} style={{ background: 'none', border: 'none', padding: 0, color: 'var(--primary)', cursor: 'pointer', fontFamily: 'inherit', fontSize: 14 }}>{w.id}</button>
                         {' '}{w.title} <span style={{ color: 'var(--foreground-muted)' }}>[{w.status}]</span>
                       </li>
                     ))}
