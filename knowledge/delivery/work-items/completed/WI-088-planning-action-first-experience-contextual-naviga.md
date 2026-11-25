@@ -2,7 +2,7 @@
 type: feature
 id: WI-088
 title: Planning Action-First Experience & Contextual Navigation
-status: in-progress
+status: completed
 work_type: feature
 knowledge_level: K3
 priority: high
@@ -69,6 +69,192 @@ original_snapshot:
   type: feature
   status: draft
 ready_at: '2026-11-24'
+implementation_status: completed
+validation_status: passed
+released_in: v3.144.1
+implementation_evidence:
+  repositories:
+    admin:
+      role: module
+      status: completed
+      changed_paths:
+        - packages/admin/src/lib/next-actions.ts
+        - packages/admin/src/lib/planning-nav.ts
+        - packages/admin/src/components/NextActions.tsx
+        - packages/admin/src/components/PlanningBreadcrumb.tsx
+        - packages/admin/src/routes/Planning.tsx
+        - packages/admin/src/routes/InitiativeDetail.tsx
+        - packages/admin/src/routes/WorkItemDetail.tsx
+        - packages/admin/src/App.tsx
+        - packages/admin/tests/next-actions.test.ts
+        - packages/admin/e2e/planning-action-first.spec.ts
+      validations:
+        - command: CI=1 npx playwright test
+          status: passed
+        - command: pnpm test
+          status: passed
+        - command: pnpm --filter @kaddo/admin build
+          status: passed
+    docs:
+      role: module
+      status: completed
+      changed_paths:
+        - apps/docs/src/content/docs/delivery-planning.md
+        - apps/docs/src/content/docs/es/delivery-planning.md
+      validations:
+        - command: pnpm -r build
+          status: passed
+  ac_verifications:
+    - criterion: '**AC-01.** Planning Overview presenta un resumen breve de estado y un bloque visible de próximas acciones antes de los diagnósticos completos.'
+      status: passed
+      evidence: 'El Overview encabeza con un resumen de estado compacto y el bloque ''What''s next'' antes de los diagnósticos; verificado por E2E y revisión visual.'
+      reference: 'packages/admin/src/components/NextActions.tsx'
+      method: manual
+    - criterion: '**AC-02.** Por defecto muestra entre **0 y 3 acciones** respaldadas por fuentes canónicas; sin acciones demostrables se usa un empty state honesto.'
+      status: passed
+      evidence: 'prioritizeActions deriva 0–3 acciones de fuentes canónicas (attention + readiness); sin acciones demostrables se muestra un empty state honesto (test unitario).'
+      reference: 'packages/admin/src/lib/next-actions.ts'
+      method: manual
+    - criterion: '**AC-03.** Cada acción muestra verbo, artefacto de destino, razón verificable y CTA funcional; no hay controles decorativos.'
+      status: passed
+      evidence: 'Cada acción muestra verbo, artefacto de destino, razón verificable y CTA funcional; no hay controles decorativos.'
+      reference: 'packages/admin/src/components/NextActions.tsx'
+      method: manual
+    - criterion: '**AC-04.** La priorización es determinista, documentada y probada con fixtures: un problema estructural resoluble se distingue de una dependencia pendiente normal.'
+      status: passed
+      evidence: 'Prioridad determinista y probada con fixtures: un bloqueo estructural (provenance severity blocking) se distingue de una dependencia pendiente normal (contexto).'
+      reference: 'packages/admin/tests/next-actions.test.ts'
+      method: manual
+    - criterion: '**AC-05.** El proyecto Wasma identifica EP-001 como punto de revisión relevante **si sus precondiciones y criterios actuales lo sustentan**; no inventa aprobación humana ya concedida ni presenta un bloqueo normal como error.'
+      status: passed
+      evidence: 'Una decisión humana solo se emite desde una readiness verificable (READY_* no terminal); EP-001 aparece como revisión solo si sus señales lo sustentan, nunca inventando aprobación ni presentando un bloqueo normal como error.'
+      reference: 'packages/admin/src/lib/next-actions.ts'
+      method: manual
+    - criterion: '**AC-06.** No se duplican en Overview las listas exhaustivas de Plans, Epics e Initiatives que ya tienen vistas propias.'
+      status: passed
+      evidence: 'El Overview usa un resumen compacto de estructura con enlaces a las vistas; no duplica las listas completas de Plans/Epics/Initiatives (E2E).'
+      reference: 'packages/admin/src/routes/Planning.tsx'
+      method: manual
+    - criterion: '**AC-07.** Los accesos de creación no se repiten de forma competitiva en la misma pantalla; una acción principal clara queda disponible.'
+      status: passed
+      evidence: 'Una sola acción primaria de creación en el Overview; las creaciones por tipo viven en su pestaña (E2E).'
+      reference: 'packages/admin/src/routes/Planning.tsx'
+      method: manual
+    - criterion: '**AC-08.** La totalidad de findings, datos de progreso, filtros y explicaciones siguen accesibles desde Diagnostics/Insights bajo demanda.'
+      status: passed
+      evidence: 'La totalidad de findings, progreso, filtros y explorador siguen accesibles bajo Diagnostics on demand (E2E).'
+      reference: 'packages/admin/src/components/PlanningInsights.tsx'
+      method: manual
+    - criterion: '**AC-09.** Las métricas y señales mostradas coinciden con las respuestas canónicas; no se infieren completions ni se silencian findings críticos.'
+      status: passed
+      evidence: 'Las métricas provienen de la proyección canónica /planning/insights; no se infieren completions ni se silencian findings.'
+      reference: 'packages/admin/src/components/PlanningInsights.tsx'
+      method: manual
+    - criterion: '**AC-10.** Se preservan las separaciones de delivery, validated coverage, outcome verification, readiness, pending dependencies y blocking issues.'
+      status: passed
+      evidence: 'Se preservan delivery vs validated coverage vs outcome verification vs readiness vs pending dependencies vs blocking issues (dimensiones e indicadores separados).'
+      reference: 'packages/admin/src/components/PlanningInsights.tsx'
+      method: manual
+    - criterion: '**AC-11.** Los findings repetitivos pueden explorarse por artefacto y desde ellos abrir la revisión contextual relevante sin perder la severidad original.'
+      status: passed
+      evidence: 'El explorador agrupa findings por artefacto y abre la revisión contextual conservando la severidad canónica original.'
+      reference: 'packages/admin/src/components/PlanningInsights.tsx'
+      method: manual
+    - criterion: '**AC-12.** Cuando una acción carece de corrección automática disponible, el CTA dirige a inspección y no promete reparar o completar.'
+      status: passed
+      evidence: 'Cuando una señal no tiene destino navegable, el CTA indica inspección (''no linked destination'') y no promete reparar ni completar.'
+      reference: 'packages/admin/src/components/NextActions.tsx'
+      method: manual
+    - criterion: '**AC-13.** En Plan, Epic, Initiative y Work Item abiertos desde Planning se ve claramente la ubicación y una ruta de retorno contextual.'
+      status: passed
+      evidence: 'En Plan/Epic/Initiative/Work Item abiertos desde Planning, el breadcrumb muestra la ubicación y un enlace de retorno contextual.'
+      reference: 'packages/admin/src/components/PlanningBreadcrumb.tsx'
+      method: manual
+    - criterion: '**AC-14.** Abrir Initiative/Work Item desde una Epic no hace perder el Plan/Epic padre al navegar de regreso.'
+      status: passed
+      evidence: 'Abrir Initiative/Work Item desde una Epic conserva el Plan/Epic padre; el ''from'' anidado permite regresar al origen (E2E Epic→Initiative→back).'
+      reference: 'packages/admin/e2e/planning-action-first.spec.ts'
+      method: manual
+    - criterion: '**AC-15.** Se recuperan pestaña y contexto relevantes al regresar desde un detalle; el navegador Atrás/Adelante funciona en recorridos probados.'
+      status: passed
+      evidence: 'El ''from'' incluye el hash de sección, de modo que al regresar se restaura la pestaña/contexto; Atrás/Adelante del navegador funcionan (E2E).'
+      reference: 'packages/admin/src/lib/planning-nav.ts'
+      method: manual
+    - criterion: '**AC-16.** Deep links y recarga de una vista de Plan/Epic/Initiative/Work Item siguen funcionando con o sin contexto previo.'
+      status: passed
+      evidence: 'Deep links y recarga de Plan/Epic/Initiative/Work Item siguen funcionando con o sin contexto previo (E2E).'
+      reference: 'packages/admin/e2e/planning-action-first.spec.ts'
+      method: manual
+    - criterion: '**AC-17.** No se crean entidades ficticias de Milestone; el explorador muestra milestones embebidos en su Plan.'
+      status: passed
+      evidence: 'No se crean rutas de Milestone; el breadcrumb muestra el milestone embebido en su Plan (E2E).'
+      reference: 'packages/admin/src/components/PlanningBreadcrumb.tsx'
+      method: manual
+    - criterion: '**AC-18.** Los casos solo-Initiative, Epic independiente de Plan y Work Item independiente navegan correctamente sin jerarquías artificiales.'
+      status: passed
+      evidence: 'Proyectos solo-Initiative, Epic sin Plan y Work Item independiente navegan sin jerarquías artificiales (tests unitarios + revisión visual de un proyecto sin Plans/Epics).'
+      reference: 'packages/admin/src/lib/next-actions.ts'
+      method: manual
+    - criterion: '**AC-19.** Las rutas globales existentes de Initiative y Work Item permanecen funcionales para accesos ajenos a Planning.'
+      status: passed
+      evidence: 'Las rutas globales /initiatives/:id y /work-items/:id siguen funcionando para accesos ajenos a Planning (E2E).'
+      reference: 'packages/admin/e2e/planning-action-first.spec.ts'
+      method: manual
+    - criterion: '**AC-20.** Los breadcrumbs, pestañas y CTA ofrecen semántica accesible y navegación por teclado, con foco visible.'
+      status: passed
+      evidence: 'Breadcrumbs, pestañas y CTA son accesibles por teclado con nombres accesibles y foco visible.'
+      reference: 'packages/admin/src/components/PlanningBreadcrumb.tsx'
+      method: manual
+    - criterion: '**AC-21.** Una acción “Revisar evidencia” conduce a la revisión correspondiente sin registrar evidencia automáticamente.'
+      status: passed
+      evidence: '''Review evidence'' conduce a la revisión correspondiente sin registrar evidencia automáticamente (E2E cero escrituras).'
+      reference: 'packages/admin/src/components/PlanningCompletion.tsx'
+      method: manual
+    - criterion: '**AC-22.** Las operaciones de evidence/completion conservan intactos los evaluadores, permisos, revisiones y compuertas humanas existentes.'
+      status: passed
+      evidence: 'Evidence/completion conservan intactos evaluadores, permisos, revisiones y compuertas humanas (sin cambio en Core/admin-server).'
+      reference: 'packages/admin/src/components/EvidenceDrawer.tsx'
+      method: manual
+    - criterion: '**AC-23.** No se modifica ni un artifact canónico de Wasma ni los archivos de entrega como efecto colateral de navegar o consultar.'
+      status: passed
+      evidence: 'Navegar y consultar no modifica ningún artifact canónico ni archivo de entrega (E2E: cero POST/PATCH/PUT/DELETE).'
+      reference: 'packages/admin/e2e/planning-action-first.spec.ts'
+      method: manual
+    - criterion: '**AC-24.** La interfaz refleja correctamente cuando una Epic tiene delivery completo pero outcomes no verificados y/o aprobación humana pendiente.'
+      status: passed
+      evidence: 'La interfaz refleja una Epic con delivery completo pero outcomes no verificados y/o aprobación humana pendiente (acción ''Review evidence'' / ''Ready for decision'').'
+      reference: 'packages/admin/src/components/PlanningCompletion.tsx'
+      method: manual
+    - criterion: '**AC-25.** Se aprueba un wireframe navegable de Planning Overview, Diagnostics y recorrido `Plan → Epic → Initiative → Work Item → retorno` **antes de implementar**.'
+      status: passed
+      evidence: 'Se presentó y aprobó un wireframe navegable (Fase 2) antes de implementar UI.'
+      reference: 'knowledge/delivery/work-items/in-progress\WI-088-planning-action-first-experience-contextual-naviga.md'
+      method: manual
+    - criterion: '**AC-26.** El flujo se valida visualmente en tema oscuro y claro, desktop y viewport móvil de 375 px, sin overflow ni pérdida de información.'
+      status: passed
+      evidence: 'Validado en tema oscuro y claro, desktop y 375px, sin overflow (overflow=0) ni pérdida de información (revisión visual + E2E).'
+      reference: 'packages/admin/e2e/planning-action-first.spec.ts'
+      method: manual
+    - criterion: '**AC-27.** Tests de componentes/integración y E2E comprueban priorización, estado sin acciones, deep link, navegación y retorno, teclado y cero escrituras no solicitadas.'
+      status: passed
+      evidence: 'Tests de componentes/integración y E2E cubren priorización, estado sin acciones, deep link, navegación y retorno, teclado y cero escrituras.'
+      reference: 'packages/admin/e2e/planning-action-first.spec.ts'
+      method: manual
+    - criterion: '**AC-28.** Prueba de usabilidad con Wasma: desde Overview se identifica una próxima acción justificada y se llega al lugar correcto para trabajar en un máximo de dos interacciones principales; el diagnóstico completo permanece accesible.'
+      status: passed
+      evidence: 'Desde el Overview se identifica una próxima acción justificada y se llega al punto de trabajo en dos interacciones (acción → sección), con el diagnóstico completo accesible.'
+      reference: 'packages/admin/src/components/NextActions.tsx'
+      method: manual
+    - criterion: '**AC-29.** Se verifica un fixture con Initiatives y Work Items, pero sin Plans/Epics, y otro con entidades sin asociaciones.'
+      status: passed
+      evidence: 'Verificado un fixture con Initiatives y Work Items sin Plans/Epics (revisión visual) y entidades sin asociaciones (tests unitarios de prioritizeActions).'
+      reference: 'packages/admin/tests/next-actions.test.ts'
+      method: manual
+    - criterion: '**AC-30.** No se ejecuta `git add`, commit ni push antes de la revisión visual local y autorización humana explícita; se entrega diff y evidencia de tests para aprobación.'
+      status: passed
+      evidence: 'No se ejecutó commit ni push antes de la revisión visual local y la autorización humana explícita; se entregó diff y evidencia de tests, y se iteró según el feedback de revisión antes de integrar.'
+      reference: 'knowledge/delivery/work-items/in-progress\WI-088-planning-action-first-experience-contextual-naviga.md'
+      method: manual
 ---
 
 # WI-088 — Planning Action-First Experience & Contextual Navigation
@@ -258,3 +444,53 @@ Ejecutar pruebas automáticas, regresiones y revisión manual local sobre Wasma 
 ## 10. Resultado de producto
 
 Planning debe dejar de ser un inventario de métricas para convertirse en una experiencia donde el usuario identifica una decisión o una tarea, comprende su contexto y llega al punto de trabajo sin abandonar mentalmente el proyecto. **Menos datos visibles por defecto, ninguna pérdida de verdad y más acciones útiles.**
+
+
+## 11. Learning
+
+Entregado en v3.144.1 (módulos `admin` y `docs`; sin cambios en Core, CLI ni MCP).
+
+### Problema observado
+
+El Planning Overview competía por atención con seis tarjetas de métricas, bloques de diagnóstico completos y
+colecciones de Plans/Epics/Initiatives. El usuario veía muchos datos pero no sabía dónde estaba, qué podía
+hacer ni adónde ir; además, la navegación hacia Initiative y Work Item salía del árbol de Planning y perdía el
+contexto de origen al volver.
+
+### Decisiones UX (checkpoints aprobados)
+
+- **Fase 1 — política de priorización de acciones (4 niveles):** 1 bloqueo real y corregible, 2 evidencia o
+  decisión humana con precondiciones cumplidas, 3 trabajo activo, 4 provenance/calidad de datos; las
+  dependencias legítimas son contexto, nunca incidentes. Determinista, sin lógica específica de proyecto.
+- **Fase 2 — wireframe navegable** del Overview, Diagnostics y el recorrido Plan→Epic→Initiative→WI→retorno,
+  aprobado antes de implementar.
+- **Navegación contextual:** un parámetro `from` en la URL (con el hash de sección) conserva el camino de
+  retorno; el milestone se muestra embebido en su Plan, sin ruta propia; las rutas globales siguen intactas.
+
+### Resultados
+
+El Overview encabeza con estado compacto y hasta tres acciones canónicas; los diagnósticos completos quedan a
+un clic en Diagnostics; abrir una entidad desde Planning conserva el retorno y la pestaña de origen, y la
+cadena anidada se despliega paso a paso.
+
+### Iteración por feedback de revisión visual
+
+La primera revisión no se aprobó: una referencia histórica ambigua de `materialized_as` (severidad *warning*)
+se mostraba como tarjeta roja de bloqueo de nivel 1, contradiciendo el indicador de cero blocking issues. Se
+corrigió haciendo la priorización **consciente de la severidad canónica**: `missing/mismatch` (blocking) son
+nivel 1; `ambiguous` (warning) pasa a una nota de **provenance/calidad de datos** discreta que enlaza a
+Diagnostics, nunca roja ni crítica. El color de cada acción sigue la severidad: solo un bloqueo real es rojo.
+Además, los enlaces internos (Epic→Initiative/WI, Initiative→WI) pasaron a llevar un `from` anidado para
+preservar toda la cadena de retorno. Se revalidó con Wasma y con un proyecto sin Plans/Epics.
+
+### Límites honestos
+
+Los diagnósticos conservan la proyección canónica de WI-081/082/083 (progressive disclosure existente); no se
+reescribió esa superficie. La validación del caso sin jerarquía se cubre con tests unitarios de la
+priorización y revisión visual local, no con un segundo servidor E2E.
+
+### Prevención de recurrencia
+
+Las acciones derivan solo de señales canónicas (attention + readiness) con severidad canónica; una señal sin
+operación navegable invita a inspeccionar, nunca promete reparar. El Overview no inventa trabajo ni jerarquías
+y nunca presenta como crítico un bloqueo que no lo es.
