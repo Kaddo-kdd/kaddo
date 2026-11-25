@@ -1,3 +1,12 @@
+---
+type: dogfooding
+id: wasma-epic-association-reconciliation
+title: Reconciliación de asociaciones Epic → Work Item (Wasma)
+version: 3.142.0
+spec: WI-086
+date: 2026-11-16
+---
+
 # Reconciliación read-only de asociaciones Epic → Work Item (Wasma)
 
 > Diagnóstico de solo lectura producido por WI-086. No modifica ningún archivo del proyecto Wasma.
