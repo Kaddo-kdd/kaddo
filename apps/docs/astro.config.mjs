@@ -185,7 +185,6 @@ export default defineConfig({
             { label: 'Project Resources', translations: { es: 'Project Resources' }, slug: 'project-resources' },
               { label: 'Controlled Deprecation', translations: { es: 'Deprecación controlada' }, slug: 'deprecation' },
             { label: 'Knowledge Graph Export', translations: { es: 'Exportar el grafo de conocimiento' }, slug: 'knowledge-graph-export' },
-            { label: 'Knowledge Consolidation', translations: { es: 'Consolidación de Conocimiento' }, slug: 'knowledge-consolidation' },
             { label: 'Knowledge Capsules', translations: { es: 'Knowledge Capsules' }, slug: 'knowledge-capsules' },
             { label: 'Initiatives', translations: { es: 'Iniciativas' }, slug: 'initiatives' },
             { label: 'Delivery Planning', translations: { es: 'Planificación de Entregas' }, slug: 'delivery-planning' },
@@ -206,6 +205,7 @@ export default defineConfig({
             { label: 'Impact Report', translations: { es: 'Reporte de impacto' }, slug: 'impact-report' },
             { label: 'Savings Report', translations: { es: 'Reporte de ahorro' }, slug: 'savings-report' },
             { label: 'Drift Report', translations: { es: 'Reporte de drift' }, slug: 'drift-report' },
+            { label: 'Knowledge Consolidation', translations: { es: 'Consolidación de Conocimiento' }, slug: 'knowledge-consolidation' },
           ],
         },
         {
