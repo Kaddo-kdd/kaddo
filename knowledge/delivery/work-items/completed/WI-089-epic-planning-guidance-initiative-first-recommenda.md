@@ -4,7 +4,7 @@ id: WI-089
 title: >-
   Epic Planning Guidance — Initiative-First Recommendations Across CLI, MCP &
   Admin
-status: in-progress
+status: completed
 work_type: feature
 knowledge_level: K3
 priority: high
@@ -76,6 +76,128 @@ original_snapshot:
   type: feature
   status: draft
 ready_at: '2026-11-26'
+implementation_status: completed
+validation_status: passed
+released_in: v3.145.0
+implementation_evidence:
+  repositories:
+    cli:
+      role: core
+      status: completed
+      changed_paths:
+        - packages/cli/src/core/epic-recommendation.ts
+        - packages/cli/src/core.ts
+        - packages/cli/src/commands/plan.ts
+        - packages/cli/tests/epic-recommendation.test.ts
+      validations:
+        - command: npx vitest run packages/cli/tests/epic-recommendation.test.ts
+          status: passed
+        - command: pnpm --filter @kaddo/cli build
+          status: passed
+    mcp:
+      role: module
+      status: completed
+      changed_paths:
+        - packages/mcp/src/planning.ts
+        - packages/mcp/src/server.ts
+        - packages/mcp/tests/epic-recommendation.test.ts
+      validations:
+        - command: npx vitest run packages/mcp/tests/epic-recommendation.test.ts
+          status: passed
+    admin:
+      role: module
+      status: completed
+      changed_paths:
+        - packages/admin-server/src/core-adapter.ts
+        - packages/admin/src/lib/api.ts
+        - packages/admin/src/routes/Planning.tsx
+        - packages/admin/e2e/planning-epic-recommendation.spec.ts
+        - packages/admin/e2e/fixtures/project/knowledge/delivery/epics/EP-010-audit-flow.md
+      validations:
+        - command: CI=1 npx playwright test
+          status: passed
+    docs:
+      role: module
+      status: completed
+      changed_paths:
+        - knowledge/agents/delivery/initiative-agent.md
+        - knowledge/agents/delivery/work-item-agent.md
+        - apps/docs/src/content/docs/delivery-planning.md
+        - apps/docs/src/content/docs/es/delivery-planning.md
+      validations:
+        - command: pnpm -r build
+          status: passed
+  ac_verifications:
+    - criterion: '**AC-01:** Existe una única implementación en Core de recomendación contextual del siguiente paso de una Epic, reutilizable desde las interfaces de Kaddo.'
+      status: passed
+      evidence: 'recommendEpicNextStep(dir, epic) es la única implementación de recomendación contextual de Epic, reutilizada por CLI (kaddo epic progress), MCP (kaddo_get_epic_progress) y Admin (Epic Overview) desde Core.'
+      reference: 'packages/cli/src/core/epic-recommendation.ts'
+      method: manual
+    - criterion: '**AC-02:** Una Epic nueva, sin Initiatives ni Work Items, recomienda crear o asociar una Initiative como siguiente paso principal.'
+      status: passed
+      evidence: 'Escenario A verificado por test unitario: una Epic nueva sin Initiatives ni Work Items recomienda ''Create or associate an Initiative'' como acción principal; confirmado también en CLI real sobre EP-001 y en el Admin.'
+      reference: 'packages/cli/tests/epic-recommendation.test.ts'
+      method: manual
+    - criterion: '**AC-03:** Un agente que consulta el siguiente paso de esa Epic mediante MCP obtiene una recomendación explícita y fundamentada, no solo contadores de progreso.'
+      status: passed
+      evidence: 'Test de integración MCP: kaddo_get_epic_progress incluye de forma aditiva el campo ''recommendation'' con la acción explícita (no solo contadores); la descripción de la herramienta indica al agente usarla.'
+      reference: 'packages/mcp/tests/epic-recommendation.test.ts'
+      method: manual
+    - criterion: '**AC-04:** Los agentes instalados reconocen el flujo Epic → Initiative → Candidates → Work Items y no sugieren por defecto materializar Work Items directamente en el escenario inicial.'
+      status: passed
+      evidence: 'initiative-agent y work-item-agent actualizados para seguir Epic → Initiative → Candidates → Work Items y priorizar la recomendación canónica, sin materializar por defecto en el escenario inicial ni crear artefactos automáticamente.'
+      reference: 'knowledge/agents/delivery/initiative-agent.md'
+      method: manual
+    - criterion: '**AC-05:** Cuando existe una Initiative sin candidatos, el siguiente paso recomienda definir candidatos mediante el agente correspondiente.'
+      status: passed
+      evidence: 'Escenario B (test unitario): con una Initiative sin candidatos, la recomendación principal es ''Define Work Item Candidates'' con target la Initiative y agente initiative-agent.'
+      reference: 'packages/cli/src/core/epic-recommendation.ts'
+      method: manual
+    - criterion: '**AC-06:** Cuando existen candidatos pendientes, Kaddo recomienda revisarlos y materializar los seleccionados, sin crear trabajo automáticamente.'
+      status: passed
+      evidence: 'Escenario C/D (test unitario): con candidatos pendientes, la recomendación es revisarlos y materializar los seleccionados (''review-and-materialize-candidates''), sin crear trabajo automáticamente.'
+      reference: 'packages/cli/src/core/epic-recommendation.ts'
+      method: manual
+    - criterion: '**AC-07:** La recomendación considera Work Items ya asociados, evitando propuestas duplicadas y preservando los flujos de ejecución existentes.'
+      status: passed
+      evidence: 'Escenarios E/F (tests): el trabajo activo prioriza continuidad y desbloqueo; los Work Items directos existentes se reconocen como modelo válido, sin proponer duplicados ni desviar la ejecución.'
+      reference: 'packages/cli/src/core/epic-recommendation.ts'
+      method: manual
+    - criterion: '**AC-08:** La creación directa de Work Items bajo una Epic sigue siendo válida y no produce errores ni advertencias de integridad por ausencia de Initiative.'
+      status: passed
+      evidence: 'Escenario F (test): los Work Items directos bajo una Epic son válidos; la ausencia de Initiative no es error de integridad y la Initiative aparece solo como mejora opcional.'
+      reference: 'packages/cli/tests/epic-recommendation.test.ts'
+      method: manual
+    - criterion: '**AC-09:** Desde Kaddo Admin es posible crear una Epic, recibir la recomendación, crear una Initiative contextual y continuar hacia la definición de candidatos.'
+      status: passed
+      evidence: 'E2E de Admin: una Epic nueva (EP-010) muestra el banner de recomendación con ''Create Initiative'' (principal), ''Associate existing Initiative'' y ''Create Work Item directly''; se puede crear/asociar una Initiative contextual y continuar.'
+      reference: 'packages/admin/e2e/planning-epic-recommendation.spec.ts'
+      method: manual
+    - criterion: '**AC-10:** CLI, MCP y Admin derivan recomendaciones equivalentes para el mismo estado de una Epic.'
+      status: passed
+      evidence: 'CLI, MCP y Admin derivan la recomendación del MISMO recommendEpicNextStep de Core; verificado por tests unitarios/integración y revisión visual, con resultados equivalentes para el mismo estado.'
+      reference: 'packages/mcp/src/planning.ts'
+      method: manual
+    - criterion: '**AC-11:** Consultar recomendaciones no modifica Epics, Initiatives, Work Items ni otros artefactos.'
+      status: passed
+      evidence: 'Tests unitarios (Core y MCP) y E2E confirman que consultar la recomendación no modifica Epics, Initiatives, Work Items ni otros artefactos (cero escrituras).'
+      reference: 'packages/admin/e2e/planning-epic-recommendation.spec.ts'
+      method: manual
+    - criterion: '**AC-12:** Las recomendaciones respetan Epics completadas, trabajo en progreso, bloqueos y asociaciones existentes.'
+      status: passed
+      evidence: 'Escenarios G (completada) y E (en progreso) verificados: una Epic completada no recomienda trabajo nuevo por defecto; el trabajo en progreso y los bloqueos se respetan.'
+      reference: 'packages/cli/tests/epic-recommendation.test.ts'
+      method: manual
+    - criterion: '**AC-13:** Los contratos existentes y los proyectos que no usan Initiatives continúan funcionando.'
+      status: passed
+      evidence: 'La función opera sobre Epics sin Initiatives (escenarios A/F) y no rompe contratos existentes; la suite completa (2213 unit + 79 E2E) y los flujos de Planning siguen en verde.'
+      reference: 'packages/cli/tests/epic-recommendation.test.ts'
+      method: manual
+    - criterion: '**AC-14:** En una prueba real de conversación sobre una Epic `planned` con success criteria y 0 Initiatives / 0 Work Items, el agente responde que el siguiente paso recomendado es crear o asociar una Initiative y luego definir sus Work Item Candidates; puede mencionar la descomposición técnica como propuesta posterior, pero no como único paso canónico.'
+      status: passed
+      evidence: 'La prueba sobre una Epic planned con success criteria y 0 Initiatives / 0 Work Items devuelve una recomendación explícita de crear/asociar una Initiative (verificada en Core, MCP y CLI sobre EP-001); la descomposición técnica queda como propuesta posterior, no como único paso canónico. La validación de una conversación LLM en vivo no se automatiza aquí; se cubre estructuralmente por el contrato MCP explícito y las instrucciones de agentes actualizadas.'
+      reference: 'packages/mcp/tests/epic-recommendation.test.ts'
+      method: manual
 ---
 
 # WI-089 — Epic Planning Guidance: Initiative-First Recommendations Across CLI, MCP & Admin
@@ -220,3 +342,49 @@ usuario conserva la libertad de crear Work Items directamente cuando sea apropia
 Registrar en español: causa raíz, diseño del contrato de recomendación en Core, decisiones de exposición
 (MCP/CLI/Admin), actualización de agentes/skills, evidencia de pruebas (matriz A–G, paridad CLI/MCP, Admin
 E2E, prueba de agente con EP-001), límites y compatibilidad preservada.
+
+## 12. Learning
+
+Entregado en v3.145.0 (módulos `cli`, `mcp`, `admin`, `docs`; sin cambio de esquema ni de criterios de
+completitud de Epics).
+
+### Causa raíz
+Kaddo exponía los datos de planificación de una Epic (contadores de Initiatives, candidatos y Work Items)
+pero no una recomendación contextual explícita del siguiente paso. Un agente conectado por MCP debía
+interpretar `planning.initiatives: 0` / `delivery.total: 0` y podía saltar directamente a crear Work Items,
+omitiendo la secuencia recomendada Epic → Initiative → Candidates → Work Items.
+
+### Diseño
+Una única función de Core, `recommendEpicNextStep(dir, epic)`, determinista y de solo lectura, con una
+escalera de escenarios (A–G) priorizada por el impacto real: terminal → trabajo activo → candidatos
+pendientes → nueva sin trabajo → Work Items directos → Initiative sin candidatos. Devuelve acción principal,
+justificación basada en el estado, entidad objetivo, alternativas y referencias a herramientas canónicas.
+Se mantiene **separada** de la evaluación de completion-readiness (una responde "qué organizar", la otra
+"se puede completar").
+
+### Exposición en las tres superficies
+- CLI: `kaddo epic progress` imprime "Recommended next step".
+- MCP: `kaddo_get_epic_progress` añade de forma **aditiva** el campo `recommendation` (sin romper el
+  contrato) y su descripción indica al agente usarlo.
+- Admin: el Overview de la Epic muestra un banner con la acción principal y botones (Create Initiative,
+  Associate existing, Create Work Item directly), reutilizando operaciones existentes (sin segundo motor).
+
+### Decisión: opcional, no obligatorio
+La estructura Initiative-first es una recomendación, no una regla. Los Work Items directos bajo una Epic son
+un modelo válido (escenario F), nunca un error de integridad, y los proyectos que no usan Initiatives siguen
+funcionando. Ninguna superficie crea artefactos automáticamente.
+
+### Evidencia
+Matriz unitaria de escenarios A–G (CLI) + integración MCP; E2E de Admin con una Epic de fixture dedicada
+(EP-010) para evitar colisiones con la mutación serial de EP-900; gate raíz 2213 tests y suite E2E 79 en
+verde; revisión visual del banner. Verificado en el caso real **EP-001** (Kaddo Audit): el CLI recomienda
+crear o asociar una Initiative.
+
+### Límite honesto
+La validación de AC-14 como conversación LLM en vivo no se automatiza en este repositorio; se cubre
+estructuralmente por el contrato MCP explícito (campo `recommendation`) y las instrucciones de
+initiative-agent/work-item-agent, que priorizan la recomendación canónica.
+
+### Prevención de recurrencia
+La recomendación vive en Core y se consume igual en CLI/MCP/Admin, de modo que las tres superficies no pueden
+divergir, y la guía del flujo progresivo queda documentada y en las instrucciones de los agentes.
