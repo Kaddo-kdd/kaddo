@@ -34,6 +34,27 @@ Initiatives y Work Items — nunca almacena una lista (sin segundo estado de ver
 checkpoints definidos dentro del Plan (id, título, criterios de salida); no tienen estado de lifecycle
 propio.
 
+## Flujo de planificación recomendado y guía del siguiente paso
+
+El trabajo se descompone de forma progresiva: **Epic → Initiative → Work Item Candidates → Work Items**. Un
+Epic es un resultado mayor; una Initiative organiza un objetivo o frente de trabajo; los Candidates son
+propuestas sin materializar; los Work Items son unidades concretas de ejecución.
+
+Kaddo calcula una **recomendación determinista y de solo lectura** del siguiente paso de un Epic —la misma
+lógica en Core, expuesta de forma idéntica por el CLI (`kaddo epic progress`), MCP (`kaddo_get_epic_progress`,
+en su campo `recommendation`) y Admin (el Overview del Epic)—. Para un **Epic nuevo sin Initiatives ni Work
+Items**, el paso recomendado es **crear o asociar una Initiative** y luego definir sus Work Item candidates,
+antes de materializar trabajo de implementación —de modo que un agente recomiende organizar el trabajo en vez
+de saltar directamente a un Work Item técnico—. La recomendación se adapta al estado real del Epic: definir
+candidates cuando una Initiative no tiene, revisar y materializar los candidates pendientes, continuar y
+desbloquear el trabajo activo y, para un Epic completado, apuntar a su evidencia en lugar de a trabajo nuevo.
+
+Esta estructura es **opcional, nunca obligatoria**. Un proyecto que coloca Work Items **directamente** bajo un
+Epic es un modelo válido, no un error de integridad —la recomendación ofrece las Initiatives como mejora
+opcional, y los proyectos que nunca usan Initiatives siguen funcionando igual—. Consultar una recomendación
+es de solo lectura: nunca crea ni modifica Epics, Initiatives, candidates ni Work Items, y la materialización
+siempre requiere una decisión humana explícita.
+
 ## Progreso — separado
 
 El progreso se calcula desde el estado real de los elementos relacionados, nunca un porcentaje único:

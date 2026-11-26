@@ -28,6 +28,7 @@ import {
   completeEpic,
   evaluatePlanCompletion,
   evaluateEpicCompletion,
+  recommendEpicNextStep,
   DeliveryPlanningWriteError,
   PlanningNotReadyError,
   type OutcomeEvidenceInput,
@@ -115,7 +116,9 @@ export function getEpicTool(root: string, id: string): ToolResult {
 export function getEpicProgressTool(root: string, id: string): ToolResult {
   const epic = getEpic(root, id)
   if (!epic) return fail(`Epic ${id} not found.`)
-  return ok(computeEpicProgress(root, epic))
+  // WI-089 — additively include the deterministic next-step recommendation so an agent gets an explicit,
+  // grounded next step (e.g. "create or associate an Initiative") and never has to infer it from counters.
+  return ok({ ...computeEpicProgress(root, epic), recommendation: recommendEpicNextStep(root, epic) })
 }
 
 export function validatePlanningTool(root: string): ToolResult {

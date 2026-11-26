@@ -130,6 +130,7 @@ import {
   workItemsInEpic,
   computePlanProgress,
   computeEpicProgress,
+  recommendEpicNextStep,
   validatePlanningGraph,
   computePlanningInsights,
   computePlanningDelivery,
@@ -436,6 +437,8 @@ export function getEpicDetailAdmin(dir: string, id: string) {
     revision: revisionOf(readFile(epic.filePath)),
     // Recorded human completion decision (WI-078), if the Epic has been completed.
     completionDecision: (epic.rawFrontmatter?.completion_decision as Record<string, unknown> | undefined) ?? null,
+    // WI-089 — deterministic, read-only next-step recommendation (Initiative-first), shared with CLI/MCP.
+    recommendation: recommendEpicNextStep(dir, epic),
     progress, initiatives, workItems, findings,
   }
 }

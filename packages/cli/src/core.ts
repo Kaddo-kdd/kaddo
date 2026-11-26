@@ -39,6 +39,11 @@ export {
   type PlanningFinding,
 } from './core/delivery-planning.js'
 export {
+  recommendEpicNextStep,
+  type EpicRecommendation,
+  type EpicScenario,
+} from './core/epic-recommendation.js'
+export {
   createDeliveryPlan,
   createEpic,
   associateInitiativeWithEpic,

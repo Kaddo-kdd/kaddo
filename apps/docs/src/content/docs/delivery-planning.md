@@ -33,6 +33,27 @@ Associations are declared **one way** and never duplicated: `initiative.epic →
 Work Items — it never stores a list of them (no second source of truth). Milestones are checkpoints
 defined inside the Plan (id, title, exit criteria); they carry no independent lifecycle state.
 
+## Recommended planning flow and next-step guidance
+
+Work decomposes progressively: **Epic → Initiative → Work Item Candidates → Work Items**. An Epic is a
+larger outcome; an Initiative organizes one objective or workfront; Candidates are proposals not yet
+materialized; Work Items are concrete execution units.
+
+Kaddo computes a **deterministic, read-only next-step recommendation** for an Epic — the same logic in Core,
+surfaced identically by the CLI (`kaddo epic progress`), MCP (`kaddo_get_epic_progress`, in its
+`recommendation` field) and Admin (the Epic Overview). For a **new Epic with no Initiatives and no Work
+Items**, the recommended step is to **create or associate an Initiative** and then define its Work Item
+candidates, before materializing implementation work — so an agent recommends organizing the work rather than
+jumping straight to a technical Work Item. The recommendation adapts to the Epic's real state: define
+candidates when an Initiative has none, review and materialize pending candidates, continue and unblock
+active work, and, for a completed Epic, point at its evidence rather than new work.
+
+This structure is **optional, never mandatory**. A project that puts Work Items **directly** under an Epic is
+a valid model, not an integrity error — the recommendation simply offers Initiatives as an opt-in
+improvement, and projects that never use Initiatives keep working unchanged. Consulting a recommendation is
+read-only: it never creates or modifies Epics, Initiatives, candidates or Work Items, and materialization
+always requires an explicit human decision.
+
 ## Progress — kept separate
 
 Progress is computed from the real state of related elements, never a single arbitrary percentage:

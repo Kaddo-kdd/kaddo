@@ -17,6 +17,7 @@ import {
   computeEpicProgress,
   validatePlanningGraph,
 } from '../core/delivery-planning.js'
+import { recommendEpicNextStep } from '../core/epic-recommendation.js'
 import {
   createDeliveryPlan,
   createEpic,
@@ -177,6 +178,14 @@ export function runEpicProgress(id: string): void {
   log.info('')
   log.info(`  Completion readiness: criteria ${p.readiness.successCriteria} · preconditions met: ${p.readiness.meetsCompletionPreconditions ? 'yes' : 'no'} · human approval required: yes`)
   if (p.readiness.blockingDependencies.length) log.warn(`  Blocking dependencies: ${p.readiness.blockingDependencies.join(', ')}`)
+  // WI-089 — recommended next step (deterministic, read-only), kept distinct from completion readiness.
+  const r = recommendEpicNextStep(dir, epic)
+  log.info('')
+  log.info(`  Recommended next step: ${r.primary.action}`)
+  log.info(`    ${r.primary.reason}`)
+  if (r.primary.command) log.info(`    → ${r.primary.command}`)
+  else if (r.primary.agent) log.info(`    → use the ${r.primary.agent}`)
+  for (const alt of r.alternatives) log.info(`    · alternative: ${alt.label}`)
   outro(`Progress for ${epic.id}.`)
 }
 

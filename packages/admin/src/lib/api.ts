@@ -794,11 +794,25 @@ export type PlanDetail = {
   epics: { id: string; title: string; status: string; milestone: string | null; delivery: PlanningDelivery; blocked: string[] }[]
   findings: PlanningFinding[]
 }
+// WI-089 — deterministic Epic next-step recommendation (Initiative-first), shared by CLI/MCP/Admin.
+export type EpicRecommendationAction = { id: string; label: string; command?: string; agent?: string; skill?: string; reason: string }
+export type EpicRecommendation = {
+  epicId: string
+  scenario: 'completed' | 'active-work' | 'new-no-work' | 'direct-work-items' | 'initiative-no-candidates' | 'candidates-pending'
+  recommendationId: string
+  primary: { action: string; reason: string; target: string; command?: string; mcpAction?: string; agent?: string }
+  alternatives: EpicRecommendationAction[]
+  state: {
+    status: string; successCriteria: number; initiatives: number; candidates: number
+    materializedCandidates: number; pendingCandidates: number; workItems: number; inProgress: number; blocked: number; completed: number
+  }
+}
 export type EpicDetail = {
   id: string; title: string; status: string; outcome: string | null; plan: string | null; milestone: string | null
   dependsOn: string[]; successCriteria: string[]; unreadableCriteria: number; relatedCapabilities: string[]; decisions: string[]; body: string
   revision: string
   completionDecision: CompletionDecision | null
+  recommendation: EpicRecommendation
   progress: PlanningProgress
   initiatives: { id: string; title: string; status: string; owners: string[]; contributors: string[] }[]
   workItems: { id: string; title: string; status: string }[]

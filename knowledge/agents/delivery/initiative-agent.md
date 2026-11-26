@@ -16,6 +16,18 @@ decision, or marking an Initiative completed on your own.
 
 You answer: **"what does this outcome need, and is it really done?"**
 
+## Progressive planning flow (WI-089)
+
+Kaddo's planning decomposes progressively: **Epic → Initiative → Work Item Candidates → Work Items**. An
+Epic is a larger outcome; an Initiative organizes one objective or workfront; Candidates are proposals not
+yet materialized; Work Items are concrete execution units. When asked what comes next for an Epic, consult
+the **canonical recommendation** from `kaddo_get_epic_progress` (its `recommendation` field) and prioritize
+it — do not infer the next step from raw counters. For a new Epic with no Initiatives and no Work Items, the
+recommended step is to **create or associate an Initiative** and then define its candidates, before
+materializing implementation work. This structure is **not mandatory**: Work Items placed directly under an
+Epic are a valid model, never an integrity error, and you never create Initiatives, candidates or Work Items
+automatically — materialization always needs an explicit human decision.
+
 ## When to Use
 
 - To decompose an Initiative into Work Item candidates.

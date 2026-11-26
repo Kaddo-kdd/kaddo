@@ -4,7 +4,7 @@ import { useRouter, useSearch } from '@tanstack/react-router'
 import { Map as MapIcon, Boxes, AlertTriangle, ArrowRight } from 'lucide-react'
 import {
   api, getPlanningOverview, getPlanDetail, getEpicDetail, disassociateInitiative,
-  type PlanningDelivery, type PlanningFinding,
+  type PlanningDelivery, type PlanningFinding, type EpicRecommendation,
 } from '../lib/api'
 import { EmptyState } from '../components/EmptyState'
 import { StatusBadge } from '../components/StatusBadge'
@@ -351,6 +351,12 @@ export function EpicDetail({ id }: { id: string }) {
         const unreadable = e.unreadableCriteria ?? 0
         const Overview = (
           <>
+            <EpicRecommendationBanner
+              rec={e.recommendation}
+              onAssociate={() => setOpen('associate')}
+              onCreateInitiative={() => router.navigate({ to: '/initiatives' })}
+              onCreateWorkItem={() => router.navigate({ to: '/work-items/new' })}
+            />
             <section style={grid}>
               <Metric label="Work Items" value={e.progress.delivery.total} />
               <Metric label="Completed" value={e.progress.delivery.completed} />
@@ -395,12 +401,50 @@ export function EpicDetail({ id }: { id: string }) {
   )
 }
 
+// WI-089 — the Epic's recommended next step, from the SAME Core recommendation the CLI and MCP use. It
+// guides Initiative-first decomposition without making it mandatory: on a new Epic it leads with "Create
+// Initiative", keeps "Associate existing Initiative" and preserves "Create Work Item directly" as a valid
+// alternative. For other states it explains the step; it never fabricates an action Kaddo can't perform.
+function EpicRecommendationBanner({ rec, onAssociate, onCreateInitiative, onCreateWorkItem }: {
+  rec: EpicRecommendation
+  onAssociate: () => void
+  onCreateInitiative: () => void
+  onCreateWorkItem: () => void
+}) {
+  const s = rec.scenario
+  return (
+    <section style={recBanner}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <ArrowRight size={15} color="var(--primary)" />
+        <strong style={{ fontSize: 14 }}>Recommended next step</strong>
+      </div>
+      <div style={{ fontSize: 14, marginTop: 6 }}>{rec.primary.action}</div>
+      <p style={{ ...mutedSmall, margin: '4px 0 0' }}>{rec.primary.reason}</p>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 10 }}>
+        {s === 'new-no-work' && <>
+          <Btn primary onClick={onCreateInitiative}>Create Initiative</Btn>
+          <Btn onClick={onAssociate}>Associate existing Initiative</Btn>
+          <Btn onClick={onCreateWorkItem}>Create Work Item directly</Btn>
+        </>}
+        {s === 'direct-work-items' && <>
+          <Btn primary onClick={onCreateWorkItem}>Create Work Item</Btn>
+          <Btn onClick={onAssociate}>Organize under an Initiative (optional)</Btn>
+        </>}
+        {(s === 'initiative-no-candidates' || s === 'candidates-pending') && <>
+          <Btn onClick={onCreateWorkItem}>Create Work Item directly</Btn>
+        </>}
+      </div>
+    </section>
+  )
+}
+
 function Metric({ label, value, hint, danger }: { label: string; value: string | number; hint?: string; danger?: boolean }) {
   const strong = danger && Number(value) > 0 ? { color: 'var(--danger)' } : undefined
   return <div style={metricCard}><span>{label}</span><strong style={strong}>{String(value)}</strong>{hint && <span style={{ fontSize: 11, fontWeight: 400 }}>{hint}</span>}</div>
 }
 
 const page: React.CSSProperties = { padding: '24px 32px', maxWidth: 1180, margin: '0 auto' }
+const recBanner: React.CSSProperties = { marginTop: 16, padding: 14, border: '1px solid var(--border-accent, var(--primary))', borderRadius: 'var(--radius)', background: 'var(--surface)' }
 const statusHeader: React.CSSProperties = { display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginTop: 8, padding: '12px 14px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', background: 'var(--surface)' }
 const structureRow: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap', marginTop: 16, padding: '10px 14px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', background: 'var(--surface)' }
 const structLink: React.CSSProperties = { background: 'none', border: 'none', padding: 0, color: 'var(--primary)', cursor: 'pointer', font: 'inherit', fontSize: 13 }

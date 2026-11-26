@@ -780,7 +780,7 @@ export function createServer(root: string): McpServer {
     async () => toolText(guarded(root, () => listEpicsTool(root))))
   server.registerTool('kaddo_get_epic', { title: 'Get epic', description: `Get one epic: outcome, plan/milestone, dependencies, initiatives and work items (derived). ${PLANNING_READ_NOTE}`, inputSchema: { id: z.string() } },
     async (args) => toolText(guarded(root, () => getEpicTool(root, args.id))))
-  server.registerTool('kaddo_get_epic_progress', { title: 'Get epic progress', description: `Planning coverage, delivery progress and completion readiness for an epic. ${PLANNING_READ_NOTE}`, inputSchema: { id: z.string() } },
+  server.registerTool('kaddo_get_epic_progress', { title: 'Get epic progress', description: `Planning coverage, delivery progress, completion readiness AND a deterministic recommended next step for an epic (e.g. create or associate an Initiative before materializing Work Items). Use the \`recommendation\` field to guide decomposition — do not infer the next step from counters alone. ${PLANNING_READ_NOTE}`, inputSchema: { id: z.string() } },
     async (args) => toolText(guarded(root, () => getEpicProgressTool(root, args.id))))
   server.registerTool('kaddo_validate_planning', { title: 'Validate planning graph', description: `Deterministic validation: invalid references, dependency cycles, duplicate milestones and pending dependencies. ${PLANNING_READ_NOTE}`, inputSchema: {} },
     async () => toolText(guarded(root, () => validatePlanningTool(root))))
