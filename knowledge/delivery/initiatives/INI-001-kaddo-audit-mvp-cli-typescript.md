@@ -68,6 +68,7 @@ candidates:
       - EP-001 AC-4
     dependencies:
       - AUD-C5
+    materialized_as: WI-094
   - id: AUD-C7
     title: 'Reporte estructurado + artefactos (knowledge/tech/audits, .kaddo/audits)'
     type: feature
