@@ -3,7 +3,8 @@ type: feature
 id: WI-093
 title: Analizadores TypeScript (código y dependencias) con evidencia
 knowledge_level: K3
-status: in-progress
+status: completed
+completed_at: 2026-11-26
 phase: now
 priority: high
 initiative: INI-001
@@ -11,6 +12,75 @@ domains:
   - Tech
 code: []
 created_at: '2026-11-27'
+implementation_status: completed
+validation_status: passed
+implementation_evidence:
+  repositories:
+    cli:
+      role: core
+      status: completed
+      changed_paths:
+        - packages/cli/src/core/audit-analyzers.ts
+        - packages/cli/src/core.ts
+        - packages/cli/tests/audit-analyzers.test.ts
+      validations:
+        - command: npx vitest run packages/cli/tests/audit-analyzers.test.ts
+          status: passed
+        - command: pnpm --filter @kaddo/cli build
+          status: passed
+        - command: pnpm test
+          status: passed
+  ac_verifications:
+    - criterion: '**AC-01:** El analizador de dependencias implementa `Analyzer`, ejecuta el `audit` del gestor de paquetes del proyecto y mapea cada advisory a un `AuditFinding` con evidencia (advisory + paquete afectado), `provenance` = la herramienta y `confidence: ''confirmed''`.'
+      status: passed
+      evidence: 'createDependencyAnalyzer implementa Analyzer: ejecuta ''<pm> audit --json'' y mapea cada advisory a un AuditFinding con evidencia (severidad + paquete + versiones + url), provenance ''<pm> audit'' y confidence ''confirmed''. Test de mapeo sobre fixture de audit.'
+      reference: 'packages/cli/src/core/audit-analyzers.ts'
+      method: manual
+    - criterion: '**AC-02:** El analizador de código TypeScript implementa `Analyzer`, ejecuta el diagnóstico del compilador (`tsc`) y mapea cada diagnóstico a un `AuditFinding` con evidencia (mensaje + `file:line`), `provenance` = la herramienta y severidad mapeada del diagnóstico.'
+      status: passed
+      evidence: 'createTypescriptAnalyzer implementa Analyzer: ejecuta ''tsc --noEmit --pretty false'' y mapTscDiagnostics mapea cada diagnóstico a un AuditFinding con evidencia (file:line:col + mensaje), provenance ''tsc'' y severidad mapeada (error→high, warning→low).'
+      reference: 'packages/cli/src/core/audit-analyzers.ts'
+      method: manual
+    - criterion: '**AC-03:** La invocación de la herramienta externa es inyectable (un runner de comandos), de modo que la lógica de mapeo se prueba con salidas capturadas, sin spawnear procesos reales.'
+      status: passed
+      evidence: 'La invocación es inyectable (type CommandRunner); los tests pasan un stubRunner que devuelve fixtures, sin spawnear procesos (execaRunner es el default real).'
+      reference: 'packages/cli/src/core/audit-analyzers.ts'
+      method: manual
+    - criterion: '**AC-04:** La severidad se mapea desde la clasificación de la propia herramienta y la `confidence` refleja la fuente (hecho de herramienta → `confirmed`; heurística → `likely`/`inferred`); nunca se sube por encima de lo que la herramienta soporta.'
+      status: passed
+      evidence: 'mapSeverity toma la clasificación de la herramienta (critical/high/moderate|medium/low) y desconocido → info; confidence ''confirmed'' para hechos de herramienta, nunca subida. Test de severidad y de confianza.'
+      reference: 'packages/cli/tests/audit-analyzers.test.ts'
+      method: manual
+    - criterion: '**AC-05:** Todo hallazgo lleva `evidence` y `provenance`; no se emite ningún hallazgo sin ambas.'
+      status: passed
+      evidence: 'Test (AC-05): todos los hallazgos producidos por runAudit cumplen evidence.length>0 y provenance.length>0; no se emite ninguno sin ambas.'
+      reference: 'packages/cli/tests/audit-analyzers.test.ts'
+      method: manual
+    - criterion: '**AC-06:** Los ids de hallazgo son estables (`stableFindingId`), de modo que el mismo advisory/diagnóstico se deduplica entre ejecuciones.'
+      status: passed
+      evidence: 'Test (AC-06): mapAuditAdvisories produce ids estables (stableFindingId) para el mismo advisory entre ejecuciones; el orquestador los deduplica.'
+      reference: 'packages/cli/tests/audit-analyzers.test.ts'
+      method: manual
+    - criterion: '**AC-07:** Una herramienta ausente o con salida inválida se señala honestamente (fallo/skip) para que el orquestador registre cobertura parcial — nunca un resultado limpio vacío; una salida con exit≠0 que sí trae hallazgos válidos (p. ej. `audit` con vulnerabilidades) NO se trata como fallo.'
+      status: passed
+      evidence: 'Test (AC-07): exit≠0 con JSON válido (vulnerabilidades) → run ''completed'' (no es fallo); salida ilegible / herramienta ausente → el analizador lanza y runAudit lo marca ''failed''/partial con coverage.complete=false; tsc exit≠0 sin diagnósticos → partial.'
+      reference: 'packages/cli/tests/audit-analyzers.test.ts'
+      method: manual
+    - criterion: '**AC-08:** Los analizadores enchufan en el orquestador (`runAudit`, WI-092) y producen un `AuditRun` con sus hallazgos y tools; verificado con runners de prueba.'
+      status: passed
+      evidence: 'Test (AC-08): ambos analizadores enchufan en runAudit (WI-092) y producen un AuditRun con hallazgos (dependency + types) y sus tools; verificado con runners de prueba.'
+      reference: 'packages/cli/tests/audit-analyzers.test.ts'
+      method: manual
+    - criterion: '**AC-09:** La lógica de mapeo (salida de herramienta → hallazgos) es pura y determinista y se exporta desde el barrel de Core (`packages/cli/src/core.ts`); el único punto impuro es el runner inyectado.'
+      status: passed
+      evidence: 'La lógica de mapeo (mapAuditAdvisories, mapTscDiagnostics, mapSeverity) es pura y determinista; el único punto impuro es el CommandRunner inyectado. Exportada desde el barrel Core (packages/cli/src/core.ts); un test la importa desde ../src/core.js.'
+      reference: 'packages/cli/src/core.ts'
+      method: manual
+    - criterion: '**AC-10:** Hay pruebas unitarias con salidas de prueba que cubren: mapeo de advisories, mapeo de diagnósticos, mapeo de severidad/confianza, evidencia/provenance presentes, estabilidad/dedup de ids, herramienta ausente → cobertura parcial (vía `runAudit`), y exit≠0 con hallazgos → `ok`.'
+      status: passed
+      evidence: 'packages/cli/tests/audit-analyzers.test.ts cubre mapeo de advisories y diagnósticos, severidad/confianza, evidencia/provenance, estabilidad/dedup de ids, herramienta ausente→partial vía runAudit y exit≠0 con hallazgos→ok (11 tests en verde).'
+      reference: 'packages/cli/tests/audit-analyzers.test.ts'
+      method: manual
 source: initiative
 source_id: AUD-C5
 source_initiative: INI-001
@@ -182,4 +252,35 @@ herramienta ausente hace el run `partial`.
 
 ## 9. Learning
 
-_What did we learn? Update after completion._
+Entregado en `main` (sin release; se publicará junto a `kaddo audit run`, AUD-C8). Módulo `cli` (Core); sin
+cambios en otras superficies ni escritura en `knowledge/`.
+
+### Runner inyectable = IO testeable
+El primer candidato con IO real se mantuvo determinista separando la **ejecución** (un `CommandRunner`
+inyectable, con `execaRunner` por defecto) del **mapeo** (`mapAuditAdvisories`, `mapTscDiagnostics`,
+`mapSeverity`, funciones puras). Los tests pasan un stub con salidas de fixture: ni un proceso real. Es el
+patrón que hace honesto y repetible un analizador que, en producción, invoca herramientas externas.
+
+### Honestidad de confianza y evidencia
+Un hecho reportado por una herramienta (un advisory de `audit`, un diagnóstico de `tsc`) es `confirmed`; una
+severidad desconocida cae a `info`, nunca se sube. Ningún hallazgo se emite sin `evidence` y `provenance`.
+La identidad del hallazgo (`stableFindingId`) permite deduplicar el mismo advisory/diagnóstico entre
+ejecuciones, base del seguimiento posterior (AUD-C tracking).
+
+### La trampa del exit code
+`pnpm audit` sale con código ≠0 cuando **encuentra** vulnerabilidades: eso es un éxito con hallazgos, no un
+fallo. Se parsea la salida siempre; solo una salida **ilegible** (herramienta ausente/rota) o un `tsc` con
+exit≠0 y **cero** diagnósticos se tratan como fallo → cobertura parcial vía el orquestador. Confundir exit≠0
+con fallo habría descartado hallazgos reales o marcado limpio un árbol vulnerable.
+
+### Decisiones del MVP
+Código con `tsc` (diagnósticos del compilador, sin depender de la config de reglas del proyecto) y
+dependencias con `pnpm audit` primero; añadir ESLint/semgrep u otros gestores no cambia la interfaz
+`Analyzer`.
+
+### Límite
+Analizadores concretos con runner inyectado. El cableado real end-to-end (ejecutar las herramientas de
+verdad) llega con `kaddo audit run` (AUD-C8). La correlación (AUD-C6), el reporte (AUD-C7) y la relación con
+Work Items (AUD-C10) son candidatos posteriores. El siguiente paso natural es AUD-C6 (correlación) o AUD-C7
+(reporte) sobre estos hallazgos, o AUD-C3 (alcance por módulo) en paralelo.
+
