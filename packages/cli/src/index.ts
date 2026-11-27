@@ -60,7 +60,7 @@ import { runStart } from './commands/start.js'
 import { runAdmin } from './commands/admin.js'
 import { runWorkItemImport } from './commands/work-item.js'
 import { runPocReport } from './commands/poc.js'
-import { runAuditRunCommand, runAuditReportCommand, runAuditLinkCommand, runAuditPlanCommand } from './commands/audit.js'
+import { runAuditRunCommand, runAuditReportCommand, runAuditLinkCommand, runAuditPlanCommand, runAuditCompareCommand } from './commands/audit.js'
 import { runVerify } from './commands/verify.js'
 import { runKnowledgeConsolidate } from './commands/knowledge.js'
 import {
@@ -182,6 +182,12 @@ auditCmd
   .description('Preview remediation actions for a stored audit without modifying Planning')
   .option('--json', 'Emit the preview as JSON')
   .action(runAuditPlanCommand)
+
+auditCmd
+  .command('compare <beforeId> <afterId>')
+  .description('Compare two stored audits without modifying them')
+  .option('--json', 'Emit comparison as JSON')
+  .action(runAuditCompareCommand)
 
 auditCmd
   .command('run')

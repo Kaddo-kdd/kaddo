@@ -28,6 +28,7 @@ import {
   getWorkItemForEdit,
   linkAuditFinding,
   previewAuditPlan,
+  compareAuditRuns,
   type AuditRun,
   type AuditFinding,
   type AuditRunSummary,
@@ -316,6 +317,27 @@ export function runAuditPlanCommand(id: string | undefined, opts: { json?: boole
       process.stdout.write(`Audit ${plan.auditId} — ${plan.status}${plan.coverage.complete ? '' : ' (coverage incomplete)'}\n`)
       if (plan.coverage.notEvaluated.length) process.stdout.write(`Not evaluated: ${plan.coverage.notEvaluated.join(', ')}\n`)
       for (const action of plan.actions) process.stdout.write(`  ${action.findingId} [${action.severity}/${action.confidence}] ${action.title} — ${action.action}\n    Evidence: ${action.evidence}\n    Recommendation: ${action.recommendation}\n    Approved: ${action.confirmedWorkItems.join(', ') || '—'}; suggested: ${action.suggestedWorkItems.join(', ') || '—'}\n`)
+    }
+  } catch (error) { process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`); process.exitCode = 2 }
+}
+
+export function runAuditCompareCommand(beforeId: string, afterId: string, opts: { json?: boolean }): void {
+  try {
+    if (!/^AUD-\d+$/.test(beforeId) || !/^AUD-\d+$/.test(afterId)) throw new Error('Invalid audit id.')
+    const before = readAuditRun(cwd(), beforeId), after = readAuditRun(cwd(), afterId)
+    if (!before || !after) throw new Error('Audit not found or unreadable.')
+    const comparison = compareAuditRuns(before, after)
+    if (opts.json) process.stdout.write(JSON.stringify(comparison, null, 2) + '\n')
+    else {
+      process.stdout.write(`Audit comparison: ${beforeId} → ${afterId}\n`)
+      for (const warning of comparison.warnings) process.stdout.write(`Warning: ${warning}\n`)
+      for (const entry of comparison.entries) {
+        process.stdout.write(`  ${entry.id}: ${entry.classification}${entry.reason ? ` — ${entry.reason}` : ''}\n`)
+        for (const field of entry.changes ?? []) {
+          const key = field as 'severity' | 'confidence' | 'status' | 'evidence'
+          process.stdout.write(`    ${field}: ${entry.before?.[key]} → ${entry.after?.[key]}\n`)
+        }
+      }
     }
   } catch (error) { process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`); process.exitCode = 2 }
 }

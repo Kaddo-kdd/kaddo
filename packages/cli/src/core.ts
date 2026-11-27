@@ -118,6 +118,7 @@ export {
   type AuditFindingFilters,
 } from './core/audit-query.js'
 export { previewAuditPlan } from './core/audit-plan.js'
+export { compareAuditRuns, type AuditComparisonEntry } from './core/audit-compare.js'
 export {
   createDeliveryPlan,
   createEpic,

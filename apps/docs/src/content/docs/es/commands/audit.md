@@ -5,6 +5,8 @@ description: Ejecuta una auditoría técnica basada en evidencia y escribe un re
 
 ## Vincular un Work Item existente
 
+Compara ejecuciones guardadas con `kaddo audit compare AUD-001 AUD-002` o agrega `--json`. Los hallazgos se comparan por ID estable. Para clasificarlos como nuevos o resueltos se requieren cobertura completa, alcance equivalente, cobertura explícita del archivo y versiones de herramientas coincidentes; en otro caso no son verificables. Los analizadores actuales registran áreas genéricas y pueden omitir versiones, por lo que normalmente una ausencia no es verificable. Los IDs incluyen archivo y línea, por lo que mover código puede producir un hallazgo diferente.
+
 Usa `kaddo audit plan [AUD-001]` (o `--json`) para previsualizar acciones de remediación, evidencia, cobertura y vínculos existentes sin escribir archivos. Revisa las sugerencias antes de usar `audit link`.
 
 Después de revisar un hallazgo y un Work Item existente, aprueba explícitamente su asociación:
