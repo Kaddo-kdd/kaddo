@@ -3,7 +3,7 @@ type: feature
 id: WI-094
 title: 'Correlación de hallazgos con ADRs, ownership, WIs y riesgos'
 knowledge_level: K3
-status: ready
+status: in-progress
 phase: now
 priority: high
 initiative: INI-001
