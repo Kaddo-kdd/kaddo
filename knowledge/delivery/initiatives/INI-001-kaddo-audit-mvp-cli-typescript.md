@@ -121,6 +121,7 @@ candidates:
     dependencies:
       - AUD-C10
       - AUD-C9
+    materialized_as: WI-100
 priority: high
 epic: EP-001
 ---

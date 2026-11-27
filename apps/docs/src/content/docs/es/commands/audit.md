@@ -5,6 +5,8 @@ description: Ejecuta una auditoría técnica basada en evidencia y escribe un re
 
 ## Vincular un Work Item existente
 
+Usa `kaddo audit plan [AUD-001]` (o `--json`) para previsualizar acciones de remediación, evidencia, cobertura y vínculos existentes sin escribir archivos. Revisa las sugerencias antes de usar `audit link`.
+
 Después de revisar un hallazgo y un Work Item existente, aprueba explícitamente su asociación:
 
 ```sh
