@@ -60,3 +60,32 @@ kaddo audit run --publish
 
 El alcance que elijas se resuelve al `AuditScope` del contrato de auditoría; el reporte y los artefactos son
 reproducibles, de modo que los diffs entre dos auditorías son limpios.
+
+## kaddo audit report
+
+Consulta auditorías previas (de solo lectura — no re-ejecuta ni escribe).
+
+```bash
+kaddo audit report [id]
+```
+
+- `--list` — lista las auditorías persistidas (id, fecha, estado, nº de hallazgos).
+- Sin id — muestra la última auditoría; `[id]` — muestra una concreta.
+- `--severity <lista>` / `--category <lista>` / `--confidence <lista>` — filtra hallazgos (separados por coma;
+  OR dentro de un filtro, AND entre filtros).
+- `--module <id...>` — filtra hallazgos por módulo.
+- `--json` — emite JSON en vez de un resumen.
+
+```bash
+# Listar todas las auditorías
+kaddo audit report --list
+
+# Mostrar los hallazgos críticos de la última auditoría
+kaddo audit report --severity critical
+
+# Una auditoría concreta, solo hallazgos de dependencias, como JSON
+kaddo audit report AUD-001 --category dependency --json
+```
+
+Las auditorías se leen de `.kaddo/audits/`, escritas por `kaddo audit run`. Un id inexistente da un error claro
+y no escribe nada.

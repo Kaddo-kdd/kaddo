@@ -58,3 +58,32 @@ kaddo audit run --publish
 
 The scope you pick resolves to the audit contract's `AuditScope`; the report and artifacts are reproducible, so
 diffs between two audits are clean.
+
+## kaddo audit report
+
+Query past audits (read-only — it never re-runs or writes).
+
+```bash
+kaddo audit report [id]
+```
+
+- `--list` — list the persisted audits (id, date, status, finding counts).
+- No id — show the latest audit; `[id]` — show a specific one.
+- `--severity <list>` / `--category <list>` / `--confidence <list>` — filter findings (comma-separated;
+  OR within a filter, AND across filters).
+- `--module <id...>` — filter findings to a module.
+- `--json` — emit JSON instead of a summary.
+
+```bash
+# List all audits
+kaddo audit report --list
+
+# Show the latest audit's critical findings
+kaddo audit report --severity critical
+
+# A specific audit, dependency findings only, as JSON
+kaddo audit report AUD-001 --category dependency --json
+```
+
+Audits are read from `.kaddo/audits/`, written by `kaddo audit run`. A missing id is a clear error and writes
+nothing.
