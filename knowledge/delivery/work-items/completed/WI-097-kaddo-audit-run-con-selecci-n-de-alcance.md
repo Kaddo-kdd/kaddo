@@ -3,7 +3,8 @@ type: feature
 id: WI-097
 title: kaddo audit run (con selección de alcance)
 knowledge_level: K3
-status: in-progress
+status: completed
+completed_at: 2026-11-27
 phase: now
 priority: high
 initiative: INI-001
@@ -11,11 +12,94 @@ domains:
   - Tech
 code: []
 created_at: '2026-11-27'
+implementation_status: completed
+validation_status: passed
+released_in: v3.146.0
+implementation_evidence:
+  repositories:
+    cli:
+      role: primary
+      status: completed
+      changed_paths:
+        - packages/cli/src/commands/audit.ts
+        - packages/cli/src/index.ts
+        - packages/cli/tests/audit-run-command.test.ts
+      validations:
+        - command: npx vitest run packages/cli/tests/audit-run-command.test.ts
+          status: passed
+        - command: pnpm --filter @kaddo/cli build
+          status: passed
+        - command: pnpm test
+          status: passed
+        - command: node packages/cli/dist/index.js audit run --module cli
+          status: passed
+    docs:
+      role: module
+      status: completed
+      changed_paths:
+        - apps/docs/src/content/docs/commands/audit.md
+        - apps/docs/src/content/docs/es/commands/audit.md
+        - apps/docs/astro.config.mjs
+      validations:
+        - command: pnpm --filter docs build
+          status: passed
+  ac_verifications:
+    - criterion: '**AC-01:** `kaddo audit run` ejecuta el flujo completo: Discover (WI-091) → `resolveAuditScope` (WI-096) → `runAudit` con los analizadores reales (WI-092/093, `execaRunner`) → `correlateFindings` inline (WI-094) → `renderAuditReport` (WI-095) → `writeAuditArtifacts` en `.kaddo/audits`.'
+      status: passed
+      evidence: 'Test (AC-01): performAuditRun ejecuta Discover→resolveAuditScope→runAudit (analizadores reales)→correlateFindings→renderAuditReport→writeAuditArtifacts; escribe .kaddo/audits/AUD-001.{json,md}. Smoke real en el repo: 164 hallazgos de pnpm audit.'
+      reference: 'packages/cli/tests/audit-run-command.test.ts'
+      method: manual
+    - criterion: '**AC-02:** `--module <id...>` y `--paths <glob...>` seleccionan el alcance vía `resolveAuditScope`; sin ellas audita el proyecto completo; un módulo desconocido falla con el error del resolver (lista los módulos válidos) y no ejecuta la auditoría.'
+      status: passed
+      evidence: 'Test (AC-02): --module ''cli'' → scope { kind:''module'', modules:[''@kaddo/cli''] }; un módulo desconocido lanza ''Unknown module'' y no ejecuta la auditoría.'
+      reference: 'packages/cli/tests/audit-run-command.test.ts'
+      method: manual
+    - criterion: '**AC-03:** La correlación es inline: el reporte y los artefactos incluyen hallazgos correlacionados (referencias a ADRs/capacidades/WIs, owners, riesgos y `matchStrength`).'
+      status: passed
+      evidence: 'Test (AC-03): con un WI cuyos codeGlobs cubren el archivo del hallazgo, el reporte incluye la correlación (WIs: WI-010) producida por correlateFindings inline.'
+      reference: 'packages/cli/tests/audit-run-command.test.ts'
+      method: manual
+    - criterion: '**AC-04:** Por defecto escribe solo artefactos derivados en `.kaddo/audits/AUD-xxx.{json,md}` e imprime un resumen humano (estado del run, nº de hallazgos por confianza, cobertura y ruta del reporte); no escribe en `knowledge/`.'
+      status: passed
+      evidence: 'Test (AC-04): por defecto escribe solo .kaddo/audits/AUD-001.{json,md} y no crea knowledge/tech/audits; el resumen humano se imprime (printSummary).'
+      reference: 'packages/cli/tests/audit-run-command.test.ts'
+      method: manual
+    - criterion: '**AC-05:** `--json` emite el `AuditRun` JSON determinista a stdout (sin el resumen humano).'
+      status: passed
+      evidence: '--json emite serializeAuditRun(result.run) a stdout en vez del resumen; verificado en el smoke real (JSON determinista del AuditRun).'
+      reference: 'packages/cli/src/commands/audit.ts'
+      method: manual
+    - criterion: '**AC-06:** `--publish` escribe el reporte canónico en `knowledge/tech/audits/AUD-xxx.md` solo tras confirmación humana; `--yes` omite el prompt; si no se confirma, no se escribe ningún artefacto canónico.'
+      status: passed
+      evidence: 'Test (AC-06): --publish escribe knowledge/tech/audits/AUD-001.md solo si confirm() devuelve true; declinado o sin TTY sin --yes no publica; --yes omite el prompt.'
+      reference: 'packages/cli/tests/audit-run-command.test.ts'
+      method: manual
+    - criterion: '**AC-07:** Una herramienta ausente o que falla produce un run `partial`/`failed` reflejado en el resumen y el reporte; nunca un resultado limpio, y el comando no reclasifica hallazgos.'
+      status: passed
+      evidence: 'Test (AC-07): una herramienta ausente (tsc exit 127) hace el run ''partial'' con coverage.complete=false y tsc en notEvaluated; nunca un resultado limpio. Confirmado en el smoke real (tsc no en PATH → partial).'
+      reference: 'packages/cli/tests/audit-run-command.test.ts'
+      method: manual
+    - criterion: '**AC-08:** Códigos de salida: `0` cuando el run se ejecuta (`completed`/`partial`); distinto de `0` solo cuando el run es `failed` (todas las herramientas fallaron) o ante un error de uso (alcance ambiguo / módulo desconocido). La mera existencia de hallazgos no hace fallar el comando.'
+      status: passed
+      evidence: 'runAuditRunCommand fija process.exitCode = run.status===''failed'' ? 1 : 0, y 2 ante error de uso (resolveAuditScope lanza). La existencia de hallazgos no cambia el código de salida.'
+      reference: 'packages/cli/src/commands/audit.ts'
+      method: manual
+    - criterion: '**AC-09:** La orquestación del comando se expone como una función con dependencias inyectadas (runner de comandos, cwd, confirmación) testeable sin spawnear procesos ni escribir en el repo real; el comando está registrado en la CLI.'
+      status: passed
+      evidence: 'Test (AC-09): performAuditRun es testeable con dependencias inyectadas (run, confirm, createdAt, idFor, hasTty) sin spawnear procesos ni escribir el repo real; el comando ''audit run'' está registrado en packages/cli/src/index.ts.'
+      reference: 'packages/cli/tests/audit-run-command.test.ts'
+      method: manual
+    - criterion: '**AC-10:** El comando queda documentado en `apps/docs` (en + es) y se publica vía Gate B (bump de las 5 versiones, tag, publish de `@kaddo/cli` + `@kaddo/mcp`).'
+      status: passed
+      evidence: 'Comando documentado en apps/docs/src/content/docs/commands/audit.md y su versión es/, con entrada en el sidebar (astro.config.mjs). Publicado vía Gate B: cli/admin/admin-server/mcp/integrations a 3.146.0, tag v3.146.0 y publish de @kaddo/cli + @kaddo/mcp (logs ''✅ Published package @kaddo/cli@3.146.0'' y ''@kaddo/mcp@3.146.0'').'
+      reference: 'apps/docs/src/content/docs/commands/audit.md'
+      method: manual
 source: initiative
 source_id: AUD-C8
 source_initiative: INI-001
 affected_modules:
   - cli
+  - docs
 source_signals:
   - EP-001 AC-3
   - EP-001 AC-10
@@ -169,4 +253,37 @@ reporte en `knowledge/tech/audits/AUD-xxx.md`.
 
 ## 9. Learning
 
-_What did we learn? Update after completion._
+Entregado en **v3.146.0** (módulos `cli` + `docs`): el **primer release** del motor de auditoría (EP-001 /
+INI-001). Esta WI cablea las 7 slices de Core que estaban cerradas sin release y las publica
+(`@kaddo/cli` + `@kaddo/mcp`).
+
+### Un comando que solo compone
+`kaddo audit run` no tiene lógica de negocio: compone las funciones puras de Core ya exportadas (discover,
+resolveAuditScope, runAudit, correlateFindings, renderAuditReport, writeAuditArtifacts). La capa de comando
+solo inyecta IO real y presenta. Por eso `performAuditRun` se separa del wrapper de CLI: recibe dependencias
+(runner, cwd, confirm, reloj, id) y se prueba el flujo entero sin spawnear procesos ni tocar el repo real.
+
+### Honestidad validada en producción
+El smoke real sobre este repo lo demostró: `pnpm audit` devolvió **164 advisories** reales (hallazgos
+`confirmed`), y como `tsc` no está directamente en el PATH, el run quedó **`partial`** con `tsc` en
+`notEvaluated` — nunca un resultado limpio. La cadena de honestidad (analizador→orquestador→reporte) funciona
+contra un árbol real, no solo en tests. (Nota: invocar `tsc` vía el binario local del PM es una mejora futura
+del analizador, WI-093; no cambia el contrato.)
+
+### Seguridad por defecto
+Por defecto el comando solo escribe **derivados** en `.kaddo/audits`; el reporte canónico en
+`knowledge/tech/audits` es opt-in (`--publish`) y **confirmado** (sin TTY y sin `--yes` no publica). La
+auditoría no altera el conocimiento sin autorización explícita (EP-001 AC-10). Los códigos de salida son
+CI-safe: los hallazgos nunca hacen fallar el comando; solo un run `failed` (todas las herramientas fallan) o
+un error de uso.
+
+### Release acumulado
+Siete slices de Core cerradas sin release y publicadas juntas en v3.146.0 cuando por fin hubo valor de cara al
+usuario: releases atados a valor visible, no a cada slice interna. CI verde antes del tag; tag sobre el HEAD
+validado; publish por `pnpm publish` con provenance.
+
+### Siguiente
+AUD-C9 (`kaddo audit report`: consultar/filtrar reportes), AUD-C10 (relacionar hallazgos con Work Items +
+dedup con aprobación) y AUD-C11 (seguimiento nuevos/persistentes/resueltos entre auditorías). El motor y el
+primer comando ya están en manos de los usuarios.
+
