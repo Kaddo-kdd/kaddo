@@ -122,6 +122,19 @@ describe('Audit read API', () => {
       fs.rmSync(outside, { recursive: true, force: true })
     }
   })
+  it('rejects a symlinked discovery directory before reading outside the project', async () => {
+    const outside = fs.mkdtempSync(path.join(os.tmpdir(), 'kaddo-discovery-outside-'))
+    const linked = path.join(dir, 'src')
+    try {
+      fs.symlinkSync(outside, linked, process.platform === 'win32' ? 'junction' : 'dir')
+      const response = await app.inject({ method: 'POST', url: '/api/v1/admin/audits/run', headers: { cookie, origin: 'http://127.0.0.1:4173' }, payload: { requestId: '7819db66-e306-43ed-a059-77319afcc924', confirmed: true } })
+      expect(response.statusCode).toBe(400)
+      expect(response.body).not.toContain(outside)
+    } finally {
+      if (fs.existsSync(linked)) fs.unlinkSync(linked)
+      fs.rmSync(outside, { recursive: true, force: true })
+    }
+  })
   it.skipIf(process.env.KADDO_TEST_DOCKER_SANDBOX === '1')('fails closed without an isolated runner and does not create a request marker', async () => {
     const server = (await createAdminServer({ projectDir: dir, storage: storage(), staticDir: path.join(dir, 'static') })).app
     try {

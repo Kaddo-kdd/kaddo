@@ -55,4 +55,14 @@ setTimeout(() => process.exit(13), 5000);
     expect(Object.values(result.advisories).length).toBeGreaterThan(0)
     expect(Object.values(result.advisories).some((a: any) => a.module_name === 'lodash')).toBe(true)
   }, 90_000)
+
+  it.skipIf(process.env.KADDO_TEST_DOCKER_SANDBOX !== '1')('audits a pnpm v9 lockfile through the isolated registry client', async () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'kaddo-registry-pnpm-'))
+    try {
+      fs.writeFileSync(path.join(root, 'pnpm-lock.yaml'), `lockfileVersion: '9.0'\npackages:\n  'lodash@4.17.20': {}\n`)
+      const result = await createAuditSandboxRunner(root)('pnpm', ['audit', '--json'], { cwd: root })
+      const parsed = JSON.parse(result.stdout)
+      expect(Object.values(parsed.advisories).some((a: any) => a.module_name === 'lodash')).toBe(true)
+    } finally { fs.rmSync(root, { recursive: true, force: true }) }
+  }, 90_000)
 })
