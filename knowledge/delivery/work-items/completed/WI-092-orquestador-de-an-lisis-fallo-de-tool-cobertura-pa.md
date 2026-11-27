@@ -3,7 +3,8 @@ type: feature
 id: WI-092
 title: Orquestador de análisis (fallo de tool = cobertura parcial)
 knowledge_level: K3
-status: in-progress
+status: completed
+completed_at: 2026-11-26
 phase: now
 priority: high
 initiative: INI-001
@@ -11,6 +12,75 @@ domains:
   - Tech
 code: []
 created_at: '2026-11-27'
+implementation_status: completed
+validation_status: passed
+implementation_evidence:
+  repositories:
+    cli:
+      role: core
+      status: completed
+      changed_paths:
+        - packages/cli/src/core/audit-orchestrator.ts
+        - packages/cli/src/core.ts
+        - packages/cli/tests/audit-orchestrator.test.ts
+      validations:
+        - command: npx vitest run packages/cli/tests/audit-orchestrator.test.ts
+          status: passed
+        - command: pnpm --filter @kaddo/cli build
+          status: passed
+        - command: pnpm test
+          status: passed
+  ac_verifications:
+    - criterion: '**AC-01:** Existe una interfaz de analizador (adaptador) con `name`, `version?` y `run(context)` que devuelve hallazgos (`AuditFinding[]`) y, opcionalmente, áreas evaluadas / no evaluadas; `run` puede ser síncrono o asíncrono.'
+      status: passed
+      evidence: 'El tipo Analyzer define name, version? y run(context) que devuelve AnalyzerResult (findings + evaluated/notEvaluated + status?/reason?); run puede ser síncrono o asíncrono (se await siempre).'
+      reference: 'packages/cli/src/core/audit-orchestrator.ts'
+      method: manual
+    - criterion: '**AC-02:** `runAudit({ id, createdAt, scope, analyzers, context })` ejecuta cada analizador y ensambla un `AuditRun` reutilizando el contrato de Core (`buildAuditRun`), con los hallazgos deduplicados por id estable.'
+      status: passed
+      evidence: 'Test (AC-02): runAudit ejecuta cada analizador y ensambla un AuditRun vía buildAuditRun; los hallazgos repetidos entre analizadores se deduplican por id estable (test de deduplicación).'
+      reference: 'packages/cli/tests/audit-orchestrator.test.ts'
+      method: manual
+    - criterion: '**AC-03:** Un analizador que lanza o rechaza queda aislado: se registra como `AuditToolRun` con `status: ''failed''` y su razón, y su área queda en `notEvaluated`, sin abortar la ejecución de los demás analizadores.'
+      status: passed
+      evidence: 'Test (AC-03): un analizador que lanza (y otro async que rechaza) se registra como AuditToolRun failed con su reason, queda en coverage.notEvaluated, y los analizadores previos y posteriores siguen aportando hallazgos.'
+      reference: 'packages/cli/tests/audit-orchestrator.test.ts'
+      method: manual
+    - criterion: '**AC-04:** Cualquier analizador fallido u omitido hace el run `partial` (o `failed` si todos fallan) con `coverage.complete = false`; nunca `completed` cuando una herramienta falló.'
+      status: passed
+      evidence: 'Test (AC-04): un fallo hace el run ''partial'' (todos fallan → ''failed'') con coverage.complete=false; un analizador ''skipped'' también hace el run partial sin ser un fallo. Nunca ''completed'' ante fallo.'
+      reference: 'packages/cli/tests/audit-orchestrator.test.ts'
+      method: manual
+    - criterion: '**AC-05:** Los hallazgos conservan la `severity` y la `confidence` (confirmado/likely/inferido) que entrega el analizador; el orquestador no reclasifica ni sube una inferencia a confirmada.'
+      status: passed
+      evidence: 'Test (AC-05): severity y confidence del hallazgo pasan sin cambios (critical + inferred); el orquestador no reclasifica ni sube inferencias a confirmadas.'
+      reference: 'packages/cli/tests/audit-orchestrator.test.ts'
+      method: manual
+    - criterion: '**AC-06:** Cada hallazgo registra su `provenance` (qué analizador lo produjo) y el run lista los tools con su `name`, `version?` y resultado.'
+      status: passed
+      evidence: 'Test (AC-06): la provenance del hallazgo se conserva (eslint-plugin-x) y el run lista cada tool con name, version? y status.'
+      reference: 'packages/cli/tests/audit-orchestrator.test.ts'
+      method: manual
+    - criterion: '**AC-07:** Dado el mismo conjunto de analizadores y contexto, el `AuditRun` producido es idéntico (orden estable de tools y hallazgos) y serializa con round-trip (`serializeAuditRun`).'
+      status: passed
+      evidence: 'Test (AC-07): dado el mismo conjunto de analizadores y contexto, serializeAuditRun(a) === serializeAuditRun(b) (orden estable de tools y hallazgos) con round-trip.'
+      reference: 'packages/cli/tests/audit-orchestrator.test.ts'
+      method: manual
+    - criterion: '**AC-08:** El orquestador es de solo lectura: no escribe conocimiento canónico ni muta las entradas; la persistencia (`writeAuditRun`) la decide el llamador.'
+      status: passed
+      evidence: 'Test (AC-08): runAudit no muta las entradas (el array de findings del analizador queda intacto) y no escribe conocimiento; la persistencia (writeAuditRun) la decide el llamador.'
+      reference: 'packages/cli/tests/audit-orchestrator.test.ts'
+      method: manual
+    - criterion: '**AC-09:** La función es pura (sin red más allá de lo que haga cada analizador; el núcleo de ensamblaje es determinista) y se exporta desde el barrel de Core (`packages/cli/src/core.ts`), reutilizable por CLI, MCP y Admin.'
+      status: passed
+      evidence: 'El núcleo de ensamblaje es determinista y puro (reutiliza buildAuditRun/dedupe); runAudit se exporta desde el barrel Core (packages/cli/src/core.ts) y un test lo importa desde ../src/core.js (AC-09).'
+      reference: 'packages/cli/src/core.ts'
+      method: manual
+    - criterion: '**AC-10:** Hay pruebas unitarias con analizadores de prueba que cubren: todos OK → `completed`; uno que lanza → `partial` + tool fallido + `notEvaluated`; todos fallan → `failed`; deduplicación entre analizadores; conservación de confianza; y registro de provenance.'
+      status: passed
+      evidence: 'packages/cli/tests/audit-orchestrator.test.ts cubre todos-ok→completed, lanza→partial+tool fallido+notEvaluated, async reject, todos fallan→failed, skipped→partial, dedup, conservación de confianza/provenance, no-mutación, determinismo+round-trip (10 tests en verde).'
+      reference: 'packages/cli/tests/audit-orchestrator.test.ts'
+      method: manual
 source: initiative
 source_id: AUD-C4
 source_initiative: INI-001
@@ -170,4 +240,34 @@ de serialización verificado.
 
 ## 9. Learning
 
-_What did we learn? Update after completion._
+Entregado en `main` (sin release; se publicará junto a `kaddo audit run`, AUD-C8). Módulo `cli` (Core); sin
+cambios en otras superficies ni escritura en `knowledge/`.
+
+### El motor, no una segunda implementación
+El orquestador no reimplementa la derivación de estado ni la cobertura: reutiliza `buildAuditRun` /
+`dedupeFindings` / `serializeAuditRun` (WI-090). Su responsabilidad nueva es **ejecutar** los analizadores
+(adaptadores) y **aislar** sus fallos. Así la honestidad de cobertura vive en un solo sitio y las tres
+superficies no pueden divergir.
+
+### Aislamiento de fallos
+Cada analizador se ejecuta bajo try/catch (siempre con `await`, así que un rechazo async se trata igual que
+un throw): un fallo se registra como `AuditToolRun` failed con su razón y no aborta a los demás. `buildAuditRun`
+convierte cualquier tool fallido en cobertura parcial y lo lista en `notEvaluated` — por eso el orquestador no
+vuelve a añadirlo (evita duplicarlo).
+
+### Sin reclasificación
+El orquestador pasa los hallazgos **tal cual**: conserva severity, confidence y provenance del analizador y no
+sube una inferencia a confirmada. La única normalización la hace `buildAuditRun` (status ausente → 'open'), que
+no toca severidad ni confianza. Un `skipped` es cobertura parcial, no un fallo.
+
+### Determinismo y pureza
+Ejecución secuencial en el orden dado; orden estable de tools y de hallazgos; `id`/`createdAt` inyectados por
+el llamador → el mismo conjunto de analizadores y contexto produce un `AuditRun` idéntico que serializa con
+round-trip. No muta las entradas ni persiste nada (eso lo decide el llamador con `writeAuditRun`).
+
+### Límite
+Solo el motor. Los analizadores reales de TypeScript (AUD-C5), la correlación (AUD-C6), el reporte (AUD-C7) y
+el comando `kaddo audit run` (AUD-C8) son candidatos posteriores. La paralelización y los timeouts por
+analizador se pueden añadir después sin cambiar el contrato. El siguiente paso natural es AUD-C5 (analizadores)
+sobre esta interfaz, o AUD-C3 (alcance por módulo) en paralelo.
+
