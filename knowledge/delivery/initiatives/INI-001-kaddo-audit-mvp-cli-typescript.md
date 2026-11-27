@@ -90,6 +90,7 @@ candidates:
     dependencies:
       - AUD-C7
       - AUD-C3
+    materialized_as: WI-097
   - id: AUD-C9
     title: kaddo audit report
     type: feature
