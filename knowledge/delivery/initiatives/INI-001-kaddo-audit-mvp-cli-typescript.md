@@ -20,6 +20,7 @@ candidates:
       - EP-001 AC-5
       - EP-001 AC-8
       - EP-001 AC-9
+    materialized_as: WI-090
   - id: AUD-C2
     title: 'Discover: stack, módulos, dependencias y configuración'
     type: feature
