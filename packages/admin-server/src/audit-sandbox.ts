@@ -28,7 +28,7 @@ export function createAuditSandboxRunner(projectDir: string): CommandRunner {
     if (relative === '..' || relative.startsWith(`..${path.sep}`) || path.isAbsolute(relative)) throw new Error('Analyzer working directory outside project.')
     const workdir = relative ? `/workspace/${relative.split(path.sep).join('/')}` : '/workspace'
     const name = `kaddo-audit-${randomUUID()}`
-    const dockerArgs = ['--host', host, 'run', '--name', name, '--rm', '--pull=never', '--network=none', '--read-only', '--cap-drop=ALL', '--security-opt=no-new-privileges', '--pids-limit=128', '--memory=512m', '--cpus=1', '--user=65534:65534', '--mount', `type=bind,src=${root},dst=/workspace,readonly,bind-nonrecursive`, '--workdir', workdir, '--entrypoint', 'node', IMAGE, '/workspace/node_modules/typescript/bin/tsc', ...args]
+    const dockerArgs = ['--host', host, 'run', '--name', name, '--rm', '--pull=never', '--network=none', '--read-only', '--cap-drop=ALL', '--security-opt=no-new-privileges', '--pids-limit=128', '--memory=512m', '--cpus=1', '--user=65534:65534', '--mount', `type=bind,src=${root},dst=/workspace,readonly,bind-recursive=disabled`, '--workdir', workdir, '--entrypoint', 'node', IMAGE, '/workspace/node_modules/typescript/bin/tsc', ...args]
     try {
       const result = await execFileAsync('docker', dockerArgs, { timeout: 120_000, maxBuffer: 4 * 1024 * 1024, windowsHide: true })
       return { stdout: result.stdout, stderr: result.stderr, exitCode: 0 }
