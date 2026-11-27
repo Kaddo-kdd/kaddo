@@ -621,6 +621,15 @@ export function linkAuditFinding(dir: string, input: { runId: string; findingId:
   const run = readAuditRun(dir, input.runId)
   if (!run?.findings.some(f => f.id === input.findingId)) throw new WorkItemWriteError('INVALID_INPUT', 'Audit finding not found.')
   const { filePath, relPath } = findArtifact(dir, input.workItemId)
+  // Validate the resolved file at the point of IO — no symlinked Work Item, and it must stay within the
+  // project — so a file swapped for an out-of-project symlink after an earlier check cannot be read or
+  // written (TOCTOU). The check is adjacent to the read below, with no await between.
+  const root = fs.realpathSync(dir)
+  if (fs.lstatSync(filePath).isSymbolicLink()) throw new WorkItemWriteError('INVALID_INPUT', 'Work Item file is a symlink.')
+  const realRel = path.relative(root, fs.realpathSync(filePath))
+  if (realRel === '..' || realRel.startsWith(`..${path.sep}`) || path.isAbsolute(realRel)) {
+    throw new WorkItemWriteError('INVALID_INPUT', 'Work Item resolves outside project.')
+  }
   const raw = readFile(filePath)
   if (revisionOf(raw) !== input.expectedRevision) throw new WorkItemWriteError('WORK_ITEM_CONFLICT', 'Work Item revision is stale.')
   const { data, content } = matter(raw)

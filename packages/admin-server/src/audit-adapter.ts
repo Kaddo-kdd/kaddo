@@ -26,9 +26,26 @@ function assertAuditStorage(dir: string): void {
   const root = fs.realpathSync(dir)
   const auditDir = path.join(root, '.kaddo', 'audits')
   if (!fs.existsSync(auditDir)) return
+  // The store directory itself must be a real directory, never a symlink — a symlinked store can be swapped
+  // in to redirect reads outside the project after an earlier validation (TOCTOU).
+  if (fs.lstatSync(auditDir).isSymbolicLink()) throw new Error('Symlinked audit storage is unsupported.')
   const inside = (target: string) => { const relative = path.relative(root, fs.realpathSync(target)); return relative !== '..' && !relative.startsWith(`..${path.sep}`) && !path.isAbsolute(relative) }
   if (!inside(auditDir)) throw new Error('Audit storage outside project.')
-  for (const name of fs.readdirSync(auditDir)) if (/^AUD-\d+\.json$/.test(name) && !inside(path.join(auditDir, name))) throw new Error('Audit file outside project.')
+  for (const name of fs.readdirSync(auditDir)) {
+    if (!/^AUD-\d+\.json$/.test(name)) continue
+    const file = path.join(auditDir, name)
+    if (fs.lstatSync(file).isSymbolicLink() || !inside(file)) throw new Error('Audit file outside project.')
+  }
+}
+
+/**
+ * Read an audit view with the storage validated atomically at the point of read: assertAuditStorage runs
+ * immediately before the synchronous getAuditView, with no await in between, so a store swapped in during an
+ * earlier async step (e.g. isolated discovery) is rejected before any file is read.
+ */
+function readAuditViewGuarded(dir: string, id: string, snapshot: IsolatedDiscovery) {
+  assertAuditStorage(dir)
+  return getAuditView(dir, id, snapshot)
 }
 
 /** Discovery recursively reads knowledge; reject paths resolving outside the configured project first. */
@@ -52,7 +69,7 @@ export async function getAuditAdmin(dir: string, id: string, filters: AuditFindi
   assertAuditStorage(dir)
   assertNoNestedMounts(fs.realpathSync(dir))
   const snapshot = await discover(dir)
-  const { run, findings } = getAuditView(dir, id, snapshot)
+  const { run, findings } = readAuditViewGuarded(dir, id, snapshot)
   if (opts.module) {
     const modules = snapshot.discovery.modules
     const matches = modules.filter(m => m.name === opts.module || m.path === opts.module)
@@ -64,14 +81,15 @@ export async function getAuditAdmin(dir: string, id: string, filters: AuditFindi
 export async function previewAuditAdmin(dir: string, id: string, discover: (dir: string) => Promise<IsolatedDiscovery> = discoverAuditIsolated) {
   assertAuditStorage(dir)
   assertNoNestedMounts(fs.realpathSync(dir))
-  const { run, findings } = getAuditView(dir, id, await discover(dir))
+  const snapshot = await discover(dir)
+  const { run, findings } = readAuditViewGuarded(dir, id, snapshot)
   return previewAuditPlan(run, findings)
 }
 export async function compareAuditsAdmin(dir: string, beforeId: string, afterId: string, discover: (dir: string) => Promise<IsolatedDiscovery> = discoverAuditIsolated) {
   assertAuditStorage(dir)
   assertNoNestedMounts(fs.realpathSync(dir))
   const snapshot = await discover(dir)
-  return compareAuditRuns(getAuditView(dir, beforeId, snapshot).run, getAuditView(dir, afterId, snapshot).run)
+  return compareAuditRuns(readAuditViewGuarded(dir, beforeId, snapshot).run, readAuditViewGuarded(dir, afterId, snapshot).run)
 }
 export function linkAuditAdmin(dir: string, input: { runId: string; findingId: string; workItemId: string; expectedRevision: string; confirmed: boolean }) {
   assertAuditStorage(dir)
