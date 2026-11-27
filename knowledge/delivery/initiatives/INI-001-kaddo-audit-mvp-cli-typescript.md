@@ -40,6 +40,7 @@ candidates:
       - EP-001 AC-3
     dependencies:
       - AUD-C2
+    materialized_as: WI-096
   - id: AUD-C4
     title: Orquestador de análisis (fallo de tool = cobertura parcial)
     type: feature
