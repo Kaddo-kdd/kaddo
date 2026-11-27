@@ -44,6 +44,28 @@ export {
   type EpicScenario,
 } from './core/epic-recommendation.js'
 export {
+  stableFindingId,
+  dedupeFindings,
+  buildAuditRun,
+  serializeAuditRun,
+  parseAuditRun,
+  nextAuditRunId,
+  writeAuditRun,
+  readAuditRun,
+  AUDITS_DIR,
+  type AuditRun,
+  type AuditFinding,
+  type AuditScope,
+  type AuditToolRun,
+  type AuditCoverage,
+  type AuditRunStatus,
+  type FindingSeverity,
+  type FindingConfidence,
+  type FindingStatus,
+  type FindingLocation,
+  type FindingReferences,
+} from './core/audit.js'
+export {
   createDeliveryPlan,
   createEpic,
   associateInitiativeWithEpic,
