@@ -3,7 +3,8 @@ type: feature
 id: WI-102
 title: Audit API Contracts & Core Integration
 knowledge_level: K3
-status: in-progress
+status: completed
+completed_at: 2026-11-27
 phase: now
 initiative: INI-002
 domains:
@@ -140,4 +141,34 @@ Fixtures de auditorías y Work Items aislados; pruebas de Core, CLI y Admin Serv
 
 ## Learning
 
-_What did we learn? Update after completion._
+Primer candidato de INI-002: expone contratos de Admin Server sobre la misma lógica Core de auditoría sin
+duplicar orquestación, con límites de seguridad verificados.
+
+### La lógica de ejecución vive en Core, no en el adaptador CLI
+La orquestación completa de `audit run` estaba en `commands/audit.ts`. Se extrajo a Core (`executeAudit`,
+`getAuditView`, proyecciones de consulta/comparación/preview) para que CLI y Admin deleguen en la misma
+implementación: una sola fuente de verdad, sin prompts en Core y con el comportamiento CLI preservado por
+pruebas de paridad.
+
+### Seguridad: el patrón vulnerable era validar-luego-reresolver
+El fallo de seguridad no era una validación ausente, sino **temporal**: las rutas se validaban una vez y la IO
+real re-resolvía la cadena de ruta más tarde (a través de un `await`, o vía `findArtifact`). Un symlink
+intercambiado en esa ventana —p. ej. durante el descubrimiento aislado— redirigía la lectura/escritura fuera
+del proyecto (TOCTOU). El descubrimiento y la correlación ya usaban instantáneas aisladas; los puntos que
+faltaban eran el **almacén de auditorías** (lectura) y la **asociación de Work Items** (lectura/escritura),
+que seguían tocando rutas del host tras comprobaciones no atómicas.
+
+### La corrección: validar en el punto de IO, sin ventana
+- Lectura: `readAuditViewGuarded` re-ejecuta `assertAuditStorage` **inmediatamente antes** del `getAuditView`
+  síncrono, sin `await` intermedio; y `assertAuditStorage` rechaza un `.kaddo/audits` enlazado (`lstat`) o que
+  resuelve fuera del proyecto (`realpath` + comprobación de contención).
+- Escritura/lectura de Work Item: `linkAuditFinding` valida el archivo resuelto (rechaza symlink y ruta fuera
+  del proyecto) justo antes de leer/escribir. Como está en Core, protege a CLI y Admin por igual.
+- La prueba de carrera pasó de **demostrar** la fuga a **verificar el rechazo** del intercambio, como guardia
+  de regresión.
+
+### Límite honesto
+El vector demostrado queda cerrado, pero una carrera externa dentro del mismo tick, entre la comprobación y la
+syscall adyacente, no se cierra por completo en todas las plataformas: Node no expone `openat`/`O_NOFOLLOW` por
+componente de ruta. Se documenta como riesgo residual aceptado; la validación real end-to-end (bind-mounts,
+registro npm) ocurre en el workflow de aislamiento con Docker, no en el gate unitario.
