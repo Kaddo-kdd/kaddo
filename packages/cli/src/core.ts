@@ -66,6 +66,18 @@ export {
   type FindingReferences,
 } from './core/audit.js'
 export {
+  discoverProject,
+  serializeDiscovery,
+  parseDiscovery,
+  type ProjectDiscovery,
+  type DiscoveredStack,
+  type DiscoveredModule,
+  type ModuleDependencies,
+  type DiscoveredDependencies,
+  type DiscoveredConfigs,
+  type KnowledgeRef,
+} from './core/discovery.js'
+export {
   createDeliveryPlan,
   createEpic,
   associateInitiativeWithEpic,
