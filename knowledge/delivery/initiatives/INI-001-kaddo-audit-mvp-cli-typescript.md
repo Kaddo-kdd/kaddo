@@ -59,6 +59,7 @@ candidates:
       - EP-001 AC-5
     dependencies:
       - AUD-C4
+    materialized_as: WI-093
   - id: AUD-C6
     title: 'Correlación de hallazgos con ADRs, ownership, WIs y riesgos'
     type: feature
