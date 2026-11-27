@@ -49,6 +49,7 @@ candidates:
       - EP-001 AC-4
     dependencies:
       - AUD-C1
+    materialized_as: WI-092
   - id: AUD-C5
     title: Analizadores TypeScript (código y dependencias) con evidencia
     type: feature
