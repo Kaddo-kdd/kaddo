@@ -117,6 +117,7 @@ export {
   type AuditRunSummary,
   type AuditFindingFilters,
 } from './core/audit-query.js'
+export { previewAuditPlan } from './core/audit-plan.js'
 export {
   createDeliveryPlan,
   createEpic,

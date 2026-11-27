@@ -60,7 +60,7 @@ import { runStart } from './commands/start.js'
 import { runAdmin } from './commands/admin.js'
 import { runWorkItemImport } from './commands/work-item.js'
 import { runPocReport } from './commands/poc.js'
-import { runAuditRunCommand, runAuditReportCommand, runAuditLinkCommand } from './commands/audit.js'
+import { runAuditRunCommand, runAuditReportCommand, runAuditLinkCommand, runAuditPlanCommand } from './commands/audit.js'
 import { runVerify } from './commands/verify.js'
 import { runKnowledgeConsolidate } from './commands/knowledge.js'
 import {
@@ -176,6 +176,12 @@ auditCmd
   .description('Associate an audit finding with an existing Work Item after explicit approval')
   .option('--yes', 'Confirm the association')
   .action(runAuditLinkCommand)
+
+auditCmd
+  .command('plan [id]')
+  .description('Preview remediation actions for a stored audit without modifying Planning')
+  .option('--json', 'Emit the preview as JSON')
+  .action(runAuditPlanCommand)
 
 auditCmd
   .command('run')

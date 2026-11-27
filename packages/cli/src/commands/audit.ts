@@ -27,6 +27,7 @@ import {
   queryAuditFindings,
   getWorkItemForEdit,
   linkAuditFinding,
+  previewAuditPlan,
   type AuditRun,
   type AuditFinding,
   type AuditRunSummary,
@@ -240,6 +241,7 @@ export function performAuditReport(opts: AuditReportOptions, deps: AuditReportDe
 
   const id = opts.id ?? runs.at(-1)?.id
   if (!id) throw new Error('No audits found. Run `kaddo audit run` first.')
+  if (!/^AUD-\d+$/.test(id)) throw new Error('Invalid audit id.')
 
   const run = readAuditRun(dir, id)
   if (!run) throw new Error(`Audit "${id}" not found in .kaddo/audits/.`)
@@ -302,4 +304,18 @@ export function runAuditReportCommand(idArg: string | undefined, opts: Omit<Audi
     process.stderr.write(`${err instanceof Error ? err.message : String(err)}\n`)
     process.exitCode = 2
   }
+}
+
+export function runAuditPlanCommand(id: string | undefined, opts: { json?: boolean }): void {
+  try {
+    const result = performAuditReport({ id }, { dir: cwd() })
+    if (result.kind !== 'run') throw new Error('An audit run is required.')
+    const plan = previewAuditPlan(result.run, result.findings as import('../core/audit-correlation.js').CorrelatedFinding[])
+    if (opts.json) process.stdout.write(JSON.stringify(plan, null, 2) + '\n')
+    else {
+      process.stdout.write(`Audit ${plan.auditId} — ${plan.status}${plan.coverage.complete ? '' : ' (coverage incomplete)'}\n`)
+      if (plan.coverage.notEvaluated.length) process.stdout.write(`Not evaluated: ${plan.coverage.notEvaluated.join(', ')}\n`)
+      for (const action of plan.actions) process.stdout.write(`  ${action.findingId} [${action.severity}/${action.confidence}] ${action.title} — ${action.action}\n    Evidence: ${action.evidence}\n    Recommendation: ${action.recommendation}\n    Approved: ${action.confirmedWorkItems.join(', ') || '—'}; suggested: ${action.suggestedWorkItems.join(', ') || '—'}\n`)
+    }
+  } catch (error) { process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`); process.exitCode = 2 }
 }
