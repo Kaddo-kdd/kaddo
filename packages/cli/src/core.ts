@@ -103,6 +103,11 @@ export {
   type DiscoveredModuleRef,
 } from './core/audit-correlation.js'
 export {
+  renderAuditReport,
+  writeAuditArtifacts,
+  type AuditArtifacts,
+} from './core/audit-report.js'
+export {
   createDeliveryPlan,
   createEpic,
   associateInitiativeWithEpic,
