@@ -3,7 +3,8 @@ type: feature
 id: WI-096
 title: Selección de alcance por módulo (monorepo)
 knowledge_level: K2
-status: in-progress
+status: completed
+completed_at: 2026-11-26
 phase: now
 priority: high
 initiative: INI-001
@@ -11,6 +12,70 @@ domains:
   - Tech
 code: []
 created_at: '2026-11-27'
+implementation_status: completed
+validation_status: passed
+implementation_evidence:
+  repositories:
+    cli:
+      role: core
+      status: completed
+      changed_paths:
+        - packages/cli/src/core/audit-scope.ts
+        - packages/cli/src/core.ts
+        - packages/cli/tests/audit-scope.test.ts
+      validations:
+        - command: npx vitest run packages/cli/tests/audit-scope.test.ts
+          status: passed
+        - command: pnpm --filter @kaddo/cli build
+          status: passed
+        - command: pnpm test
+          status: passed
+  ac_verifications:
+    - criterion: '**AC-01:** `resolveAuditScope(selection, modules)` es una función pura que devuelve un `AuditScope` del contrato (`project` | `module` | `paths`).'
+      status: passed
+      evidence: 'resolveAuditScope(selection, modules) es pura y devuelve un AuditScope del contrato (WI-090): project | module | paths.'
+      reference: 'packages/cli/src/core/audit-scope.ts'
+      method: manual
+    - criterion: '**AC-02:** Sin selección (o con selección explícita de proyecto) devuelve `{ kind: ''project'' }`.'
+      status: passed
+      evidence: 'Test (AC-02): sin selección y con project:true devuelve { kind: ''project'' }.'
+      reference: 'packages/cli/tests/audit-scope.test.ts'
+      method: manual
+    - criterion: '**AC-03:** Una selección por módulo resuelve cada id contra el inventario del Discover (WI-091), emparejando por nombre (`@kaddo/cli`) o por id corto (`cli`), y devuelve `{ kind: ''module'', modules }` con los nombres canónicos en orden estable.'
+      status: passed
+      evidence: 'Test (AC-03): ''cli'' (id corto) y ''@kaddo/admin'' (nombre) resuelven a los nombres canónicos; varios módulos se deduplican y ordenan.'
+      reference: 'packages/cli/tests/audit-scope.test.ts'
+      method: manual
+    - criterion: '**AC-04:** Un id de módulo desconocido lanza un error que lista los módulos válidos; nunca degrada silenciosamente a auditar el proyecto completo.'
+      status: passed
+      evidence: 'Test (AC-04): un módulo desconocido lanza ''Unknown module "nope". Valid modules: @kaddo/admin, @kaddo/cli.''; nunca degrada a proyecto completo.'
+      reference: 'packages/cli/tests/audit-scope.test.ts'
+      method: manual
+    - criterion: '**AC-05:** Una selección por rutas devuelve `{ kind: ''paths'', paths }` con rutas normalizadas (POSIX, deduplicadas y ordenadas).'
+      status: passed
+      evidence: 'Test (AC-05): las rutas se normalizan a POSIX, se deduplican y se ordenan ({ kind: ''paths'', paths }).'
+      reference: 'packages/cli/tests/audit-scope.test.ts'
+      method: manual
+    - criterion: '**AC-06:** Módulos y rutas son mutuamente excluyentes: proveer ambos es un error (alcance ambiguo).'
+      status: passed
+      evidence: 'Test (AC-06): proveer modules y paths a la vez lanza un error de alcance ambiguo.'
+      reference: 'packages/cli/tests/audit-scope.test.ts'
+      method: manual
+    - criterion: '**AC-07:** La resolución es determinista: la misma selección produce el mismo `AuditScope` (orden estable de módulos y rutas).'
+      status: passed
+      evidence: 'Test (AC-07): la misma selección produce el mismo AuditScope (orden estable de módulos/rutas).'
+      reference: 'packages/cli/tests/audit-scope.test.ts'
+      method: manual
+    - criterion: '**AC-08:** La función es de solo lectura y pura, se exporta desde el barrel de Core (`packages/cli/src/core.ts`), y el `AuditScope` resultante es compatible con el orquestador (`runAudit`, WI-092).'
+      status: passed
+      evidence: 'Test (AC-08): el AuditScope resuelto enchufa en runAudit (WI-092) y conserva { kind:''module'', modules:[''@kaddo/cli''] }; resolveAuditScope se exporta desde el barrel Core y un test lo importa desde ../src/core.js.'
+      reference: 'packages/cli/tests/audit-scope.test.ts'
+      method: manual
+    - criterion: '**AC-09:** Hay pruebas unitarias con un inventario de módulos de prueba que cubren: proyecto por defecto, match por nombre y por id corto, módulo desconocido → error, normalización de rutas, exclusión mutua y determinismo.'
+      status: passed
+      evidence: 'packages/cli/tests/audit-scope.test.ts cubre proyecto por defecto, match por nombre y id corto, módulo desconocido→error, normalización de rutas, exclusión mutua y determinismo (11 tests en verde).'
+      reference: 'packages/cli/tests/audit-scope.test.ts'
+      method: manual
 source: initiative
 source_id: AUD-C3
 source_initiative: INI-001
@@ -159,4 +224,25 @@ desconocido lanza un error con la lista de módulos válidos; sin selección dev
 
 ## 9. Learning
 
-_What did we learn? Update after completion._
+Entregado en `main` (sin release; se publicará junto a `kaddo audit run`, AUD-C8). Módulo `cli` (Core); sin
+cambios en otras superficies.
+
+### Resolver acotado y honesto
+`resolveAuditScope` solo traduce la selección del usuario al `AuditScope` del contrato (WI-090); su forma ya
+estaba fijada, así que la única decisión real fue el emparejamiento de ids y el manejo de errores. Un módulo
+desconocido **lanza** y lista los módulos válidos: nunca se degrada en silencio a auditar el proyecto entero,
+que sería dar un alcance distinto del pedido. Módulos y rutas son mutuamente excluyentes para no dejar un
+alcance ambiguo.
+
+### Id canónico vs id corto
+Se empareja por `name` (`@kaddo/cli`) o por id corto (basename de ruta / segmento tras `/`, `cli`), pero se
+**almacena** el nombre canónico del inventario del Discover (WI-091), que es el identificador estable. La
+entrada es flexible; la salida, canónica y determinista (deduplicada y ordenada).
+
+### Cierra el núcleo
+Con esto quedan completas todas las piezas puras de Core del flujo (contrato, discover, orquestador,
+analizadores, correlación, reporte y alcance). El siguiente candidato, AUD-C8 (`kaddo audit run`), es el
+primer comando de cara al usuario: parsea los flags, llama a este resolver y cablea Discover→Analyze→
+Correlate→Report con herramientas reales; es también la WI con **release** (Gate B) que publica todo el motor
+acumulado.
+
