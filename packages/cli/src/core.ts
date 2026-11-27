@@ -112,6 +112,12 @@ export {
   type ScopeSelection,
 } from './core/audit-scope.js'
 export {
+  listAuditRuns,
+  queryAuditFindings,
+  type AuditRunSummary,
+  type AuditFindingFilters,
+} from './core/audit-query.js'
+export {
   createDeliveryPlan,
   createEpic,
   associateInitiativeWithEpic,

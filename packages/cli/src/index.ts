@@ -60,7 +60,7 @@ import { runStart } from './commands/start.js'
 import { runAdmin } from './commands/admin.js'
 import { runWorkItemImport } from './commands/work-item.js'
 import { runPocReport } from './commands/poc.js'
-import { runAuditRunCommand } from './commands/audit.js'
+import { runAuditRunCommand, runAuditReportCommand } from './commands/audit.js'
 import { runVerify } from './commands/verify.js'
 import { runKnowledgeConsolidate } from './commands/knowledge.js'
 import {
@@ -181,6 +181,19 @@ auditCmd
   .option('--yes', 'Skip the --publish confirmation prompt')
   .action(async (opts: { module?: string[]; paths?: string[]; json?: boolean; publish?: boolean; yes?: boolean }) => {
     await runAuditRunCommand(opts)
+  })
+
+auditCmd
+  .command('report [id]')
+  .description('List past audits or show one (read-only); filter its findings')
+  .option('--list', 'List the persisted audits instead of showing one')
+  .option('--severity <list>', 'Filter findings by severity (comma-separated: critical,high,medium,low,info)')
+  .option('--category <list>', 'Filter findings by category (comma-separated)')
+  .option('--confidence <list>', 'Filter findings by confidence (comma-separated: confirmed,likely,inferred)')
+  .option('--module <id...>', 'Filter findings by module')
+  .option('--json', 'Emit JSON instead of a human summary')
+  .action((id: string | undefined, opts: { list?: boolean; severity?: string; category?: string; confidence?: string; module?: string[]; json?: boolean }) => {
+    runAuditReportCommand(id, opts)
   })
 
 const capsuleCmd = program

@@ -22,9 +22,17 @@ import {
   writeAuditArtifacts,
   serializeAuditRun,
   nextAuditRunId,
+  readAuditRun,
+  listAuditRuns,
+  queryAuditFindings,
   type AuditRun,
+  type AuditFinding,
+  type AuditRunSummary,
+  type AuditFindingFilters,
   type CommandRunner,
   type DiscoveredModuleRef,
+  type FindingSeverity,
+  type FindingConfidence,
 } from '../core.js'
 import { discoverKnowledge } from '../services/knowledge-artifacts.js'
 import { loadOwners } from '../services/owners.js'
@@ -161,6 +169,116 @@ export async function runAuditRunCommand(opts: AuditRunOptions): Promise<void> {
       printSummary(result)
     }
     process.exitCode = result.run.status === 'failed' ? 1 : 0
+  } catch (err) {
+    process.stderr.write(`${err instanceof Error ? err.message : String(err)}\n`)
+    process.exitCode = 2
+  }
+}
+
+// ── kaddo audit report (WI-098, AUD-C9) — read-only query over persisted runs ─────────────────────────────
+
+export type AuditReportOptions = {
+  id?: string
+  list?: boolean
+  severity?: string
+  category?: string
+  confidence?: string
+  module?: string[]
+  json?: boolean
+}
+
+export type AuditReportDeps = { dir: string }
+
+export type AuditReportResult =
+  | { kind: 'list'; runs: AuditRunSummary[] }
+  | { kind: 'run'; run: AuditRun; findings: AuditFinding[] }
+
+const SEVERITIES: FindingSeverity[] = ['critical', 'high', 'medium', 'low', 'info']
+const CONFIDENCES: FindingConfidence[] = ['confirmed', 'likely', 'inferred']
+
+function parseList(value: string | undefined): string[] | undefined {
+  if (!value) return undefined
+  const parts = value.split(',').map((s) => s.trim().toLowerCase()).filter(Boolean)
+  return parts.length ? parts : undefined
+}
+
+function validateEnum<T extends string>(values: string[] | undefined, allowed: readonly T[], label: string): T[] | undefined {
+  if (!values) return undefined
+  for (const v of values) {
+    if (!allowed.includes(v as T)) {
+      throw new Error(`Invalid ${label} "${v}". Valid values: ${allowed.join(', ')}.`)
+    }
+  }
+  return values as T[]
+}
+
+/**
+ * Read-only query over persisted audit runs. With `list`, returns run summaries. Otherwise reads one run (by
+ * id, or the latest) and returns its filtered findings. Throws on a missing id/no audits; never writes.
+ */
+export function performAuditReport(opts: AuditReportOptions, deps: AuditReportDeps): AuditReportResult {
+  const dir = deps.dir
+  const runs = listAuditRuns(dir)
+
+  if (opts.list) return { kind: 'list', runs }
+
+  const id = opts.id ?? runs.at(-1)?.id
+  if (!id) throw new Error('No audits found. Run `kaddo audit run` first.')
+
+  const run = readAuditRun(dir, id)
+  if (!run) throw new Error(`Audit "${id}" not found in .kaddo/audits/.`)
+
+  // Resolve --module to path prefixes via the Discover inventory.
+  let pathPrefix: string[] | undefined
+  if (opts.module?.length) {
+    const modules = discoverProject(dir, { createdAt: run.createdAt }).modules
+    pathPrefix = opts.module.map((m) => {
+      const match = modules.find((x) => x.name === m || x.path.split('/').pop() === m || x.name.split('/').pop() === m)
+      return match ? match.path : m
+    })
+  }
+
+  const filters: AuditFindingFilters = {
+    severity: validateEnum(parseList(opts.severity), SEVERITIES, 'severity'),
+    confidence: validateEnum(parseList(opts.confidence), CONFIDENCES, 'confidence'),
+    category: parseList(opts.category),
+    ...(pathPrefix ? { pathPrefix } : {}),
+  }
+
+  return { kind: 'run', run, findings: queryAuditFindings(run.findings, filters) }
+}
+
+function printRunList(runs: AuditRunSummary[]): void {
+  if (runs.length === 0) {
+    process.stdout.write('No audits found.\n')
+    return
+  }
+  for (const r of runs) {
+    process.stdout.write(`${r.id}  ${r.createdAt}  ${r.status}  findings: ${r.total} (confirmed: ${r.confirmed}, inferences: ${r.inferences})\n`)
+  }
+}
+
+function printFindings(run: AuditRun, findings: AuditFinding[]): void {
+  process.stdout.write(`Audit ${run.id} — ${run.status} — showing ${findings.length} of ${run.findings.length} finding(s)\n`)
+  for (const f of findings) {
+    const loc = f.location?.file ? ` ${f.location.file}${typeof f.location.line === 'number' ? `:${f.location.line}` : ''}` : ''
+    process.stdout.write(`  [${f.severity}/${f.confidence}] ${f.category}: ${f.title}${loc}\n`)
+  }
+}
+
+/** CLI action for `kaddo audit report`. Read-only; a usage error (bad id/filter) sets a non-zero exit. */
+export function runAuditReportCommand(idArg: string | undefined, opts: Omit<AuditReportOptions, 'id'>): void {
+  try {
+    const result = performAuditReport({ ...opts, id: idArg }, { dir: cwd() })
+    if (opts.json) {
+      if (result.kind === 'list') process.stdout.write(JSON.stringify(result.runs, null, 2) + '\n')
+      else process.stdout.write(JSON.stringify(result.findings, null, 2) + '\n')
+    } else if (result.kind === 'list') {
+      printRunList(result.runs)
+    } else {
+      printFindings(result.run, result.findings)
+    }
+    process.exitCode = 0
   } catch (err) {
     process.stderr.write(`${err instanceof Error ? err.message : String(err)}\n`)
     process.exitCode = 2
