@@ -99,6 +99,7 @@ candidates:
       - EP-001 AC-10
     dependencies:
       - AUD-C8
+    materialized_as: WI-098
   - id: AUD-C10
     title: Relacionar hallazgos con Work Items existentes + dedup
     type: feature
