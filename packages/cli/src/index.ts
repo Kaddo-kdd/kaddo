@@ -60,6 +60,7 @@ import { runStart } from './commands/start.js'
 import { runAdmin } from './commands/admin.js'
 import { runWorkItemImport } from './commands/work-item.js'
 import { runPocReport } from './commands/poc.js'
+import { runAuditRunCommand } from './commands/audit.js'
 import { runVerify } from './commands/verify.js'
 import { runKnowledgeConsolidate } from './commands/knowledge.js'
 import {
@@ -165,6 +166,22 @@ pocCmd
   .description('Prepare a deterministic final POC report handoff (no LLM call, no write)')
   .option('--json', 'Output the report context as JSON')
   .action((opts: { json?: boolean }) => { runPocReport(opts) })
+
+const auditCmd = program
+  .command('audit')
+  .description('Evidence-based technical audit of the project')
+
+auditCmd
+  .command('run')
+  .description('Run an audit (Discover → analyze → correlate → report) and write derived artifacts')
+  .option('--module <id...>', 'Audit only these module(s)')
+  .option('--paths <glob...>', 'Audit only these path(s)')
+  .option('--json', 'Emit the AuditRun JSON to stdout instead of a summary')
+  .option('--publish', 'Also write the canonical report under knowledge/tech/audits/ (asks to confirm)')
+  .option('--yes', 'Skip the --publish confirmation prompt')
+  .action(async (opts: { module?: string[]; paths?: string[]; json?: boolean; publish?: boolean; yes?: boolean }) => {
+    await runAuditRunCommand(opts)
+  })
 
 const capsuleCmd = program
   .command('capsule')
