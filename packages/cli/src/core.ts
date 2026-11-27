@@ -95,6 +95,14 @@ export {
   type CommandResult,
 } from './core/audit-analyzers.js'
 export {
+  correlateFindings,
+  type CorrelatedFinding,
+  type FindingCorrelation,
+  type MatchStrength,
+  type CorrelateInput,
+  type DiscoveredModuleRef,
+} from './core/audit-correlation.js'
+export {
   createDeliveryPlan,
   createEpic,
   associateInitiativeWithEpic,
