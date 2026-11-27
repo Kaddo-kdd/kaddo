@@ -108,6 +108,10 @@ export {
   type AuditArtifacts,
 } from './core/audit-report.js'
 export {
+  resolveAuditScope,
+  type ScopeSelection,
+} from './core/audit-scope.js'
+export {
   createDeliveryPlan,
   createEpic,
   associateInitiativeWithEpic,
