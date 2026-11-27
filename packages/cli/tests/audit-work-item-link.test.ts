@@ -3,6 +3,7 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import { execFileSync, spawnSync } from 'node:child_process'
+import { fileURLToPath } from 'node:url'
 import { buildAuditRun, stableFindingId, writeAuditRun, type AuditFinding } from '../src/core/audit.js'
 import { createWorkItem, getWorkItemForEdit, linkAuditFinding } from '../src/core/work-item-write.js'
 import { discoverKnowledge } from '../src/services/knowledge-artifacts.js'
@@ -47,7 +48,7 @@ describe('approved audit finding links', () => {
     const auditPath = writeAuditRun(dir, run)
     const initial = fs.readFileSync(auditPath, 'utf8')
     const wi = createWorkItem(dir, { intent: 'fix issue', type: 'feature' })
-    const cli = path.resolve('dist/index.js')
+    const cli = fileURLToPath(new URL('../dist/index.js', import.meta.url))
     const execute = (args: string[]) => spawnSync(process.execPath, [cli, ...args], { cwd: dir, encoding: 'utf8' })
     expect(execute(['audit', 'link', 'AUD-001', findingId, wi.id]).status).not.toBe(0)
     expect(execute(['audit', 'link', 'AUD-001', findingId, wi.id, '--yes']).status).toBe(0)
