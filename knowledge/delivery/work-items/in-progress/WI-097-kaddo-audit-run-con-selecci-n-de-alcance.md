@@ -3,7 +3,7 @@ type: feature
 id: WI-097
 title: kaddo audit run (con selección de alcance)
 knowledge_level: K3
-status: ready
+status: in-progress
 phase: now
 priority: high
 initiative: INI-001
