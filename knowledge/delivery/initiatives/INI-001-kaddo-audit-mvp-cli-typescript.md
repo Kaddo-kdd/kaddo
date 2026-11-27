@@ -30,6 +30,7 @@ candidates:
       - EP-001 AC-1
     dependencies:
       - AUD-C1
+    materialized_as: WI-091
   - id: AUD-C3
     title: Selección de alcance por módulo (monorepo)
     type: feature
