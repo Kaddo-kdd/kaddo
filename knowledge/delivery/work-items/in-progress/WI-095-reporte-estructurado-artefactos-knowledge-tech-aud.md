@@ -3,7 +3,7 @@ type: feature
 id: WI-095
 title: 'Reporte estructurado + artefactos (knowledge/tech/audits, .kaddo/audits)'
 knowledge_level: K3
-status: ready
+status: in-progress
 phase: now
 priority: high
 initiative: INI-001
