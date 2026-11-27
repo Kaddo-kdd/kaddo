@@ -5,6 +5,7 @@ import path from 'node:path'
 import { createRequire } from 'node:module'
 import { createAuditSandboxRunner } from '../src/audit-sandbox.js'
 import { queryIsolatedRegistry } from '../src/audit-registry.js'
+import { discoverAuditIsolated } from '../src/audit-isolated-discovery.js'
 
 describe('audit sandbox runner', () => {
   it('rejects commands and working directories outside the project before starting Docker', async () => {
@@ -65,4 +66,18 @@ setTimeout(() => process.exit(13), 5000);
       expect(Object.values(parsed.advisories).some((a: any) => a.module_name === 'lodash')).toBe(true)
     } finally { fs.rmSync(root, { recursive: true, force: true }) }
   }, 90_000)
+
+  it.skipIf(process.env.KADDO_TEST_DOCKER_SANDBOX !== '1')('isolates discovery and knowledge correlation inputs from an external symlink', async () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'kaddo-discovery-sandbox-'))
+    const outside = fs.mkdtempSync(path.join(os.tmpdir(), 'kaddo-discovery-secret-'))
+    try {
+      if (process.platform !== 'win32') { fs.chmodSync(root, 0o755); fs.chmodSync(outside, 0o755) }
+      fs.writeFileSync(path.join(root, 'package.json'), '{"name":"fixture"}')
+      fs.mkdirSync(path.join(outside, 'private-sentinel'))
+      fs.symlinkSync(outside, path.join(root, 'src'), process.platform === 'win32' ? 'junction' : 'dir')
+      const result = await discoverAuditIsolated(root)
+      expect(result.discovery.stack.packageManager).toBe('npm')
+      expect(JSON.stringify(result)).not.toContain('private-sentinel')
+    } finally { fs.unlinkSync(path.join(root, 'src')); fs.rmSync(root, { recursive: true, force: true }); fs.rmSync(outside, { recursive: true, force: true }) }
+  }, 180_000)
 })
