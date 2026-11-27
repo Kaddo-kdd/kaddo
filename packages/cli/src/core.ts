@@ -78,6 +78,13 @@ export {
   type KnowledgeRef,
 } from './core/discovery.js'
 export {
+  runAudit,
+  type Analyzer,
+  type AnalyzerContext,
+  type AnalyzerResult,
+  type RunAuditInput,
+} from './core/audit-orchestrator.js'
+export {
   createDeliveryPlan,
   createEpic,
   associateInitiativeWithEpic,
