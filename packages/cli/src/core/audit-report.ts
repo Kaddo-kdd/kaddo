@@ -39,6 +39,7 @@ function renderFinding(f: AuditFinding | CorrelatedFinding): string {
   lines.push(`#### [${f.severity.toUpperCase()}] ${f.title}${loc}`)
   lines.push('')
   lines.push(`- **Category:** ${f.category}`)
+  lines.push(`- **Finding ID:** ${f.id}`)
   lines.push(`- **Confidence:** ${f.confidence}`)
   lines.push(`- **Evidence:** ${f.evidence}`)
   lines.push(`- **Provenance:** ${f.provenance}`)
@@ -51,6 +52,7 @@ function renderFinding(f: AuditFinding | CorrelatedFinding): string {
   if (hasCorrelation(f)) {
     const c = f.correlation
     lines.push(`- **Correlation:** ${c.matchStrength}`)
+    if (c.confirmedWorkItems?.length) lines.push(`- **Approved Work Item links:** ${c.confirmedWorkItems.join(', ')}`)
     if (c.owners.length) lines.push(`- **Owners:** ${c.owners.map((o) => `${o.domain} → ${o.owners.join('/')}`).join('; ')}`)
     if (c.risks.length) lines.push(`- **Risks:** ${[...c.risks].sort().join(', ')}`)
   }

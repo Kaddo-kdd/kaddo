@@ -251,6 +251,7 @@ export {
   updateWorkItem,
   completeWorkItem,
   updateWorkItemAssignments,
+  linkAuditFinding,
   getWorkItemForEdit,
   validateWorkItem,
   transitionWorkItem,

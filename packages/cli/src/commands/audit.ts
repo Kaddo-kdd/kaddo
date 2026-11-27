@@ -25,6 +25,8 @@ import {
   readAuditRun,
   listAuditRuns,
   queryAuditFindings,
+  getWorkItemForEdit,
+  linkAuditFinding,
   type AuditRun,
   type AuditFinding,
   type AuditRunSummary,
@@ -34,6 +36,20 @@ import {
   type FindingSeverity,
   type FindingConfidence,
 } from '../core.js'
+
+/** Explicit approval is required; the revision read before writing detects intervening edits. */
+export function runAuditLinkCommand(runId: string, findingId: string, workItemId: string, opts: { yes?: boolean }): void {
+  try {
+    if (!opts.yes) throw new Error('Pass --yes to confirm this association.')
+    const dir = cwd()
+    const wi = getWorkItemForEdit(dir, workItemId)
+    const result = linkAuditFinding(dir, { runId, findingId, workItemId, expectedRevision: wi.revision, confirmed: true })
+    process.stdout.write(result.changed ? `Linked ${findingId} to ${workItemId}.\n` : `Already linked.\n`)
+  } catch (error) {
+    process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`)
+    process.exitCode = 2
+  }
+}
 import { discoverKnowledge } from '../services/knowledge-artifacts.js'
 import { loadOwners } from '../services/owners.js'
 import { cwd } from '../utils/fs.js'
@@ -245,7 +261,8 @@ export function performAuditReport(opts: AuditReportOptions, deps: AuditReportDe
     ...(pathPrefix ? { pathPrefix } : {}),
   }
 
-  return { kind: 'run', run, findings: queryAuditFindings(run.findings, filters) }
+  const correlated = correlateFindings({ findings: run.findings, artifacts: discoverKnowledge(dir), owners: loadOwners(dir), modules: discoverProject(dir, { createdAt: run.createdAt }).modules.map(m => ({ name: m.name, path: m.path })) })
+  return { kind: 'run', run, findings: queryAuditFindings(correlated, filters) }
 }
 
 function printRunList(runs: AuditRunSummary[]): void {
@@ -262,7 +279,9 @@ function printFindings(run: AuditRun, findings: AuditFinding[]): void {
   process.stdout.write(`Audit ${run.id} — ${run.status} — showing ${findings.length} of ${run.findings.length} finding(s)\n`)
   for (const f of findings) {
     const loc = f.location?.file ? ` ${f.location.file}${typeof f.location.line === 'number' ? `:${f.location.line}` : ''}` : ''
-    process.stdout.write(`  [${f.severity}/${f.confidence}] ${f.category}: ${f.title}${loc}\n`)
+    process.stdout.write(`  ${f.id} [${f.severity}/${f.confidence}] ${f.category}: ${f.title}${loc}\n`)
+    const approved = (f as import('../core/audit-correlation.js').CorrelatedFinding).correlation?.confirmedWorkItems
+    if (approved?.length) process.stdout.write(`    Approved Work Item links: ${approved.join(', ')}\n`)
   }
 }
 

@@ -3,6 +3,16 @@ title: kaddo audit run
 description: Run an evidence-based technical audit and write a structured, reproducible report.
 ---
 
+## Link an existing Work Item
+
+After reviewing a finding and an existing Work Item, explicitly approve their association:
+
+```sh
+kaddo audit link AUD-001 AF-0123456789abcdef WI-001 --yes
+```
+
+The finding must exist in the specified stored audit and the Work Item must be active. Kaddo records its stable finding ID on the Work Item; repeating the association does not duplicate it. Audit reports distinguish approved links from path or module suggestions. This command does not create Work Items.
+
 `kaddo audit run` runs an evidence-based technical audit of the project and writes a structured,
 reproducible report. It wires the whole audit flow end to end: discover the project, resolve the scope,
 run the analyzers, correlate findings with existing knowledge, and render a report.

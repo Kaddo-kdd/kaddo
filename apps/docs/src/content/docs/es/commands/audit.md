@@ -3,6 +3,16 @@ title: kaddo audit run
 description: Ejecuta una auditoría técnica basada en evidencia y escribe un reporte estructurado y reproducible.
 ---
 
+## Vincular un Work Item existente
+
+Después de revisar un hallazgo y un Work Item existente, aprueba explícitamente su asociación:
+
+```sh
+kaddo audit link AUD-001 AF-0123456789abcdef WI-001 --yes
+```
+
+El hallazgo debe existir en la auditoría indicada y el Work Item debe estar activo. Kaddo registra el ID estable del hallazgo en el Work Item; repetir la asociación no la duplica. Los reportes distinguen vínculos aprobados de sugerencias por ruta o módulo. El comando no crea Work Items.
+
 `kaddo audit run` ejecuta una auditoría técnica del proyecto basada en evidencia y escribe un reporte
 estructurado y reproducible. Cablea todo el flujo de auditoría de principio a fin: descubre el proyecto,
 resuelve el alcance, ejecuta los analizadores, correlaciona los hallazgos con el conocimiento existente y

@@ -26,6 +26,7 @@ import { getLevelForType } from './knowledge-levels.js'
 import { loadSystemTopology } from './system-topology.js'
 import { emit } from './telemetry.js'
 import type { TelemetryInterface } from './telemetry-events.js'
+import { readAuditRun } from './audit.js'
 
 const WORK_ITEMS_DIR = 'knowledge/delivery/work-items'
 
@@ -609,6 +610,29 @@ export function updateWorkItemAssignments(dir: string, id: string, assignments: 
   const nextRaw = serialize(next, content)
   atomicWrite(filePath, nextRaw)
   return { revision: revisionOf(nextRaw), path: relPath, status }
+}
+
+/** Record an explicitly approved audit finding on an existing active Work Item. */
+export function linkAuditFinding(dir: string, input: { runId: string; findingId: string; workItemId: string; expectedRevision: string; confirmed: boolean }): { revision: string; path: string; changed: boolean } {
+  if (!input.confirmed) throw new WorkItemWriteError('INVALID_INPUT', 'Explicit confirmation is required.')
+  if (!/^AUD-\d+$/.test(input.runId) || !/^AF-[a-f0-9]{16}$/.test(input.findingId) || !/^WI-\d+$/.test(input.workItemId)) {
+    throw new WorkItemWriteError('INVALID_INPUT', 'Invalid audit, finding or Work Item identifier.')
+  }
+  const run = readAuditRun(dir, input.runId)
+  if (!run?.findings.some(f => f.id === input.findingId)) throw new WorkItemWriteError('INVALID_INPUT', 'Audit finding not found.')
+  const { filePath, relPath } = findArtifact(dir, input.workItemId)
+  const raw = readFile(filePath)
+  if (revisionOf(raw) !== input.expectedRevision) throw new WorkItemWriteError('WORK_ITEM_CONFLICT', 'Work Item revision is stale.')
+  const { data, content } = matter(raw)
+  const status = lifecycleStateOf({ status: String(data.status ?? ''), filePath })
+  if (!['draft', 'ready', 'in-progress'].includes(status)) throw new WorkItemWriteError('WORK_ITEM_NOT_EDITABLE', `A ${status} Work Item cannot be modified.`)
+  const existing = data.audit_findings
+  if (existing !== undefined && (!Array.isArray(existing) || existing.some((v: unknown) => typeof v !== 'string'))) throw new WorkItemWriteError('INVALID_INPUT', 'Invalid audit_findings metadata.')
+  const findings: string[] = existing ?? []
+  if (findings.includes(input.findingId)) return { revision: revisionOf(raw), path: relPath, changed: false }
+  const nextRaw = serialize({ ...data, audit_findings: [...findings, input.findingId] }, content)
+  atomicWrite(filePath, nextRaw)
+  return { revision: revisionOf(nextRaw), path: relPath, changed: true }
 }
 
 // --- Validation --------------------------------------------------------------
