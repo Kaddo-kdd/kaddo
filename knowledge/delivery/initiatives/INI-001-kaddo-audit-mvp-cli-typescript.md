@@ -2,7 +2,7 @@
 type: initiative
 id: INI-001
 title: Kaddo Audit — MVP (CLI + TypeScript)
-status: planned
+status: completed
 knowledge_level: K3
 domains:
   - Tech
@@ -124,6 +124,50 @@ candidates:
     materialized_as: WI-100
 priority: high
 epic: EP-001
+outcome_verifications:
+  - criterion: >-
+      Auditar proyectos TypeScript y dependencias mediante CLI, con alcance por
+      módulo y cobertura parcial explícita.
+    status: passed
+    evidence: 'Pruebas de analizadores, alcance, orquestación y comando de auditoría.'
+    reference: >-
+      packages/cli/tests/audit-analyzers.test.ts;
+      packages/cli/tests/audit-scope.test.ts;
+      packages/cli/tests/audit-orchestrator.test.ts;
+      packages/cli/tests/audit-run-command.test.ts
+    method: automated
+    verified_at: '2026-11-27'
+    verified_by: codex
+  - criterion: >-
+      Generar resultados y reportes reproducibles que separen evidencia
+      confirmada, inferencias y áreas no evaluadas.
+    status: passed
+    evidence: Pruebas de contrato y generación de reportes.
+    reference: >-
+      packages/cli/tests/audit-contract.test.ts;
+      packages/cli/tests/audit-report.test.ts
+    method: automated
+    verified_at: '2026-11-27'
+    verified_by: codex
+  - criterion: >-
+      Relacionar hallazgos con Work Items existentes y previsualizar remediación
+      sin escrituras automáticas, con aprobación explícita para vincular.
+    status: passed
+    evidence: 'Pruebas de vínculos, preview y CLI con fixtures aislados.'
+    reference: >-
+      packages/cli/tests/audit-work-item-link.test.ts;
+      packages/cli/tests/audit-plan.test.ts
+    method: automated
+    verified_at: '2026-11-27'
+    verified_by: codex
+completed_at: '2026-11-27'
+completion_decision:
+  readiness: READY_TO_COMPLETE
+  decided_at: '2026-11-27'
+  reasons:
+    - >-
+      All success criteria are verified and committed scope is delivered. Human
+      approval is still required to close.
 ---
 
 ## Objetivo
@@ -152,3 +196,9 @@ MVP usable de punta a punta.
 ## Candidatos (sin materializar)
 
 Propuestas pendientes de autorización humana; se materializan de a uno, empezando por AUD-C1 (contrato Core).
+
+## Success Criteria
+
+- Auditar proyectos TypeScript y dependencias mediante CLI, con alcance por módulo y cobertura parcial explícita.
+- Generar resultados y reportes reproducibles que separen evidencia confirmada, inferencias y áreas no evaluadas.
+- Relacionar hallazgos con Work Items existentes y previsualizar remediación sin escrituras automáticas, con aprobación explícita para vincular.
