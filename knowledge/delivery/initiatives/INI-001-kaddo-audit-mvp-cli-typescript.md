@@ -78,6 +78,7 @@ candidates:
       - EP-001 AC-5
     dependencies:
       - AUD-C6
+    materialized_as: WI-095
   - id: AUD-C8
     title: kaddo audit run (con selección de alcance)
     type: feature
