@@ -5,6 +5,8 @@ description: Run an evidence-based technical audit and write a structured, repro
 
 ## Link an existing Work Item
 
+Compare stored runs with `kaddo audit compare AUD-001 AUD-002` or add `--json`. Findings are matched by stable ID. New or resolved classifications require complete equivalent scope, explicit file-level coverage and matching tool versions; otherwise they are unverifiable. Current analyzers record generic areas and may omit versions, so absence is typically unverifiable. IDs include file and line, so moving code can appear as a different finding.
+
 Use `kaddo audit plan [AUD-001]` (or `--json`) to preview remediation actions, their evidence, coverage and existing Work Item links without writing files. Review suggestions before using `audit link`.
 
 After reviewing a finding and an existing Work Item, explicitly approve their association:
