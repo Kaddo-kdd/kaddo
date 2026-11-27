@@ -119,7 +119,7 @@ export {
   type AuditFindingFilters,
 } from './core/audit-query.js'
 export { previewAuditPlan } from './core/audit-plan.js'
-export { executeAudit } from './core/audit-execution.js'
+export { executeAudit, type AuditDiscoverySnapshot } from './core/audit-execution.js'
 export { buildRegistryInventory, type RegistryInventory } from './core/audit-registry-input.js'
 export { compareAuditRuns, type AuditComparisonEntry } from './core/audit-compare.js'
 export {

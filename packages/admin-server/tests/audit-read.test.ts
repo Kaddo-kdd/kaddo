@@ -5,6 +5,8 @@ import path from 'node:path'
 import { createHash } from 'node:crypto'
 import { createAdminServer } from '../src/server.js'
 import type { AdminStorage } from '../src/storage/admin-storage.js'
+import { discoverProject, discoverKnowledge } from '@kaddo/cli/core'
+import { AuditExecutionError } from '../src/audit-adapter.js'
 
 function storage(): AdminStorage { const sessions = new Map<string, any>(); return { initialize: async () => {}, close: async () => {}, sessions: { create: (v: any) => sessions.set(v.id, v), findById: (id: string) => sessions.get(id), deleteById: () => {}, deleteExpired: () => {} }, preferences: { get: () => undefined, set: () => {}, delete: () => {}, all: () => [] }, cache: { get: () => undefined, set: () => {}, delete: () => {}, clear: () => {} } } }
 describe('Audit read API', () => {
@@ -25,7 +27,10 @@ describe('Audit read API', () => {
     fs.mkdirSync(path.join(dir, 'knowledge', 'delivery', 'work-items', 'draft'), { recursive: true })
     fs.writeFileSync(path.join(dir, 'knowledge', 'delivery', 'work-items', 'draft', 'WI-001.md'), '---\nid: WI-001\ntitle: Fix\ntype: feature\nstatus: draft\n---\n# Fix\n')
     fs.mkdirSync(path.join(dir, 'static')); fs.writeFileSync(path.join(dir, 'static', 'index.html'), 'Admin')
-    app = (await createAdminServer({ projectDir: dir, storage: storage(), staticDir: path.join(dir, 'static'), auditRunner: async (command) => { calls++; onStarted?.(); if (gate) await gate; return { stdout: command === 'tsc' ? '' : '{"advisories":{}}', stderr: '', exitCode: 0 } } })).app
+    app = (await createAdminServer({ projectDir: dir, storage: storage(), staticDir: path.join(dir, 'static'), auditDiscovery: async root => {
+      for (const target of ['src', 'knowledge/external']) if (fs.existsSync(path.join(root, target)) && fs.lstatSync(path.join(root, target)).isSymbolicLink()) throw new AuditExecutionError('INVALID_INPUT', 'Symlinked discovery inputs are unsupported.')
+      return { discovery: discoverProject(root), artifacts: discoverKnowledge(root), owners: {}, configured: true }
+    }, auditRunner: async (command) => { calls++; onStarted?.(); if (gate) await gate; return { stdout: command === 'tsc' ? '' : '{"advisories":{}}', stderr: '', exitCode: 0 } } })).app
     cookie = String((await app.inject({ method: 'GET', url: '/api/v1/admin/session' })).headers['set-cookie']).split(';')[0]
   })
   afterAll(async () => { await app.close(); fs.rmSync(dir, { recursive: true, force: true }) })

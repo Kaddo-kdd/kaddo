@@ -8,7 +8,7 @@ import type { ProjectDiscovery, KnowledgeArtifact } from '@kaddo/cli/core'
 
 const execFileAsync = promisify(execFile)
 const IMAGE = 'node:22.14.0-alpine@sha256:9bef0ef1e268f60627da9ba7d7605e8831d5b56ad07487d24d1aa386336d1944'
-export type IsolatedDiscovery = { discovery: ProjectDiscovery; artifacts: KnowledgeArtifact[]; owners: Record<string, string[]> }
+export type IsolatedDiscovery = { discovery: ProjectDiscovery; artifacts: KnowledgeArtifact[]; owners: Record<string, string[]>; configured: boolean }
 
 /** All project discovery reads happen inside the container, never via host paths. */
 export async function discoverAuditIsolated(dir: string): Promise<IsolatedDiscovery> {
@@ -27,6 +27,6 @@ export async function discoverAuditIsolated(dir: string): Promise<IsolatedDiscov
   }
   let result: IsolatedDiscovery
   try { result = JSON.parse(stdout) } catch { throw new Error('Invalid isolated discovery result.') }
-  if (!result || !result.discovery || !Array.isArray(result.discovery.modules) || !Array.isArray(result.artifacts) || !result.owners || typeof result.owners !== 'object') throw new Error('Invalid isolated discovery result.')
+  if (!result || !result.discovery || !Array.isArray(result.discovery.modules) || !Array.isArray(result.artifacts) || !result.owners || typeof result.owners !== 'object' || typeof result.configured !== 'boolean') throw new Error('Invalid isolated discovery result.')
   return result
 }

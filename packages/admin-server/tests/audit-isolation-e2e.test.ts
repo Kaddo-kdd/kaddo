@@ -36,6 +36,10 @@ describe('Admin isolated audit E2E', () => {
       expect(response.json().run.findings.some((f: any) => f.category === 'types' && f.title.includes('TS2322'))).toBe(true)
       expect(response.json().run.findings.some((f: any) => f.category === 'dependency' && f.location?.symbol === 'lodash')).toBe(true)
       expect(response.json().run.coverage.complete).toBe(true)
+      const id = response.json().run.id
+      expect((await app.inject({ method: 'GET', url: `/api/v1/admin/audits/${id}`, headers: { cookie } })).statusCode).toBe(200)
+      expect((await app.inject({ method: 'GET', url: `/api/v1/admin/audits/${id}/plan`, headers: { cookie } })).statusCode).toBe(200)
+      expect((await app.inject({ method: 'GET', url: `/api/v1/admin/audit-comparison?before=${id}&after=${id}`, headers: { cookie } })).statusCode).toBe(200)
       const replay = await app.inject({ method: 'POST', url: '/api/v1/admin/audits/run', headers, payload })
       expect(replay.json().reused).toBe(true)
       expect(replay.json().run.id).toBe(response.json().run.id)

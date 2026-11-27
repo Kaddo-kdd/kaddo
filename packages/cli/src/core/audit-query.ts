@@ -9,6 +9,7 @@ import { discoverProject } from './discovery.js'
 import { correlateFindings } from './audit-correlation.js'
 import { discoverKnowledge } from '../services/knowledge-artifacts.js'
 import { loadOwners } from '../services/owners.js'
+import type { AuditDiscoverySnapshot } from './audit-execution.js'
 
 export type AuditRunSummary = {
   id: string
@@ -78,11 +79,11 @@ export function queryAuditFindings(findings: AuditFinding[], filters: AuditFindi
 }
 
 /** Load and correlate a stored run without writing or executing analyzers. */
-export function getAuditView(dir: string, id: string) {
+export function getAuditView(dir: string, id: string, snapshot?: AuditDiscoverySnapshot) {
   if (!/^AUD-\d+$/.test(id)) throw new Error('Invalid audit id.')
   const run = readAuditRun(dir, id)
   if (!run) throw new Error(`Audit "${id}" not found or unreadable.`)
-  const modules = discoverProject(dir, { createdAt: run.createdAt }).modules.map(m => ({ name: m.name, path: m.path }))
-  const findings = correlateFindings({ findings: run.findings, artifacts: discoverKnowledge(dir), owners: loadOwners(dir), modules })
+  const modules = (snapshot?.discovery ?? discoverProject(dir, { createdAt: run.createdAt })).modules.map(m => ({ name: m.name, path: m.path }))
+  const findings = correlateFindings({ findings: run.findings, artifacts: snapshot?.artifacts ?? discoverKnowledge(dir), owners: snapshot?.owners ?? loadOwners(dir), modules })
   return { run, findings }
 }

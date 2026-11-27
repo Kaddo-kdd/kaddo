@@ -1,17 +1,18 @@
-import { discoverProject } from './discovery.js'
+import { discoverProject, type ProjectDiscovery } from './discovery.js'
 import { resolveAuditScope } from './audit-scope.js'
 import { createDependencyAnalyzer, createTypescriptAnalyzer, type CommandRunner } from './audit-analyzers.js'
 import { runAudit } from './audit-orchestrator.js'
 import { correlateFindings } from './audit-correlation.js'
 import { renderAuditReport, writeAuditArtifacts } from './audit-report.js'
 import { nextAuditRunId, type AuditRun } from './audit.js'
-import { discoverKnowledge } from '../services/knowledge-artifacts.js'
-import { loadOwners } from '../services/owners.js'
+import { discoverKnowledge, type KnowledgeArtifact } from '../services/knowledge-artifacts.js'
+import { loadOwners, type DomainOwners } from '../services/owners.js'
 import fs from 'node:fs'
 import path from 'node:path'
 
 /** Shared audit pipeline; no prompts or canonical publication. Dependencies are explicit. */
-export async function executeAudit(dir: string, opts: { module?: string[]; paths?: string[] }, deps: { run: CommandRunner; createdAt: string; idFor?: (dir: string) => string; packageManager?: string }): Promise<{ run: AuditRun; jsonPath: string; reportPath: string; report: string }> {
+export type AuditDiscoverySnapshot = { discovery: ProjectDiscovery; artifacts: KnowledgeArtifact[]; owners: DomainOwners }
+export async function executeAudit(dir: string, opts: { module?: string[]; paths?: string[] }, deps: { run: CommandRunner; createdAt: string; idFor?: (dir: string) => string; packageManager?: string; snapshot?: AuditDiscoverySnapshot }): Promise<{ run: AuditRun; jsonPath: string; reportPath: string; report: string }> {
   const root = fs.realpathSync(dir)
   const stateDir = path.join(root, '.kaddo')
   if (!fs.existsSync(stateDir)) fs.mkdirSync(stateDir)
@@ -26,7 +27,7 @@ export async function executeAudit(dir: string, opts: { module?: string[]; paths
     throw error
   }
   try {
-  const discovery = discoverProject(dir, { createdAt: deps.createdAt })
+  const discovery = deps.snapshot?.discovery ?? discoverProject(dir, { createdAt: deps.createdAt })
   const modules = discovery.modules.map(m => ({ name: m.name, path: m.path }))
   const scope = resolveAuditScope({ modules: opts.module, paths: opts.paths }, modules)
   const packageManager = deps.packageManager ?? discovery.stack.packageManager
@@ -38,7 +39,7 @@ export async function executeAudit(dir: string, opts: { module?: string[]; paths
     catch (error) { if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error }
   }
   const run = await runAudit({ id, createdAt: deps.createdAt, scope, analyzers: [createDependencyAnalyzer({ run: deps.run, packageManager }), createTypescriptAnalyzer({ run: deps.run })], context: { dir, scope, discovery } })
-  const correlated = correlateFindings({ findings: run.findings, artifacts: discoverKnowledge(dir), owners: loadOwners(dir), modules })
+  const correlated = correlateFindings({ findings: run.findings, artifacts: deps.snapshot?.artifacts ?? discoverKnowledge(dir), owners: deps.snapshot?.owners ?? loadOwners(dir), modules })
   const report = renderAuditReport(run, correlated)
   return { run, ...writeAuditArtifacts(dir, run, { report }), report }
   } finally {

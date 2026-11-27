@@ -4,6 +4,7 @@ import path from 'node:path'
 import { createHash } from 'node:crypto'
 import { assertAuditSandboxAvailable, createAuditSandboxRunner } from './audit-sandbox.js'
 import { assertNoNestedMounts } from './audit-mounts.js'
+import { discoverAuditIsolated, type IsolatedDiscovery } from './audit-isolated-discovery.js'
 
 /** Reject symlinks in discovery inputs before the host-side scanner reads them. */
 function assertDiscoveryTree(dir: string): void {
@@ -47,31 +48,30 @@ function assertKnowledgeTree(dir: string): void {
 }
 
 export function listAuditsAdmin(dir: string) { assertAuditStorage(dir); return listAuditRuns(dir) }
-export function getAuditAdmin(dir: string, id: string, filters: AuditFindingFilters = {}, opts: { module?: string; status?: string } = {}) {
+export async function getAuditAdmin(dir: string, id: string, filters: AuditFindingFilters = {}, opts: { module?: string; status?: string } = {}, discover: (dir: string) => Promise<IsolatedDiscovery> = discoverAuditIsolated) {
   assertAuditStorage(dir)
-  assertDiscoveryTree(dir)
-  assertKnowledgeTree(dir)
-  const { run, findings } = getAuditView(dir, id)
+  assertNoNestedMounts(fs.realpathSync(dir))
+  const snapshot = await discover(dir)
+  const { run, findings } = getAuditView(dir, id, snapshot)
   if (opts.module) {
-    const modules = discoverProject(dir, { createdAt: run.createdAt }).modules
+    const modules = snapshot.discovery.modules
     const matches = modules.filter(m => m.name === opts.module || m.path === opts.module)
     if (matches.length !== 1) throw new Error('Invalid or ambiguous module.')
     filters = { ...filters, pathPrefix: [matches[0].path] }
   }
   return { run, findings: queryAuditFindings(findings, filters).filter(f => !opts.status || f.status === opts.status) }
 }
-export function previewAuditAdmin(dir: string, id: string) {
+export async function previewAuditAdmin(dir: string, id: string, discover: (dir: string) => Promise<IsolatedDiscovery> = discoverAuditIsolated) {
   assertAuditStorage(dir)
-  assertDiscoveryTree(dir)
-  assertKnowledgeTree(dir)
-  const { run, findings } = getAuditView(dir, id)
+  assertNoNestedMounts(fs.realpathSync(dir))
+  const { run, findings } = getAuditView(dir, id, await discover(dir))
   return previewAuditPlan(run, findings)
 }
-export function compareAuditsAdmin(dir: string, beforeId: string, afterId: string) {
+export async function compareAuditsAdmin(dir: string, beforeId: string, afterId: string, discover: (dir: string) => Promise<IsolatedDiscovery> = discoverAuditIsolated) {
   assertAuditStorage(dir)
-  assertDiscoveryTree(dir)
-  assertKnowledgeTree(dir)
-  return compareAuditRuns(getAuditView(dir, beforeId).run, getAuditView(dir, afterId).run)
+  assertNoNestedMounts(fs.realpathSync(dir))
+  const snapshot = await discover(dir)
+  return compareAuditRuns(getAuditView(dir, beforeId, snapshot).run, getAuditView(dir, afterId, snapshot).run)
 }
 export function linkAuditAdmin(dir: string, input: { runId: string; findingId: string; workItemId: string; expectedRevision: string; confirmed: boolean }) {
   assertAuditStorage(dir)
@@ -86,7 +86,7 @@ export function linkAuditAdmin(dir: string, input: { runId: string; findingId: s
 export class AuditExecutionError extends Error { constructor(public code: string, message: string) { super(message) } }
 
 /** Persist the request key before starting; interrupted requests fail closed rather than rerunning. */
-export async function runAuditAdmin(dir: string, input: { requestId: string; module?: string[]; paths?: string[] }, runner?: CommandRunner) {
+export async function runAuditAdmin(dir: string, input: { requestId: string; module?: string[]; paths?: string[] }, runner?: CommandRunner, discover: (dir: string) => Promise<IsolatedDiscovery> = discoverAuditIsolated) {
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(input.requestId)) throw new AuditExecutionError('INVALID_INPUT', 'Invalid request ID.')
   if (!runner) {
     try { await assertAuditSandboxAvailable(); runner = createAuditSandboxRunner(dir) }
@@ -96,13 +96,11 @@ export async function runAuditAdmin(dir: string, input: { requestId: string; mod
   const inside = (p: string) => { const rel = path.relative(root, fs.realpathSync(p)); return rel !== '..' && !rel.startsWith(`..${path.sep}`) && !path.isAbsolute(rel) }
   if (!fs.existsSync(stateDir)) throw new AuditExecutionError('INVALID_INPUT', 'A configured project is required.')
   if (!inside(stateDir)) throw new AuditExecutionError('INVALID_INPUT', 'Audit state must be inside the project.')
-  assertDiscoveryTree(root)
-  const configPath = path.join(stateDir, 'config.yml')
-  if (fs.existsSync(configPath) && !inside(configPath)) throw new AuditExecutionError('INVALID_INPUT', 'Project configuration must be inside the project.')
-  if (!loadConfig(root)) throw new AuditExecutionError('INVALID_INPUT', 'A configured project is required.')
+  assertNoNestedMounts(root)
   assertAuditStorage(root)
-  assertKnowledgeTree(root)
-  const discovery = discoverProject(root)
+  const snapshot = await discover(root)
+  if (!snapshot.configured) throw new AuditExecutionError('INVALID_INPUT', 'A configured project is required.')
+  const discovery = snapshot.discovery
   if (!['npm', 'pnpm', 'yarn', 'bun'].includes(discovery.stack.packageManager)) throw new AuditExecutionError('INVALID_INPUT', 'Unsupported package manager for audit.')
   const scope = resolveAuditScope({ modules: input.module, paths: input.paths }, discovery.modules)
   if (scope.kind === 'module') for (const name of scope.modules) {
@@ -123,10 +121,10 @@ export async function runAuditAdmin(dir: string, input: { requestId: string; mod
     try { prior = JSON.parse(fs.readFileSync(file, 'utf8')) } catch { throw new AuditExecutionError('AUDIT_CONFLICT', 'Prior request state requires review.') }
     if (prior.fingerprint !== fingerprint) throw new AuditExecutionError('AUDIT_CONFLICT', 'Request ID was already used with different input.')
     if (prior.state !== 'completed' || !prior.auditId) throw new AuditExecutionError('AUDIT_CONFLICT', 'Prior request is running or requires review.')
-    return { run: getAuditView(dir, prior.auditId).run, reused: true }
+    return { run: getAuditView(dir, prior.auditId, snapshot).run, reused: true }
   }
   try {
-    const result = await executeAudit(root, input, { run: runner, createdAt: new Date().toISOString() })
+    const result = await executeAudit(root, input, { run: runner, createdAt: new Date().toISOString(), snapshot })
     fs.writeFileSync(file, JSON.stringify({ state: 'completed', fingerprint, auditId: result.run.id }))
     return { run: result.run, reused: false }
   } catch (error) {
