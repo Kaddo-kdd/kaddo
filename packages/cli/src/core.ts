@@ -85,6 +85,16 @@ export {
   type RunAuditInput,
 } from './core/audit-orchestrator.js'
 export {
+  execaRunner,
+  mapSeverity,
+  mapAuditAdvisories,
+  mapTscDiagnostics,
+  createDependencyAnalyzer,
+  createTypescriptAnalyzer,
+  type CommandRunner,
+  type CommandResult,
+} from './core/audit-analyzers.js'
+export {
   createDeliveryPlan,
   createEpic,
   associateInitiativeWithEpic,
