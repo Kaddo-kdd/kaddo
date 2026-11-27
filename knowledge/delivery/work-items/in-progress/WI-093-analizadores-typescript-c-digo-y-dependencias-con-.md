@@ -3,7 +3,7 @@ type: feature
 id: WI-093
 title: Analizadores TypeScript (código y dependencias) con evidencia
 knowledge_level: K3
-status: ready
+status: in-progress
 phase: now
 priority: high
 initiative: INI-001
