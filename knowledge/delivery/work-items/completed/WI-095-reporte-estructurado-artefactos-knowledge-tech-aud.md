@@ -3,7 +3,8 @@ type: feature
 id: WI-095
 title: 'Reporte estructurado + artefactos (knowledge/tech/audits, .kaddo/audits)'
 knowledge_level: K3
-status: in-progress
+status: completed
+completed_at: 2026-11-26
 phase: now
 priority: high
 initiative: INI-001
@@ -11,6 +12,75 @@ domains:
   - Tech
 code: []
 created_at: '2026-11-27'
+implementation_status: completed
+validation_status: passed
+implementation_evidence:
+  repositories:
+    cli:
+      role: core
+      status: completed
+      changed_paths:
+        - packages/cli/src/core/audit-report.ts
+        - packages/cli/src/core.ts
+        - packages/cli/tests/audit-report.test.ts
+      validations:
+        - command: npx vitest run packages/cli/tests/audit-report.test.ts
+          status: passed
+        - command: pnpm --filter @kaddo/cli build
+          status: passed
+        - command: pnpm test
+          status: passed
+  ac_verifications:
+    - criterion: '**AC-01:** `renderAuditReport(run, correlated?)` es una función pura que devuelve un reporte Markdown estructurado con cabecera (id, fecha, commit, scope y estado del run).'
+      status: passed
+      evidence: 'Test (AC-01): renderAuditReport devuelve Markdown con cabecera ''# Audit Report — AUD-001'' y campos Date, Scope y Status; función pura (sin IO).'
+      reference: 'packages/cli/tests/audit-report.test.ts'
+      method: manual
+    - criterion: '**AC-02:** El reporte distingue en secciones separadas los hallazgos confirmados (`confidence: confirmed`), las inferencias (`likely`/`inferred`) y las áreas no evaluadas (`coverage.notEvaluated`); nunca se mezclan (EP-001 AC-4).'
+      status: passed
+      evidence: 'Test (AC-02): secciones separadas ''## Confirmed findings'' e ''## Inferences''; un hallazgo confirmed aparece antes de la sección de inferencias y uno inferred después; nunca se mezclan.'
+      reference: 'packages/cli/tests/audit-report.test.ts'
+      method: manual
+    - criterion: '**AC-03:** Cada hallazgo se renderiza con su evidencia, provenance, severidad, confianza, ubicación (`file:line` cuando existe) y recomendación (EP-001 AC-5).'
+      status: passed
+      evidence: 'Test (AC-03): cada hallazgo renderiza Evidence, Provenance, ubicación `file:line` y Recommendation.'
+      reference: 'packages/cli/tests/audit-report.test.ts'
+      method: manual
+    - criterion: '**AC-04:** Cuando se proveen `CorrelatedFinding`, el reporte incluye sus referencias (ADRs/capacidades/WIs), owners, riesgos y `matchStrength`.'
+      status: passed
+      evidence: 'Test (AC-04): con CorrelatedFinding se incluyen References (WIs/ADRs/Capabilities), Correlation (matchStrength), Owners y Risks.'
+      reference: 'packages/cli/tests/audit-report.test.ts'
+      method: manual
+    - criterion: '**AC-05:** Un run `partial` o `failed` se marca con claridad y las áreas no evaluadas se listan; nunca se presenta como un resultado limpio.'
+      status: passed
+      evidence: 'Test (AC-05): un run parcial se marca ''partial — coverage is incomplete'' y lista las áreas no evaluadas (semgrep failed timeout); nunca como resultado limpio.'
+      reference: 'packages/cli/tests/audit-report.test.ts'
+      method: manual
+    - criterion: '**AC-06:** El render es determinista: el mismo `AuditRun` produce un Markdown idéntico byte a byte (orden estable de secciones y hallazgos).'
+      status: passed
+      evidence: 'Test (AC-06): renderAuditReport(r) === renderAuditReport(r) (Markdown idéntico byte a byte) para el mismo run.'
+      reference: 'packages/cli/tests/audit-report.test.ts'
+      method: manual
+    - criterion: '**AC-07:** Los hallazgos se ordenan de forma determinista por rango de severidad y luego por id, para diffs limpios entre ejecuciones.'
+      status: passed
+      evidence: 'Test (AC-07): los hallazgos se ordenan por rango de severidad y luego id (crítico antes que bajo).'
+      reference: 'packages/cli/tests/audit-report.test.ts'
+      method: manual
+    - criterion: '**AC-08:** `writeAuditArtifacts(dir, run, { report })` persiste artefactos **derivados** bajo `.kaddo/audits/`: el run JSON (vía `writeAuditRun`) y el reporte `.md`. La publicación canónica en `knowledge/tech/audits/` es una acción aprobada por humano (fuera de alcance aquí).'
+      status: passed
+      evidence: 'Test (AC-08): writeAuditArtifacts escribe .kaddo/audits/AUD-001.json (vía writeAuditRun) y AUD-001.md; no se crea ningún directorio knowledge/ (sin escritura canónica).'
+      reference: 'packages/cli/tests/audit-report.test.ts'
+      method: manual
+    - criterion: '**AC-09:** La lógica de render es pura y se exporta desde el barrel de Core (`packages/cli/src/core.ts`), reutilizable por CLI, MCP y Admin.'
+      status: passed
+      evidence: 'La lógica de render es pura y se exporta desde el barrel Core (packages/cli/src/core.ts: renderAuditReport, writeAuditArtifacts); un test las importa desde ../src/core.js.'
+      reference: 'packages/cli/src/core.ts'
+      method: manual
+    - criterion: '**AC-10:** Hay pruebas unitarias con `AuditRun`/correlación de prueba que cubren: separación de secciones (confirmados/inferencias/no evaluadas), evidencia/provenance renderizadas, inclusión de correlación, marcado de run parcial, determinismo y escritura derivada en `.kaddo/audits/`.'
+      status: passed
+      evidence: 'packages/cli/tests/audit-report.test.ts cubre separación de secciones, evidencia/provenance, correlación, marcado de run parcial, determinismo, orden y escritura derivada en .kaddo/audits (9 tests en verde).'
+      reference: 'packages/cli/tests/audit-report.test.ts'
+      method: manual
 source: initiative
 source_id: AUD-C7
 source_initiative: INI-001
@@ -166,4 +236,30 @@ inferidos, el reporte tiene secciones separadas para confirmados, inferencias y
 
 ## 9. Learning
 
-_What did we learn? Update after completion._
+Entregado en `main` (sin release; se publicará junto a `kaddo audit run`, AUD-C8). Módulo `cli` (Core); sin
+cambios en otras superficies ni escritura automática en `knowledge/`.
+
+### Separar es la honestidad
+La regla de EP-001 (distinguir confirmados, inferencias y áreas no evaluadas) se materializa como **secciones
+separadas** del reporte, no como un campo más: una inferencia crítica nunca aparece en la misma lista que un
+hecho crítico. El run parcial se marca explícitamente y lista lo no evaluado — leer el reporte deja claro qué
+se verificó y qué no.
+
+### Renderizador puro y determinista
+`renderAuditReport` consume un `AuditRun` ya construido (no re-analiza) y produce Markdown idéntico byte a
+byte para el mismo run: orden estable de secciones y de hallazgos (severidad y luego id), y todas las fechas
+salen de `run.createdAt`. Esto hace el reporte reproducible y sus diffs limpios entre ejecuciones (base del
+seguimiento nuevos/persistentes/resueltos).
+
+### Canónico vs derivado
+`writeAuditArtifacts` escribe solo **derivados** bajo `.kaddo/audits/` (el run JSON reutilizando
+`writeAuditRun`, y el reporte `.md`). El reporte humano canónico en `knowledge/tech/audits/` que propone
+EP-001 se **genera** aquí pero se **publica** solo con aprobación humana (UX en AUD-C8), respetando
+"knowledge/ es fuente de verdad". El test confirma que no se crea ningún directorio `knowledge/`.
+
+### Límite
+Solo el render y la persistencia derivada. El comando `kaddo audit run`/`report` (AUD-C8/C9), la publicación
+canónica aprobada y la propuesta/asociación a Planning (AUD-C8/C10) son candidatos posteriores. El siguiente
+paso natural es AUD-C8 (`kaddo audit run`): el primer comando de cara al usuario, que cablea de verdad el
+flujo Discover→Analyze→Correlate→Report y donde por fin se publica el release acumulado.
+
