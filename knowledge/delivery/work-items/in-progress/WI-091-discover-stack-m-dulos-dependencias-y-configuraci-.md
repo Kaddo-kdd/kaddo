@@ -3,7 +3,7 @@ type: feature
 id: WI-091
 title: 'Discover: stack, módulos, dependencias y configuración'
 knowledge_level: K2
-status: ready
+status: in-progress
 phase: now
 priority: high
 initiative: INI-001
