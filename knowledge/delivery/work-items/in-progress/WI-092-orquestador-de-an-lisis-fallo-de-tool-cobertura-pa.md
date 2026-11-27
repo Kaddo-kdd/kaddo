@@ -3,7 +3,7 @@ type: feature
 id: WI-092
 title: Orquestador de análisis (fallo de tool = cobertura parcial)
 knowledge_level: K3
-status: ready
+status: in-progress
 phase: now
 priority: high
 initiative: INI-001
