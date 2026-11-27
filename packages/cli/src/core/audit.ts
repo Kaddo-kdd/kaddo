@@ -24,7 +24,7 @@ export type AuditToolRun = {
 }
 
 export type AuditCoverage = {
-  /** False when any declared tool failed/was skipped — the run is not a clean, complete result. */
+  /** False when a tool failed/was skipped or an area is explicitly not evaluated. */
   complete: boolean
   /** Human-readable areas that were evaluated (e.g. module ids, globs). */
   evaluated: string[]
@@ -140,7 +140,7 @@ export function buildAuditRun(input: {
 }): AuditRun {
   const failed = input.tools.filter((t) => t.status !== 'ok')
   const allFailed = input.tools.length > 0 && input.tools.every((t) => t.status === 'failed')
-  const status: AuditRunStatus = allFailed ? 'failed' : failed.length > 0 ? 'partial' : 'completed'
+  const status: AuditRunStatus = allFailed ? 'failed' : failed.length > 0 || (input.notEvaluated?.length ?? 0) > 0 ? 'partial' : 'completed'
   const notEvaluated = [
     ...(input.notEvaluated ?? []),
     ...failed.map((t) => `${t.name}${t.version ? `@${t.version}` : ''} (${t.status}${t.reason ? `: ${t.reason}` : ''})`),
@@ -153,7 +153,7 @@ export function buildAuditRun(input: {
     scope: input.scope,
     tools: input.tools,
     status,
-    coverage: { complete: failed.length === 0, evaluated: input.evaluated ?? [], notEvaluated },
+    coverage: { complete: notEvaluated.length === 0, evaluated: input.evaluated ?? [], notEvaluated },
     findings,
     limitations: input.limitations ?? [],
     ...(input.reportRef ? { reportRef: input.reportRef } : {}),

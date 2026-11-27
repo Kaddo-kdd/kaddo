@@ -4,10 +4,19 @@ import { randomUUID } from 'node:crypto'
 import fs from 'node:fs'
 import path from 'node:path'
 import type { CommandRunner } from '@kaddo/cli/core'
+import { buildRegistryInventory } from '@kaddo/cli/core'
+import { queryIsolatedRegistry } from './audit-registry.js'
 
 // A digest pins the multi-platform image; --pull=never prevents implicit network access.
 const IMAGE = 'node:22.14.0-alpine@sha256:9bef0ef1e268f60627da9ba7d7605e8831d5b56ad07487d24d1aa386336d1944'
 const execFileAsync = promisify(execFile)
+
+/** Fail before recording a request when the local daemon or pinned image is unavailable. */
+export async function assertAuditSandboxAvailable(): Promise<void> {
+  const host = process.platform === 'win32' ? 'npipe:////./pipe/docker_engine' : 'unix:///var/run/docker.sock'
+  try { await execFileAsync('docker', ['--host', host, 'image', 'inspect', IMAGE], { timeout: 10_000, maxBuffer: 2 * 1024 * 1024, windowsHide: true }) }
+  catch { throw new Error('Isolated analyzer runtime or pinned image unavailable.') }
+}
 
 /**
  * Docker runner for the fixed TypeScript analyzer. It exposes only the project,
@@ -20,6 +29,21 @@ export function createAuditSandboxRunner(projectDir: string): CommandRunner {
   if (root.includes(',') || root.includes('\n') || root.includes('\r')) throw new Error('Unsupported project path for sandbox mount.')
   const host = process.platform === 'win32' ? 'npipe:////./pipe/docker_engine' : 'unix:///var/run/docker.sock'
   return async (command: string, args: string[], options?: { cwd?: string }) => {
+    if ((command === 'npm' || command === 'pnpm') && JSON.stringify(args) === JSON.stringify(['audit', '--json'])) {
+      const file = path.join(root, command === 'npm' ? 'package-lock.json' : 'pnpm-lock.yaml')
+      const stat = fs.lstatSync(file)
+      if (!stat.isFile() || stat.isSymbolicLink() || stat.size > 10 * 1024 * 1024) throw new Error('Unsafe or oversized dependency lockfile.')
+      const fd = fs.openSync(file, fs.constants.O_RDONLY | (fs.constants.O_NOFOLLOW ?? 0))
+      let content: string
+      try {
+        const opened = fs.fstatSync(fd)
+        if (!opened.isFile() || opened.size > 10 * 1024 * 1024 || opened.ino !== stat.ino || opened.dev !== stat.dev) throw new Error('Dependency lockfile changed during validation.')
+        content = fs.readFileSync(fd, 'utf8')
+      } finally { fs.closeSync(fd) }
+      const inventory = buildRegistryInventory(command, content)
+      if (Object.keys(inventory.packages).length === 0) throw new Error('Dependency inventory is empty or unsupported.')
+      return { stdout: await queryIsolatedRegistry(inventory), stderr: '', exitCode: 0 }
+    }
     if (command !== 'tsc' || JSON.stringify(args) !== JSON.stringify(['--noEmit', '--pretty', 'false'])) {
       throw new Error('Analyzer unavailable in the isolated runner.')
     }

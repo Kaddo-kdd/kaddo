@@ -4,6 +4,7 @@ import os from 'node:os'
 import path from 'node:path'
 import { createRequire } from 'node:module'
 import { createAuditSandboxRunner } from '../src/audit-sandbox.js'
+import { queryIsolatedRegistry } from '../src/audit-registry.js'
 
 describe('audit sandbox runner', () => {
   it('rejects commands and working directories outside the project before starting Docker', async () => {
@@ -48,4 +49,10 @@ setTimeout(() => process.exit(13), 5000);
       expect(fs.existsSync(path.join(root, 'escape'))).toBe(false)
     } finally { fs.rmSync(root, { recursive: true, force: true }); fs.rmSync(outside, { recursive: true, force: true }) }
   }, 180_000)
+
+  it.skipIf(process.env.KADDO_TEST_DOCKER_SANDBOX !== '1')('queries the real registry from a container without project mounts', async () => {
+    const result = JSON.parse(await queryIsolatedRegistry({ packages: { lodash: ['4.17.20'] }, omitted: 0 }))
+    expect(Object.values(result.advisories).length).toBeGreaterThan(0)
+    expect(Object.values(result.advisories).some((a: any) => a.module_name === 'lodash')).toBe(true)
+  }, 90_000)
 })

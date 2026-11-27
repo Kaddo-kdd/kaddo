@@ -40,6 +40,19 @@ afterEach(() => {
 })
 
 describe('project discovery (WI-091)', () => {
+  it('does not discover workspace packages outside the project', () => {
+    const outside = fs.mkdtempSync(path.join(os.tmpdir(), 'kaddo-external-workspace-'))
+    try {
+      fs.writeFileSync(path.join(outside, 'package.json'), JSON.stringify({ name: 'external-fixture' }))
+      write('package.json', JSON.stringify({ name: 'root' }))
+      const relative = path.relative(dir, outside).replace(/\\/g, '/')
+      write('pnpm-workspace.yaml', `packages:\n  - "${relative}"\n  - "packages/*"\n`)
+      write('packages/valid/package.json', JSON.stringify({ name: 'valid' }))
+      const result = discoverProject(dir)
+      expect(result.modules.map((m) => m.name)).toEqual(['valid'])
+      expect(result.limitations).toContain('Ignored an unsafe or unsupported workspace pattern.')
+    } finally { fs.rmSync(outside, { recursive: true, force: true }) }
+  })
   it('detects the monorepo layout: package manager and workspace modules with their paths (AC-02)', () => {
     fixtureMonorepo()
     const d = discoverProject(dir, { createdAt: 't' })

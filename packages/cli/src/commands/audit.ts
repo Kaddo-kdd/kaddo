@@ -24,11 +24,13 @@ import {
   nextAuditRunId,
   readAuditRun,
   listAuditRuns,
+  getAuditView,
   queryAuditFindings,
   getWorkItemForEdit,
   linkAuditFinding,
   previewAuditPlan,
   compareAuditRuns,
+  executeAudit,
   type AuditRun,
   type AuditFinding,
   type AuditRunSummary,
@@ -107,37 +109,7 @@ function writeCanonicalReport(dir: string, id: string, report: string): string {
  */
 export async function performAuditRun(opts: AuditRunOptions, deps: AuditRunDeps): Promise<AuditRunResult> {
   const dir = deps.dir
-  const discovery = discoverProject(dir, { createdAt: deps.createdAt })
-  const moduleRefs: DiscoveredModuleRef[] = discovery.modules.map((m) => ({ name: m.name, path: m.path }))
-
-  // Resolve scope first — a bad selection throws before any tool runs.
-  const scope = resolveAuditScope({ modules: opts.module, paths: opts.paths }, moduleRefs)
-
-  const pm = deps.packageManager ?? discovery.stack.packageManager
-  const analyzers = [
-    createDependencyAnalyzer({ run: deps.run, packageManager: pm }),
-    createTypescriptAnalyzer({ run: deps.run }),
-  ]
-
-  const id = deps.idFor(dir)
-  const run = await runAudit({
-    id,
-    createdAt: deps.createdAt,
-    scope,
-    analyzers,
-    context: { dir, scope, discovery },
-  })
-
-  // Correlate inline so the report ships enriched findings.
-  const correlated = correlateFindings({
-    findings: run.findings,
-    artifacts: discoverKnowledge(dir),
-    owners: loadOwners(dir),
-    modules: moduleRefs,
-  })
-  const report = renderAuditReport(run, correlated)
-
-  const { jsonPath, reportPath } = writeAuditArtifacts(dir, run, { report })
+  const { run, jsonPath, reportPath, report } = await executeAudit(dir, opts, deps)
 
   let publishedPath: string | undefined
   if (opts.publish) {
@@ -244,8 +216,7 @@ export function performAuditReport(opts: AuditReportOptions, deps: AuditReportDe
   if (!id) throw new Error('No audits found. Run `kaddo audit run` first.')
   if (!/^AUD-\d+$/.test(id)) throw new Error('Invalid audit id.')
 
-  const run = readAuditRun(dir, id)
-  if (!run) throw new Error(`Audit "${id}" not found in .kaddo/audits/.`)
+  const { run, findings: correlated } = getAuditView(dir, id)
 
   // Resolve --module to path prefixes via the Discover inventory.
   let pathPrefix: string[] | undefined
@@ -264,7 +235,6 @@ export function performAuditReport(opts: AuditReportOptions, deps: AuditReportDe
     ...(pathPrefix ? { pathPrefix } : {}),
   }
 
-  const correlated = correlateFindings({ findings: run.findings, artifacts: discoverKnowledge(dir), owners: loadOwners(dir), modules: discoverProject(dir, { createdAt: run.createdAt }).modules.map(m => ({ name: m.name, path: m.path })) })
   return { kind: 'run', run, findings: queryAuditFindings(correlated, filters) }
 }
 
