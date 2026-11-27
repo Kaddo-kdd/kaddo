@@ -144,6 +144,7 @@ export default defineConfig({
             { label: 'ready', slug: 'commands/ready' },
             { label: 'guard', slug: 'commands/guard' },
             { label: 'explain', slug: 'commands/explain' },
+            { label: 'audit', slug: 'commands/audit' },
             { label: 'admin', slug: 'commands/admin' },
           ],
         },
