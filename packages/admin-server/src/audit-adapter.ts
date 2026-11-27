@@ -3,10 +3,12 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { createHash } from 'node:crypto'
 import { assertAuditSandboxAvailable, createAuditSandboxRunner } from './audit-sandbox.js'
+import { assertNoNestedMounts } from './audit-mounts.js'
 
 /** Reject symlinks in discovery inputs before the host-side scanner reads them. */
 function assertDiscoveryTree(dir: string): void {
   const root = fs.realpathSync(dir)
+  assertNoNestedMounts(root)
   const visit = (target: string) => {
     for (const entry of fs.readdirSync(target, { withFileTypes: true })) {
       const child = path.join(target, entry.name)

@@ -34,3 +34,7 @@ jobs:
         env:
           KADDO_TEST_DOCKER_SANDBOX: '1'
         run: pnpm exec vitest run --config vitest.config.ts packages/admin-server/tests/audit-sandbox.test.ts packages/admin-server/tests/audit-isolation-e2e.test.ts
+      - name: Validate nested bind mount detection and discovery race
+        env:
+          KADDO_TEST_MOUNT: '1'
+        run: pnpm exec vitest run --config vitest.config.ts packages/admin-server/tests/audit-mounts.test.ts packages/admin-server/tests/audit-race-probe.test.ts
