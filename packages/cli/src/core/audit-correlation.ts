@@ -25,6 +25,8 @@ export type FindingCorrelation = {
   matchStrength: MatchStrength
   /** Human-readable, advisory notes — never an assertion of causality. */
   notes: string[]
+  /** Explicitly approved links, distinct from heuristic suggestions. */
+  confirmedWorkItems: string[]
 }
 
 /** A finding plus its correlation. The base AuditFinding (WI-090) is unchanged. */
@@ -106,6 +108,7 @@ export function correlateFindings(input: CorrelateInput): CorrelatedFinding[] {
     }
 
     const workItems = uniqSorted(matches.filter((m) => m.artifact.isWorkItem).map((m) => m.artifact.id))
+    const confirmedWorkItems = uniqSorted(input.artifacts.filter((a) => a.isWorkItem && Array.isArray(a.rawFrontmatter?.audit_findings) && a.rawFrontmatter.audit_findings.includes(finding.id)).map((a) => a.id))
     const adrs = uniqSorted(matches.filter((m) => isAdr(m.artifact)).map((m) => m.artifact.id))
     const capabilities = uniqSorted(matches.flatMap((m) => m.artifact.capabilities))
     const risks = uniqSorted(matches.filter((m) => isRisk(m.artifact)).map((m) => m.artifact.id))
@@ -120,9 +123,10 @@ export function correlateFindings(input: CorrelateInput): CorrelatedFinding[] {
     if (matchStrength === 'none' && resolvedOwners.length > 0) matchStrength = 'domain'
 
     const notes: string[] = []
-    if (matchStrength === 'none') {
+    if (matchStrength === 'none' && confirmedWorkItems.length === 0) {
       notes.push('No correlation found in project knowledge.')
     } else {
+      if (confirmedWorkItems.length > 0) notes.push(`Approved Work Item links: ${confirmedWorkItems.join(', ')}.`)
       if (workItems.length > 0) notes.push(`Related Work Items: ${workItems.join(', ')} (${matchStrength} match).`)
       if (adrs.length > 0) notes.push(`Governing ADRs: ${adrs.join(', ')}.`)
       if (risks.length > 0) notes.push(`Documented risks: ${risks.join(', ')}.`)
@@ -133,13 +137,13 @@ export function correlateFindings(input: CorrelateInput): CorrelatedFinding[] {
     const mergedReferences = {
       adrs: uniqSorted([...(finding.references.adrs ?? []), ...adrs]),
       capabilities: uniqSorted([...(finding.references.capabilities ?? []), ...capabilities]),
-      workItems: uniqSorted([...(finding.references.workItems ?? []), ...workItems]),
+      workItems: uniqSorted([...(finding.references.workItems ?? []), ...workItems, ...confirmedWorkItems]),
     }
 
     return {
       ...finding,
       references: mergedReferences,
-      correlation: { owners: resolvedOwners, risks, matchStrength, notes },
+      correlation: { owners: resolvedOwners, risks, matchStrength, notes, confirmedWorkItems },
     }
   })
 }

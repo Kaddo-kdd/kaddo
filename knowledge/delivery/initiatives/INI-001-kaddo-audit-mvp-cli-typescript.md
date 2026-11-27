@@ -108,6 +108,7 @@ candidates:
       - EP-001 AC-6
     dependencies:
       - AUD-C7
+    materialized_as: WI-099
   - id: AUD-C11
     title: >-
       kaddo audit plan — preview de remediación + asociación a Planning con

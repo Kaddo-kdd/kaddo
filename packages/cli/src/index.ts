@@ -60,7 +60,7 @@ import { runStart } from './commands/start.js'
 import { runAdmin } from './commands/admin.js'
 import { runWorkItemImport } from './commands/work-item.js'
 import { runPocReport } from './commands/poc.js'
-import { runAuditRunCommand, runAuditReportCommand } from './commands/audit.js'
+import { runAuditRunCommand, runAuditReportCommand, runAuditLinkCommand } from './commands/audit.js'
 import { runVerify } from './commands/verify.js'
 import { runKnowledgeConsolidate } from './commands/knowledge.js'
 import {
@@ -170,6 +170,12 @@ pocCmd
 const auditCmd = program
   .command('audit')
   .description('Evidence-based technical audit of the project')
+
+auditCmd
+  .command('link <runId> <findingId> <workItemId>')
+  .description('Associate an audit finding with an existing Work Item after explicit approval')
+  .option('--yes', 'Confirm the association')
+  .action(runAuditLinkCommand)
 
 auditCmd
   .command('run')
