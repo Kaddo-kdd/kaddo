@@ -3,7 +3,8 @@ type: feature
 id: WI-105
 title: Remediation Planning & Work Item Linking
 knowledge_level: K3
-status: in-progress
+status: completed
+completed_at: 2026-11-28
 phase: now
 priority: high
 initiative: INI-002
@@ -58,6 +59,79 @@ surfaces:
   documentation: reviewed-not-affected
   operations-release: affected
 ready_at: '2026-11-28'
+implementation_status: completed
+validation_status: passed
+implementation_evidence:
+  repositories:
+    admin:
+      role: primary
+      status: completed
+      changed_paths:
+        - packages/admin/src/lib/api.ts
+        - packages/admin/src/lib/audit-presentation.ts
+        - packages/admin/src/components/AuditRemediation.tsx
+        - packages/admin/src/routes/AuditDetail.tsx
+        - packages/admin/tests/audit-explorer.test.ts
+      validations:
+        - command: npx vitest run packages/admin/tests/audit-explorer.test.ts
+          status: passed
+        - command: pnpm --filter @kaddo/admin build
+          status: passed
+        - command: pnpm test
+          status: passed
+        - command: GitHub Actions — CI + Audit analyzer isolation + Telemetry (commit 8c069ba)
+          status: passed
+  ac_verifications:
+    - criterion: '**AC-01:** Una vista de remediación por auditoría (GET /audits/:id/plan) lista las acciones por hallazgo ordenadas por severidad, con recomendación, evidencia, Work Items sugeridos y ya vinculados (`confirmedWorkItems`) y el estado (`already-linked`/`review`).'
+      status: passed
+      evidence: 'AuditRemediation consume getAuditPlan(id) (previewAuditPlan, ordenado por severidad) y lista por acción recomendación, WIs sugeridos y confirmedWorkItems y el estado already-linked/review. Happy path con datos en el E2E de aislamiento de CI.'
+      reference: 'packages/admin/src/components/AuditRemediation.tsx'
+      method: manual
+    - criterion: '**AC-02:** Desde un hallazgo se puede vincular a un Work Item existente: se elige el WI (sugerido o por id), se obtiene su revisión actual y se requiere confirmación explícita antes de escribir.'
+      status: passed
+      evidence: 'LinkFlow permite elegir un WI (botones de sugeridos o input por id), obtiene su revisión con getWorkItemEdit y abre un ConfirmDialog explícito antes de escribir.'
+      reference: 'packages/admin/src/components/AuditRemediation.tsx'
+      method: manual
+    - criterion: '**AC-03:** La vinculación usa `POST /audit-links` con `expectedRevision` y `confirmed: true`, es idempotente (si ya estaba vinculado, no cambia nada) y refleja el resultado (`changed`/`already-linked`).'
+      status: passed
+      evidence: 'linkAuditFinding hace POST /audit-links con expectedRevision y confirmed:true (buildAuditLinkInput); el resultado {changed} se refleja como ''Linked''/''Already linked'' (idempotente).'
+      reference: 'packages/admin/src/lib/api.ts'
+      method: manual
+    - criterion: '**AC-04:** Un conflicto de revisión (409) se maneja: se informa, se re-obtiene la revisión y se permite reintentar; `WORK_ITEM_NOT_EDITABLE`/`NOT_FOUND`/`INVALID_INPUT` dan errores claros.'
+      status: passed
+      evidence: 'isRevisionConflict distingue el 409 WORK_ITEM_CONFLICT: se informa ''changed since it was read — review and retry'' (reintentar re-obtiene la revisión); otros errores muestran su mensaje. Test de isRevisionConflict.'
+      reference: 'packages/admin/src/components/AuditRemediation.tsx'
+      method: manual
+    - criterion: '**AC-05:** Nunca se vincula automáticamente: las coincidencias heurísticas son sugerencias y toda escritura exige aprobación humana explícita (EP-001 AC-7).'
+      status: passed
+      evidence: 'No hay camino que escriba sin confirmación: buildAuditLinkInput fuerza confirmed:true y el POST solo se dispara desde el onConfirm del ConfirmDialog; las sugerencias son heurísticas (EP-001 AC-7). Test de buildAuditLinkInput.'
+      reference: 'packages/admin/src/lib/audit-presentation.ts'
+      method: manual
+    - criterion: '**AC-06:** Tras vincular, el hallazgo muestra el Work Item vinculado y ofrece navegación contextual a `/work-items/:id`; las asociaciones y la evidencia se preservan.'
+      status: passed
+      evidence: 'Tras vincular se invalidan las queries del plan y del detalle; los confirmedWorkItems se muestran con WorkItemLink que navega a /work-items/:id. El Core preserva asociaciones y evidencia.'
+      reference: 'packages/admin/src/components/AuditRemediation.tsx'
+      method: manual
+    - criterion: '**AC-07:** La preview de remediación es de solo lectura (no escribe); solo la acción de vincular, confirmada, escribe; no se modifican lifecycles ni campos ajenos.'
+      status: passed
+      evidence: 'El preview (getAuditPlan) es GET de solo lectura; solo confirmLink escribe; el backend (WI-099/WI-102) impide tocar lifecycle o campos ajenos a audit_findings.'
+      reference: 'packages/admin/src/components/AuditRemediation.tsx'
+      method: manual
+    - criterion: '**AC-08:** `api.ts` expone `getAuditPlan(id)` y `linkAuditFinding(input)` tipados, y el tipo de correlación incluye `confirmedWorkItems`.'
+      status: passed
+      evidence: 'api.getAuditPlan(id) y api.linkAuditFinding(input) están tipados (AuditPlanPreview/AuditLinkInput/AuditLinkResult) y AuditFindingCorrelation incluye confirmedWorkItems.'
+      reference: 'packages/admin/src/lib/api.ts'
+      method: manual
+    - criterion: '**AC-09:** Validación visual local (desktop + mobile) de los controles y estados sin errores de consola de UI, y pruebas unitarias de la lógica (orden/estado de acciones, construcción de la petición, estados de confirmación/conflicto); el happy path se cubre en el E2E de CI.'
+      status: passed
+      evidence: 'Pruebas unitarias de la lógica (buildAuditLinkInput con confirmed:true, isValidWorkItemId, isRevisionConflict, exports de componente/API; 13 en verde). Validación visual local del estado de error del detalle sin errores de UI; el happy path y el vínculo real se cubren en el E2E de aislamiento de CI.'
+      reference: 'packages/admin/tests/audit-explorer.test.ts'
+      method: manual
+    - criterion: '**AC-10:** `pnpm --filter @kaddo/admin build` sin errores y el gate raíz sin regresiones.'
+      status: passed
+      evidence: 'pnpm --filter @kaddo/admin build sin errores; gate raíz 2342 pruebas en verde; CI de la rama en verde (CI, Audit analyzer isolation, Telemetry) en el commit 8c069ba.'
+      reference: 'packages/admin/tests/audit-explorer.test.ts'
+      method: manual
 ---
 
 # Remediation Planning & Work Item Linking
@@ -182,4 +256,34 @@ enlaza a su detalle. El happy path con datos se valida en el E2E de CI.
 
 ## 9. Learning
 
-_What did we learn? Update after completion._
+Primera pieza de UI de INI-002 con **escritura**: cierra el lazo auditoría → Planning vinculando un hallazgo a
+un Work Item existente, con aprobación humana explícita.
+
+### Sugerir es lectura; vincular es una escritura confirmada
+La vista de remediación (GET /audits/:id/plan) es de solo lectura y marca las coincidencias heurísticas como
+**sugerencias** (`suggestedWorkItems`) frente a las ya vinculadas (`confirmedWorkItems`). El vínculo no ocurre
+nunca de forma automática: el usuario elige el WI, se obtiene su revisión y hay un `ConfirmDialog` explícito
+antes del `POST /audit-links`. `buildAuditLinkInput` fuerza `confirmed: true` en la petición, de modo que no
+existe un camino de código que escriba sin confirmación.
+
+### Concurrencia optimista de principio a fin
+La escritura usa `expectedRevision`: se lee la revisión del Work Item (`getWorkItemEdit`) justo antes de
+confirmar, y el backend rechaza con 409 si cambió en el intermedio. La UI distingue ese conflicto
+(`isRevisionConflict`) de otros errores y pide revisar y reintentar (lo que re-obtiene la revisión), en vez de
+sobrescribir a ciegas. La operación es idempotente: re-vincular informa "Already linked" sin cambiar nada.
+
+### Solo vincular a existentes
+Se acotó a **vincular a Work Items existentes** (no crear nuevos desde un hallazgo): la asociación añade el
+hallazgo a `audit_findings` del WI sin tocar lifecycle ni otros campos (garantía del Core/WI-099). Crear
+entidades de Planning queda fuera. Esto mantiene la acción pequeña y auditable.
+
+### Límite de validación local (recurrente)
+Como C2/C4, la sección de remediación solo se renderiza con datos del detalle, que dependen del
+descubrimiento aislado con Docker de WI-102. Localmente se validó el estado de error y la ausencia de
+regresión; el flujo completo (preview con datos, vínculo real, idempotencia y conflicto) se cubre con pruebas
+unitarias de la lógica y el E2E de aislamiento de CI. La lógica de escritura/confirmación/conflicto se extrajo
+a funciones puras precisamente para poder probarla sin DOM ni Docker.
+
+### Alcance
+Desbloquea AUD-ADMIN-C7 (validación E2E + docs). Quedan C3 (ejecución) y C5 (comparación) antes del cierre de
+la iniciativa.
