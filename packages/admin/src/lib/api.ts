@@ -542,8 +542,57 @@ export type DeprecationPlan = {
   targets: DeprecationTarget[]
 }
 
+export type AuditRunSummary = { id: string; createdAt: string; status: 'completed' | 'partial' | 'failed'; total: number; confirmed: number; inferences: number }
+export type AuditScopeView = { kind: 'project' } | { kind: 'module'; modules: string[] } | { kind: 'paths'; paths: string[] }
+export type AuditFindingReferences = { adrs?: string[]; capabilities?: string[]; workItems?: string[] }
+export type AuditFindingCorrelation = {
+  owners: { domain: string; owners: string[] }[]
+  risks: string[]
+  matchStrength: 'exact' | 'module' | 'domain' | 'none'
+  notes: string[]
+  confirmedWorkItems?: string[]
+}
+export type AuditPlanAction = {
+  findingId: string; title: string; severity: string; confidence: string
+  evidence: string; recommendation: string
+  confirmedWorkItems: string[]; suggestedWorkItems: string[]
+  action: 'already-linked' | 'review'
+}
+export type AuditPlanPreview = {
+  auditId: string; status: 'completed' | 'partial' | 'failed'
+  coverage: { complete: boolean; evaluated: string[]; notEvaluated: string[] }
+  actions: AuditPlanAction[]
+}
+export type AuditLinkInput = { runId: string; findingId: string; workItemId: string; expectedRevision: string; confirmed: true }
+export type AuditLinkResult = { revision: string; path: string; changed: boolean }
+export type AuditFindingView = {
+  id: string; category: string; title: string; severity: string; confidence: string
+  location?: { file?: string; line?: number }; evidence: string; provenance: string; recommendation: string; status: string
+  references?: AuditFindingReferences
+  correlation?: AuditFindingCorrelation
+}
+export type AuditFindingFilters = {
+  severity?: string; confidence?: string; category?: string; status?: string; module?: string; pathPrefix?: string
+}
+export type AuditRunView = {
+  id: string; createdAt: string; commit?: string; scope: AuditScopeView; status: 'completed' | 'partial' | 'failed'
+  coverage: { complete: boolean; evaluated: string[]; notEvaluated: string[] }
+  tools: { name: string; version?: string; status: string }[]
+  findings: AuditFindingView[]
+}
+export type AuditDetail = { run: AuditRunView; findings: AuditFindingView[] }
+
 export const api = {
   initSession: () => fetchApi<{ status: string }>('/session'),
+  listAudits: () => fetchApi<AuditRunSummary[]>('/audits'),
+  getAudit: (id: string, filters?: AuditFindingFilters) => {
+    const params = new URLSearchParams()
+    for (const [k, v] of Object.entries(filters ?? {})) if (v) params.set(k, v)
+    const qs = params.toString()
+    return fetchApi<AuditDetail>(`/audits/${encodeURIComponent(id)}${qs ? `?${qs}` : ''}`)
+  },
+  getAuditPlan: (id: string) => fetchApi<AuditPlanPreview>(`/audits/${encodeURIComponent(id)}/plan`),
+  linkAuditFinding: (input: AuditLinkInput) => mutateApi<AuditLinkResult>('/audit-links', 'POST', input),
   getOverview: () => fetchApi<ProjectOverview>('/overview'),
   getProject: () => fetchApi<ProjectOverview['project']>('/project'),
   updateProjectMode: (mode: 'standard' | 'poc') => mutateApi<ProjectOverview['project']>('/project/mode', 'PUT', { mode }),

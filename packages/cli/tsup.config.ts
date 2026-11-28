@@ -19,4 +19,14 @@ export default defineConfig([
     sourcemap: false,
     minify: false,
   },
+  {
+    entry: ['src/audit-discover-sandbox.ts'],
+    format: ['cjs'],
+    target: 'node18',
+    clean: false,
+    noExternal: [/.*/],
+    outExtension: () => ({ js: '.cjs' }),
+    sourcemap: false,
+    minify: false,
+  },
 ])

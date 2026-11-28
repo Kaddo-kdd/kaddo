@@ -22,6 +22,8 @@ import { DeprecationDetail } from './routes/DeprecationDetail'
 import { Reports } from './routes/Reports'
 import { ConsolidationReport } from './routes/ConsolidationReport'
 import { Planning, PlanDetail, EpicDetail } from './routes/Planning'
+import { Audits } from './routes/Audits'
+import { AuditDetail } from './routes/AuditDetail'
 import { validateFromSearch } from './lib/planning-nav'
 
 const queryClient = new QueryClient({
@@ -60,6 +62,8 @@ const resourcesRoute = createRoute({ getParentRoute: () => rootRoute, path: '/re
 const resourceDetailRoute = createRoute({ getParentRoute: () => rootRoute, path: '/resources/$resourceId', component: ResourceDetail, errorComponent: RouteErrorFallback })
 const deprecationsRoute = createRoute({ getParentRoute: () => rootRoute, path: '/deprecations', component: Deprecations, errorComponent: RouteErrorFallback })
 const deprecationDetailRoute = createRoute({ getParentRoute: () => rootRoute, path: '/deprecations/$planId', component: DeprecationDetail, errorComponent: RouteErrorFallback })
+const auditsRoute = createRoute({ getParentRoute: () => rootRoute, path: '/audits', component: Audits, errorComponent: RouteErrorFallback })
+const auditDetailRoute = createRoute({ getParentRoute: () => rootRoute, path: '/audits/$auditId', component: AuditDetail, errorComponent: RouteErrorFallback })
 const reportsRoute = createRoute({ getParentRoute: () => rootRoute, path: '/reports', component: Reports, errorComponent: RouteErrorFallback })
 const impactReportRoute = createRoute({ getParentRoute: () => rootRoute, path: '/reports/impact', component: () => <Reports kind="impact" />, errorComponent: RouteErrorFallback })
 const driftReportRoute = createRoute({ getParentRoute: () => rootRoute, path: '/reports/drift', component: () => <Reports kind="drift" />, errorComponent: RouteErrorFallback })
@@ -69,7 +73,7 @@ const planningRoute = createRoute({ getParentRoute: () => rootRoute, path: '/pla
 const planDetailRoute = createRoute({ getParentRoute: () => rootRoute, path: '/planning/plans/$id', component: () => <PlanDetail id={planDetailRoute.useParams().id} />, errorComponent: RouteErrorFallback, validateSearch: validateFromSearch })
 const epicDetailRoute = createRoute({ getParentRoute: () => rootRoute, path: '/planning/epics/$id', component: () => <EpicDetail id={epicDetailRoute.useParams().id} />, errorComponent: RouteErrorFallback, validateSearch: validateFromSearch })
 
-const routeTree = rootRoute.addChildren([indexRoute, overviewRoute, knowledgeRoute, knowledgeLayerRoute, knowledgeArtifactRoute, workItemsRoute, workItemNewRoute, workItemDetailRoute, workItemEditRoute, systemRoute, integrationsRoute, externalWorkItemsRoute, initiativesRoute, initiativeDetailRoute, resourcesRoute, resourceDetailRoute, deprecationsRoute, deprecationDetailRoute, reportsRoute, impactReportRoute, driftReportRoute, savingsReportRoute, consolidationReportRoute, planningRoute, planDetailRoute, epicDetailRoute])
+const routeTree = rootRoute.addChildren([indexRoute, overviewRoute, knowledgeRoute, knowledgeLayerRoute, knowledgeArtifactRoute, workItemsRoute, workItemNewRoute, workItemDetailRoute, workItemEditRoute, systemRoute, integrationsRoute, externalWorkItemsRoute, initiativesRoute, initiativeDetailRoute, resourcesRoute, resourceDetailRoute, deprecationsRoute, deprecationDetailRoute, auditsRoute, auditDetailRoute, reportsRoute, impactReportRoute, driftReportRoute, savingsReportRoute, consolidationReportRoute, planningRoute, planDetailRoute, epicDetailRoute])
 const router = createRouter({ routeTree })
 
 declare module '@tanstack/react-router' {

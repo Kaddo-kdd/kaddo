@@ -120,7 +120,17 @@ function roleFromPath(relDir: string): string {
 function discoverModules(dir: string, globs: string[], limitations: string[]): DiscoveredModule[] {
   if (globs.length === 0) return []
   // Each workspace glob points at module directories; append package.json to match actual packages.
-  const patterns = globs.map((g) => `${g.replace(/\/+$/, '')}/package.json`)
+  // Do not allow workspace patterns to make discovery read outside the project.
+  // Restrict the grammar as well as '..': glob brace/extglob expansion can otherwise
+  // synthesize traversal after a simple path check.
+  const safeGlobs = globs.filter((g) => {
+    const candidate = g.startsWith('!') ? g.slice(1) : g
+    const safe = candidate.length > 0 && /^[A-Za-z0-9_@./*\-]+$/.test(candidate)
+      && !candidate.includes('..') && !path.posix.isAbsolute(candidate) && !path.win32.isAbsolute(candidate)
+    if (!safe) limitations.push('Ignored an unsafe or unsupported workspace pattern.')
+    return safe
+  })
+  const patterns = safeGlobs.map((g) => `${g.replace(/\/+$/, '')}/package.json`)
   let matches: string[] = []
   try {
     matches = fg.sync(patterns, { cwd: dir, dot: false, onlyFiles: true, followSymbolicLinks: false })

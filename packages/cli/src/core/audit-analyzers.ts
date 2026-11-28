@@ -10,6 +10,8 @@
 // is NOT treated as a failure.
 
 import { execa } from 'execa'
+import fs from 'node:fs'
+import path from 'node:path'
 import { stableFindingId, type AuditFinding, type FindingSeverity } from './audit.js'
 import type { Analyzer } from './audit-orchestrator.js'
 
@@ -55,10 +57,27 @@ type Advisory = {
  * `advisories` shape; an absent/empty `advisories` yields no findings (a clean audit).
  */
 export function mapAuditAdvisories(parsed: unknown, packageManager: string): AuditFinding[] {
-  const root = parsed as { advisories?: unknown } | null
-  const advisories = root && typeof root.advisories === 'object' && root.advisories
+  const root = parsed as { advisories?: unknown; vulnerabilities?: unknown } | null
+  const advisories: Advisory[] = root && typeof root.advisories === 'object' && root.advisories && !Array.isArray(root.advisories)
     ? Object.values(root.advisories as Record<string, Advisory>)
     : []
+  // npm audit v7+ reports direct advisories in vulnerabilities[*].via.
+  // String entries identify indirect dependencies, not advisories by themselves.
+  if (root && typeof root.vulnerabilities === 'object' && root.vulnerabilities && !Array.isArray(root.vulnerabilities)) {
+    for (const [name, value] of Object.entries(root.vulnerabilities as Record<string, { via?: unknown }>)) {
+      if (!value || !Array.isArray(value.via)) continue
+      for (const via of value.via) {
+        if (!via || typeof via !== 'object' || Array.isArray(via)) continue
+        const item = via as Record<string, unknown>
+        advisories.push({ id: typeof item.source === 'number' || typeof item.source === 'string' ? item.source : undefined,
+          module_name: typeof item.name === 'string' ? item.name : name,
+          title: typeof item.title === 'string' ? item.title : undefined,
+          severity: typeof item.severity === 'string' ? item.severity : undefined,
+          url: typeof item.url === 'string' ? item.url : undefined,
+          vulnerable_versions: typeof item.range === 'string' ? item.range : undefined })
+      }
+    }
+  }
   return advisories.map((a) => {
     const moduleName = a.module_name ?? 'unknown'
     const fingerprint = String(a.id ?? a.url ?? a.title ?? moduleName)
@@ -125,6 +144,7 @@ export function createDependencyAnalyzer(opts: { run: CommandRunner; packageMana
   return {
     name: `${pm} audit`,
     run: async (ctx) => {
+      if (ctx.scope.kind !== 'project') return { status: 'skipped', findings: [], reason: 'Dependency audit cannot guarantee the selected module or path scope.' }
       const res = await opts.run(pm, ['audit', '--json'], { cwd: ctx.dir })
       let parsed: unknown
       try {
@@ -132,7 +152,14 @@ export function createDependencyAnalyzer(opts: { run: CommandRunner; packageMana
       } catch {
         throw new Error(`${pm} audit produced no parseable JSON (exit ${res.exitCode})`)
       }
-      return { findings: mapAuditAdvisories(parsed, pm), evaluated: ['dependencies'] }
+      const data = parsed as { error?: unknown; advisories?: unknown; vulnerabilities?: unknown; kaddoOmitted?: unknown } | null
+      const objectMap = (v: unknown) => typeof v === 'object' && v !== null && !Array.isArray(v)
+      if (!data || data.error || (!objectMap(data.advisories) && !objectMap(data.vulnerabilities))) throw new Error(`${pm} audit returned an unrecognized or error response`)
+      const findings = mapAuditAdvisories(parsed, pm)
+      const indirect = objectMap(data.vulnerabilities) && Object.values(data.vulnerabilities as Record<string, { via?: unknown }>).some(v => !v || !Array.isArray(v.via) || !v.via.some(x => x && typeof x === 'object' && !Array.isArray(x)))
+      if (indirect && findings.length === 0) throw new Error(`${pm} audit returned vulnerabilities without direct advisory evidence`)
+      const notEvaluated = [...(indirect ? ['indirect dependency vulnerability attribution'] : []), ...(typeof data.kaddoOmitted === 'number' && data.kaddoOmitted > 0 ? ['unsupported lockfile entries'] : [])]
+      return { findings, evaluated: ['dependencies'], ...(notEvaluated.length ? { notEvaluated } : {}) }
     },
   }
 }
@@ -146,12 +173,33 @@ export function createTypescriptAnalyzer(opts: { run: CommandRunner }): Analyzer
   return {
     name: 'tsc',
     run: async (ctx) => {
-      const res = await opts.run('tsc', ['--noEmit', '--pretty', 'false'], { cwd: ctx.dir })
-      const findings = mapTscDiagnostics(`${res.stdout}\n${res.stderr}`)
-      if (res.exitCode !== 0 && findings.length === 0) {
-        throw new Error(`tsc failed to run (exit ${res.exitCode}): ${(res.stderr || res.stdout).slice(0, 200)}`)
+      if (ctx.scope.kind === 'paths') return { status: 'skipped', findings: [], reason: 'TypeScript analysis cannot guarantee an arbitrary path scope.' }
+      const root = path.resolve(ctx.dir)
+      const dirs = ctx.scope.kind === 'project' ? [{ cwd: root, prefix: '' }] : ctx.scope.modules.map(name => {
+        const match = ctx.discovery?.modules.find(m => m.name === name)
+        if (!match) throw new Error(`Unknown module: ${name}`)
+        const resolved = path.resolve(root, match.path)
+        const relative = path.relative(fs.realpathSync(root), fs.realpathSync(resolved))
+        if (relative === '..' || relative.startsWith(`..${path.sep}`) || path.isAbsolute(relative)) throw new Error('Module resolves outside project.')
+        return { cwd: resolved, prefix: match.path.replace(/\\/g, '/') }
+      })
+      const findings: AuditFinding[] = []
+      for (const target of dirs) {
+        const res = await opts.run('tsc', ['--noEmit', '--pretty', 'false'], { cwd: target.cwd })
+        const found = mapTscDiagnostics(`${res.stdout}\n${res.stderr}`)
+        if (res.exitCode !== 0 && found.length === 0) throw new Error(`tsc failed to run (exit ${res.exitCode}): ${(res.stderr || res.stdout).slice(0, 200)}`)
+        for (const f of found) {
+          if (target.prefix && f.location?.file) {
+            const file = path.relative(root, path.resolve(target.cwd, f.location.file)).replace(/\\/g, '/')
+            if (file !== target.prefix && !file.startsWith(`${target.prefix}/`)) continue
+            const location = { ...f.location, file }
+            const match = f.evidence.match(/:(\d+) (?:error|warning) (TS\d+):/)
+            if (!match) throw new Error('Could not preserve diagnostic identity.')
+            findings.push({ ...f, id: stableFindingId({ category: f.category, location, fingerprint: `${match[2]}:${match[1]}` }), location, evidence: f.evidence.replace(f.location.file, file) })
+          } else findings.push(f)
+        }
       }
-      return { findings, evaluated: ['types'] }
+      return { findings, evaluated: ctx.scope.kind === 'project' ? ['types'] : dirs.map(d => `types:${d.prefix}`) }
     },
   }
 }

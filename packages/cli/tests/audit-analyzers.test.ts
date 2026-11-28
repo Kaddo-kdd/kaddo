@@ -25,6 +25,26 @@ const ctx = { dir: '/x', scope: { kind: 'project' as const } }
 const base = { id: 'AUD-001', createdAt: '2026-11-26T00:00:00Z', scope: { kind: 'project' as const }, context: ctx }
 
 describe('audit analyzers (WI-093)', () => {
+  it('maps npm modern advisory records instead of treating vulnerabilities as a clean result', async () => {
+    const output = JSON.stringify({ vulnerabilities: { example: { via: [{ source: 123, name: 'example', title: 'Example advisory', severity: 'high', url: 'https://example.test/advisory', range: '<2' }] } } })
+    const run = await runAudit({ ...base, analyzers: [createDependencyAnalyzer({ run: stubRunner({ npm: { stdout: output, stderr: '', exitCode: 1 } }), packageManager: 'npm' })] })
+    expect(run.findings).toHaveLength(1)
+    expect(run.findings[0]).toMatchObject({ severity: 'high', title: 'Example advisory', provenance: 'npm audit' })
+  })
+
+  it.each(['{}', '{"error":{"code":"E401"}}', '{"vulnerabilities":{"indirect":{"via":["other"]}}}'])('does not treat unsupported or error JSON as clean: %s', async (stdout) => {
+    const run = await runAudit({ ...base, analyzers: [createDependencyAnalyzer({ run: stubRunner({ npm: { stdout, stderr: '', exitCode: 1 } }), packageManager: 'npm' })] })
+    expect(run.coverage.complete).toBe(false)
+    expect(run.tools[0].status).toBe('failed')
+  })
+
+  it('keeps direct advisory evidence but reports partial attribution for indirect npm vulnerabilities', async () => {
+    const stdout = JSON.stringify({ vulnerabilities: { direct: { via: [{ source: 123, name: 'direct', title: 'Advisory', severity: 'high' }] }, indirect: { via: ['direct'] } } })
+    const run = await runAudit({ ...base, analyzers: [createDependencyAnalyzer({ run: stubRunner({ npm: { stdout, stderr: '', exitCode: 1 } }), packageManager: 'npm' })] })
+    expect(run.findings).toHaveLength(1)
+    expect(run.coverage.complete).toBe(false)
+    expect(run.coverage.notEvaluated).toContain('indirect dependency vulnerability attribution')
+  })
   it('maps audit advisories to confirmed findings with evidence and provenance (AC-01/AC-04/AC-05)', () => {
     const findings = mapAuditAdvisories(JSON.parse(AUDIT_JSON), 'pnpm')
     expect(findings).toHaveLength(2)

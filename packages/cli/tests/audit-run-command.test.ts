@@ -4,6 +4,7 @@ import os from 'node:os'
 import path from 'node:path'
 import { performAuditRun, type AuditRunDeps } from '../src/commands/audit.js'
 import type { CommandRunner, CommandResult } from '../src/core/audit-analyzers.js'
+import { nextAuditRunId } from '../src/core/audit.js'
 
 // WI-097 (EP-001/INI-001, AUD-C8) — the `kaddo audit run` pipeline, tested via performAuditRun with injected
 // deps (command runner, confirm, clock, id). No real processes spawned; a temp dir stands in for the repo.
@@ -40,7 +41,7 @@ function okRunner(): CommandRunner {
 function deps(over: Partial<AuditRunDeps> = {}): AuditRunDeps {
   return {
     dir, run: okRunner(), confirm: async () => false, createdAt: '2026-11-26T00:00:00Z',
-    idFor: () => 'AUD-001', hasTty: false, packageManager: 'pnpm', ...over,
+    idFor: nextAuditRunId, hasTty: false, packageManager: 'pnpm', ...over,
   }
 }
 
@@ -66,6 +67,28 @@ describe('kaddo audit run (WI-097)', () => {
     await expect(performAuditRun({ module: ['nope'] }, deps())).rejects.toThrow(/Unknown module "nope"/)
   })
 
+  it('runs scoped TypeScript inside the selected module and records unavailable dependency coverage', async () => {
+    const calls: { command: string; cwd?: string }[] = []
+    const runner: CommandRunner = async (command, _args, options) => {
+      calls.push({ command, cwd: options?.cwd })
+      return { stdout: 'src/a.ts(1,1): error TS1005: oops.', stderr: '', exitCode: 1 }
+    }
+    const result = await performAuditRun({ module: ['cli'] }, deps({ run: runner }))
+    expect(calls).toEqual([{ command: 'tsc', cwd: path.join(dir, 'packages', 'cli') }])
+    expect(result.run.status).toBe('partial')
+    expect(result.run.coverage.notEvaluated.join(' ')).toMatch(/Dependency audit cannot guarantee/)
+    expect(result.run.findings[0].location?.file).toBe('packages/cli/src/a.ts')
+  })
+
+  it('does not run analyzers for unsupported arbitrary path scope', async () => {
+    const calls: string[] = []
+    const runner: CommandRunner = async (command) => { calls.push(command); return { stdout: '', stderr: '', exitCode: 0 } }
+    const result = await performAuditRun({ paths: ['packages/cli/src'] }, deps({ run: runner }))
+    expect(calls).toEqual([])
+    expect(result.run.status).toBe('partial')
+    expect(result.run.coverage.complete).toBe(false)
+  })
+
   it('correlates inline so the report can carry references (AC-03)', async () => {
     // A Work Item whose code globs cover the finding's file → correlated into the report.
     write('knowledge/delivery/work-items/ready/WI-010.md',
@@ -80,7 +103,7 @@ describe('kaddo audit run (WI-097)', () => {
     expect(fs.existsSync(path.join(dir, 'knowledge', 'tech', 'audits'))).toBe(false)
 
     const approved = await performAuditRun({ publish: true }, deps({ hasTty: true, confirm: async () => true }))
-    expect(approved.publishedPath?.replace(/\\/g, '/')).toMatch(/knowledge\/tech\/audits\/AUD-001\.md$/)
+    expect(approved.publishedPath?.replace(/\\/g, '/')).toMatch(/knowledge\/tech\/audits\/AUD-002\.md$/)
     expect(fs.existsSync(approved.publishedPath!)).toBe(true)
   })
 

@@ -9,6 +9,7 @@
 
 import type { AuditScope } from './audit.js'
 import type { DiscoveredModuleRef } from './audit-correlation.js'
+import path from 'node:path'
 
 export type ScopeSelection = {
   /** Explicitly audit the whole project. Ignored when modules or paths are given. */
@@ -40,6 +41,7 @@ export function resolveAuditScope(selection: ScopeSelection, modules: Discovered
 
   if (hasPaths) {
     const paths = [...new Set(selection.paths!.map((p) => p.replace(/\\/g, '/').trim()).filter(Boolean))].sort()
+    if (!paths.length || paths.some(p => path.posix.isAbsolute(p) || path.win32.isAbsolute(p) || /^[a-zA-Z]:/.test(p) || p.split('/').includes('..') || p.includes('\0'))) throw new Error('Audit paths must be relative and stay within the project.')
     return { kind: 'paths', paths }
   }
 

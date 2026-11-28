@@ -3,6 +3,10 @@ import fastifyCookie from '@fastify/cookie'
 import fastifyCors from '@fastify/cors'
 import fastifyStatic from '@fastify/static'
 import path from 'node:path'
+import { z } from 'zod'
+import { listAuditsAdmin, getAuditAdmin, previewAuditAdmin, compareAuditsAdmin, linkAuditAdmin, runAuditAdmin, AuditExecutionError } from './audit-adapter.js'
+import type { CommandRunner } from '@kaddo/cli/core'
+import type { IsolatedDiscovery } from './audit-isolated-discovery.js'
 import { SessionManager } from './session.js'
 import {
   getProjectOverview,
@@ -171,6 +175,10 @@ export type AdminServerOptions = {
   staticDir?: string
   host?: string
   port?: number
+  /** Test seam for allowlisted analyzers; never supplied by a browser request. */
+  auditRunner?: CommandRunner
+  /** Internal discovery seam for controlled tests. */
+  auditDiscovery?: (dir: string) => Promise<IsolatedDiscovery>
 }
 
 export async function createAdminServer(opts: AdminServerOptions) {
@@ -248,6 +256,58 @@ export async function createAdminServer(opts: AdminServerOptions) {
     return writeHandler(reply, () => updateProjectMode(projectDir, parsed.data.mode))
   })
   app.get('/api/v1/admin/knowledge', coreRoute(getKnowledgeSummary))
+  // Audit queries are read-only and use the same Core projections as the CLI.
+  const auditId = z.string().regex(/^AUD-\d+$/)
+  const auditRead = async (reply: import('fastify').FastifyReply, fn: () => unknown) => {
+    try { return await fn() } catch (error) {
+      const missing = error instanceof Error && /^Audit "AUD-\d+" not found or unreadable\.$/.test(error.message)
+      return reply.code(missing ? 404 : 500).send({ error: { code: missing ? 'NOT_FOUND' : 'AUDIT_READ_FAILED', message: missing ? 'Audit not found or unreadable.' : 'Could not read audit data.' } })
+    }
+  }
+  app.get('/api/v1/admin/audits', async () => listAuditsAdmin(projectDir))
+  app.get<{ Params: { id: string }; Querystring: { severity?: string; confidence?: string; category?: string; pathPrefix?: string; module?: string; status?: string } }>('/api/v1/admin/audits/:id', async (request, reply) => {
+    if (!auditId.safeParse(request.params.id).success) return reply.code(400).send({ error: { code: 'INVALID_INPUT', message: 'Invalid audit ID.' } })
+    const schema = z.object({ severity: z.enum(['critical', 'high', 'medium', 'low', 'info']).optional(), confidence: z.enum(['confirmed', 'likely', 'inferred']).optional(), category: z.string().min(1).max(100).optional(), pathPrefix: z.string().min(1).max(500).optional(), module: z.string().min(1).max(200).optional(), status: z.enum(['open', 'acknowledged', 'accepted-risk', 'false-positive', 'resolved']).optional() }).strict().refine(f => !(f.module && f.pathPrefix))
+    const parsed = schema.safeParse(request.query)
+    if (!parsed.success) return reply.code(400).send({ error: { code: 'INVALID_INPUT', message: 'Invalid audit filters.' } })
+    const f = parsed.data
+    if (f.pathPrefix && (path.posix.isAbsolute(f.pathPrefix) || path.win32.isAbsolute(f.pathPrefix) || /^[a-zA-Z]:/.test(f.pathPrefix) || f.pathPrefix.replace(/\\/g, '/').split('/').includes('..'))) return reply.code(400).send({ error: { code: 'INVALID_INPUT', message: 'Invalid path prefix.' } })
+    try { return await getAuditAdmin(projectDir, request.params.id, { severity: f.severity ? [f.severity] : undefined, confidence: f.confidence ? [f.confidence] : undefined, category: f.category ? [f.category] : undefined, pathPrefix: f.pathPrefix ? [f.pathPrefix] : undefined }, { module: f.module, status: f.status }, opts.auditDiscovery) } catch (error) {
+      const badModule = error instanceof Error && error.message === 'Invalid or ambiguous module.'
+      if (badModule) return reply.code(400).send({ error: { code: 'INVALID_INPUT', message: 'Invalid or ambiguous module.' } })
+      const missing = error instanceof Error && /^Audit "AUD-\d+" not found or unreadable\.$/.test(error.message)
+      return reply.code(missing ? 404 : 500).send({ error: { code: missing ? 'NOT_FOUND' : 'AUDIT_READ_FAILED', message: missing ? 'Audit not found or unreadable.' : 'Could not read audit data.' } })
+    }
+  })
+  app.get<{ Params: { id: string } }>('/api/v1/admin/audits/:id/plan', async (request, reply) => {
+    if (!auditId.safeParse(request.params.id).success) return reply.code(400).send({ error: { code: 'INVALID_INPUT', message: 'Invalid audit ID.' } })
+    return auditRead(reply, () => previewAuditAdmin(projectDir, request.params.id, opts.auditDiscovery))
+  })
+  app.get<{ Querystring: { before?: string; after?: string } }>('/api/v1/admin/audit-comparison', async (request, reply) => {
+    const parsed = z.object({ before: auditId, after: auditId }).strict().safeParse(request.query)
+    if (!parsed.success) return reply.code(400).send({ error: { code: 'INVALID_INPUT', message: 'Two valid audit IDs are required.' } })
+    return auditRead(reply, () => compareAuditsAdmin(projectDir, parsed.data.before, parsed.data.after, opts.auditDiscovery))
+  })
+  app.post('/api/v1/admin/audit-links', async (request, reply) => {
+    const parsed = z.object({ runId: auditId, findingId: z.string().regex(/^AF-[a-f0-9]{16}$/), workItemId: z.string().regex(/^WI-\d+$/), expectedRevision: z.string().regex(/^[a-f0-9]{64}$/), confirmed: z.literal(true) }).strict().safeParse(request.body)
+    if (!parsed.success) return reply.code(400).send({ error: { code: 'INVALID_INPUT', message: 'Valid IDs, revision and explicit confirmation are required.' } })
+    try { return linkAuditAdmin(projectDir, parsed.data) } catch (error) {
+      const code = (error as { code?: string }).code
+      const status = code === 'WORK_ITEM_CONFLICT' || code === 'WORK_ITEM_NOT_EDITABLE' ? 409 : code === 'WORK_ITEM_NOT_FOUND' ? 404 : code === 'INVALID_INPUT' ? 400 : 500
+      return reply.code(status).send({ error: { code: code ?? 'AUDIT_LINK_FAILED', message: status === 500 ? 'Could not link audit finding.' : error instanceof Error ? error.message : 'Invalid link.' } })
+    }
+  })
+  app.post('/api/v1/admin/audits/run', async (request, reply) => {
+    const parsed = z.object({ requestId: z.string().uuid(), confirmed: z.literal(true), module: z.array(z.string().min(1).max(200)).min(1).max(20).optional(), paths: z.array(z.string().min(1).max(500)).min(1).max(20).optional() }).strict().refine(v => !(v.module && v.paths)).safeParse(request.body)
+    if (!parsed.success) return reply.code(400).send({ error: { code: 'INVALID_INPUT', message: 'Explicit confirmation, request ID and a valid scope are required.' } })
+    try { return await runAuditAdmin(projectDir, parsed.data, opts.auditRunner, opts.auditDiscovery) } catch (error) {
+      if (error instanceof AuditExecutionError) return reply.code(error.code === 'AUDIT_CONFLICT' ? 409 : error.code === 'AUDIT_ISOLATION_UNAVAILABLE' ? 503 : 400).send({ error: { code: error.code, message: error.message } })
+      const message = error instanceof Error ? error.message : ''
+      if (/^(Unknown module|Ambiguous audit scope|Audit paths must|Unsupported package manager|Invalid generated audit ID)/.test(message)) return reply.code(400).send({ error: { code: 'INVALID_INPUT', message } })
+      if (message === 'Audit execution is already running or requires recovery.' || message === 'Audit output already exists.') return reply.code(409).send({ error: { code: 'AUDIT_CONFLICT', message } })
+      return reply.code(500).send({ error: { code: 'AUDIT_EXECUTION_FAILED', message: 'Audit execution failed; the request ID will not be retried automatically.' } })
+    }
+  })
   app.get<{ Querystring: { scope?: 'all' | 'active' } }>('/api/v1/admin/reports/impact', async (request, reply) => {
     const scope = request.query.scope
     if (scope && scope !== 'all' && scope !== 'active') return reply.code(400).send({ error: { code: 'INVALID_INPUT', message: 'scope must be all or active.' } })
