@@ -542,8 +542,24 @@ export type DeprecationPlan = {
   targets: DeprecationTarget[]
 }
 
+export type AuditRunSummary = { id: string; createdAt: string; status: 'completed' | 'partial' | 'failed'; total: number; confirmed: number; inferences: number }
+export type AuditScopeView = { kind: 'project' } | { kind: 'module'; modules: string[] } | { kind: 'paths'; paths: string[] }
+export type AuditFindingView = {
+  id: string; category: string; title: string; severity: string; confidence: string
+  location?: { file?: string; line?: number }; evidence: string; provenance: string; recommendation: string; status: string
+}
+export type AuditRunView = {
+  id: string; createdAt: string; commit?: string; scope: AuditScopeView; status: 'completed' | 'partial' | 'failed'
+  coverage: { complete: boolean; evaluated: string[]; notEvaluated: string[] }
+  tools: { name: string; version?: string; status: string }[]
+  findings: AuditFindingView[]
+}
+export type AuditDetail = { run: AuditRunView; findings: AuditFindingView[] }
+
 export const api = {
   initSession: () => fetchApi<{ status: string }>('/session'),
+  listAudits: () => fetchApi<AuditRunSummary[]>('/audits'),
+  getAudit: (id: string) => fetchApi<AuditDetail>(`/audits/${encodeURIComponent(id)}`),
   getOverview: () => fetchApi<ProjectOverview>('/overview'),
   getProject: () => fetchApi<ProjectOverview['project']>('/project'),
   updateProjectMode: (mode: 'standard' | 'poc') => mutateApi<ProjectOverview['project']>('/project/mode', 'PUT', { mode }),
