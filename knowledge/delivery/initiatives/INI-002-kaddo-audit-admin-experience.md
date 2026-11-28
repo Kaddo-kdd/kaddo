@@ -220,6 +220,7 @@ candidates:
       - AUD-ADMIN-C4
       - WI-099
       - WI-100
+    materialized_as: WI-105
   - id: AUD-ADMIN-C7
     title: 'End-to-End Validation, UX & Documentation'
     type: chore

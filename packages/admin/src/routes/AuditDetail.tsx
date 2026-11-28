@@ -3,6 +3,7 @@ import { useParams, useRouter } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { api } from '../lib/api'
 import type { AuditRunView, AuditFindingView, AuditFindingFilters } from '../lib/api'
+import { AuditRemediation } from '../components/AuditRemediation'
 import {
   describeAuditScope, auditStatusLabel, auditStatusTone, countConfirmed,
   confidenceIsFirm, findingLocationLabel, cleanAuditFilters, hasActiveFilters,
@@ -181,6 +182,8 @@ export function AuditDetail() {
               </div>
             )}
           </section>
+
+          <AuditRemediation auditId={run.id} />
         </>
       )}
     </div>

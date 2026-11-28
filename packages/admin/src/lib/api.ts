@@ -550,7 +550,21 @@ export type AuditFindingCorrelation = {
   risks: string[]
   matchStrength: 'exact' | 'module' | 'domain' | 'none'
   notes: string[]
+  confirmedWorkItems?: string[]
 }
+export type AuditPlanAction = {
+  findingId: string; title: string; severity: string; confidence: string
+  evidence: string; recommendation: string
+  confirmedWorkItems: string[]; suggestedWorkItems: string[]
+  action: 'already-linked' | 'review'
+}
+export type AuditPlanPreview = {
+  auditId: string; status: 'completed' | 'partial' | 'failed'
+  coverage: { complete: boolean; evaluated: string[]; notEvaluated: string[] }
+  actions: AuditPlanAction[]
+}
+export type AuditLinkInput = { runId: string; findingId: string; workItemId: string; expectedRevision: string; confirmed: true }
+export type AuditLinkResult = { revision: string; path: string; changed: boolean }
 export type AuditFindingView = {
   id: string; category: string; title: string; severity: string; confidence: string
   location?: { file?: string; line?: number }; evidence: string; provenance: string; recommendation: string; status: string
@@ -577,6 +591,8 @@ export const api = {
     const qs = params.toString()
     return fetchApi<AuditDetail>(`/audits/${encodeURIComponent(id)}${qs ? `?${qs}` : ''}`)
   },
+  getAuditPlan: (id: string) => fetchApi<AuditPlanPreview>(`/audits/${encodeURIComponent(id)}/plan`),
+  linkAuditFinding: (input: AuditLinkInput) => mutateApi<AuditLinkResult>('/audit-links', 'POST', input),
   getOverview: () => fetchApi<ProjectOverview>('/overview'),
   getProject: () => fetchApi<ProjectOverview['project']>('/project'),
   updateProjectMode: (mode: 'standard' | 'poc') => mutateApi<ProjectOverview['project']>('/project/mode', 'PUT', { mode }),

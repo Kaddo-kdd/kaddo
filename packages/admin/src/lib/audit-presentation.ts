@@ -40,6 +40,24 @@ export function hasActiveFilters(filters: AuditFindingFilters): boolean {
   return Object.values(filters).some((v) => Boolean(v && v.trim()))
 }
 
+// WI-105 (AUD-ADMIN-C6) — remediation / Work Item linking helpers.
+
+/** Build the link request, always with explicit confirmation — the write never happens without it. */
+export function buildAuditLinkInput(runId: string, findingId: string, workItemId: string, expectedRevision: string) {
+  return { runId, findingId, workItemId, expectedRevision, confirmed: true as const }
+}
+
+/** A Work Item id the user may type to link; accepted only when it matches the canonical WI-<n> shape. */
+export function isValidWorkItemId(id: string): boolean {
+  return /^WI-\d+$/.test(id.trim())
+}
+
+/** A stale-revision conflict: the Work Item changed since we read it, so the user must refetch and retry. */
+export function isRevisionConflict(error: unknown): boolean {
+  const code = (error as { code?: string })?.code
+  return code === 'WORK_ITEM_CONFLICT'
+}
+
 /** Human-readable scope for the detail header. */
 export function describeAuditScope(scope: AuditScopeView): string {
   if (scope.kind === 'module') return `modules: ${scope.modules.join(', ')}`

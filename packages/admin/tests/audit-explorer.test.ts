@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
   describeAuditScope, auditStatusLabel, auditStatusTone, countConfirmed, summarizeBySeverity,
   confidenceIsFirm, findingLocationLabel, cleanAuditFilters, hasActiveFilters,
+  buildAuditLinkInput, isValidWorkItemId, isRevisionConflict,
 } from '../src/lib/audit-presentation'
 import type { AuditFindingView } from '../src/lib/api'
 
@@ -79,5 +80,36 @@ describe('findings explorer (WI-104)', () => {
     expect(hasActiveFilters({})).toBe(false)
     expect(hasActiveFilters({ severity: '' })).toBe(false)
     expect(hasActiveFilters({ severity: 'high' })).toBe(true)
+  })
+})
+
+// WI-105 (AUD-ADMIN-C6) — remediation / Work Item linking logic.
+describe('remediation linking (WI-105)', () => {
+  it('builds a link request that always carries explicit confirmation', () => {
+    expect(buildAuditLinkInput('AUD-001', 'AF-abc', 'WI-5', 'rev')).toEqual({
+      runId: 'AUD-001', findingId: 'AF-abc', workItemId: 'WI-5', expectedRevision: 'rev', confirmed: true,
+    })
+  })
+
+  it('accepts only canonical Work Item ids', () => {
+    expect(isValidWorkItemId('WI-42')).toBe(true)
+    expect(isValidWorkItemId('  WI-42  ')).toBe(true)
+    expect(isValidWorkItemId('wi-42')).toBe(false)
+    expect(isValidWorkItemId('WI')).toBe(false)
+    expect(isValidWorkItemId('')).toBe(false)
+  })
+
+  it('detects a stale-revision conflict distinctly from other errors', () => {
+    expect(isRevisionConflict({ code: 'WORK_ITEM_CONFLICT' })).toBe(true)
+    expect(isRevisionConflict({ code: 'WORK_ITEM_NOT_FOUND' })).toBe(false)
+    expect(isRevisionConflict(new Error('boom'))).toBe(false)
+  })
+
+  it('exposes the remediation component and plan/link api methods', async () => {
+    const comp = await import('../src/components/AuditRemediation')
+    const apiMod = await import('../src/lib/api')
+    expect(typeof comp.AuditRemediation).toBe('function')
+    expect(typeof apiMod.api.getAuditPlan).toBe('function')
+    expect(typeof apiMod.api.linkAuditFinding).toBe('function')
   })
 })
