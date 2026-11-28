@@ -147,6 +147,7 @@ candidates:
     dependencies:
       - AUD-ADMIN-C1
       - AUD-ADMIN-C2
+    materialized_as: WI-104
   - id: AUD-ADMIN-C5
     title: Audit Comparison Experience
     type: feature

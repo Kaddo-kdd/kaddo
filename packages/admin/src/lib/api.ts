@@ -544,9 +544,21 @@ export type DeprecationPlan = {
 
 export type AuditRunSummary = { id: string; createdAt: string; status: 'completed' | 'partial' | 'failed'; total: number; confirmed: number; inferences: number }
 export type AuditScopeView = { kind: 'project' } | { kind: 'module'; modules: string[] } | { kind: 'paths'; paths: string[] }
+export type AuditFindingReferences = { adrs?: string[]; capabilities?: string[]; workItems?: string[] }
+export type AuditFindingCorrelation = {
+  owners: { domain: string; owners: string[] }[]
+  risks: string[]
+  matchStrength: 'exact' | 'module' | 'domain' | 'none'
+  notes: string[]
+}
 export type AuditFindingView = {
   id: string; category: string; title: string; severity: string; confidence: string
   location?: { file?: string; line?: number }; evidence: string; provenance: string; recommendation: string; status: string
+  references?: AuditFindingReferences
+  correlation?: AuditFindingCorrelation
+}
+export type AuditFindingFilters = {
+  severity?: string; confidence?: string; category?: string; status?: string; module?: string; pathPrefix?: string
 }
 export type AuditRunView = {
   id: string; createdAt: string; commit?: string; scope: AuditScopeView; status: 'completed' | 'partial' | 'failed'
@@ -559,7 +571,12 @@ export type AuditDetail = { run: AuditRunView; findings: AuditFindingView[] }
 export const api = {
   initSession: () => fetchApi<{ status: string }>('/session'),
   listAudits: () => fetchApi<AuditRunSummary[]>('/audits'),
-  getAudit: (id: string) => fetchApi<AuditDetail>(`/audits/${encodeURIComponent(id)}`),
+  getAudit: (id: string, filters?: AuditFindingFilters) => {
+    const params = new URLSearchParams()
+    for (const [k, v] of Object.entries(filters ?? {})) if (v) params.set(k, v)
+    const qs = params.toString()
+    return fetchApi<AuditDetail>(`/audits/${encodeURIComponent(id)}${qs ? `?${qs}` : ''}`)
+  },
   getOverview: () => fetchApi<ProjectOverview>('/overview'),
   getProject: () => fetchApi<ProjectOverview['project']>('/project'),
   updateProjectMode: (mode: 'standard' | 'poc') => mutateApi<ProjectOverview['project']>('/project/mode', 'PUT', { mode }),

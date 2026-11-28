@@ -1,11 +1,44 @@
 // WI-103 (INI-002, AUD-ADMIN-C2) — pure presentation helpers for the Audit Explorer and detail. Kept
 // separate from the route components so they are unit-testable without a DOM.
 
-import type { AuditScopeView, AuditFindingView, AuditRunView } from './api'
+import type { AuditScopeView, AuditFindingView, AuditRunView, AuditFindingFilters } from './api'
 
 export type AuditStatus = AuditRunView['status']
 
 const SEVERITY_ORDER = ['critical', 'high', 'medium', 'low', 'info'] as const
+
+export const SEVERITY_OPTIONS = [...SEVERITY_ORDER]
+export const CONFIDENCE_OPTIONS = ['confirmed', 'likely', 'inferred'] as const
+export const STATUS_OPTIONS = ['open', 'acknowledged', 'accepted-risk', 'false-positive', 'resolved'] as const
+
+/** A finding's confidence is INDEPENDENT of its severity. Confirmed facts read solid; inferences read muted
+ *  and tagged, so a critical inference is never shown as a critical fact. */
+export function confidenceIsFirm(confidence: string): boolean {
+  return confidence === 'confirmed'
+}
+
+export function findingLocationLabel(location: AuditFindingView['location']): string | null {
+  if (!location?.file) return null
+  return typeof location.line === 'number' ? `${location.file}:${location.line}` : location.file
+}
+
+/**
+ * Normalize filter input for the detail endpoint: drop empty values and enforce the backend's rule that
+ * `module` and `pathPrefix` are mutually exclusive (module wins when both are set).
+ */
+export function cleanAuditFilters(raw: AuditFindingFilters): AuditFindingFilters {
+  const out: AuditFindingFilters = {}
+  for (const key of ['severity', 'confidence', 'category', 'status', 'module', 'pathPrefix'] as const) {
+    const v = raw[key]?.trim()
+    if (v) out[key] = v
+  }
+  if (out.module && out.pathPrefix) delete out.pathPrefix
+  return out
+}
+
+export function hasActiveFilters(filters: AuditFindingFilters): boolean {
+  return Object.values(filters).some((v) => Boolean(v && v.trim()))
+}
 
 /** Human-readable scope for the detail header. */
 export function describeAuditScope(scope: AuditScopeView): string {

@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   describeAuditScope, auditStatusLabel, auditStatusTone, countConfirmed, summarizeBySeverity,
+  confidenceIsFirm, findingLocationLabel, cleanAuditFilters, hasActiveFilters,
 } from '../src/lib/audit-presentation'
 import type { AuditFindingView } from '../src/lib/api'
 
@@ -51,5 +52,32 @@ describe('audit presentation (WI-103)', () => {
     const detail = await import('../src/routes/AuditDetail')
     expect(typeof explorer.Audits).toBe('function')
     expect(typeof detail.AuditDetail).toBe('function')
+  })
+})
+
+// WI-104 (AUD-ADMIN-C4) — findings explorer presentation + filter logic.
+describe('findings explorer (WI-104)', () => {
+  it('distinguishes confirmed facts from inferences', () => {
+    expect(confidenceIsFirm('confirmed')).toBe(true)
+    expect(confidenceIsFirm('likely')).toBe(false)
+    expect(confidenceIsFirm('inferred')).toBe(false)
+  })
+
+  it('formats a finding location as file:line, or null when absent', () => {
+    expect(findingLocationLabel({ file: 'src/a.ts', line: 12 })).toBe('src/a.ts:12')
+    expect(findingLocationLabel({ file: 'src/a.ts' })).toBe('src/a.ts')
+    expect(findingLocationLabel(undefined)).toBeNull()
+  })
+
+  it('cleans filters: drops empties and enforces module/pathPrefix exclusivity', () => {
+    expect(cleanAuditFilters({ severity: 'critical', category: '  ', status: '' })).toEqual({ severity: 'critical' })
+    expect(cleanAuditFilters({ module: 'cli', pathPrefix: 'packages/cli' })).toEqual({ module: 'cli' })
+    expect(cleanAuditFilters({ pathPrefix: 'packages/cli' })).toEqual({ pathPrefix: 'packages/cli' })
+  })
+
+  it('detects whether any filter is active', () => {
+    expect(hasActiveFilters({})).toBe(false)
+    expect(hasActiveFilters({ severity: '' })).toBe(false)
+    expect(hasActiveFilters({ severity: 'high' })).toBe(true)
   })
 })
